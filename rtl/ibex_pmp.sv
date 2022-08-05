@@ -220,6 +220,11 @@ module ibex_pmp #(
                                                           pmp_req_type_i[c],
                                                           priv_mode_i[c],
                                                           region_basic_perm_check[c][r]);
+
+      // Address bits below PMP granularity (which starts at 4 byte) are deliberately unused.
+      logic unused_sigs;
+      assign unused_sigs = ^{region_start_addr[r][PMPGranularity+2-1:0],
+                             pmp_req_addr_i[c][PMPGranularity+2-1:0]};
     end
 
     // Once the permission checks of the regions are done, decide if the access is
