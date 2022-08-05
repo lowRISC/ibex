@@ -78,7 +78,7 @@ optional arguments:
 ### Generating UVM agent
 The boilerplate code for a UVM agent for an interface can be generated using the
 `-a` switch. This results in the generation of complete agent with classes that
-extend from the [DV library]({{< relref "hw/dv/sv/dv_lib/README.md" >}}). Please see
+extend from the [DV library]({{< relref "hw/dv/sv/dv_lib/doc" >}}). Please see
 that description for more details.
 
 The tool generates an interface, item, cfg, cov, monitor, driver and sequence
@@ -160,7 +160,7 @@ more is typically needed.
 ### Generating UVM environment & testbench
 The boilerplate code for a UVM environment and the testbench for a DUT can be
 generated using the `-e` switch. This results in the generation of classes that
-extend from [DV base library]({{< relref "hw/dv/sv/dv_lib/README.md" >}}).
+extend from [DV base library]({{< relref "hw/dv/sv/dv_lib/doc" >}}).
 If the `-c` switch is passed, it extends from
 [CIP base library]({{< relref "hw/dv/sv/cip_lib/doc" >}}). With `-ea` switch,
 user can provide a list of downstream agents to create within the environment.
@@ -196,7 +196,7 @@ provided by `-hi` and `-ha` respectively. By default, these are set to 'False'
 
     This is the UVM reg based RAL model. This is created for completeness. The
     actual RAL model needs to be generated prior to running simulations using the
-    [regtool]({{< relref "util/reggen/README.md" >}}).
+    [regtool]({{< relref "util/reggen/doc" >}}).
 
 * `env/i2c_host_scoreboard`
 

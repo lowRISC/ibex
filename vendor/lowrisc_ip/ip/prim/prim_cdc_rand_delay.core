@@ -9,6 +9,7 @@ filesets:
   files_rtl:
     depend:
       - lowrisc:prim:assert
+      - lowrisc:dv:dv_macros
     files:
       - rtl/prim_cdc_rand_delay.sv
     file_type: systemVerilogSource
@@ -26,7 +27,7 @@ filesets:
       # common waivers
       - lowrisc:lint:common
     files:
-      #- lint/prim_cdc_rand_delay.waiver
+      - lint/prim_cdc_rand_delay.waiver
     file_type: waiver
 
   files_veriblelint_waiver:

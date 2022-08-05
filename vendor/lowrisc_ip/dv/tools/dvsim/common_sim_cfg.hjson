@@ -10,14 +10,17 @@
   import_cfgs:      ["{proj_root}/dv/uvm/common_project_cfg.hjson",
                      "{dv_root}/tools/dvsim/common_modes.hjson",
                      "{dv_root}/tools/dvsim/fusesoc.hjson",
+                     "{dv_root}/tools/dvsim/bazel.hjson",
                      "{dv_root}/tools/dvsim/{tool}.hjson"]
 
   // Default directory structure for the output
   build_dir:          "{scratch_path}/{build_mode}"
   run_dir_name:       "{index}.{test}"
   run_dir:            "{scratch_path}/{run_dir_name}/out"
-  sw_build_dir:       "{scratch_path}"
   sw_root_dir:        "{proj_root}/sw"
+
+  // Default file to store build_seed value
+  build_seed_file_path: "{build_dir}/build_seed.log"
 
   // pass and fail patterns
   build_pass_patterns: []
@@ -54,6 +57,8 @@
   // file, xprop cfg file etc. If this is different for your block, then override it with
   // the 'overrides' directive.
   dut_instance: "{tb}.dut"
+
+  timescale: "1ns/1ps"
 
   // Top level simulation entities.
   sim_tops: ["{tb}"]
