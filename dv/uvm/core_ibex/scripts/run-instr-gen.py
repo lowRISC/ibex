@@ -43,6 +43,7 @@ def main() -> int:
     ]
     sim_opts_dict = {
         'uvm_set_inst_override': ','.join(inst_overrides),
+        'require_signature_addr': '1',
         'signature_addr': args.end_signature_addr,
         'pmp_num_regions': str(cfg.pmp_num_regions),
         'pmp_granularity': str(cfg.pmp_granularity),
