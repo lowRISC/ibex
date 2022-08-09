@@ -41,10 +41,17 @@ def main() -> int:
         'ibex_asm_program_gen',
         'uvm_test_top.asm_gen'
     ]
+
+    # Special-case for riscv_csr_test -> fixup the handshake addr.
+    # Currently use (signature_addr - 0x4) for test_done channel.
+    sig = ((args.end_signature_addr) if ('riscv_csr_test' not in testname)
+           else
+           f'{(int(args.end_signature_addr, 16) - 4):x}')  # (signature_addr - 0x4)
+
     sim_opts_dict = {
         'uvm_set_inst_override': ','.join(inst_overrides),
         'require_signature_addr': '1',
-        'signature_addr': args.end_signature_addr,
+        'signature_addr': sig,
         'pmp_num_regions': str(cfg.pmp_num_regions),
         'pmp_granularity': str(cfg.pmp_granularity),
         'tvec_alignment': '8'
@@ -71,7 +78,7 @@ def main() -> int:
                 '--test', testname,
                 '--start_seed', str(seed),
                 '--iterations', '1',
-                '--end_signature_addr', args.end_signature_addr,
+                '--end_signature_addr', sig,
                 '--sim_opts', sim_opts_str,
                 '--debug', orig_list])
 
