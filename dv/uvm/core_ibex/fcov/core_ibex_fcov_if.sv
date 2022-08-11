@@ -551,7 +551,17 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
                                      (id_stage_i.controller_i.fcov_debug_single_step_taken) {
       // Not certain if InstrCategoryOtherIllegal can occur. Put it in illegal_bins for now and
       // revisit if any issues are seen
-      illegal_bins illegal = {InstrCategoryOther, InstrCategoryOtherIllegal};
+      illegal_bins illegal =
+        {InstrCategoryOther, InstrCategoryNone, InstrCategoryOtherIllegal
+         // [Debug Spec v1.0.0-STABLE, p.95]
+         // > dret is an instruction which only has meaning while Debug Mode
+         // We want to step over this to at-least specify how the Ibex does behave.
+         //
+         // [Debug Spec v1.0.0-STABLE, p.50]
+         // > If the instruction being stepped over is wfi and would normally stall the hart,
+         // > then instead the instruction is treated as nop.
+         // Again this will be useful coverage to verify we are testing this behaviour.
+        };
     }
 
     // Only sample the bus error from the first access of misaligned load/store when we are in
