@@ -1104,7 +1104,7 @@ module ibex_top import ibex_pkg::*; #(
     // the new request.
     `ASSERT(MaxOutstandingDSideAccessesCorrect,
         data_req_o |->
-        ~pending_dside_accesses_d[MaxOutstandingDSideAccesses-1].valid | data_rvalid_i)
+        ~pending_dside_accesses_q[MaxOutstandingDSideAccesses-1].valid | data_rvalid_i)
 
     // Should only see a request response if we're expecting one
     `ASSERT(PendingAccessTrackingCorrect, data_rvalid_i |-> pending_dside_accesses_q[0])
