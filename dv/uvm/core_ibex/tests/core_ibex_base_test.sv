@@ -81,6 +81,8 @@ class core_ibex_base_test extends uvm_test;
 
   virtual function void build_phase(uvm_phase phase);
     string cosim_log_file;
+    bit [31:0] pmp_num_regions;
+    bit [31:0] pmp_granularity;
 
     super.build_phase(phase);
     $value$plusargs("timeout_in_cycles=%0d", timeout_in_cycles);
@@ -111,6 +113,17 @@ class core_ibex_base_test extends uvm_test;
     cosim_cfg.probe_imem_for_errs = 1'b0;
     void'($value$plusargs("cosim_log_file=%0s", cosim_log_file));
     cosim_cfg.log_file = cosim_log_file;
+
+    if (!uvm_config_db#(bit [31:0])::get(null, "", "PMPNumRegions", pmp_num_regions)) begin
+      pmp_num_regions = '0;
+    end
+
+    if (!uvm_config_db#(bit [31:0])::get(null, "", "PMPGranularity", pmp_granularity)) begin
+      pmp_granularity = '0;
+    end
+
+    cosim_cfg.pmp_num_regions = pmp_num_regions;
+    cosim_cfg.pmp_granularity = pmp_granularity;
 
     uvm_config_db#(core_ibex_cosim_cfg)::set(null, "*cosim_agent*", "cosim_cfg", cosim_cfg);
 `endif
