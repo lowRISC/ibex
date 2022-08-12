@@ -740,7 +740,7 @@
     and allow PMP regions to overlap.
     A large number of iterations will be required since this introduces a huge
     state space of configurations.
-  iterations: 100
+  iterations: 5
   gen_test: riscv_rand_instr_test
   gen_opts: >
     +instr_cnt=6000
