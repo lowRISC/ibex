@@ -5,17 +5,20 @@
 #ifndef SPIKE_COSIM_H_
 #define SPIKE_COSIM_H_
 
+#include <stdint.h>
+
+#include <deque>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "cosim.h"
 #include "riscv/devices.h"
 #include "riscv/log_file.h"
 #include "riscv/processor.h"
 #include "riscv/simif.h"
 
-#include <stdint.h>
-#include <deque>
-#include <memory>
-#include <string>
-#include <vector>
+#define IBEX_MARCHID 22
 
 class SpikeCosim : public simif_t, public Cosim {
  private:
@@ -65,6 +68,8 @@ class SpikeCosim : public simif_t, public Cosim {
   void on_csr_write(const commit_log_reg_t::value_type &reg_change);
 
   void leave_nmi_mode();
+
+  void initial_proc_setup(uint32_t start_pc, uint32_t start_mtvec);
 
   int insn_cnt;
 

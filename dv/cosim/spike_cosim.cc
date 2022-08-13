@@ -57,9 +57,7 @@ SpikeCosim::SpikeCosim(const std::string &isa_string, uint32_t start_pc,
   processor->set_pmp_granularity(1 << (pmp_granularity + 2));
   processor->set_ibex_flags(secure_ibex, icache_en);
 
-  processor->set_mmu_capability(IMPL_MMU_SBARE);
-  processor->get_state()->pc = start_pc;
-  processor->get_state()->mtvec->write(start_mtvec);
+  initial_proc_setup(start_pc, start_mtvec);
 
   if (log) {
     processor->set_debug(true);
@@ -440,6 +438,21 @@ void SpikeCosim::leave_nmi_mode() {
 #endif
 }
 
+void SpikeCosim::initial_proc_setup(uint32_t start_pc, uint32_t start_mtvec) {
+  processor->get_state()->pc = start_pc;
+  processor->get_state()->mtvec->write(start_mtvec);
+
+  processor->get_state()->csrmap[CSR_MARCHID] =
+      std::make_shared<const_csr_t>(processor.get(), CSR_MARCHID, IBEX_MARCHID);
+
+  processor->set_mmu_capability(IMPL_MMU_SBARE);
+
+  for (int i = 0; i < processor->TM.count(); ++i) {
+    processor->TM.tdata2_write(processor.get(), i, 0);
+    processor->TM.tdata1_write(processor.get(), i, 0x28001048);
+  }
+}
+
 void SpikeCosim::set_mip(uint32_t mip) {
   processor->get_state()->mip->write_with_mask(0xffffffff, mip);
 }
@@ -521,7 +534,7 @@ void SpikeCosim::clear_errors() { errors.clear(); }
 
 void SpikeCosim::fixup_csr(int csr_num, uint32_t csr_val) {
   switch (csr_num) {
-    case CSR_MSTATUS:
+    case CSR_MSTATUS: {
       reg_t mask =
           MSTATUS_MIE | MSTATUS_MPIE | MSTATUS_MPRV | MSTATUS_MPP | MSTATUS_TW;
 
@@ -532,6 +545,24 @@ void SpikeCosim::fixup_csr(int csr_num, uint32_t csr_val) {
       processor->put_csr(csr_num, new_val);
 #endif
       break;
+    }
+    case CSR_MCAUSE: {
+      uint32_t any_interrupt = csr_val & 0x80000000;
+      uint32_t int_interrupt = csr_val & 0x40000000;
+
+      reg_t new_val = (csr_val & 0x0000001f) | any_interrupt;
+
+      if (any_interrupt && int_interrupt) {
+        new_val |= 0x7fffffe0;
+      }
+
+#ifdef OLD_SPIKE
+      processor->set_csr(csr_num, new_val);
+#else
+      processor->put_csr(csr_num, new_val);
+#endif
+      break;
+    }
   }
 }
 
