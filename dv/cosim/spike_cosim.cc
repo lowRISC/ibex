@@ -464,11 +464,29 @@ void SpikeCosim::set_debug_req(bool debug_req) {
 }
 
 void SpikeCosim::set_mcycle(uint64_t mcycle) {
-  // TODO: Spike decrements mcycle on write to hack around an issue it has with
-  // correctly writing minstret. Preferably this write would use a backdoor
-  // access and avoid that decrement but backdoor access isn't part of the
-  // public CSR interface.
-  processor->get_state()->mcycle->write(mcycle + 1);
+  uint32_t upper_mcycle = mcycle >> 32;
+  uint32_t lower_mcycle = mcycle & 0xffffffff;
+
+  // Spike decrements the MCYCLE CSR when you write to it to hack around an
+  // issue it has with incorrectly setting minstret/mcycle when there's an
+  // explicit write to them. There's no backdoor write available via the public
+  // interface to skip this. To complicate matters we can only write 32 bits at
+  // a time and get a decrement each time.
+
+  // Write the lower half first, incremented twice due to the double decrement
+  processor->get_state()->csrmap[CSR_MCYCLE]->write(lower_mcycle + 2);
+
+  if ((processor->get_state()->csrmap[CSR_MCYCLE]->read() & 0xffffffff) == 0) {
+    // If the lower half is 0 at this point then the upper half will get
+    // decremented, so increment it first.
+    upper_mcycle++;
+  }
+
+  // Set the upper half
+  processor->get_state()->csrmap[CSR_MCYCLEH]->write(upper_mcycle);
+
+  // TODO: Do a neater job of this, a more recent spike release should allow us
+  // to write all 64 bits at once at least.
 }
 
 void SpikeCosim::set_csr(const int csr_num, const uint32_t new_val) {
