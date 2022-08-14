@@ -89,7 +89,7 @@ def _main() -> int:
             # Note that we don't capture the success or failure of the subprocess:
 
             sim_fd.write(f"Running run-rtl command :\n{' '.join(cmd)}\n".encode())
-            run_one(md.verbose, cmd, redirect_stdstreams=sim_fd, timeout_s=900)
+            run_one(md.verbose, cmd, redirect_stdstreams=sim_fd, timeout_s=1800)
 
     # Always return 0 (success), even if the test failed. We've successfully
     # generated a log either way.
