@@ -748,7 +748,6 @@
     +set_mstatus_mprv=1
     +pmp_randomize=1
     +pmp_allow_addr_overlap=1
-    +enable_write_pmp_csr=1
   rtl_test: core_ibex_base_test
   rtl_params:
     PMPEnable: 1
