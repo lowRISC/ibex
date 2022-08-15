@@ -111,9 +111,13 @@ int kernel_program_instr_cnt = 400;
 // ----------------------------------------------------------------------------
 
 // Implemented previlieged CSR list
+// TODO: Bring back commented out CSRs, these are currently removed as they can
+// cause co-sim mismatches. These must be investigated and fixed
 const privileged_reg_t implemented_csr[] = {
     // Machine mode mode CSR
+    MSCRATCH,         // Scratch register
     MVENDORID,        // Vendor ID
+    MIMPID,           // Implementation ID
     MARCHID,          // Architecture ID
     MHARTID,          // Hardware thread ID
     MSTATUS,          // Machine status
@@ -126,8 +130,8 @@ const privileged_reg_t implemented_csr[] = {
     MIP,              // Machine interrupt pending
     MCYCLE,           // Machine cycle counter (lower 32 bits)
     MCYCLEH,          // Machine cycle counter (upper 32 bits)
-    MINSTRET,         // Machine instructions retired counter (lower 32 bits)
-    MINSTRETH,        // Machine instructions retired counter (upper 32 bits)
+    //MINSTRET,         // Machine instructions retired counter (lower 32 bits)
+    //MINSTRETH,        // Machine instructions retired counter (upper 32 bits)
     MCOUNTINHIBIT,    // Machine counter inhibit register
 % for pcount_num in range(ibex_config['MHPMCounterNum']):
     MHPMEVENT${pcount_num + 3},       // Machine performance monitoring event selector
@@ -135,6 +139,7 @@ const privileged_reg_t implemented_csr[] = {
     MHPMCOUNTER${pcount_num + 3}H,    // Machine performance monitoring counter (lower 32 bits)
 % endfor
 % if ibex_config['PMPEnable']:
+    MSECCFG,          // Machine security configuration register
     PMPCFG0,          // PMP configuration register
     PMPCFG1,          // PMP configuration register
     PMPCFG2,          // PMP configuration register
@@ -159,15 +164,15 @@ const privileged_reg_t implemented_csr[] = {
     DCSR,             // Debug control and status register
     DPC,              // Debug PC
     DSCRATCH0,        // Debug scratch register 0
-    DSCRATCH1,         // Debug scratch register 1
+    DSCRATCH1         // Debug scratch register 1
 % if ibex_config['DbgTriggerEn']:
-    TSELECT,         // Trigger select register
+    ,TSELECT,         // Trigger select register
     TDATA1,           // Trigger data register 1
     TDATA2,           // Trigger data register 2
-    TDATA3,           // Trigger data register 3
+    TDATA3            // Trigger data register 3
 % endif
-    MCONTEXT,         // Machine context register
-    SCONTEXT          // Supervisor context register
+    //MCONTEXT,         // Machine context register
+    //SCONTEXT          // Supervisor context register
 };
 
 // TODO: Co-simulation fix required so cpuctrl behaves correctly in co-sim for all ibex configs. For
