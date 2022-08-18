@@ -15,7 +15,7 @@ import pathlib3x as pathlib
 from typing import Set
 
 from metadata import RegressionMetadata
-from setup_imports import _IBEX_ROOT
+from setup_imports import _OT_LOWRISC_IP
 from scripts_lib import run_one
 
 
@@ -56,7 +56,7 @@ def merge_cov_vcs(cov_dir: str, verbose: bool, cov_dirs: Set[str]) -> int:
 
 
 def merge_cov_xlm(cov_dir: str, verbose: bool, cov_dirs: Set[str]) -> int:
-    xcelium_scripts = _IBEX_ROOT/'vendor/lowrisc_ip/dv/tools/xcelium'
+    xcelium_scripts = _OT_LOWRISC_IP/'dv/tools/xcelium'
 
     # The merge TCL code uses a glob to find all available scopes and previous
     # runs. In order to actually get the databases we need to go up once so
