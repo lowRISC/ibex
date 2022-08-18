@@ -33,9 +33,9 @@ case "$ID-$VERSION_ID" in
     $SUDO_CMD apt-get update
 
     # Make spike-cosim repository available
-    curl -Ls https://download.opensuse.org/repositories/home:gac_lowrisc/xUbuntu_18.04/Release.key | $SUDO_CMD apt-key add -
-    $SUDO_CMD sh -c "echo 'deb http://download.opensuse.org/repositories/home:/gac_lowrisc/xUbuntu_18.04/ /' > /etc/apt/sources.list.d/spike-cosim.list" sudo apt update
-    $SUDO_CMD apt-get update
+    #curl -Ls https://download.opensuse.org/repositories/home:gac_lowrisc/xUbuntu_18.04/Release.key | $SUDO_CMD apt-key add -
+    #$SUDO_CMD sh -c "echo 'deb http://download.opensuse.org/repositories/home:/gac_lowrisc/xUbuntu_18.04/ /' > /etc/apt/sources.list.d/spike-cosim.list" sudo apt update
+    #$SUDO_CMD apt-get update
 
     # Packaged dependencies
     # Install python3-yaml through apt to get a version with libyaml bindings,
@@ -58,28 +58,34 @@ case "$ID-$VERSION_ID" in
         bison \
         libelf-dev \
         clang-format \
+        wget \
         "verilator-$VERILATOR_VERSION" \
-        "ibex-cosim-$IBEX_COSIM_VERSION" \
         xz-utils
+       # "ibex-cosim-$IBEX_COSIM_VERSION" \
 
-      # Python dependencies
-      #
-      # Updating pip and setuptools is required to have these tools properly
-      # parse Python-version metadata, which some packages uses to specify that
-      # an older version of a package must be used for a certain Python version.
-      # If that information is not read, pip installs the latest version, which
-      # then fails to run.
-      $SUDO_CMD pip3 install -U pip setuptools
+    # TODO: Remove this hack, workaround due to OBS mirrors not syncing
+    # correctly
+    wget https://download.opensuse.org/repositories/home:/gac_lowrisc/xUbuntu_18.04/amd64/ibex-cosim-0.4_0.4-1_amd64.deb
+    $SUDO_CMD dpkg -i ibex-cosim-0.4_0.4-1_amd64.deb
 
-      $SUDO_CMD pip3 install -r python-requirements.txt
+    # Python dependencies
+    #
+    # Updating pip and setuptools is required to have these tools properly
+    # parse Python-version metadata, which some packages uses to specify that
+    # an older version of a package must be used for a certain Python version.
+    # If that information is not read, pip installs the latest version, which
+    # then fails to run.
+    $SUDO_CMD pip3 install -U pip setuptools
 
-      # Install Verible
-      mkdir -p build/verible
-      cd build/verible
-      curl -Ls -o verible.tar.gz "https://github.com/google/verible/releases/download/$VERIBLE_VERSION/verible-$VERIBLE_VERSION-Ubuntu-$VERSION_ID-$VERSION_CODENAME-x86_64.tar.gz"
-      $SUDO_CMD mkdir -p /tools/verible && $SUDO_CMD chmod 777 /tools/verible
-      tar -C /tools/verible -xf verible.tar.gz --strip-components=1
-      echo "##vso[task.prependpath]/tools/verible/bin"
+    $SUDO_CMD pip3 install -r python-requirements.txt
+
+    # Install Verible
+    mkdir -p build/verible
+    cd build/verible
+    curl -Ls -o verible.tar.gz "https://github.com/google/verible/releases/download/$VERIBLE_VERSION/verible-$VERIBLE_VERSION-Ubuntu-$VERSION_ID-$VERSION_CODENAME-x86_64.tar.gz"
+    $SUDO_CMD mkdir -p /tools/verible && $SUDO_CMD chmod 777 /tools/verible
+    tar -C /tools/verible -xf verible.tar.gz --strip-components=1
+    echo "##vso[task.prependpath]/tools/verible/bin"
     ;;
 
   *)
