@@ -124,6 +124,22 @@ module ibex_cs_registers #(
 
   import ibex_pkg::*;
 
+  // Is a PMP config a locked one that allows M-mode execution when MSECCFG.MML is set (either
+  // M mode alone or shared M/U mode execution)?
+  function automatic logic is_mml_m_exec_cfg(ibex_pkg::pmp_cfg_t pmp_cfg);
+    logic unused_cfg;
+    unused_cfg = ^{pmp_cfg.mode};
+
+    if (pmp_cfg.lock) begin
+      case ({pmp_cfg.read, pmp_cfg.write, pmp_cfg.exec})
+        3'b001, 3'b010, 3'b011, 3'b101: return 1'b1;
+        default: return 1'b0;
+      endcase
+    end
+
+    return 1'b0;
+  endfunction
+
   localparam int unsigned RV32BExtra = (RV32B == RV32BOTEarlGrey) || (RV32B == RV32BFull) ? 1 : 0;
   localparam int unsigned RV32MEnabled = (RV32M == RV32MNone) ? 0 : 1;
   localparam int unsigned PMPAddrWidth = (PMPGranularity > 0) ? 33 - PMPGranularity : 32;
@@ -1045,6 +1061,7 @@ module ibex_cs_registers #(
     logic                        pmp_mseccfg_err;
     pmp_cfg_t                    pmp_cfg         [PMPNumRegions];
     logic [PMPNumRegions-1:0]    pmp_cfg_locked;
+    logic [PMPNumRegions-1:0]    pmp_cfg_wr_suppress;
     pmp_cfg_t                    pmp_cfg_wdata   [PMPNumRegions];
     logic [PMPAddrWidth-1:0]     pmp_addr        [PMPNumRegions];
     logic [PMPNumRegions-1:0]    pmp_cfg_we;
@@ -1100,7 +1117,9 @@ module ibex_cs_registers #(
       // -------------------------
       // Instantiate cfg registers
       // -------------------------
-      assign pmp_cfg_we[i] = csr_we_int & ~pmp_cfg_locked[i] &
+      assign pmp_cfg_we[i] = csr_we_int                                       &
+                             ~pmp_cfg_locked[i]                               &
+                             ~pmp_cfg_wr_suppress[i]                          &
                              (csr_addr == (CSR_OFF_PMP_CFG + (i[11:0] >> 2)));
 
       // Select the correct WDATA (each CSR contains 4 CFG fields, each with 2 RES bits)
@@ -1139,6 +1158,12 @@ module ibex_cs_registers #(
       // MSECCFG.RLB allows the lock bit to be bypassed (allowing cfg writes when MSECCFG.RLB is
       // set).
       assign pmp_cfg_locked[i] = pmp_cfg[i].lock & ~pmp_mseccfg_q.rlb;
+
+      // When MSECCFG.MML is set cannot add new regions allowing M mode execution unless MSECCFG.RLB
+      // is set
+      assign pmp_cfg_wr_suppress[i] = pmp_mseccfg_q.mml                   &
+                                      ~pmp_mseccfg.rlb                    &
+                                      is_mml_m_exec_cfg(pmp_cfg_wdata[i]);
 
       // --------------------------
       // Instantiate addr registers
