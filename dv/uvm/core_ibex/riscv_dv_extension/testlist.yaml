@@ -514,6 +514,8 @@
   iterations: 5
   no_iss: 1
   rtl_test: core_ibex_csr_test
+  sim_opts: >
+    +disable_cosim=1
   no_post_compare: true
   ignore_cosim_log: true
 

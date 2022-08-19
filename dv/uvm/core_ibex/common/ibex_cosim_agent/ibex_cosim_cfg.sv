@@ -10,6 +10,7 @@ class core_ibex_cosim_cfg extends uvm_object;
   string     log_file;
   bit [31:0] pmp_num_regions;
   bit [31:0] pmp_granularity;
+  bit        relax_cosim_check;
 
   `uvm_object_utils_begin(core_ibex_cosim_cfg)
     `uvm_field_string(isa_string, UVM_DEFAULT)

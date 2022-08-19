@@ -121,6 +121,7 @@ class core_ibex_base_test extends uvm_test;
 
     cosim_cfg.pmp_num_regions = pmp_num_regions;
     cosim_cfg.pmp_granularity = pmp_granularity;
+    cosim_cfg.relax_cosim_check = cfg.disable_cosim;
 
     uvm_config_db#(core_ibex_cosim_cfg)::set(null, "*cosim_agent*", "cosim_cfg", cosim_cfg);
 
