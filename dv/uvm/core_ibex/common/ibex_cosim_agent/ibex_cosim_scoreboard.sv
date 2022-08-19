@@ -136,7 +136,11 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
                             rvfi_instr.trap)) begin
         // cosim instruction step doesn't match rvfi captured instruction, report a fatal error
         // with the details
-        `uvm_fatal(`gfn, get_cosim_error_str())
+        if (cfg.relax_cosim_check) begin
+          `uvm_info(`gfn, get_cosim_error_str(), UVM_LOW)
+        end else begin
+          `uvm_fatal(`gfn, get_cosim_error_str())
+        end
       end
     end
   endtask: run_cosim_rvfi
