@@ -740,12 +740,11 @@
     and allow PMP regions to overlap.
     A large number of iterations will be required since this introduces a huge
     state space of configurations.
-  iterations: 5
+  iterations: 20
   gen_test: riscv_rand_instr_test
   gen_opts: >
     +instr_cnt=6000
     +pmp_max_offset=00024000
-    +set_mstatus_mprv=1
     +pmp_randomize=1
     +pmp_allow_addr_overlap=1
   rtl_test: core_ibex_base_test
