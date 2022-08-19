@@ -55,7 +55,6 @@
       -do vcs.tcl
     cosim_opts: >-
       -f <core_ibex>/ibex_dv_cosim_dpi.f
-      +define+INC_IBEX_COSIM
       -LDFLAGS '<ISS_LDFLAGS>'
       -CFLAGS '<ISS_CFLAGS>'
       -CFLAGS '-I<IBEX_ROOT>/dv/cosim'
@@ -254,7 +253,6 @@
       <ISS_LIBS>
       <ISS_CFLAGS>
       -Wld,<ISS_LDFLAGS>
-      +define+INC_IBEX_COSIM
       -lstdc++
   sim:
     cmd:
