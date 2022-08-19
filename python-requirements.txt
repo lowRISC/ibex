@@ -14,7 +14,6 @@ junit-xml
 # dataclass  # needed for backports?
 pathlib3x  # Backports some useful features
 typing-utils  # Ditto
-gitpython
 typeguard
 portalocker
 
