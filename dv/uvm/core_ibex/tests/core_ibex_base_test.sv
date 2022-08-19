@@ -6,9 +6,7 @@ class core_ibex_base_test extends uvm_test;
 
   core_ibex_env                                   env;
   core_ibex_env_cfg                               cfg;
-`ifdef INC_IBEX_COSIM
   core_ibex_cosim_cfg                             cosim_cfg;
-`endif
   virtual clk_rst_if                              clk_vif;
   virtual core_ibex_dut_probe_if                  dut_vif;
   virtual core_ibex_instr_monitor_if              instr_vif;
@@ -103,7 +101,6 @@ class core_ibex_base_test extends uvm_test;
     env = core_ibex_env::type_id::create("env", this);
     cfg = core_ibex_env_cfg::type_id::create("cfg", this);
 
-`ifdef INC_IBEX_COSIM
     cosim_cfg = core_ibex_cosim_cfg::type_id::create("cosim_cfg", this);
 
     cosim_cfg.isa_string = get_isa_string();
@@ -126,7 +123,6 @@ class core_ibex_base_test extends uvm_test;
     cosim_cfg.pmp_granularity = pmp_granularity;
 
     uvm_config_db#(core_ibex_cosim_cfg)::set(null, "*cosim_agent*", "cosim_cfg", cosim_cfg);
-`endif
 
     uvm_config_db#(core_ibex_env_cfg)::set(this, "*", "cfg", cfg);
     mem = mem_model_pkg::mem_model#()::type_id::create("mem");
@@ -190,12 +186,8 @@ class core_ibex_base_test extends uvm_test;
       `uvm_fatal(get_full_name(), $sformatf("Cannot open file %0s", bin))
     while ($fread(r8,f_bin)) begin
       `uvm_info(`gfn, $sformatf("Init mem [0x%h] = 0x%0h", addr, r8), UVM_FULL)
-      mem.write(addr, r8);
-`ifdef INC_IBEX_COSIM
-      if (env.cosim_agent != null) begin
-        env.cosim_agent.write_mem_byte(addr, r8);
-      end
-`endif
+      mem.write(addr, r8);                      // Populate RTL memory model
+      env.cosim_agent.write_mem_byte(addr, r8); // Populate ISS memory model
       addr++;
     end
   endfunction

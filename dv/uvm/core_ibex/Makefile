@@ -23,8 +23,6 @@ SEED                := $(shell echo $$RANDOM)
 WAVES               := 0
 # Enable coverage dump
 COV                 := 0
-# Enable cosimulation flow
-COSIM               := 1
 # RTL simulator (xlm, vcs, questa, dsim, )
 SIMULATOR           := xlm
 # ISS (spike, ovpsim)
@@ -123,7 +121,7 @@ new-metadata-file := $(shell env PYTHONPATH=$(PYTHONPATH) python3 ./scripts/meta
   --dir-metadata $(METADATA-DIR) \
   --dir-out $(OUT-DIR) \
   --args-list "\
-  SEED=$(SEED) WAVES=$(WAVES) COV=$(COV) COSIM=$(COSIM) SIMULATOR=$(SIMULATOR) \
+  SEED=$(SEED) WAVES=$(WAVES) COV=$(COV) SIMULATOR=$(SIMULATOR) \
   ISS=$(ISS) TEST=$(TEST) VERBOSE=$(VERBOSE) ITERATIONS=$(ITERATIONS) \
   SIGNATURE_ADDR=$(SIGNATURE_ADDR) IBEX_CONFIG=$(IBEX_CONFIG)")
 
@@ -171,7 +169,7 @@ instr_gen_compile: $(test-bins)
 
 TB-COMPILE-STAMP = $(METADATA-DIR)/tb.compile.stamp
 rtl_tb_compile: $(METADATA-DIR)/tb.compile.stamp
-rtl-tb-compile-var-deps := SIMULATOR COV WAVES COSIM  # Rebuild if these change
+rtl-tb-compile-var-deps := SIMULATOR COV WAVES # Rebuild if these change
 
 rtl_sim_run: $(rtl-sim-logs)
 
