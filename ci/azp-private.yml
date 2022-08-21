@@ -4,6 +4,9 @@
 #
 # Private CI trigger.  Used to run tooling that can't currently be shared
 # publicly.
+#
+variables:
+- template: vars.yml
 
 trigger:
   batch: true
@@ -18,14 +21,21 @@ pr:
     include:
     - '*'
 
-# The runner used for private CI enforces the use of the template below. All
-# build steps need to be placed into the template.
-resources:
-  repositories:
-  - repository: lowrisc-private-ci
-    type: github
-    endpoint: lowRISC
-    name: lowrisc/lowrisc-private-ci
+jobs:
+- job: lint_dv
+  displayName: Run quality checks (Lint and DV)
+  pool: test
+  steps:
+  - bash: |
+      ci/install-build-deps.sh
+    displayName: Install build dependencies
 
-extends:
-  template: jobs-ibex.yml@lowrisc-private-ci
+  - bash: |
+      echo $PATH
+      python3 --version
+      echo -n "fusesoc "
+      fusesoc --version
+      verilator --version
+      riscv32-unknown-elf-gcc --version
+      verible-verilog-lint --version
+    displayName: Display environment
