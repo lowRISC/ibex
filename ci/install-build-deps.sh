@@ -61,12 +61,12 @@ case "$ID-$VERSION_ID" in
         wget \
         "verilator-$VERILATOR_VERSION" \
         xz-utils
-       # "ibex-cosim-$IBEX_COSIM_VERSION" \
 
-    # TODO: Remove this hack, workaround due to OBS mirrors not syncing
-    # correctly
-    wget https://download.opensuse.org/repositories/home:/gac_lowrisc/xUbuntu_18.04/amd64/ibex-cosim-0.4_0.4-1_amd64.deb
-    $SUDO_CMD dpkg -i ibex-cosim-0.4_0.4-1_amd64.deb
+    wget https://storage.googleapis.com/ibex-cosim-builds/ibex-cosim-$IBEX_COSIM_VERSION.tar.gz
+    $SUDO_CMD mkdir -p /tools/riscv-isa-sim
+    $SUDO_CMD chmod 777 /tools/riscv-isa-sim
+    $SUDO_CMD tar -C /tools/riscv-isa-sim -xvzf ibex-cosim-$IBEX_COSIM_VERSION.tar.gz --strip-components=1
+    echo "##vso[task.prependpath]/tools/riscv-isa-sim/bin"
 
     # Python dependencies
     #
