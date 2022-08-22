@@ -67,6 +67,7 @@ steps:
       displayName: Run RISC-V Compliance test for Ibex RV32IMC for ${{ config }}
 
     - bash: |
+        source ci/setup-cosim.sh
         # Build simple system with co-simulation
         fusesoc --cores-root=. run --target=sim --setup --build lowrisc:ibex:ibex_simple_system_cosim $IBEX_CONFIG_OPTS
 
