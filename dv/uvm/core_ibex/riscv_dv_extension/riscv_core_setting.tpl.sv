@@ -62,11 +62,19 @@ mtvec_mode_t supported_interrupt_mode[$] = {VECTORED};
 // supported
 int max_interrupt_vector_num = 32;
 
+% if ibex_config['PMPEnable']:
 // Physical memory protection support
 bit support_pmp = 1;
 
 // Enhanced physical memory protection support
 bit support_epmp = 1;
+% else:
+// Physical memory protection support
+bit support_pmp = 0;
+
+// Enhanced physical memory protection support
+bit support_epmp = 0;
+% endif
 
 // Debug mode support
 bit support_debug_mode = 1;
