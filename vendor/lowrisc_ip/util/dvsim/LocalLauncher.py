@@ -3,13 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import datetime
-import logging as log
 import os
 import shlex
 import subprocess
 
 from Launcher import ErrorMessage, Launcher, LauncherError
-from utils import VERBOSE
 
 
 class LocalLauncher(Launcher):
@@ -95,7 +93,7 @@ class LocalLauncher(Launcher):
                     'K',
                     ErrorMessage(line_number=None,
                                  message=timeout_message,
-                                 context=[]))
+                                 context=[timeout_message]))
                 return 'K'
 
             return 'D'

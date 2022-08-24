@@ -16,7 +16,7 @@
   // Default directory structure for the output
   build_dir:          "{scratch_path}/{build_mode}"
   run_dir_name:       "{index}.{test}"
-  run_dir:            "{scratch_path}/{run_dir_name}/out"
+  run_dir:            "{scratch_path}/{run_dir_name}/latest"
   sw_root_dir:        "{proj_root}/sw"
 
   // Default file to store build_seed value
@@ -150,6 +150,7 @@
   // Project defaults for VCS
   vcs_cov_cfg_file: "{{build_mode}_vcs_cov_cfg_file}"
   vcs_unr_cfg_file: "{dv_root}/tools/vcs/unr.cfg"
+  vcs_fsm_reset_cov_cfg_file: "{dv_root}/tools/vcs/fsm_reset_cov.cfg"
   vcs_cov_excl_files: []
 
   // Build-specific coverage cfg files for VCS.
