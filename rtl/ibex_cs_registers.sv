@@ -131,7 +131,7 @@ module ibex_cs_registers #(
     unused_cfg = ^{pmp_cfg.mode};
 
     if (pmp_cfg.lock) begin
-      case ({pmp_cfg.read, pmp_cfg.write, pmp_cfg.exec})
+      unique case ({pmp_cfg.read, pmp_cfg.write, pmp_cfg.exec})
         3'b001, 3'b010, 3'b011, 3'b101: return 1'b1;
         default: return 1'b0;
       endcase

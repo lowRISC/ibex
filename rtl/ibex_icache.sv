@@ -1083,7 +1083,7 @@ module ibex_icache import ibex_pkg::*; #(
     // IDLE.
     inval_block_cache = 1'b1;
 
-    case (inval_state_q)
+    unique case (inval_state_q)
       OUT_OF_RESET: begin
         // Initial state, this initialises the tag RAMs out of reset before the icache can be used
         inval_state_d = AWAIT_SCRAMBLE_KEY;
