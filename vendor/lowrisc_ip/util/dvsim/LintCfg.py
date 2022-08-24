@@ -76,10 +76,8 @@ class LintCfg(OneShotCfg):
 
         keys = self.totals.get_keys(self.report_severities)
         for cfg in self.cfgs:
-            results_page = f'{cfg.results_server_dir}/results.html'
-            results_page_url = results_page.replace(
-                cfg.results_server_prefix, cfg.results_server_url_prefix)
-            name_with_link = f'[{cfg.name.upper()}]({results_page_url})'
+            name_with_link = cfg._get_results_page_link(
+                self.results_dir)
 
             row = [name_with_link]
             row += cfg.result_summary.get_counts_md(keys)
@@ -164,18 +162,15 @@ class LintCfg(OneShotCfg):
                 table, headers='firstrow', tablefmt='pipe',
                 colalign=colalign) + '\n'
 
-            # The email and published reports will default to self.results_md
-            # if they are empty. In case they need to be sanitized, override
-            # them and do not append detailed messages.
-            if self.sanitize_email_results:
-                self.email_results_md = self.results_md
+            # Th published report will default to self.results_md if they are
+            # empty. In case it needs need to be sanitized, override it and do
+            # not append detailed messages.
             if self.sanitize_publish_results:
                 self.publish_results_md = self.results_md
             # Locally generated result always contains all details.
             self.results_md += fail_msgs
         else:
             self.results_md = f'{results_str}\nNo results to display.\n'
-            self.email_results_md = self.results_md
             self.publish_results_md = self.results_md
 
         return self.results_md

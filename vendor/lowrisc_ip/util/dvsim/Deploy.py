@@ -287,7 +287,7 @@ class Deploy():
 
     def get_timeout_mins(self):
         """Returns the timeout in minutes."""
-        return 0
+        return None
 
     def extract_info_from_log(self, log_text: List):
         """Extracts information pertaining to the job from its log.
@@ -378,8 +378,8 @@ class CompileSim(Deploy):
         if self.sim_cfg.args.build_timeout_mins is not None:
             self.build_timeout_mins = self.sim_cfg.args.build_timeout_mins
         if self.build_timeout_mins:
-            log.log(VERBOSE, "Compile timeout for job \"%s\" is %d minutes",
-                    self.name, self.build_timeout_mins)
+            log.debug("Timeout for job \"%s\" is %d minutes.",
+                      self.name, self.build_timeout_mins)
 
     def pre_launch(self):
         # Delete old coverage database directories before building again. We
@@ -387,8 +387,11 @@ class CompileSim(Deploy):
         rm_path(self.cov_db_dir)
 
     def get_timeout_mins(self):
-        """Returns the timeout in minutes."""
-        return self.build_timeout_mins
+        """Returns the timeout in minutes.
+
+        Limit build jobs to 60 minutes if the timeout is not set.
+        """
+        return self.build_timeout_mins if self.build_timeout_mins else 60
 
 
 class CompileOneShot(Deploy):
@@ -439,12 +442,15 @@ class CompileOneShot(Deploy):
         if self.sim_cfg.args.build_timeout_mins is not None:
             self.build_timeout_mins = self.sim_cfg.args.build_timeout_mins
         if self.build_timeout_mins:
-            log.log(VERBOSE, "Compile timeout for job \"%s\" is %d minutes",
-                    self.name, self.build_timeout_mins)
+            log.debug("Timeout for job \"%s\" is %d minutes.",
+                      self.name, self.build_timeout_mins)
 
     def get_timeout_mins(self):
-        """Returns the timeout in minutes."""
-        return self.build_timeout_mins
+        """Returns the timeout in minutes.
+
+        Limit build jobs to 60 minutes if the timeout is not set.
+        """
+        return self.build_timeout_mins if self.build_timeout_mins else 60
 
 
 class RunTest(Deploy):
@@ -518,8 +524,8 @@ class RunTest(Deploy):
         if self.sim_cfg.args.run_timeout_mins is not None:
             self.run_timeout_mins = self.sim_cfg.args.run_timeout_mins
         if self.run_timeout_mins:
-            log.log(VERBOSE, "Run timeout for job \"%s\" is %d minutes",
-                    self.name, self.run_timeout_mins)
+            log.debug("Timeout for job \"%s\" is %d minutes.",
+                      self.full_name, self.run_timeout_mins)
 
     def pre_launch(self):
         self.launcher.renew_odir = True
@@ -543,8 +549,11 @@ class RunTest(Deploy):
         return RunTest.seeds.pop(0)
 
     def get_timeout_mins(self):
-        """Returns the timeout in minutes."""
-        return self.run_timeout_mins
+        """Returns the timeout in minutes.
+
+        Limit run jobs to 60 minutes if the timeout is not set.
+        """
+        return self.run_timeout_mins if self.run_timeout_mins else 60
 
     def extract_info_from_log(self, log_text: List):
         """Extracts the time the design was simulated for, from the log."""
@@ -605,11 +614,15 @@ class CovMerge(Deploy):
 
     def __init__(self, run_items, sim_cfg):
         # Construct the cov_db_dirs right away from the run_items. This is a
-        # special variable used in the HJson.
+        # special variable used in the HJson. The coverage associated with
+        # the primary build mode needs to be first in the list.
         self.cov_db_dirs = []
         for run in run_items:
             if run.cov_db_dir not in self.cov_db_dirs:
-                self.cov_db_dirs.append(run.cov_db_dir)
+                if sim_cfg.primary_build_mode == run.build_mode:
+                    self.cov_db_dirs.insert(0, run.cov_db_dir)
+                else:
+                    self.cov_db_dirs.append(run.cov_db_dir)
 
         # Early lookup the cov_merge_db_dir, which is a mandatory misc
         # attribute anyway. We need it to compute additional cov db dirs.
