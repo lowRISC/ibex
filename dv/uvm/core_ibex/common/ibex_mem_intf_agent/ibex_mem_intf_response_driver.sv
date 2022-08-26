@@ -119,10 +119,16 @@ class ibex_mem_intf_response_driver extends uvm_driver #(ibex_mem_intf_seq_item)
       if(cfg.vif.response_driver_cb.reset) continue;
       cfg.vif.wait_clks(tr.rvalid_delay);
       if(~cfg.vif.response_driver_cb.reset) begin
-        cfg.vif.response_driver_cb.rvalid <=  1'b1;
-        cfg.vif.response_driver_cb.error  <=  tr.error;
-        cfg.vif.response_driver_cb.rdata  <=  tr.data;
-        cfg.vif.response_driver_cb.rintg  <=  tr.intg;
+        cfg.vif.response_driver_cb.rvalid <= 1'b1;
+        cfg.vif.response_driver_cb.error  <= tr.error;
+        if (tr.read_write == READ) begin
+          cfg.vif.response_driver_cb.rdata <= tr.data;
+          cfg.vif.response_driver_cb.rintg <= tr.intg;
+        end else begin
+          // These are only relevant to read responses, so drive to X for a write response
+          cfg.vif.response_driver_cb.rdata <= 'x;
+          cfg.vif.response_driver_cb.rintg <= 'x;
+        end
       end
     end
   endtask : send_read_data
