@@ -533,7 +533,7 @@ class riscv_pmp_cfg extends uvm_object;
       //  from the command line instead of having to calculate an offset themselves.
       //
       // Only set the address if it has not already been configured in the above routine.
-      if (pmp_cfg_already_configured[i] == 1'b0) begin
+      if (pmp_cfg_already_configured[i] == 1'b0 || pmp_cfg_addr_valid[i]) begin
         if (pmp_cfg_addr_valid[i] || pmp_randomize) begin
           // In case an address was supplied by the test or full randomize is enabled.
           instr.push_back($sformatf("li x%0d, 0x%0x", scratch_reg[0], pmp_cfg[i].addr));
