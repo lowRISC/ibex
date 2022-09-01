@@ -546,6 +546,7 @@
     +instr_cnt=10000
     +randomize_csr=1
     +enable_unaligned_load_store=1
+    +suppress_pmp_setup=1
   rtl_test: core_ibex_mem_error_test
   sim_opts: >
     +require_signature_addr=1
