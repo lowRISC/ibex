@@ -120,7 +120,10 @@ const privileged_reg_t implemented_csr[] = {
     MIMPID,           // Implementation ID
     MARCHID,          // Architecture ID
     MHARTID,          // Hardware thread ID
-    MSTATUS,          // Machine status
+    MCONFIGPTR,       // Machine configuration pointer
+    MENVCFG,          // Machine environment configuration (lower 32 bits)
+    MSTATUS,          // Machine status (lower 32 bits)
+    MSTATUSH,         // Machine status (upper 32 bits)
     MISA,             // ISA and extensions
     MTVEC,            // Machine trap-handler base address
     MEPC,             // Machine exception program counter

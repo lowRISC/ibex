@@ -425,10 +425,11 @@ package ibex_pkg;
   // CSRs
   typedef enum logic[11:0] {
     // Machine information
-    CSR_MVENDORID = 12'hF11,
-    CSR_MARCHID   = 12'hF12,
-    CSR_MIMPID    = 12'hF13,
-    CSR_MHARTID   = 12'hF14,
+    CSR_MVENDORID  = 12'hF11,
+    CSR_MARCHID    = 12'hF12,
+    CSR_MIMPID     = 12'hF13,
+    CSR_MHARTID    = 12'hF14,
+    CSR_MCONFIGPTR = 12'hF15,
 
     // Machine trap setup
     CSR_MSTATUS   = 12'h300,
@@ -436,6 +437,10 @@ package ibex_pkg;
     CSR_MIE       = 12'h304,
     CSR_MTVEC     = 12'h305,
     CSR_MCOUNTEREN= 12'h306,
+    CSR_MSTATUSH  = 12'h310,
+
+    CSR_MENVCFG   = 12'h30A,
+    CSR_MENVCFGH  = 12'h31A,
 
     // Machine trap handling
     CSR_MSCRATCH  = 12'h340,
@@ -626,6 +631,11 @@ package ibex_pkg;
   // version here using their own unique encoding (e.g. 32 bits of the git hash of the implemented
   // commit).
   localparam logic [31:0] CSR_MIMPID_VALUE = 32'b0;
+
+  // Machine Configuration Pointer
+  // 0 indicates the configuration data structure does not eixst. Ibex implementors may wish to
+  // alter this to point to their system specific configuration data structure.
+  localparam logic [31:0] CSR_MCONFIGPTR_VALUE = 32'b0;
 
   // These LFSR parameters have been generated with
   // $ opentitan/util/design/gen-lfsr-seed.py --width 32 --seed 2480124384 --prefix ""
