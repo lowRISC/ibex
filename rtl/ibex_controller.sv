@@ -231,7 +231,7 @@ module ibex_controller #(
   // Is there an instruction in ID or WB that has yet to complete?
   assign id_wb_pending = instr_valid_i | ~ready_wb_i;
 
-  // Exception/fault prioritisation is taken from Table 3.7 of Priviledged Spec v1.11
+  // Logic to determine which exception takes priority where multiple are possible.
   if (WritebackStage) begin : g_wb_exceptions
     always_comb begin
       instr_fetch_err_prio = 0;
@@ -398,7 +398,7 @@ module ibex_controller #(
   assign irq_nm = irq_nm_ext_i | irq_nm_int;
 
   // Interrupts including NMI are ignored,
-  // - while in debug mode [Debug Spec v0.13.2, p.39],
+  // - while in debug mode,
   // - while in NMI mode (nested NMIs are not supported, NMI has highest priority and
   //   cannot be interrupted by regular interrupts).
   assign handle_irq = ~debug_mode_q & ~nmi_mode_q &
@@ -615,7 +615,7 @@ module ibex_controller #(
           csr_save_if_o    = 1'b1;
           csr_save_cause_o = 1'b1;
 
-          // interrupt priorities according to Privileged Spec v1.11 p.31
+          // Prioritise interrupts as required by the architecture
           if (irq_nm && !nmi_mode_q) begin
             exc_cause_o =
               irq_nm_ext_i ? ExcCauseIrqNm :
@@ -677,7 +677,7 @@ module ibex_controller #(
         // 2. EBREAK with forced entry into debug mode (ebreakm or ebreaku set).
         // regular ebreak's go through FLUSH.
         //
-        // for 1. do not update dcsr and dpc, for 2. do so [Debug Spec v0.13.2, p.39]
+        // for 1. do not update dcsr and dpc, for 2. do so
         // jump to debug exception handler in debug memory
         flush_id      = 1'b1;
         pc_mux_o      = PC_EXC;
@@ -746,34 +746,17 @@ module ibex_controller #(
             end
             ebrk_insn_prio: begin
               if (debug_mode_q | ebreak_into_debug) begin
-                /*
-                 * EBREAK in debug mode re-enters debug mode
-                 *
-                 * "The only exception is EBREAK. When that is executed in Debug
-                 * Mode, it halts the hart again but without updating dpc or
-                 * dcsr." [Debug Spec v0.13.2, p.39]
-                 */
+                // EBREAK enters debug mode when dcsr.ebreakm or dcsr.ebreaku is set and we're in
+                // M or U mode respectively. If we're already in debug mode we re-enter debug mode.
 
-                /*
-                 * dcsr.ebreakm == 1:
-                 * "EBREAK instructions in M-mode enter Debug Mode."
-                 * [Debug Spec v0.13.2, p.42]
-                 */
                 pc_set_o         = 1'b0;
                 csr_save_id_o    = 1'b0;
                 csr_save_cause_o = 1'b0;
                 ctrl_fsm_ns      = DBG_TAKEN_ID;
                 flush_id         = 1'b0;
               end else begin
-                /*
-                 * "The EBREAK instruction is used by debuggers to cause control
-                 * to be transferred back to a debugging environment. It
-                 * generates a breakpoint exception and performs no other
-                 * operation. [...] ECALL and EBREAK cause the receiving
-                 * privilege mode's epc register to be set to the address of the
-                 * ECALL or EBREAK instruction itself, not the address of the
-                 * following instruction." [Privileged Spec v1.11, p.40]
-                 */
+                // If EBREAK won't enter debug mode (dcsr.ebreakm/u not set) then raise a breakpoint
+                // exception.
                 exc_cause_o      = ExcCauseBreakpoint;
               end
             end
@@ -811,7 +794,7 @@ module ibex_controller #(
 
         // Entering debug mode due to either single step or debug_req. Ensure
         // registers are set for exception but then enter debug handler rather
-        // than exception handler [Debug Spec v0.13.2, p.44]
+        // than exception handler
         // Leave all other signals as is to ensure CSRs and PC get set as if
         // core was entering exception handler, entry to debug mode will then
         // see the appropriate state and setup dpc correctly.
@@ -819,7 +802,7 @@ module ibex_controller #(
         // If an EBREAK instruction is causing us to enter debug mode on the
         // same cycle as a debug_req or single step, honor the EBREAK and
         // proceed to DBG_TAKEN_ID, as it has the highest priority.
-        // [Debug Spec v1.0.0-STABLE, p.53]
+        //
         // cause==EBREAK    -> prio 3 (highest)
         // cause==debug_req -> prio 2
         // cause==step      -> prio 1 (lowest)
