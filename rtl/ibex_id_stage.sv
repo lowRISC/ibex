@@ -535,8 +535,7 @@ module ibex_id_stage #(
   // Controller //
   ////////////////
 
-  // "Executing DRET outside of Debug Mode causes an illegal instruction exception."
-  // [Debug Spec v0.13.2, p.41]
+  // Executing DRET outside of Debug Mode causes an illegal instruction exception.
   assign illegal_dret_insn  = dret_insn_dec & ~debug_mode_o;
   // Some instructions can only be executed in M-Mode
   assign illegal_umode_insn = (priv_mode_i != PRIV_LVL_M) &

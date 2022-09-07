@@ -5,9 +5,6 @@
 
 /**
  * Control and Status Registers
- *
- * Control and Status Registers (CSRs) following the RISC-V Privileged
- * Specification, draft version 1.11
  */
 
 `include "prim_assert.sv"
@@ -303,7 +300,6 @@ module ibex_cs_registers #(
   assign mhpmcounter_idx    = csr_addr[4:0];
 
   assign illegal_csr_dbg    = dbg_csr & ~debug_mode_i;
-  // See RISC-V Privileged Specification, version 1.11, Section 2.1
   assign illegal_csr_priv   = (csr_addr[9:8] > {priv_lvl_q});
   assign illegal_csr_write  = (csr_addr[11:10] == 2'b11) && csr_wr;
   assign illegal_csr_insn_o = csr_access_i & (illegal_csr | illegal_csr_write | illegal_csr_priv |
@@ -724,8 +720,8 @@ module ibex_cs_registers #(
           depc_d       = exception_pc;
           depc_en      = 1'b1;
         end else if (!debug_mode_i) begin
-          // In debug mode, "exceptions do not update any registers. That
-          // includes cause, epc, tval, dpc and mstatus." [Debug Spec v0.13.2, p.39]
+          // Exceptions do not update CSRs in debug mode, so ony write these CSRs if we're not in
+          // debug mode.
           mtval_en       = 1'b1;
           mtval_d        = csr_mtval_i;
           mstatus_en     = 1'b1;
@@ -782,7 +778,6 @@ module ibex_cs_registers #(
           mcause_d       = mstack_cause_q;
         end else begin
           // otherwise just set mstatus.MPIE/MPP
-          // See RISC-V Privileged Specification, version 1.11, Section 3.1.6.1
           mstatus_d.mpie = 1'b1;
           mstatus_d.mpp  = PRIV_LVL_U;
         end
@@ -1091,7 +1086,6 @@ module ibex_cs_registers #(
                                    pmp_cfg[i].exec, pmp_cfg[i].write, pmp_cfg[i].read};
 
         // Address field read data depends on the current programmed mode and the granularity
-        // See RISC-V Privileged Specification, version 1.11, Section 3.6.1
         if (PMPGranularity == 0) begin : g_pmp_g0
           // If G == 0, read data is unmodified
           assign pmp_addr_rdata[i] = pmp_addr[i];
