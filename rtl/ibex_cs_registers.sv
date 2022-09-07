@@ -763,6 +763,10 @@ module ibex_cs_registers #(
         mstatus_en     = 1'b1;
         mstatus_d.mie  = mstatus_q.mpie; // re-enable interrupts
 
+        if (mstatus_q.mpp != PRIV_LVL_M) begin
+          mstatus_d.mprv = 1'b0;
+        end
+
         // SEC_CM: EXCEPTION.CTRL_FLOW.LOCAL_ESC
         // SEC_CM: EXCEPTION.CTRL_FLOW.GLOBAL_ESC
         cpuctrl_we              = 1'b1;
