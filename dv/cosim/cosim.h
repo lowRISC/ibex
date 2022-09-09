@@ -114,6 +114,9 @@ class Cosim {
   // communication between DUT and Spike (e.g. Performance counters).
   virtual void set_csr(const int csr_num, const uint32_t new_val) = 0;
 
+  // Set the ICache scramble key valid bit that is visible in CPUCTRLSTS.
+  virtual void set_ic_scr_key_valid(bool valid) = 0;
+
   // Tell the co-simulation model about observed transactions on the dside
   // memory interface of the DUT. Accesses are notified once the response to a
   // transaction is seen.
