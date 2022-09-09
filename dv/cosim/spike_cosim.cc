@@ -233,6 +233,9 @@ bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data,
       if (!check_sync_trap(write_reg, pc, initial_spike_pc)) {
         return false;
       }
+
+      handle_cpuctrl_exception_entry();
+
       // This is all the checking possible when consider a
       // synchronously-trapping instruction that never retired.
       return true;
@@ -242,9 +245,13 @@ bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data,
   // We reached a retired instruction, so check spike and the dut behaved
   // consistently.
 
-  if (!sync_trap && pc_is_mret(pc) && nmi_mode) {
-    // Do handling for recoverable NMI
-    leave_nmi_mode();
+  if (!sync_trap && pc_is_mret(pc)) {
+    change_cpuctrlsts_sync_exc_seen(false);
+
+    if (nmi_mode) {
+      // Do handling for recoverable NMI
+      leave_nmi_mode();
+    }
   }
 
   if (pending_iside_error) {
@@ -438,6 +445,36 @@ void SpikeCosim::leave_nmi_mode() {
   processor->put_csr(CSR_MEPC, mstack.epc);
   processor->put_csr(CSR_MCAUSE, mstack.cause);
 #endif
+}
+
+void SpikeCosim::handle_cpuctrl_exception_entry() {
+  bool old_sync_exc_seen = change_cpuctrlsts_sync_exc_seen(true);
+
+  if (old_sync_exc_seen) {
+    set_cpuctrlsts_double_fault_seen();
+  }
+}
+
+bool SpikeCosim::change_cpuctrlsts_sync_exc_seen(bool flag) {
+  bool old_flag = false;
+  uint32_t cpuctrlsts = processor->get_csr(CSR_CPUCTRLSTS);
+
+  // If sync_exc_seen (bit 6) is already set update old_flag to match
+  if (cpuctrlsts & 0x40) {
+    old_flag = true;
+  }
+
+  cpuctrlsts = (cpuctrlsts & 0x1bf) | (flag ? 0x40 : 0);
+  processor->put_csr(CSR_CPUCTRLSTS, cpuctrlsts);
+
+  return old_flag;
+}
+
+void SpikeCosim::set_cpuctrlsts_double_fault_seen() {
+  uint32_t cpuctrlsts = processor->get_csr(CSR_CPUCTRLSTS);
+  // Set double_fault_seen  (bit 7)
+  cpuctrlsts = (cpuctrlsts & 0x17f) | 0x80;
+  processor->put_csr(CSR_CPUCTRLSTS, cpuctrlsts);
 }
 
 void SpikeCosim::initial_proc_setup(uint32_t start_pc, uint32_t start_mtvec,
