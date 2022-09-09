@@ -1311,7 +1311,7 @@ module ibex_core import ibex_pkg::*; #(
     assign rvfi_trap_id = id_stage_i.controller_i.id_exception_o;
     assign rvfi_trap_wb = id_stage_i.controller_i.exc_req_lsu;
     // WB is instantly done in the tracking pipeline when a trap is progress through the pipeline
-    assign rvfi_wb_done = instr_done_wb | (rvfi_stage_valid[0] & rvfi_stage_trap[0]);
+    assign rvfi_wb_done = rvfi_stage_valid[0] & (instr_done_wb | rvfi_stage_trap[0]);
   end else begin : gen_rvfi_no_wb_stage
     // Without writeback stage first RVFI stage is output stage so simply valid the cycle after
     // instruction leaves ID/EX (and so has retired)
