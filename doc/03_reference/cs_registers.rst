@@ -524,8 +524,8 @@ Reset Value: ``0x0000_0000``
 Scratch register to be used by the debug module.
 Accessible in Debug Mode only.
 
-CPU Control Register (cpuctrl)
-------------------------------
+CPU Control and Status Register (cpuctrlsts)
+--------------------------------------------
 
 CSR Address: ``0x7C0``
 
@@ -538,6 +538,13 @@ Other bit fields read as zero.
 
 +-------+------+------------------------------------------------------------------+
 | Bit#  | R/W  | Description                                                      |
++=======+======+==================================================================+
+| 8     | R    | **ic_scr_key_valid:** The icache scrambling key is valid. A      |
+|       |      | ``fence.i`` instruction is guaranteed to fetch a new key. If     |
+|       |      | the instruction cache has not been configured or the core has    |
+|       |      | not been configured with security features  (ICache parameter    |
+|       |      | == 0 or SecureIbex parameter == 0), this field will always read  |
+|       |      | as zero. (see :ref:`icache-scramble-key`)                        |
 +-------+------+------------------------------------------------------------------+
 | 7     | RW   | **double_fault_seen:** A synchronous exception was observed when |
 |       |      | the ``sync_exc_seen`` field was set. This field must be manually |

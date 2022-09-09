@@ -38,6 +38,7 @@ module ibex_simple_system_cosim_checker (
         riscv_cosim_set_csr(cosim_handle, int'(CSR_MHPMCOUNTER3H) + i,
           u_top.rvfi_ext_mhpmcountersh[i]);
       end
+      riscv_cosim_set_ic_scr_key_valid(cosim_handle, u_top.rvfi_ext_ic_scr_key_valid);
 
       if (riscv_cosim_step(cosim_handle, u_top.rvfi_rd_addr, u_top.rvfi_rd_wdata,
                            u_top.rvfi_pc_rdata, u_top.rvfi_trap) == 0)

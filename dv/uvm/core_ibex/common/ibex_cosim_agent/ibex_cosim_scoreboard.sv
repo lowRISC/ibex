@@ -132,6 +132,8 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
         riscv_cosim_set_csr(cosim_handle, CSR_MHPMCOUNTER3H + i, rvfi_instr.mhpmcountersh[i]);
       end
 
+      riscv_cosim_set_ic_scr_key_valid(cosim_handle, rvfi_instr.ic_scr_key_valid);
+
       if (!riscv_cosim_step(cosim_handle, rvfi_instr.rd_addr, rvfi_instr.rd_wdata, rvfi_instr.pc,
                             rvfi_instr.trap)) begin
         // cosim instruction step doesn't match rvfi captured instruction, report a fatal error

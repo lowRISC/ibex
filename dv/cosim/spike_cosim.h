@@ -104,6 +104,7 @@ class SpikeCosim : public simif_t, public Cosim {
   void set_debug_req(bool debug_req) override;
   void set_mcycle(uint64_t mcycle) override;
   void set_csr(const int csr_num, const uint32_t new_val) override;
+  void set_ic_scr_key_valid(bool valid) override;
   void notify_dside_access(const DSideAccessInfo &access_info) override;
   // The spike co-simulator assumes iside and dside accesses within a step are
   // disjoint. If both access the same address within a step memory faults may

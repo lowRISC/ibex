@@ -21,6 +21,7 @@ void riscv_cosim_set_debug_req(Cosim *cosim, svBit debug_req);
 void riscv_cosim_set_mcycle(Cosim *cosim, svBitVecVal *mcycle);
 void riscv_cosim_set_csr(Cosim *cosim, const int csr_id,
                          const svBitVecVal *csr_val);
+void riscv_cosim_set_ic_scr_key_valid(Cosim *cosim, svBit valid);
 void riscv_cosim_notify_dside_access(Cosim *cosim, svBit store,
                                      svBitVecVal *addr, svBitVecVal *data,
                                      svBitVecVal *be, svBit error,

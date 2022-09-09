@@ -512,6 +512,10 @@ void SpikeCosim::set_csr(const int csr_num, const uint32_t new_val) {
 #endif
 }
 
+void SpikeCosim::set_ic_scr_key_valid(bool valid) {
+  processor->set_ic_scr_key_valid(valid);
+}
+
 void SpikeCosim::notify_dside_access(const DSideAccessInfo &access_info) {
   // Address must be 32-bit aligned
   assert((access_info.addr & 0x3) == 0);

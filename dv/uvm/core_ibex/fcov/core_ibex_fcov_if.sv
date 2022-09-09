@@ -462,11 +462,11 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
 
     `DV_FCOV_EXPR_SEEN(warl_check_cpuctrl,
                        fcov_csr_write &&
-                       (cs_registers_i.u_cpuctrl_csr.wr_data_i !=
+                       (cs_registers_i.u_cpuctrlsts_part_csr.wr_data_i !=
                        cs_registers_i.csr_wdata_int))
 
-    `DV_FCOV_EXPR_SEEN(double_fault, cs_registers_i.cpuctrl_d.double_fault_seen)
-    `DV_FCOV_EXPR_SEEN(icache_enable, cs_registers_i.cpuctrl_d.icache_enable)
+    `DV_FCOV_EXPR_SEEN(double_fault, cs_registers_i.cpuctrlsts_part_d.double_fault_seen)
+    `DV_FCOV_EXPR_SEEN(icache_enable, cs_registers_i.cpuctrlsts_part_d.icache_enable)
 
     cp_irq_pending: coverpoint id_stage_i.irq_pending_i | id_stage_i.irq_nm_i;
     cp_debug_req: coverpoint id_stage_i.controller_i.fcov_debug_req;

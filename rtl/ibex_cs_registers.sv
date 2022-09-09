@@ -81,7 +81,7 @@ module ibex_cs_registers #(
   input  logic [31:0]          pc_id_i,
   input  logic [31:0]          pc_wb_i,
 
-  // CPU control bits
+  // CPU control and status bits
   output logic                 data_ind_timing_o,
   output logic                 dummy_instr_en_o,
   output logic [2:0]           dummy_instr_mask_o,
@@ -89,6 +89,7 @@ module ibex_cs_registers #(
   output logic [31:0]          dummy_instr_seed_o,
   output logic                 icache_enable_o,
   output logic                 csr_shadow_err_o,
+  input  logic                 ic_scr_key_valid_i,
 
   // Exception save/restore
   input  logic                 csr_save_if_i,
@@ -188,7 +189,10 @@ module ibex_cs_registers #(
       priv_lvl_e    prv;
   } dcsr_t;
 
-  // CPU control register fields
+  // Partial CPU control and status register fields
+  // ICache scramble key valid (ic_scr_key_valid) is registered seperately to this struct. This is
+  // because it is sampled from the top-level every cycle whilst the other fields only change
+  // occasionally.
   typedef struct packed {
     logic        double_fault_seen;
     logic        sync_exc_seen;
@@ -196,7 +200,7 @@ module ibex_cs_registers #(
     logic        dummy_instr_en;
     logic        data_ind_timing;
     logic        icache_enable;
-  } cpu_ctrl_t;
+  } cpu_ctrl_sts_part_t;
 
   // Interrupt and exception control signals
   logic [31:0] exception_pc;
@@ -268,9 +272,13 @@ module ibex_cs_registers #(
   logic [31:0] tmatch_value_rdata;
 
   // CPU control bits
-  cpu_ctrl_t   cpuctrl_q, cpuctrl_d, cpuctrl_wdata_raw, cpuctrl_wdata;
-  logic        cpuctrl_we;
-  logic        cpuctrl_err;
+  cpu_ctrl_sts_part_t cpuctrlsts_part_q, cpuctrlsts_part_d;
+  cpu_ctrl_sts_part_t cpuctrlsts_part_wdata_raw, cpuctrlsts_part_wdata;
+  logic               cpuctrlsts_part_we;
+  logic               cpuctrlsts_part_err;
+
+  logic cpuctrlsts_ic_scr_key_valid_q;
+  logic cpuctrlsts_ic_scr_key_err;
 
   // CSR update logic
   logic [31:0] csr_wdata_int;
@@ -515,9 +523,11 @@ module ibex_cs_registers #(
         illegal_csr   = ~DbgTriggerEn;
       end
 
-      // Custom CSR for controlling CPU features
-      CSR_CPUCTRL: begin
-        csr_rdata_int = {{32 - $bits(cpu_ctrl_t) {1'b0}}, cpuctrl_q};
+      // Custom CSR for controlling CPU features and reporting CPU status
+      CSR_CPUCTRLSTS: begin
+        csr_rdata_int = {{32 - $bits(cpu_ctrl_sts_part_t) - 1 {1'b0}},
+                         cpuctrlsts_ic_scr_key_valid_q,
+                         cpuctrlsts_part_q};
       end
 
       // Custom CSR for LFSR re-seeding (cannot be read)
@@ -580,8 +590,8 @@ module ibex_cs_registers #(
     mhpmcounter_we   = '0;
     mhpmcounterh_we  = '0;
 
-    cpuctrl_we       = 1'b0;
-    cpuctrl_d        = cpuctrl_q;
+    cpuctrlsts_part_we = 1'b0;
+    cpuctrlsts_part_d  = cpuctrlsts_part_q;
 
     double_fault_seen_o = 1'b0;
 
@@ -682,9 +692,9 @@ module ibex_cs_registers #(
           mhpmcounterh_we[mhpmcounter_idx] = 1'b1;
         end
 
-        CSR_CPUCTRL: begin
-          cpuctrl_d  = cpuctrl_wdata;
-          cpuctrl_we = 1'b1;
+        CSR_CPUCTRLSTS: begin
+          cpuctrlsts_part_d  = cpuctrlsts_part_wdata;
+          cpuctrlsts_part_we = 1'b1;
         end
 
         default:;
@@ -739,12 +749,12 @@ module ibex_cs_registers #(
           if (!(mcause_d.irq_ext || mcause_d.irq_int)) begin
             // SEC_CM: EXCEPTION.CTRL_FLOW.LOCAL_ESC
             // SEC_CM: EXCEPTION.CTRL_FLOW.GLOBAL_ESC
-            cpuctrl_we = 1'b1;
+            cpuctrlsts_part_we = 1'b1;
 
-            cpuctrl_d.sync_exc_seen = 1'b1;
-            if (cpuctrl_q.sync_exc_seen) begin
-              double_fault_seen_o         = 1'b1;
-              cpuctrl_d.double_fault_seen = 1'b1;
+            cpuctrlsts_part_d.sync_exc_seen = 1'b1;
+            if (cpuctrlsts_part_q.sync_exc_seen) begin
+              double_fault_seen_o                 = 1'b1;
+              cpuctrlsts_part_d.double_fault_seen = 1'b1;
             end
           end
         end
@@ -765,8 +775,8 @@ module ibex_cs_registers #(
 
         // SEC_CM: EXCEPTION.CTRL_FLOW.LOCAL_ESC
         // SEC_CM: EXCEPTION.CTRL_FLOW.GLOBAL_ESC
-        cpuctrl_we              = 1'b1;
-        cpuctrl_d.sync_exc_seen = 1'b0;
+        cpuctrlsts_part_we              = 1'b1;
+        cpuctrlsts_part_d.sync_exc_seen = 1'b0;
 
         if (nmi_mode_i) begin
           // when returning from an NMI restore state from mstack CSR
@@ -1558,29 +1568,30 @@ module ibex_cs_registers #(
   //////////////////////////
 
   // Cast register write data
-  assign cpuctrl_wdata_raw = cpu_ctrl_t'(csr_wdata_int[$bits(cpu_ctrl_t)-1:0]);
+  assign cpuctrlsts_part_wdata_raw =
+    cpu_ctrl_sts_part_t'(csr_wdata_int[$bits(cpu_ctrl_sts_part_t)-1:0]);
 
   // Generate fixed time execution bit
   if (DataIndTiming) begin : gen_dit
     // SEC_CM: CORE.DATA_REG_SW.SCA
-    assign cpuctrl_wdata.data_ind_timing = cpuctrl_wdata_raw.data_ind_timing;
+    assign cpuctrlsts_part_wdata.data_ind_timing = cpuctrlsts_part_wdata_raw.data_ind_timing;
 
   end else begin : gen_no_dit
     // tieoff for the unused bit
     logic unused_dit;
-    assign unused_dit = cpuctrl_wdata_raw.data_ind_timing;
+    assign unused_dit = cpuctrlsts_part_wdata_raw.data_ind_timing;
 
     // field will always read as zero if not configured
-    assign cpuctrl_wdata.data_ind_timing = 1'b0;
+    assign cpuctrlsts_part_wdata.data_ind_timing = 1'b0;
   end
 
-  assign data_ind_timing_o = cpuctrl_q.data_ind_timing;
+  assign data_ind_timing_o = cpuctrlsts_part_q.data_ind_timing;
 
   // Generate dummy instruction signals
   if (DummyInstructions) begin : gen_dummy
     // SEC_CM: CTRL_FLOW.UNPREDICTABLE
-    assign cpuctrl_wdata.dummy_instr_en   = cpuctrl_wdata_raw.dummy_instr_en;
-    assign cpuctrl_wdata.dummy_instr_mask = cpuctrl_wdata_raw.dummy_instr_mask;
+    assign cpuctrlsts_part_wdata.dummy_instr_en   = cpuctrlsts_part_wdata_raw.dummy_instr_en;
+    assign cpuctrlsts_part_wdata.dummy_instr_mask = cpuctrlsts_part_wdata_raw.dummy_instr_mask;
 
     // Signal a write to the seed register
     assign dummy_instr_seed_en_o = csr_we_int && (csr_addr == CSR_SECURESEED);
@@ -1590,50 +1601,72 @@ module ibex_cs_registers #(
     // tieoff for the unused bit
     logic       unused_dummy_en;
     logic [2:0] unused_dummy_mask;
-    assign unused_dummy_en   = cpuctrl_wdata_raw.dummy_instr_en;
-    assign unused_dummy_mask = cpuctrl_wdata_raw.dummy_instr_mask;
+    assign unused_dummy_en   = cpuctrlsts_part_wdata_raw.dummy_instr_en;
+    assign unused_dummy_mask = cpuctrlsts_part_wdata_raw.dummy_instr_mask;
 
     // field will always read as zero if not configured
-    assign cpuctrl_wdata.dummy_instr_en   = 1'b0;
-    assign cpuctrl_wdata.dummy_instr_mask = 3'b000;
-    assign dummy_instr_seed_en_o      = 1'b0;
-    assign dummy_instr_seed_o         = '0;
+    assign cpuctrlsts_part_wdata.dummy_instr_en   = 1'b0;
+    assign cpuctrlsts_part_wdata.dummy_instr_mask = 3'b000;
+    assign dummy_instr_seed_en_o             = 1'b0;
+    assign dummy_instr_seed_o                = '0;
   end
 
-  assign dummy_instr_en_o   = cpuctrl_q.dummy_instr_en;
-  assign dummy_instr_mask_o = cpuctrl_q.dummy_instr_mask;
+  assign dummy_instr_en_o   = cpuctrlsts_part_q.dummy_instr_en;
+  assign dummy_instr_mask_o = cpuctrlsts_part_q.dummy_instr_mask;
 
   // Generate icache enable bit
   if (ICache) begin : gen_icache_enable
-    assign cpuctrl_wdata.icache_enable = cpuctrl_wdata_raw.icache_enable;
+    assign cpuctrlsts_part_wdata.icache_enable = cpuctrlsts_part_wdata_raw.icache_enable;
+
+    ibex_csr #(
+      .Width     (1),
+      .ShadowCopy(ShadowCSR),
+      .ResetValue(1'b0)
+    ) u_cpuctrlsts_ic_scr_key_valid_q_csr (
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i (ic_scr_key_valid_i),
+      .wr_en_i   (1'b1),
+      .rd_data_o (cpuctrlsts_ic_scr_key_valid_q),
+      .rd_error_o(cpuctrlsts_ic_scr_key_err)
+    );
   end else begin : gen_no_icache
     // tieoff for the unused icen bit
     logic unused_icen;
-    assign unused_icen = cpuctrl_wdata_raw.icache_enable;
+    assign unused_icen = cpuctrlsts_part_wdata_raw.icache_enable;
 
     // icen field will always read as zero if ICache not configured
-    assign cpuctrl_wdata.icache_enable = 1'b0;
+    assign cpuctrlsts_part_wdata.icache_enable = 1'b0;
+
+
+    logic unused_ic_scr_key_valid;
+    assign unused_ic_scr_key_valid = ic_scr_key_valid_i;
+
+    // ic_scr_key_valid will always read as zero if ICache not configured
+    assign cpuctrlsts_ic_scr_key_valid_q = 1'b0;
+    assign cpuctrlsts_ic_scr_key_err     = 1'b0;
   end
 
-  assign cpuctrl_wdata.double_fault_seen = cpuctrl_wdata_raw.double_fault_seen;
-  assign cpuctrl_wdata.sync_exc_seen     = cpuctrl_wdata_raw.sync_exc_seen;
+  assign cpuctrlsts_part_wdata.double_fault_seen = cpuctrlsts_part_wdata_raw.double_fault_seen;
+  assign cpuctrlsts_part_wdata.sync_exc_seen     = cpuctrlsts_part_wdata_raw.sync_exc_seen;
 
-  assign icache_enable_o = cpuctrl_q.icache_enable;
+  assign icache_enable_o = cpuctrlsts_part_q.icache_enable;
 
   ibex_csr #(
-    .Width     ($bits(cpu_ctrl_t)),
+    .Width     ($bits(cpu_ctrl_sts_part_t)),
     .ShadowCopy(ShadowCSR),
     .ResetValue('0)
-  ) u_cpuctrl_csr (
+  ) u_cpuctrlsts_part_csr (
     .clk_i     (clk_i),
     .rst_ni    (rst_ni),
-    .wr_data_i ({cpuctrl_d}),
-    .wr_en_i   (cpuctrl_we),
-    .rd_data_o (cpuctrl_q),
-    .rd_error_o(cpuctrl_err)
+    .wr_data_i ({cpuctrlsts_part_d}),
+    .wr_en_i   (cpuctrlsts_part_we),
+    .rd_data_o (cpuctrlsts_part_q),
+    .rd_error_o(cpuctrlsts_part_err)
   );
 
-  assign csr_shadow_err_o = mstatus_err | mtvec_err | pmp_csr_err | cpuctrl_err;
+  assign csr_shadow_err_o =
+    mstatus_err | mtvec_err | pmp_csr_err | cpuctrlsts_part_err | cpuctrlsts_ic_scr_key_err;
 
   ////////////////
   // Assertions //
