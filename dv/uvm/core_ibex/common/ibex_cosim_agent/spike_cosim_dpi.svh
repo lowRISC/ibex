@@ -11,7 +11,9 @@ import "DPI-C" function
                            bit [31:0] start_mtvec,
                            string     log_file_path,
                            bit [31:0] pmp_num_regions,
-                           bit [31:0] pmp_granularity);
+                           bit [31:0] pmp_granularity,
+                           bit        secure_ibex,
+                           bit        icache);
 
 import "DPI-C" function void spike_cosim_release(chandle cosim_handle);
 
