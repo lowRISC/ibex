@@ -72,6 +72,7 @@ class core_base_new_seq #(type REQ = uvm_sequence_item) extends uvm_sequence #(R
         `DV_CHECK_FATAL(iteration_cnt != 0)
         `uvm_info(`gfn, $sformatf("Number of stimulus iterations = %0d", iteration_cnt), UVM_LOW)
         for (int i = 0; i <= iteration_cnt; i++) begin
+          `uvm_info(`gfn, $sformatf("Running %0d/%0d", i, iteration_cnt), UVM_LOW)
           drive_stimulus();
         end
       end
@@ -198,7 +199,7 @@ class debug_new_seq extends core_base_new_seq#(irq_seq_item);
 
 endclass
 
-class memory_error_seq extends core_base_new_seq#(irq_seq_item);
+class memory_error_seq extends core_base_new_seq#(ibex_mem_intf_seq_item);
   core_ibex_vseq               vseq;
   rand bit                     choose_side;
   bit                          start_seq = 0; // Use this bit to start any unique sequence once
@@ -210,7 +211,6 @@ class memory_error_seq extends core_base_new_seq#(irq_seq_item);
 
   function new (string name = "");
     super.new(name);
-    vseq = core_ibex_vseq::type_id::create("vseq");
   endfunction
 
   virtual task send_req();
@@ -233,10 +233,6 @@ class memory_error_seq extends core_base_new_seq#(irq_seq_item);
         // DO nothing
       end
     endcase
-    if(!start_seq) begin
-      vseq.start(p_sequencer);
-      start_seq = 1;
-    end
   endtask
 
 endclass: memory_error_seq
