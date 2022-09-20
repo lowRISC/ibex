@@ -207,6 +207,13 @@ class memory_error_seq extends core_base_new_seq#(ibex_mem_intf_seq_item);
   bit                          start_seq = 0; // Use this bit to start any unique sequence once
 
   rand error_type_e            err_type = PickErr;
+  rand bit                     inject_intg_err;
+  // CONTROL_KNOB: Configure the rate between seeing an integrity error versus seeing a bus error.
+  int unsigned                 intg_err_pct = 50;
+  constraint inject_intg_err_c {
+     inject_intg_err dist {1 :/ intg_err_pct,
+                           0 :/ 100 - intg_err_pct};
+  }
 
   `uvm_object_utils(memory_error_seq)
   `uvm_declare_p_sequencer(core_ibex_vseqr)
@@ -216,19 +223,37 @@ class memory_error_seq extends core_base_new_seq#(ibex_mem_intf_seq_item);
   endfunction
 
   virtual task send_req();
-    case (err_type)
-      IsideErr: begin
+    `DV_CHECK_MEMBER_RANDOMIZE_FATAL(inject_intg_err)
+    // If we expect to see only bus errors, we can enable this assertion. Otherwise
+    // integrity errors would cause alerts to trigger.
+    `DV_ASSERT_CTRL_REQ("NoAlertsTriggered", intg_err_pct == 0)
+    case ({err_type, inject_intg_err})
+      {IsideErr, 1'b0}: begin
         vseq.instr_intf_seq.inject_error();
       end
-      DsideErr: begin
+      {DsideErr, 1'b0}: begin
         vseq.data_intf_seq.inject_error();
       end
-      PickErr: begin
+      {PickErr, 1'b0}: begin
         `DV_CHECK_STD_RANDOMIZE_FATAL(choose_side)
         if (choose_side) begin
           vseq.instr_intf_seq.inject_error();
         end else begin
           vseq.data_intf_seq.inject_error();
+        end
+      end
+      {IsideErr, 1'b1}: begin
+        vseq.instr_intf_seq.inject_intg_error();
+      end
+      {DsideErr, 1'b1}: begin
+        vseq.data_intf_seq.inject_intg_error();
+      end
+      {PickErr, 1'b1}: begin
+        `DV_CHECK_STD_RANDOMIZE_FATAL(choose_side)
+        if (choose_side) begin
+          vseq.instr_intf_seq.inject_intg_error();
+        end else begin
+          vseq.data_intf_seq.inject_intg_error();
         end
       end
       default: begin

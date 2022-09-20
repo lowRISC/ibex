@@ -1176,6 +1176,7 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
     memory_error_seq_h.iteration_modes = InfiniteRuns;
     memory_error_seq_h.stimulus_delay_cycles_min = 800; // Interval between injected errors
     memory_error_seq_h.stimulus_delay_cycles_max = 5000;
+    memory_error_seq_h.intg_err_pct = cfg.enable_mem_intg_err ? 75 : 0;
     fork
       begin
         forever begin
