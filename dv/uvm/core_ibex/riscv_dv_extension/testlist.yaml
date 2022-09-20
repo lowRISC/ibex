@@ -588,6 +588,27 @@
     +disable_pmp_exception_handler=1
   rtl_test: core_ibex_mem_error_test
   sim_opts: >
+    +enable_mem_intg_err=0
+    +enable_double_fault_detector=0
+    +require_signature_addr=1
+  compare_opts:
+    compare_final_value_only: 1
+
+- test: riscv_mem_intg_error_test
+  description: >
+    Normal random instruction test, but randomly insert memory load/store integrity errors
+  iterations: 15
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +require_signature_addr=1
+    +instr_cnt=10000
+    +randomize_csr=1
+    +enable_unaligned_load_store=1
+    +suppress_pmp_setup=1
+  rtl_test: core_ibex_mem_error_test
+  sim_opts: >
+    +enable_mem_intg_err=1
+    +enable_double_fault_detector=0
     +require_signature_addr=1
   compare_opts:
     compare_final_value_only: 1

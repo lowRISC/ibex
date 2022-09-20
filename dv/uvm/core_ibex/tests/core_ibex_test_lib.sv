@@ -1630,6 +1630,9 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
   `uvm_component_utils(core_ibex_mem_error_test)
   `uvm_component_new
 
+  int illegal_instruction_threshold = 20;
+  int illegal_instruction_exceptions_seen = 0;
+
   virtual task check_stimulus();
     memory_error_seq memory_error_seq_h;
     memory_error_seq_h = memory_error_seq::type_id::create("memory_error_seq_h", this);
@@ -1639,22 +1642,40 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
     memory_error_seq_h.iteration_modes = InfiniteRuns;
     memory_error_seq_h.stimulus_delay_cycles_min = 800; // Interval between injected errors
     memory_error_seq_h.stimulus_delay_cycles_max = 5000;
+    memory_error_seq_h.intg_err_pct = cfg.enable_mem_intg_err ? 75 : 0;
+    memory_error_seq_h.skip_on_exc = 1'b1;
     fork
-      begin
-        forever begin
-          memory_error_seq_h.start(env.vseqr);
-          // Wait until we are out of IRQ handler to the inject errors
-          wait_ret("mret", 20000);
-        end
-      end
-      begin
-        forever begin
-          wait_for_core_status(HANDLING_IRQ);
-          // Do not allow error injection while we are handling IRQ
-          memory_error_seq_h.stop();
-        end
-      end
+      run_illegal_instr_watcher();
+      memory_error_seq_h.start(env.vseqr);
     join_none
+  endtask
+
+  task run_illegal_instr_watcher();
+    // When integrity errors are present loads that see them won't write to the register file.
+    // Generated code from RISC-DV may be using the loads to produce known constants in register
+    // that are then used elsewhere, in particular for jump targets. As the register write doesn't
+    // occur this results in jumping to places that weren't intended which in turn can result in
+    // illegal instruction exceptions.
+    //
+    // As a simple fix for this we observe illegal instruction exceptions and terminate the test
+    // with a pass after hitting a certain threshold when the test is generating integrity errors.
+    //
+    // We don't terminate immediately as sometimes the test hits an illegal instruction exception
+    // but finds its way back to generated code and terminates as usual. Sometimes it doesn't. The
+    // treshold allows for normal test termination in cases where that's possible.
+    if (!cfg.enable_mem_intg_err) begin
+      return;
+    end
+
+    forever begin
+      wait_for_core_exception(ibex_pkg::ExcCauseIllegalInsn);
+      ++illegal_instruction_exceptions_seen;
+    end
+  endtask
+
+  virtual task wait_for_custom_test_done();
+    wait(illegal_instruction_exceptions_seen == illegal_instruction_threshold);
+    `uvm_info(`gfn, "Terminating test early due to illegal instruction threshold reached", UVM_LOW)
   endtask
 
 endclass
