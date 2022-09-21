@@ -69,6 +69,7 @@ module ibex_cs_registers #(
 
   // debug
   input  logic                 debug_mode_i,
+  input  logic                 debug_mode_entering_i,
   input  ibex_pkg::dbg_cause_e debug_cause_i,
   input  logic                 debug_csr_save_i,
   output logic [31:0]          csr_depc_o,
@@ -1650,7 +1651,8 @@ module ibex_cs_registers #(
   assign cpuctrlsts_part_wdata.double_fault_seen = cpuctrlsts_part_wdata_raw.double_fault_seen;
   assign cpuctrlsts_part_wdata.sync_exc_seen     = cpuctrlsts_part_wdata_raw.sync_exc_seen;
 
-  assign icache_enable_o = cpuctrlsts_part_q.icache_enable;
+  assign icache_enable_o =
+    cpuctrlsts_part_q.icache_enable & ~(debug_mode_i | debug_mode_entering_i);
 
   ibex_csr #(
     .Width     ($bits(cpu_ctrl_sts_part_t)),

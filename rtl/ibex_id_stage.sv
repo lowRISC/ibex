@@ -135,6 +135,7 @@ module ibex_id_stage #(
 
   // Debug Signal
   output logic                      debug_mode_o,
+  output logic                      debug_mode_entering_o,
   output ibex_pkg::dbg_cause_e      debug_cause_o,
   output logic                      debug_csr_save_o,
   input  logic                      debug_req_i,
@@ -618,14 +619,15 @@ module ibex_id_stage #(
     .priv_mode_i          (priv_mode_i),
 
     // Debug Signal
-    .debug_mode_o       (debug_mode_o),
-    .debug_cause_o      (debug_cause_o),
-    .debug_csr_save_o   (debug_csr_save_o),
-    .debug_req_i        (debug_req_i),
-    .debug_single_step_i(debug_single_step_i),
-    .debug_ebreakm_i    (debug_ebreakm_i),
-    .debug_ebreaku_i    (debug_ebreaku_i),
-    .trigger_match_i    (trigger_match_i),
+    .debug_mode_o         (debug_mode_o),
+    .debug_mode_entering_o(debug_mode_entering_o),
+    .debug_cause_o        (debug_cause_o),
+    .debug_csr_save_o     (debug_csr_save_o),
+    .debug_req_i          (debug_req_i),
+    .debug_single_step_i  (debug_single_step_i),
+    .debug_ebreakm_i      (debug_ebreakm_i),
+    .debug_ebreaku_i      (debug_ebreaku_i),
+    .trigger_match_i      (trigger_match_i),
 
     .stall_id_i(stall_id),
     .stall_wb_i(stall_wb),
