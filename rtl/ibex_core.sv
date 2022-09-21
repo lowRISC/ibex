@@ -330,6 +330,7 @@ module ibex_core import ibex_pkg::*; #(
 
   // debug mode and dcsr configuration
   logic        debug_mode;
+  logic        debug_mode_entering;
   dbg_cause_e  debug_cause;
   logic        debug_csr_save;
   logic        debug_single_step;
@@ -605,14 +606,15 @@ module ibex_core import ibex_pkg::*; #(
     .nmi_mode_o       (nmi_mode),
 
     // Debug Signal
-    .debug_mode_o       (debug_mode),
-    .debug_cause_o      (debug_cause),
-    .debug_csr_save_o   (debug_csr_save),
-    .debug_req_i        (debug_req_i),
-    .debug_single_step_i(debug_single_step),
-    .debug_ebreakm_i    (debug_ebreakm),
-    .debug_ebreaku_i    (debug_ebreaku),
-    .trigger_match_i    (trigger_match),
+    .debug_mode_o         (debug_mode),
+    .debug_mode_entering_o(debug_mode_entering),
+    .debug_cause_o        (debug_cause),
+    .debug_csr_save_o     (debug_csr_save),
+    .debug_req_i          (debug_req_i),
+    .debug_single_step_i  (debug_single_step),
+    .debug_ebreakm_i      (debug_ebreakm),
+    .debug_ebreaku_i      (debug_ebreaku),
+    .trigger_match_i      (trigger_match),
 
     // write data to commit in the register file
     .result_ex_i(result_ex),
@@ -990,14 +992,15 @@ module ibex_core import ibex_pkg::*; #(
     .csr_pmp_mseccfg_o(csr_pmp_mseccfg),
 
     // debug
-    .csr_depc_o         (csr_depc),
-    .debug_mode_i       (debug_mode),
-    .debug_cause_i      (debug_cause),
-    .debug_csr_save_i   (debug_csr_save),
-    .debug_single_step_o(debug_single_step),
-    .debug_ebreakm_o    (debug_ebreakm),
-    .debug_ebreaku_o    (debug_ebreaku),
-    .trigger_match_o    (trigger_match),
+    .csr_depc_o           (csr_depc),
+    .debug_mode_i         (debug_mode),
+    .debug_mode_entering_i(debug_mode_entering),
+    .debug_cause_i        (debug_cause),
+    .debug_csr_save_i     (debug_csr_save),
+    .debug_single_step_o  (debug_single_step),
+    .debug_ebreakm_o      (debug_ebreakm),
+    .debug_ebreaku_o      (debug_ebreaku),
+    .trigger_match_o      (trigger_match),
 
     .pc_if_i(pc_if),
     .pc_id_i(pc_id),
