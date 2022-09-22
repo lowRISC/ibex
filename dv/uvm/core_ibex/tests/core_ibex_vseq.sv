@@ -98,6 +98,22 @@ class core_ibex_vseq extends uvm_sequence;
     end
   endtask
 
+  virtual task wait_for_stop();
+    if (cfg.enable_irq_single_seq) begin
+      if (irq_raise_single_seq_h.is_started) irq_raise_single_seq_h.wait_for_stop();
+    end
+    if (cfg.enable_irq_multiple_seq) begin
+      if (irq_raise_seq_h.is_started) irq_raise_seq_h.wait_for_stop();
+    end
+    if (cfg.enable_irq_single_seq || cfg.enable_irq_multiple_seq) begin
+      if (irq_drop_seq_h.is_started)   irq_drop_seq_h.wait_for_stop();
+    end
+    if (cfg.enable_debug_seq) begin
+      if (debug_seq_stress_h.is_started) debug_seq_stress_h.wait_for_stop();
+      if (debug_seq_single_h.is_started) debug_seq_single_h.wait_for_stop();
+    end
+  endtask
+
   // Helper tasks to allow the test fine grained control to start sequences through the vseq
   // - necessary for testing directed stimulus scenarios
   virtual task start_debug_stress_seq();
