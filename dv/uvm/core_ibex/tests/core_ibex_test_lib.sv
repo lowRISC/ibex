@@ -439,6 +439,10 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
             check_stimulus();
           join_none
           wait (test_done === 1'b1);
+          // disable below can kill processes that are running sequences. As a result they never
+          // stop and the simulation never ends. So wait for all sequences to stop before doing the
+          // disable.
+          vseq.wait_for_stop();
           disable fork;
           if (cur_run_phase.get_objection_count(this) > 1) begin
             cur_run_phase.drop_objection(this);
