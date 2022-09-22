@@ -401,8 +401,9 @@ module ibex_controller #(
   // Interrupts including NMI are ignored,
   // - while in debug mode,
   // - while in NMI mode (nested NMIs are not supported, NMI has highest priority and
-  //   cannot be interrupted by regular interrupts).
-  assign handle_irq = ~debug_mode_q & ~nmi_mode_q &
+  //   cannot be interrupted by regular interrupts),
+  // - while single stepping.
+  assign handle_irq = ~debug_mode_q & ~debug_single_step_i & ~nmi_mode_q &
       (irq_nm | (irq_pending_i & csr_mstatus_mie_i));
 
   // generate ID of fast interrupts, highest priority to lowest ID
