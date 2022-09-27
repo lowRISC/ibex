@@ -192,13 +192,19 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
         // Wildcards in crosses are not supported by VCS. As a workaround we are using `with`
         // keyword and basic logic expressions to constraint the condition as appropriate.
         pmp_iside_mode_cross : cross cp_region_mode, pmp_iside_req_err
-          iff (g_pmp_fcov_signals.g_pmp_region_fcov[i_region].fcov_pmp_region_ichan_access);
+          iff (g_pmp_fcov_signals.g_pmp_region_fcov[i_region].fcov_pmp_region_ichan_access) {
+            illegal_bins illegal_off_mode_match = binsof(cp_region_mode) intersect {PMP_MODE_OFF};
+          }
 
         pmp_iside2_mode_cross : cross cp_region_mode, pmp_iside2_req_err
-          iff (g_pmp_fcov_signals.g_pmp_region_fcov[i_region].fcov_pmp_region_ichan2_access);
+          iff (g_pmp_fcov_signals.g_pmp_region_fcov[i_region].fcov_pmp_region_ichan2_access) {
+            illegal_bins illegal_off_mode_match = binsof(cp_region_mode) intersect {PMP_MODE_OFF};
+          }
 
         pmp_dside_mode_cross : cross cp_region_mode, pmp_dside_req_err
-          iff (g_pmp_fcov_signals.g_pmp_region_fcov[i_region].fcov_pmp_region_dchan_access);
+          iff (g_pmp_fcov_signals.g_pmp_region_fcov[i_region].fcov_pmp_region_dchan_access) {
+            illegal_bins illegal_off_mode_match = binsof(cp_region_mode) intersect {PMP_MODE_OFF};
+          }
 
         pmp_iside_priv_bits_cross :
           cross cp_region_priv_bits, cp_req_type_iside, cp_priv_lvl_iside, pmp_iside_req_err
