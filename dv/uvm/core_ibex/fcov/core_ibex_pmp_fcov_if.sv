@@ -16,6 +16,7 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
   input rst_ni,
 
   input ibex_pkg::pmp_cfg_t  csr_pmp_cfg     [PMPNumRegions],
+  input logic[33:0]          csr_pmp_addr    [PMPNumRegions],
   input logic                pmp_req_err     [3],
   input pmp_mseccfg_t        csr_pmp_mseccfg,
 
@@ -110,6 +111,8 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
 
     logic misaligned_pmp_err_last;
 
+    logic [31:0] pmp_addr_napot_valid [PMPNumRegions];
+
     assign pmp_iside_match      = g_pmp.pmp_i.region_match_all[PMP_I];
     assign pmp_iside2_match     = g_pmp.pmp_i.region_match_all[PMP_I2];
     assign pmp_dside_match      = g_pmp.pmp_i.region_match_all[PMP_D];
@@ -152,9 +155,26 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
                                        cs_registers_i.priv_mode_id_o,
                                        g_pmp.pmp_i.region_basic_perm_check[PMP_D][i_region]);
 
+      // Each cycle this assignment creates either the value 0 if the mode is not NAPOT or 1 bit is
+      // set based on how large the NAPOT region is. The size of the NAPOT region is essentially
+      // encoded by how many consecutive ones there are after the last 0. This encoding is
+      // specified in the "Physical Memory Protection" section of the RISC-V privileged spec.
+      for (genvar i = 0; i < 32; i += 1) begin : g_pmp_napot_region_fcov
+        assign pmp_addr_napot_valid[i_region][i] = csr_pmp_cfg[i_region].mode == PMP_MODE_NAPOT &&
+          (csr_pmp_addr[i_region][i+2:2] == {1'b0, {i{1'b1}}});
+      end
+
       covergroup pmp_region_cg @(posedge clk_i);
         option.per_instance = 1;
         option.name = "pmp_region_cg";
+
+        // This coverpoint converts pmp_add_napot_valid into 32 bins. The onehot call makes sure
+        // that when the entry is not in NAPOT mode, then no bin is selected. The clog2 call
+        // converts the value 0...010...0 to the index of the one bit that is set.
+        cp_napot_addr_modes: coverpoint $clog2(pmp_addr_napot_valid[i_region])
+          iff ($onehot(pmp_addr_napot_valid[i_region])) {
+          bins napot_addr[] = { [0:31] };
+        }
 
         cp_warl_check_pmpcfg : coverpoint
           g_pmp_fcov_signals.g_pmp_region_fcov[i_region].fcov_warl_check_pmpcfg;
