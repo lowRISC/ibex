@@ -22,7 +22,7 @@ if [ $(id -u) -ne 0 ]; then
 fi
 
 case "$ID-$VERSION_ID" in
-  ubuntu-16.04|ubuntu-18.04)
+  ubuntu-16.04|ubuntu-18.04|ubuntu-20.04)
     # Curl must be available to get the repo key below.
     $SUDO_CMD apt-get update
     $SUDO_CMD apt-get install -y curl
