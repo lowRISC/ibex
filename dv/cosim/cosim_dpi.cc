@@ -106,7 +106,7 @@ void riscv_cosim_write_mem_byte(Cosim *cosim, const svBitVecVal *addr,
   cosim->backdoor_write_mem(addr[0], 1, &byte);
 }
 
-int riscv_cosim_get_insn_cnt(Cosim *cosim) {
+unsigned int riscv_cosim_get_insn_cnt(Cosim *cosim) {
   assert(cosim);
 
   return cosim->get_insn_cnt();

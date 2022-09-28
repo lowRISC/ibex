@@ -33,7 +33,7 @@ const char *riscv_cosim_get_error(Cosim *cosim, int index);
 void riscv_cosim_clear_errors(Cosim *cosim);
 void riscv_cosim_write_mem_byte(Cosim *cosim, const svBitVecVal *addr,
                                 const svBitVecVal *d);
-int riscv_cosim_get_insn_cnt(Cosim *cosim);
+unsigned int riscv_cosim_get_insn_cnt(Cosim *cosim);
 }
 
 #endif  // COSIM_DPI_H_

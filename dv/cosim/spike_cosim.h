@@ -71,7 +71,7 @@ class SpikeCosim : public simif_t, public Cosim {
 
   void initial_proc_setup(uint32_t start_pc, uint32_t start_mtvec);
 
-  int insn_cnt;
+  unsigned int insn_cnt;
 
  public:
   SpikeCosim(const std::string &isa_string, uint32_t start_pc,
@@ -114,7 +114,7 @@ class SpikeCosim : public simif_t, public Cosim {
   void set_iside_error(uint32_t addr) override;
   const std::vector<std::string> &get_errors() override;
   void clear_errors() override;
-  int get_insn_cnt() override;
+  unsigned int get_insn_cnt() override;
 };
 
 #endif  // SPIKE_COSIM_H_
