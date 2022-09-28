@@ -27,16 +27,6 @@ case "$ID-$VERSION_ID" in
     $SUDO_CMD apt-get update
     $SUDO_CMD apt-get install -y curl
 
-    # Make Verilator repository available
-    curl -Ls https://download.opensuse.org/repositories/home:phiwag:edatools/xUbuntu_$VERSION_ID/Release.key | $SUDO_CMD apt-key add -
-    $SUDO_CMD sh -c "echo 'deb http://download.opensuse.org/repositories/home:/phiwag:/edatools/xUbuntu_$VERSION_ID/ /' > /etc/apt/sources.list.d/edatools.list"
-    $SUDO_CMD apt-get update
-
-    # Make spike-cosim repository available
-    #curl -Ls https://download.opensuse.org/repositories/home:gac_lowrisc/xUbuntu_18.04/Release.key | $SUDO_CMD apt-key add -
-    #$SUDO_CMD sh -c "echo 'deb http://download.opensuse.org/repositories/home:/gac_lowrisc/xUbuntu_18.04/ /' > /etc/apt/sources.list.d/spike-cosim.list" sudo apt update
-    #$SUDO_CMD apt-get update
-
     # Packaged dependencies
     # Install python3-yaml through apt to get a version with libyaml bindings,
     # which is significantly faster than the pure Python version.
@@ -59,7 +49,6 @@ case "$ID-$VERSION_ID" in
         libelf-dev \
         clang-format \
         wget \
-        "verilator-$VERILATOR_VERSION" \
         xz-utils
 
     wget https://storage.googleapis.com/ibex-cosim-builds/ibex-cosim-$IBEX_COSIM_VERSION.tar.gz
@@ -68,6 +57,11 @@ case "$ID-$VERSION_ID" in
     $SUDO_CMD tar -C /tools/riscv-isa-sim -xvzf ibex-cosim-$IBEX_COSIM_VERSION.tar.gz --strip-components=1
     echo "##vso[task.prependpath]/tools/riscv-isa-sim/bin"
 
+    wget https://storage.googleapis.com/verilator-builds/verilator-$VERILATOR_VERSION.tar.gz
+    $SUDO_CMD mkdir -p /tools/verilator
+    $SUDO_CMD chmod 777 /tools/verilator
+    $SUDO_CMD tar -C /tools/verilator -xvzf verilator-$VERILATOR_VERSION.tar.gz
+    echo "##vso[task.prependpath]/tools/verilator/$VERILATOR_VERSION/bin"
     # Python dependencies
     #
     # Updating pip and setuptools is required to have these tools properly
