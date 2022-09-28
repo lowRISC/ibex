@@ -142,7 +142,7 @@ class Cosim {
 
   // Returns a count of instructions executed by co-simulator and DUT without
   // failures.
-  virtual int get_insn_cnt() = 0;
+  virtual unsigned int get_insn_cnt() = 0;
 };
 
 #endif  // COSIM_H_

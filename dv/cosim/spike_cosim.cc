@@ -35,7 +35,7 @@ SpikeCosim::SpikeCosim(const std::string &isa_string, uint32_t start_pc,
                        uint32_t start_mtvec, const std::string &trace_log_path,
                        bool secure_ibex, bool icache_en,
                        uint32_t pmp_num_regions, uint32_t pmp_granularity)
-    : nmi_mode(false), pending_iside_error(false) {
+    : nmi_mode(false), pending_iside_error(false), insn_cnt(0) {
   FILE *log_file = nullptr;
   if (trace_log_path.length() != 0) {
     log = std::make_unique<log_file_t>(trace_log_path.c_str());
@@ -778,4 +778,4 @@ bool SpikeCosim::pc_is_mret(uint32_t pc) {
   return insn == 0x30200073;
 }
 
-int SpikeCosim::get_insn_cnt() { return insn_cnt; }
+unsigned int SpikeCosim::get_insn_cnt() { return insn_cnt; }
