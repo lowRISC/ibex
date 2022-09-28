@@ -2,7 +2,13 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-module ibex_simple_system_cosim_checker (
+module ibex_simple_system_cosim_checker #(
+  parameter bit                 SecureIbex     = 1'b0,
+  parameter bit                 ICache         = 1'b0,
+  parameter bit                 PMPEnable      = 1'b0,
+  parameter int unsigned        PMPGranularity = 0,
+  parameter int unsigned        PMPNumRegions  = 4
+) (
   input clk_i,
   input rst_ni,
 
@@ -18,11 +24,18 @@ module ibex_simple_system_cosim_checker (
   input logic        host_dmem_err
 );
   import "DPI-C" function chandle get_spike_cosim;
+  import "DPI-C" function void create_cosim(bit secure_ibex, bit icache_en,
+    bit [31:0] pmp_num_regions, bit [31:0] pmp_granularity);
+
   import ibex_pkg::*;
 
   chandle cosim_handle;
 
   initial begin
+    localparam int unsigned LocalPMPGranularity = PMPEnable ? PMPGranularity : 0;
+    localparam int unsigned LocalPMPNumRegions  = PMPEnable ? PMPNumRegions  : 0;
+
+    create_cosim(SecureIbex, ICache, LocalPMPNumRegions, LocalPMPGranularity);
     cosim_handle = get_spike_cosim();
   end
 
