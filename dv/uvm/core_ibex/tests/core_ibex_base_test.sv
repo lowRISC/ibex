@@ -81,6 +81,7 @@ class core_ibex_base_test extends uvm_test;
     string cosim_log_file;
     bit [31:0] pmp_num_regions;
     bit [31:0] pmp_granularity;
+    bit [31:0] mhpm_counter_num;
     bit        secure_ibex;
     bit        icache;
 
@@ -121,6 +122,10 @@ class core_ibex_base_test extends uvm_test;
       pmp_granularity = '0;
     end
 
+    if (!uvm_config_db#(bit [31:0])::get(null, "", "MHPMCounterNum", mhpm_counter_num)) begin
+      mhpm_counter_num = '0;
+    end
+
     if (!uvm_config_db#(bit)::get(null, "", "SecureIbex", secure_ibex)) begin
       secure_ibex = '0;
     end
@@ -131,6 +136,7 @@ class core_ibex_base_test extends uvm_test;
 
     cosim_cfg.pmp_num_regions = pmp_num_regions;
     cosim_cfg.pmp_granularity = pmp_granularity;
+    cosim_cfg.mhpm_counter_num = mhpm_counter_num;
     cosim_cfg.relax_cosim_check = cfg.disable_cosim;
     cosim_cfg.secure_ibex = secure_ibex;
     cosim_cfg.icache = icache;

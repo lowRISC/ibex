@@ -34,7 +34,8 @@
 SpikeCosim::SpikeCosim(const std::string &isa_string, uint32_t start_pc,
                        uint32_t start_mtvec, const std::string &trace_log_path,
                        bool secure_ibex, bool icache_en,
-                       uint32_t pmp_num_regions, uint32_t pmp_granularity)
+                       uint32_t pmp_num_regions, uint32_t pmp_granularity,
+                       uint32_t mhpm_counter_num)
     : nmi_mode(false), pending_iside_error(false), insn_cnt(0) {
   FILE *log_file = nullptr;
   if (trace_log_path.length() != 0) {
@@ -54,10 +55,11 @@ SpikeCosim::SpikeCosim(const std::string &isa_string, uint32_t start_pc,
 #endif
 
   processor->set_pmp_num(pmp_num_regions);
+  processor->set_mhpm_counter_num(mhpm_counter_num);
   processor->set_pmp_granularity(1 << (pmp_granularity + 2));
   processor->set_ibex_flags(secure_ibex, icache_en);
 
-  initial_proc_setup(start_pc, start_mtvec);
+  initial_proc_setup(start_pc, start_mtvec, mhpm_counter_num);
 
   if (log) {
     processor->set_debug(true);
@@ -438,7 +440,8 @@ void SpikeCosim::leave_nmi_mode() {
 #endif
 }
 
-void SpikeCosim::initial_proc_setup(uint32_t start_pc, uint32_t start_mtvec) {
+void SpikeCosim::initial_proc_setup(uint32_t start_pc, uint32_t start_mtvec,
+                                    uint32_t mhpm_counter_num) {
   processor->get_state()->pc = start_pc;
   processor->get_state()->mtvec->write(start_mtvec);
 
@@ -450,6 +453,12 @@ void SpikeCosim::initial_proc_setup(uint32_t start_pc, uint32_t start_mtvec) {
   for (int i = 0; i < processor->TM.count(); ++i) {
     processor->TM.tdata2_write(processor.get(), i, 0);
     processor->TM.tdata1_write(processor.get(), i, 0x28001048);
+  }
+
+  for (int i = 0; i < mhpm_counter_num; i++) {
+    processor->get_state()->csrmap[CSR_MHPMEVENT3 + i] =
+        std::make_shared<const_csr_t>(processor.get(), CSR_MHPMEVENT3 + i,
+                                      1 << i);
   }
 }
 

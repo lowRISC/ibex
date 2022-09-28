@@ -20,10 +20,11 @@ class SimpleSystemCosim : public SimpleSystem {
   ~SimpleSystemCosim() {}
 
   void CreateCosim(bool secure_ibex, bool icache_en, uint32_t pmp_num_regions,
-                   uint32_t pmp_granularity) {
+                   uint32_t pmp_granularity, uint32_t mhpm_counter_num) {
     _cosim = std::make_unique<SpikeCosim>(
         GetIsaString(), 0x100080, 0x100001, "simple_system_cosim.log",
-        secure_ibex, icache_en, pmp_num_regions, pmp_granularity);
+        secure_ibex, icache_en, pmp_num_regions, pmp_granularity,
+        mhpm_counter_num);
 
     _cosim->add_memory(0x100000, 1024 * 1024);
     _cosim->add_memory(0x20000, 4096);
@@ -68,10 +69,11 @@ void *get_spike_cosim() {
 
 void create_cosim(svBit secure_ibex, svBit icache_en,
                   const svBitVecVal *pmp_num_regions,
-                  const svBitVecVal *pmp_granularity) {
+                  const svBitVecVal *pmp_granularity,
+                  const svBitVecVal *mhpm_counter_num) {
   assert(simple_system_cosim);
   simple_system_cosim->CreateCosim(secure_ibex, icache_en, pmp_num_regions[0],
-                                   pmp_granularity[0]);
+                                   pmp_granularity[0], mhpm_counter_num[0]);
 }
 }
 
