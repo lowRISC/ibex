@@ -7,7 +7,8 @@ module ibex_simple_system_cosim_checker #(
   parameter bit                 ICache         = 1'b0,
   parameter bit                 PMPEnable      = 1'b0,
   parameter int unsigned        PMPGranularity = 0,
-  parameter int unsigned        PMPNumRegions  = 4
+  parameter int unsigned        PMPNumRegions  = 4,
+  parameter int unsigned        MHPMCounterNum  = 0
 ) (
   input clk_i,
   input rst_ni,
@@ -25,7 +26,7 @@ module ibex_simple_system_cosim_checker #(
 );
   import "DPI-C" function chandle get_spike_cosim;
   import "DPI-C" function void create_cosim(bit secure_ibex, bit icache_en,
-    bit [31:0] pmp_num_regions, bit [31:0] pmp_granularity);
+    bit [31:0] pmp_num_regions, bit [31:0] pmp_granularity, bit [31:0] mhpm_counter_num);
 
   import ibex_pkg::*;
 
@@ -35,7 +36,7 @@ module ibex_simple_system_cosim_checker #(
     localparam int unsigned LocalPMPGranularity = PMPEnable ? PMPGranularity : 0;
     localparam int unsigned LocalPMPNumRegions  = PMPEnable ? PMPNumRegions  : 0;
 
-    create_cosim(SecureIbex, ICache, LocalPMPNumRegions, LocalPMPGranularity);
+    create_cosim(SecureIbex, ICache, LocalPMPNumRegions, LocalPMPGranularity, MHPMCounterNum);
     cosim_handle = get_spike_cosim();
   end
 

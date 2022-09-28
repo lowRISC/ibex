@@ -8,7 +8,8 @@ module ibex_simple_system_cosim_checker_bind;
       .ICache,
       .PMPEnable,
       .PMPGranularity,
-      .PMPNumRegions
+      .PMPNumRegions,
+      .MHPMCounterNum
     ) u_ibex_simple_system_cosim_checker_bind (
       .clk_i            (IO_CLK),
       .rst_ni           (IO_RST_N),

@@ -69,7 +69,8 @@ class SpikeCosim : public simif_t, public Cosim {
 
   void leave_nmi_mode();
 
-  void initial_proc_setup(uint32_t start_pc, uint32_t start_mtvec);
+  void initial_proc_setup(uint32_t start_pc, uint32_t start_mtvec,
+                          uint32_t mhpm_counter_num);
 
   unsigned int insn_cnt;
 
@@ -77,7 +78,7 @@ class SpikeCosim : public simif_t, public Cosim {
   SpikeCosim(const std::string &isa_string, uint32_t start_pc,
              uint32_t start_mtvec, const std::string &trace_log_path,
              bool secure_ibex, bool icache_en, uint32_t pmp_num_regions,
-             uint32_t pmp_granularity);
+             uint32_t pmp_granularity, uint32_t mhpm_counter_num);
 
   // simif_t implementation
   virtual char *addr_to_mem(reg_t addr) override;

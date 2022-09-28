@@ -299,6 +299,7 @@ module core_ibex_tb_top;
       uvm_config_db#(bit [31:0])::set(null, "*", "PMPGranularity", 0);
     end
 
+    uvm_config_db#(bit [31:0])::set(null, "*", "MHPMCounterNum", MHPMCounterNum);
     uvm_config_db#(bit)::set(null, "*", "SecureIbex", SecureIbex);
     uvm_config_db#(bit)::set(null, "*", "ICache", ICache);
 
