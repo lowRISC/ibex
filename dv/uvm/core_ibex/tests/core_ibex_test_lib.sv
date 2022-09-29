@@ -1125,12 +1125,38 @@ class core_ibex_debug_single_step_test extends core_ibex_directed_test;
   `uvm_component_utils(core_ibex_debug_single_step_test)
   `uvm_component_new
 
+  uvm_event e1;
+  int       cnt;
+  int       debug_mode_end_dwell_cycles = 3000;
+
   virtual task check_stimulus();
-    forever begin
-      clk_vif.wait_clks(2000);
-      vseq.start_debug_single_seq();
-      wait_ret("dret", 50000);
-    end
+    e1 = new();
+    fork
+      begin
+        forever begin
+          // Create an event (e1) whenever we are out of debug_mode for a configurable length of time.
+          // This allows us to detect when the system has stopped single-stepping.
+          cnt = 0;
+          @(negedge dut_vif.dut_cb.debug_mode);
+          while (dut_vif.dut_cb.debug_mode == '0) begin
+            clk_vif.wait_clks(1);
+            cnt++;
+            if (cnt == debug_mode_end_dwell_cycles) begin
+              e1.trigger();
+              break;
+            end
+          end
+        end
+      end
+      begin
+        forever begin
+          clk_vif.wait_clks(2000);
+          vseq.start_debug_single_seq();
+          // Wait for the above event (e1) before sending another debug_req
+          e1.wait_trigger();
+        end
+      end
+    join_none
   endtask
 
 endclass
