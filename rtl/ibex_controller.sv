@@ -143,6 +143,7 @@ module ibex_controller #(
   logic enter_debug_mode_prio_q;
   logic enter_debug_mode;
   logic ebreak_into_debug;
+  logic irq_enabled;
   logic handle_irq;
   logic id_wb_pending;
 
@@ -398,13 +399,16 @@ module ibex_controller #(
   // ibex_core) source. For internal sources the cause is specified via irq_nm_int_cause.
   assign irq_nm = irq_nm_ext_i | irq_nm_int;
 
+  // MIE bit only applies when in M mode
+  assign irq_enabled = csr_mstatus_mie_i | (priv_mode_i == PRIV_LVL_U);
+
   // Interrupts including NMI are ignored,
   // - while in debug mode,
   // - while in NMI mode (nested NMIs are not supported, NMI has highest priority and
   //   cannot be interrupted by regular interrupts),
   // - while single stepping.
   assign handle_irq = ~debug_mode_q & ~debug_single_step_i & ~nmi_mode_q &
-      (irq_nm | (irq_pending_i & csr_mstatus_mie_i));
+      (irq_nm | (irq_pending_i & irq_enabled));
 
   // generate ID of fast interrupts, highest priority to lowest ID
   always_comb begin : gen_mfip_id
