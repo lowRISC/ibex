@@ -51,6 +51,7 @@ SRCS_SV ?=                              \
 
 PKGS ?=                                        \
   $(SRC_DIR)/ibex_pkg.sv                       \
+  $(LOWRISC_IP)/ip/prim/rtl/prim_secded_pkg.sv \
   $(LOWRISC_IP)/ip/prim/rtl/prim_ram_1p_pkg.sv
 
 PRIM_CLOCK ?= $(SYN_DIR)/rtl/prim_clock_gating.v
