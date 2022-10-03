@@ -129,9 +129,14 @@ module ibex_register_file_ff #(
     assign rf_reg[0] = WordZeroVal;
   end
 
-  assign rdata_a_o = rf_reg[raddr_a_i];
-  assign rdata_b_o = rf_reg[raddr_b_i];
-
+  if(RV32E) begin : rv32e_regfile
+    assign rdata_a_o = rf_reg[raddr_a_i[3:0]];
+    assign rdata_b_o = rf_reg[raddr_b_i[3:0]];
+  end else begin : rv32i_regfile
+    assign rdata_a_o = rf_reg[raddr_a_i];
+    assign rdata_b_o = rf_reg[raddr_b_i];
+  end
+    
   // Signal not used in FF register file
   logic unused_test_en;
   assign unused_test_en = test_en_i;
