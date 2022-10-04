@@ -129,7 +129,7 @@ module ibex_register_file_ff #(
     assign rf_reg[0] = WordZeroVal;
   end
 
-  if(RV32E) begin : rv32e_regfile
+  if (RV32E) begin : rv32e_regfile
     assign rdata_a_o = rf_reg[raddr_a_i[3:0]];
     assign rdata_b_o = rf_reg[raddr_b_i[3:0]];
   end else begin : rv32i_regfile
