@@ -130,8 +130,9 @@ module ibex_id_stage #(
   output logic                      nmi_mode_o,
 
   input  logic                      lsu_load_err_i,
+  input  logic                      lsu_load_resp_intg_err_i,
   input  logic                      lsu_store_err_i,
-  input  logic                      lsu_load_intg_err_i,
+  input  logic                      lsu_store_resp_intg_err_i,
 
   // Debug Signal
   output logic                      debug_mode_o,
@@ -224,6 +225,8 @@ module ibex_id_stage #(
   logic        stall_wb;
   logic        flush_id;
   logic        multicycle_done;
+
+  logic        mem_resp_intg_err;
 
   // Immediate decoding and sign extension
   logic [31:0] imm_i_type;
@@ -546,6 +549,8 @@ module ibex_id_stage #(
   assign illegal_insn_o = instr_valid_i &
       (illegal_insn_dec | illegal_csr_insn_i | illegal_dret_insn | illegal_umode_insn);
 
+  assign mem_resp_intg_err = lsu_load_resp_intg_err_i | lsu_store_resp_intg_err_i;
+
   ibex_controller #(
     .WritebackStage (WritebackStage),
     .BranchPredictor(BranchPredictor),
@@ -589,12 +594,12 @@ module ibex_id_stage #(
     .exc_cause_o           (exc_cause_o),
 
     // LSU
-    .lsu_addr_last_i(lsu_addr_last_i),
-    .load_err_i     (lsu_load_err_i),
-    .load_intg_err_i(lsu_load_intg_err_i),
-    .store_err_i    (lsu_store_err_i),
-    .wb_exception_o (wb_exception),
-    .id_exception_o (id_exception),
+    .lsu_addr_last_i    (lsu_addr_last_i),
+    .load_err_i         (lsu_load_err_i),
+    .mem_resp_intg_err_i(mem_resp_intg_err),
+    .store_err_i        (lsu_store_err_i),
+    .wb_exception_o     (wb_exception),
+    .id_exception_o     (id_exception),
 
     // jump/branch control
     .branch_set_i     (branch_set),

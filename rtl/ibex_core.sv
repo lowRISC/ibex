@@ -204,7 +204,8 @@ module ibex_core import ibex_pkg::*; #(
   logic        instr_intg_err;
   logic        lsu_load_err;
   logic        lsu_store_err;
-  logic        lsu_load_intg_err;
+  logic        lsu_load_resp_intg_err;
+  logic        lsu_store_resp_intg_err;
 
   // LSU signals
   logic        lsu_addr_incr_req;
@@ -594,9 +595,10 @@ module ibex_core import ibex_pkg::*; #(
     .lsu_addr_incr_req_i(lsu_addr_incr_req),
     .lsu_addr_last_i    (lsu_addr_last),
 
-    .lsu_load_err_i     (lsu_load_err),
-    .lsu_load_intg_err_i(lsu_load_intg_err),
-    .lsu_store_err_i    (lsu_store_err),
+    .lsu_load_err_i           (lsu_load_err),
+    .lsu_load_resp_intg_err_i (lsu_load_resp_intg_err),
+    .lsu_store_err_i          (lsu_store_err),
+    .lsu_store_resp_intg_err_i(lsu_store_resp_intg_err),
 
     // Interrupt Signals
     .csr_mstatus_mie_i(csr_mstatus_mie),
@@ -748,9 +750,10 @@ module ibex_core import ibex_pkg::*; #(
     .lsu_resp_valid_o(lsu_resp_valid),
 
     // exception signals
-    .load_err_o     (lsu_load_err),
-    .store_err_o    (lsu_store_err),
-    .load_intg_err_o(lsu_load_intg_err),
+    .load_err_o           (lsu_load_err),
+    .load_resp_intg_err_o (lsu_load_resp_intg_err),
+    .store_err_o          (lsu_store_err),
+    .store_resp_intg_err_o(lsu_store_resp_intg_err),
 
     .busy_o(lsu_busy),
 
@@ -881,7 +884,7 @@ module ibex_core import ibex_pkg::*; #(
   // Major internal alert - core is unrecoverable
   assign alert_major_internal_o = rf_ecc_err_comb | pc_mismatch_alert | csr_shadow_err;
   // Major bus alert
-  assign alert_major_bus_o = lsu_load_intg_err | instr_intg_err;
+  assign alert_major_bus_o = lsu_load_resp_intg_err | lsu_store_resp_intg_err | instr_intg_err;
 
   // Explict INC_ASSERT block to avoid unused signal lint warnings were asserts are not included
   `ifdef INC_ASSERT
