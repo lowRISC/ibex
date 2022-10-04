@@ -58,8 +58,8 @@ module ibex_controller #(
   // LSU
   input  logic [31:0]           lsu_addr_last_i,         // for mtval
   input  logic                  load_err_i,
-  input  logic                  load_intg_err_i,
   input  logic                  store_err_i,
+  input  logic                  mem_resp_intg_err_i,
   output logic                  wb_exception_o,          // Instruction in WB taking an exception
   output logic                  id_exception_o,          // Instruction in ID taking an exception
 
@@ -307,55 +307,55 @@ module ibex_controller #(
   // irq_nm_int_cause.
 
   if (MemECC) begin : g_intg_irq_int
-    logic        load_intg_err_irq_pending_q, load_intg_err_irq_pending_d;
-    logic [31:0] load_intg_err_addr_q, load_intg_err_addr_d;
-    logic        load_intg_err_irq_set, load_intg_err_irq_clear;
+    logic        mem_resp_intg_err_irq_pending_q, mem_resp_intg_err_irq_pending_d;
+    logic [31:0] mem_resp_intg_err_addr_q, mem_resp_intg_err_addr_d;
+    logic        mem_resp_intg_err_irq_set, mem_resp_intg_err_irq_clear;
     logic        entering_nmi;
 
     assign entering_nmi = nmi_mode_d & ~nmi_mode_q;
 
     // Load integerity error internal interrupt
     always_comb begin
-      load_intg_err_addr_d        = load_intg_err_addr_q;
-      load_intg_err_irq_set       = 1'b0;
-      load_intg_err_irq_clear     = 1'b0;
+      mem_resp_intg_err_addr_d        = mem_resp_intg_err_addr_q;
+      mem_resp_intg_err_irq_set       = 1'b0;
+      mem_resp_intg_err_irq_clear     = 1'b0;
 
-      if (load_intg_err_irq_pending_q) begin
+      if (mem_resp_intg_err_irq_pending_q) begin
         // Clear ECC error interrupt when it is handled. External NMI takes a higher priority so
         // don't clear the ECC error interrupt if an external NMI is present.
         if (entering_nmi & !irq_nm_ext_i) begin
-          load_intg_err_irq_clear = 1'b1;
+          mem_resp_intg_err_irq_clear = 1'b1;
         end
-      end else if (load_intg_err_i) begin
+      end else if (mem_resp_intg_err_i) begin
         // When an ECC error is seen set the ECC error interrupt and capture the address that saw
         // the error. If there is already an ecc error IRQ pending ignore any ECC errors coming in.
-        load_intg_err_addr_d        = lsu_addr_last_i;
-        load_intg_err_irq_set       = 1'b1;
+        mem_resp_intg_err_addr_d        = lsu_addr_last_i;
+        mem_resp_intg_err_irq_set       = 1'b1;
       end
     end
 
-    assign load_intg_err_irq_pending_d =
-      (load_intg_err_irq_pending_q & ~load_intg_err_irq_clear) | load_intg_err_irq_set;
+    assign mem_resp_intg_err_irq_pending_d =
+      (mem_resp_intg_err_irq_pending_q & ~mem_resp_intg_err_irq_clear) | mem_resp_intg_err_irq_set;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
-        load_intg_err_irq_pending_q <= 1'b0;
-        load_intg_err_addr_q        <= '0;
+        mem_resp_intg_err_irq_pending_q <= 1'b0;
+        mem_resp_intg_err_addr_q        <= '0;
       end else begin
-        load_intg_err_irq_pending_q <= load_intg_err_irq_pending_d;
-        load_intg_err_addr_q        <= load_intg_err_addr_d;
+        mem_resp_intg_err_irq_pending_q <= mem_resp_intg_err_irq_pending_d;
+        mem_resp_intg_err_addr_q        <= mem_resp_intg_err_addr_d;
       end
     end
 
     // As integrity error is the only internal interrupt implement, set irq_nm_* signals directly
     // within this generate block.
-    assign irq_nm_int = load_intg_err_irq_set | load_intg_err_irq_pending_q;
+    assign irq_nm_int       = mem_resp_intg_err_irq_set | mem_resp_intg_err_irq_pending_q;
     assign irq_nm_int_cause = NMI_INT_CAUSE_ECC;
-    assign irq_nm_int_mtval = load_intg_err_addr_q;
+    assign irq_nm_int_mtval = mem_resp_intg_err_addr_q;
   end else begin : g_no_intg_irq_int
-    logic unused_load_intg_err_i;
+    logic unused_mem_resp_intg_err_i;
 
-    assign unused_load_intg_err_i = load_intg_err_i;
+    assign unused_mem_resp_intg_err_i = mem_resp_intg_err_i;
 
     // No integrity checking on incoming load data so no internal interrupts
     assign irq_nm_int       = 1'b0;
