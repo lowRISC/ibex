@@ -471,6 +471,8 @@ package ibex_pkg;
     CSR_PMPADDR14 = 12'h3BE,
     CSR_PMPADDR15 = 12'h3BF,
 
+    CSR_SCONTEXT  = 12'h5A8,
+
     // ePMP control
     CSR_MSECCFG   = 12'h747,
     CSR_MSECCFGH  = 12'h757,
@@ -481,7 +483,7 @@ package ibex_pkg;
     CSR_TDATA2    = 12'h7A2,
     CSR_TDATA3    = 12'h7A3,
     CSR_MCONTEXT  = 12'h7A8,
-    CSR_SCONTEXT  = 12'h7AA,
+    CSR_MSCONTEXT = 12'h7AA,
 
     // Debug/trace
     CSR_DCSR      = 12'h7b0,
