@@ -523,6 +523,10 @@ module ibex_cs_registers #(
         csr_rdata_int = '0;
         illegal_csr   = ~DbgTriggerEn;
       end
+      CSR_MSCONTEXT: begin
+        csr_rdata_int = '0;
+        illegal_csr   = ~DbgTriggerEn;
+      end
 
       // Custom CSR for controlling CPU features and reporting CPU status
       CSR_CPUCTRLSTS: begin
