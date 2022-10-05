@@ -25,7 +25,7 @@
         vcs
           -full64
           -f <core_ibex>/ibex_dv.f
-          -l <tb_dir>/<rtl_log>
+          -l <rtl_sim_log>
           -sverilog
           -ntb_opts uvm-1.2
           +define+UVM
@@ -102,7 +102,7 @@
           +define+UVM
           -timescale \"1 ns / 1 ps \"
           -writetoplevels <tb_dir>/top.list
-          -l <tb_dir>/<rtl_log>
+          -l <rtl_sim_log>
           <cmp_opts>
   sim:
     cmd:
@@ -119,7 +119,7 @@
           +UVM_VERBOSITY=UVM_LOW
           +bin=<binary>
           +ibex_tracer_file_base=<rtl_trace>
-          -l <test_dir>/sim.log
+          -l <rtl_sim_log>
           <cov_opts>
     cov_opts: >-
       -do "coverage save -onexit <tb_dir>/cov.ucdb;"
