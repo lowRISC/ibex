@@ -31,6 +31,7 @@ def compare_test_run(trr: TestRunResult) -> TestRunResult:
     """
 
     # If the test timed-out, return early to avoid overwriting the failure_mode.
+    # Don't check the logs at all in this case.
     if (trr.failure_mode == Failure_Modes.TIMEOUT):
         trr.passed = False
         return trr
@@ -41,7 +42,7 @@ def compare_test_run(trr: TestRunResult) -> TestRunResult:
         uvm_pass, uvm_log_lines = check_ibex_uvm_log(trr.rtl_log)
     except IOError as e:
         trr.passed = False
-        trr.failure_mode = Failure_Modes.PARSE_ERROR
+        trr.failure_mode = Failure_Modes.FILE_ERROR
         trr.failure_message = f"[FAILED] Could not open simulation log: {e}\n"
         return trr
     if not uvm_pass:
@@ -62,7 +63,7 @@ def compare_test_run(trr: TestRunResult) -> TestRunResult:
         process_ibex_sim_log(trr.rtl_trace, trr.dir_test/'rtl_trace.csv')
     except (OSError, RuntimeError) as e:
         trr.passed = False
-        trr.failure_mode = Failure_Modes.LOG_ERROR
+        trr.failure_mode = Failure_Modes.FILE_ERROR
         trr.failure_message = f"[FAILED]: Log processing failed: {e}"
         return trr
 
@@ -74,7 +75,7 @@ def compare_test_run(trr: TestRunResult) -> TestRunResult:
             raise RuntimeError('Unsupported simulator for cosim')
     except (OSError, RuntimeError) as e:
         trr.passed = False
-        trr.failure_mode = Failure_Modes.LOG_ERROR
+        trr.failure_mode = Failure_Modes.FILE_ERROR
         trr.failure_message = f"[FAILED]: Log processing failed: {e}"
         return trr
 
