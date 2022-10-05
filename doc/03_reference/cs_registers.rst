@@ -46,6 +46,8 @@ Ibex implements all the Control and Status Registers (CSRs) listed in the follow
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x3BF  | ``pmpaddr15``      | WARL   | PMP Address Register                          |
 +---------+--------------------+--------+-----------------------------------------------+
+|  0x5A8  | ``scontext``       | WARL   | Supervisor Context Register                   |
++---------+--------------------+--------+-----------------------------------------------+
 |  0x747  | ``mseccfg``        | WARL   | Machine Security Configuration                |
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x757  | ``mseccfgh``       | WARL   | Upper 32 bits of ``mseccfg``                  |
@@ -60,7 +62,7 @@ Ibex implements all the Control and Status Registers (CSRs) listed in the follow
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x7A8  | ``mcontext``       | WARL   | Machine Context Register                      |
 +---------+--------------------+--------+-----------------------------------------------+
-|  0x7AA  | ``scontext``       | WARL   | Supervisor Context Register                   |
+|  0x7AA  | ``mscontext``      | WARL   | Machine Supervisor Context Register           |
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x7B0  | ``dcsr``           | WARL   | Debug Control and Status Register             |
 +---------+--------------------+--------+-----------------------------------------------+
