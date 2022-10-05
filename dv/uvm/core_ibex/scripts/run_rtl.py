@@ -81,6 +81,10 @@ def _main() -> int:
     trr.dir_test.mkdir(exist_ok=True, parents=True)
     trr.rtl_cmds   = [format_to_cmd(cmd) for cmd in sim_cmds]
     trr.rtl_stdout = trr.dir_test / 'rtl_sim_stdstreams.log'
+    # Since we cannot pass the logfile to VCS as an argument, we use stdstream log instead
+    if (md.simulator == "vcs"):
+        trr.rtl_log = trr.rtl_stdout
+    trr.export(write_yaml=True)
 
     # Write all sim_cmd output into a single logfile
     with open(trr.rtl_stdout, 'wb') as sim_fd:
