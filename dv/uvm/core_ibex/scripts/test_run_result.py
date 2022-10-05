@@ -20,9 +20,9 @@ class Failure_Modes(Enum):
     """Descriptive enum for the mode in which a test fails"""
 
     NONE = 0
-    TIMEOUT = 1
-    PARSE_ERROR = 2
-    LOG_ERROR = 3
+    TIMEOUT = 1  # The simulation process did not complete within the timeout
+    FILE_ERROR = 2  # There was a problem attempting to open a logfile
+    LOG_ERROR = 3  # The contents of a logfile met a criterion for test failure
 
     def __str__(self):
         """Print enumerated values as e.g. TIMEOUT(1)"""
