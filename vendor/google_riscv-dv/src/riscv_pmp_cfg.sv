@@ -451,6 +451,8 @@ class riscv_pmp_cfg extends uvm_object;
 
         // Load the address of the kernel_stack_end into PMP stack entry.
         instr.push_back($sformatf("la x%0d, kernel_stack_end", scratch_reg[0]));
+        // Add 4 to also include the final address of the kernel stack.
+        instr.push_back($sformatf("addi x%0d, x%0d, 4", scratch_reg[0], scratch_reg[0]));
         instr.push_back($sformatf("srli x%0d, x%0d, 2", scratch_reg[0], scratch_reg[0]));
         instr.push_back($sformatf("csrw 0x%0x, x%0d", base_pmp_addr + stack_entry,
                                   scratch_reg[0]));
