@@ -397,22 +397,21 @@ class riscv_pmp_cfg extends uvm_object;
         if (mseccfg.mml) begin
           // This value is different from below (M-mode execute only) because we need code region
           // to be executable in both M-mode and U-mode, since RISCV-DV switches priviledge before
-          // <main> but after <pmp_setup>. We choose not to use the shared code region that also
-          // allows read in M-mode because that is inconsistent with the execute-only in other
-          // modes.
+          // <main> but after <pmp_setup>. We choose to allow M-mode reads to allows checking
+          // whether instructions are compressed in the trap handler in order to recover from load
+          // and store access faults.
           tmp_pmp_cfg.l = 1'b1;
           tmp_pmp_cfg.a = TOR;
-          tmp_pmp_cfg.x = 1'b0;
+          tmp_pmp_cfg.x = 1'b1;
           tmp_pmp_cfg.w = 1'b1;
           tmp_pmp_cfg.r = 1'b0;
           // This configuration needs to be executable in M-mode both before and after writing to
           // MSECCFG. It will deny execution for U-Mode, but this is necessary because RWX=111 in
           // MML means read only, and RW=01 is not allowed before MML is enabled.
-          cfg_byte = {tmp_pmp_cfg.l, tmp_pmp_cfg.zero, tmp_pmp_cfg.a, 1'b1,
+          cfg_byte = {tmp_pmp_cfg.l, tmp_pmp_cfg.zero, tmp_pmp_cfg.a, tmp_pmp_cfg.x,
                       1'b0, tmp_pmp_cfg.r};
         end else begin
-          // We must set pmp code region to executable before enabling MMWP. RW=00 to be consistent
-          // with MML configuration as much as possible.
+          // We must set pmp code region to executable before enabling MMWP.
           tmp_pmp_cfg.l = 1'b0;
           tmp_pmp_cfg.a = TOR;
           tmp_pmp_cfg.x = 1'b1;
@@ -745,7 +744,8 @@ class riscv_pmp_cfg extends uvm_object;
              // If fault_addr < pmpaddr[i-1] : continue looping
              $sformatf("22: bgtu x%0d, x%0d, 18b", scratch_reg[5], scratch_reg[4]),
              // If fault_addr >= pmpaddr[i] : continue looping
-             $sformatf("23: bleu x%0d, x%0d, 18b", scratch_reg[1], scratch_reg[4])
+             $sformatf("23: bleu x%0d, x%0d, 18b", scratch_reg[1], scratch_reg[4]),
+             $sformatf("j 26f")
             };
 
     // Sub-section to handle address matching mode NA4.
@@ -758,7 +758,8 @@ class riscv_pmp_cfg extends uvm_object;
              $sformatf("srli x%0d, x%0d, 2", scratch_reg[4], scratch_reg[4]),
              // If fault_addr[31:2] != pmpaddr[i][29:0] => there is a mismatch,
              // so continue looping
-             $sformatf("bne x%0d, x%0d, 18b", scratch_reg[0], scratch_reg[4])
+             $sformatf("bne x%0d, x%0d, 18b", scratch_reg[0], scratch_reg[4]),
+             $sformatf("j 26f")
             };
 
     // Sub-section to handle address matching mode NAPOT.
@@ -776,7 +777,8 @@ class riscv_pmp_cfg extends uvm_object;
              $sformatf("srli x%0d, x%0d, %0d", scratch_reg[4], scratch_reg[4], pmp_granularity),
              $sformatf("slli x%0d, x%0d, %0d", scratch_reg[4], scratch_reg[4], pmp_granularity),
              // If masked_fault_addr != masked_pmpaddr[i] : mismatch, so continue looping
-             $sformatf("bne x%0d, x%0d, 18b", scratch_reg[0], scratch_reg[4])
+             $sformatf("bne x%0d, x%0d, 18b", scratch_reg[0], scratch_reg[4]),
+             $sformatf("j 26f")
            };
 
     // Sub-section that is common to the address modes deciding what to do what to do when hitting
@@ -784,18 +786,12 @@ class riscv_pmp_cfg extends uvm_object;
     instr = {instr,
              // If we get here there is an address match.
              // First check whether we are in MML mode.
-             $sformatf("csrr x%0d, 0x%0x", scratch_reg[4], MSECCFG),
+             $sformatf("26: csrr x%0d, 0x%0x", scratch_reg[4], MSECCFG),
              $sformatf("andi x%0d, x%0d, 1", scratch_reg[4], scratch_reg[4]),
-             $sformatf("bnez x%0d, 26f", scratch_reg[4]),
+             $sformatf("bnez x%0d, 27f", scratch_reg[4]),
              // Then check whether the lock bit is set.
              $sformatf("andi x%0d, x%0d, 128", scratch_reg[4], scratch_reg[3]),
-             $sformatf("bnez x%0d, 26f", scratch_reg[4]),
-             // If MML or locked just quit the test.
-             // TODO (marnovandermaas) Can we do something smarter here like continue to the next
-             //   instruction in case of a load or store?
-             $sformatf("26: la x%0d, test_done", scratch_reg[0]),
-             $sformatf("jalr x0, x%0d, 0", scratch_reg[0]),
-             // If neither is true then try to modify the PMP permission bits.
+             $sformatf("bnez x%0d, 27f", scratch_reg[4]),
              $sformatf("j 29f")
             };
 
@@ -803,17 +799,79 @@ class riscv_pmp_cfg extends uvm_object;
     // and ORs it with the 8-bit configuration fields.
     case (fault_type)
       INSTRUCTION_ACCESS_FAULT: begin
-        // The X bit is bit 2, and 1 << 2 = 2
-        instr.push_back($sformatf("29: ori x%0d, x%0d, 4", scratch_reg[3], scratch_reg[3]));
+        instr = {instr,
+                 // If MML or locked just quit the test.
+                 $sformatf("27: la x%0d, test_done", scratch_reg[0]),
+                 $sformatf("jalr x0, x%0d, 0", scratch_reg[0]),
+                 // If neither is true then try to modify the PMP permission bits.
+                 // The X bit is bit 2, and 1 << 2 = 2.
+                 $sformatf("29: ori x%0d, x%0d, 4", scratch_reg[3], scratch_reg[3])
+                };
       end
       STORE_AMO_ACCESS_FAULT: begin
-        // The combination of W:1 and R:0 is reserved, so if we are enabling write
-        // permissions, also enable read permissions to adhere to the spec.
-        instr.push_back($sformatf("29: ori x%0d, x%0d, 3", scratch_reg[3], scratch_reg[3]));
+        instr = {instr,
+                 // If MML or locked try to load the instruction and see if it is compressed so
+                 // the MEPC can be advanced appropriately.
+                 $sformatf("27: csrr x%0d, 0x%0x", scratch_reg[0], MEPC),
+                 // This might cause a load access fault, which we much handle in the load trap
+                 // handler.
+                 $sformatf("lw x%0d, 0(x%0d)", scratch_reg[0], scratch_reg[0]),
+                 // Non-compressed instructions have two least significant bits set to one.
+                 $sformatf("li x%0d, 3", scratch_reg[4]),
+                 $sformatf("and x%0d, x%0d, x%0d", scratch_reg[0], scratch_reg[0], scratch_reg[4]),
+                 // Check whether instruction is compressed.
+                 $sformatf("beq x%0d, x%0d, 28f", scratch_reg[0], scratch_reg[4]),
+                 $sformatf("csrr x%0d, 0x%0x", scratch_reg[0], MEPC),
+                 // Increase MEPC by 2 in case instruction is compressed.
+                 $sformatf("addi x%0d, x%0d, 2", scratch_reg[0], scratch_reg[0]),
+                 $sformatf("csrw 0x%0x, x%0d", MEPC, scratch_reg[0]),
+                 $sformatf("j 34f"),
+                 $sformatf("28: csrr x%0d, 0x%0x", scratch_reg[0], MEPC),
+                 // Increase MEPC by 4 in case instruction is compressed.
+                 $sformatf("addi x%0d, x%0d, 4", scratch_reg[0], scratch_reg[0]),
+                 $sformatf("csrw 0x%0x, x%0d", MEPC, scratch_reg[0]),
+                 $sformatf("j 34f"),
+                 // If neither is true then try to modify the PMP permission bits.
+                 // The combination of W:1 and R:0 is reserved, so if we are enabling write
+                 // permissions, also enable read permissions to adhere to the spec.
+                 $sformatf("29: ori x%0d, x%0d, 3", scratch_reg[3], scratch_reg[3])
+                };
       end
       LOAD_ACCESS_FAULT: begin
-        // The R bit is bit 0, and 1 << 0 = 1
-        instr.push_back($sformatf("29: ori x%0d, x%0d, 1", scratch_reg[3], scratch_reg[3]));
+        instr = {instr,
+                 // If MML or locked try to load the instruction and see if it is compressed so
+                 // the MEPC can be advanced appropriately.
+                 $sformatf("27: csrr x%0d, 0x%0x", scratch_reg[0], MEPC),
+                 // We must first check whether the access fault was in the trap handler in case
+                 // we previously tried to load an instruction in a PMP entry that did not have
+                 // read permissions.
+                 $sformatf("la x%0d, main", scratch_reg[4]),
+                 $sformatf("bge x%0d, x%0d, 40f", scratch_reg[0], scratch_reg[4]),
+                 // In case MEPC is before main, then the load access fault probably happened in a
+                 // trap handler and we should just quit the test.
+                 $sformatf("la x%0d, test_done", scratch_reg[0]),
+                 $sformatf("jalr x0, x%0d, 0", scratch_reg[0]),
+                 // This might cause a load access fault, which we much handle in the load trap
+                 // handler.
+                 $sformatf("40: lw x%0d, 0(x%0d)", scratch_reg[0], scratch_reg[0]),
+                 // Non-compressed instructions have two least significant bits set to one.
+                 $sformatf("li x%0d, 3", scratch_reg[4]),
+                 $sformatf("and x%0d, x%0d, x%0d", scratch_reg[0], scratch_reg[0], scratch_reg[4]),
+                 // Check whether instruction is compressed.
+                 $sformatf("beq x%0d, x%0d, 28f", scratch_reg[0], scratch_reg[4]),
+                 $sformatf("csrr x%0d, 0x%0x", scratch_reg[0], MEPC),
+                 // Increase MEPC by 2 in case instruction is compressed.
+                 $sformatf("addi x%0d, x%0d, 2", scratch_reg[0], scratch_reg[0]),
+                 $sformatf("csrw 0x%0x, x%0d", MEPC, scratch_reg[0]),
+                 $sformatf("j 34f"),
+                 $sformatf("28: csrr x%0d, 0x%0x", scratch_reg[0], MEPC),
+                 // Increase MEPC by 4 in case instruction is compressed.
+                 $sformatf("addi x%0d, x%0d, 4", scratch_reg[0], scratch_reg[0]),
+                 $sformatf("csrw 0x%0x, x%0d", MEPC, scratch_reg[0]),
+                 // If neither is true then try to modify the PMP permission bits.
+                 // The R bit is bit 0, and 1 << 0 = 1.
+                 $sformatf("29: ori x%0d, x%0d, 1", scratch_reg[3], scratch_reg[3])
+                };
       end
       default: begin
         `uvm_fatal(`gfn, "Invalid PMP fault type")
