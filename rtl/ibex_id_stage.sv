@@ -44,6 +44,7 @@ module ibex_id_stage #(
   output logic                      instr_first_cycle_id_o,
   output logic                      instr_valid_clear_o,   // kill instr in IF-ID reg
   output logic                      id_in_ready_o,         // ID stage is ready for next instr
+  input  logic                      instr_exec_i,
   output logic                      icache_inval_o,
 
   // Jumps and branches
@@ -584,6 +585,7 @@ module ibex_id_stage #(
     .instr_valid_clear_o(instr_valid_clear_o),
     .id_in_ready_o      (id_in_ready_o),
     .controller_run_o   (controller_run),
+    .instr_exec_i       (instr_exec_i),
 
     // to prefetcher
     .instr_req_o           (instr_req_o),

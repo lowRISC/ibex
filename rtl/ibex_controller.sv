@@ -44,7 +44,9 @@ module ibex_controller #(
   output logic                  id_in_ready_o,           // ID stage is ready for new instr
   output logic                  controller_run_o,        // Controller is in standard instruction
                                                          // run mode
-
+  input  logic                  instr_exec_i,            // Execution control, when clear ID/EX
+                                                         // stage stops accepting instructions from
+                                                         // IF
   // to prefetcher
   output logic                  instr_req_o,             // start fetching instructions
   output logic                  pc_set_o,                // jump to address set by pc_mux
@@ -837,6 +839,11 @@ module ibex_controller #(
         ctrl_fsm_ns = RESET;
       end
     endcase
+
+    if (~instr_exec_i) begin
+      // Hold halt_if high when instr_exec_i is low to stop accepting instructions from the IF stage
+      halt_if = 1'b1;
+    end
   end
 
   assign flush_id_o = flush_id;
