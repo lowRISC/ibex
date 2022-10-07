@@ -294,6 +294,7 @@ module ibex_core import ibex_pkg::*; #(
   // Signals between instruction core interface and pipe (if and id stages)
   logic        instr_req_int;          // Id stage asserts a req to instruction core interface
   logic        instr_req_gated;
+  logic        instr_exec;
 
   // Writeback stage
   logic           en_wb;
@@ -484,12 +485,14 @@ module ibex_core import ibex_pkg::*; #(
     // fetch
     // SEC_CM: FETCH.CTRL.LC_GATED
     assign instr_req_gated = instr_req_int & (fetch_enable_i == FetchEnableOn);
+    assign instr_exec      = fetch_enable_i == FetchEnableOn;
   end else begin : g_instr_req_gated_non_secure
     // For non secure Ibex only the bottom bit of fetch enable is considered
     logic unused_fetch_enable;
     assign unused_fetch_enable = ^fetch_enable_i[$bits(fetch_enable_t)-1:1];
 
     assign instr_req_gated = instr_req_int & fetch_enable_i[0];
+    assign instr_exec      = fetch_enable_i[0];
   end
 
   //////////////
@@ -528,6 +531,7 @@ module ibex_core import ibex_pkg::*; #(
     .instr_first_cycle_id_o(instr_first_cycle_id),
     .instr_valid_clear_o   (instr_valid_clear),
     .id_in_ready_o         (id_in_ready),
+    .instr_exec_i          (instr_exec),
     .instr_req_o           (instr_req_int),
     .pc_set_o              (pc_set),
     .pc_mux_o              (pc_mux_id),
@@ -923,6 +927,31 @@ module ibex_core import ibex_pkg::*; #(
 
   `ASSERT(NoMemResponseWithoutPendingAccess,
     data_rvalid_i |-> outstanding_load_resp | outstanding_store_resp, clk_i, !rst_ni)
+
+
+  // Keep track of the PC last seen in the ID stage when fetch is disabled
+  logic [31:0]   pc_at_fetch_disable;
+  fetch_enable_t last_fetch_enable;
+
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      pc_at_fetch_disable <= '0;
+      last_fetch_enable   <= '0;
+    end else begin
+      last_fetch_enable <= fetch_enable_i;
+
+      if ((fetch_enable_i != FetchEnableOn) && (last_fetch_enable == FetchEnableOn)) begin
+        pc_at_fetch_disable <= pc_id;
+      end
+    end
+  end
+
+  // When fetch is disabled no instructions should be executed. Once fetch is disabled either the
+  // ID/EX stage is not valid or the PC of the ID/EX stage must remain as it was at disable. The
+  // ID/EX valid should not ressert once it has been cleared.
+  `ASSERT(NoExecWhenFetchEnableNotOn, fetch_enable_i != FetchEnableOn |=>
+    (~instr_valid_id || (pc_id == pc_at_fetch_disable)) && ~$rose(instr_valid_id))
+
   `endif
 
   ////////////////////////
@@ -1637,7 +1666,6 @@ module ibex_core import ibex_pkg::*; #(
 
   // Certain parameter combinations are not supported
   `ASSERT_INIT(IllegalParamSecure, !(SecureIbex && (RV32M == RV32MNone)))
-
 
   //////////
   // FCOV //
