@@ -147,6 +147,38 @@
     compare_final_value_only: 1
     verbose: 1
 
+- test: riscv_debug_triggers_test
+  description: >
+    Test stimulus includes directed routine which set the breakpoint addr forwards a few instructions.
+    This test has no pass/fail criteria, but instead is used to gather appropriate coverage.
+    // rtl_test:core_ibex_single_debug_pulse_test
+    // In combination with the test-program, this HALTREQ triggers code that then
+    // enables the DCSR.ebreakm/u functionality. From then on, EBREAK instructions trigger the
+    // DUT to run some debug-mode code to setup the next breakpoint address.
+  iterations: 5
+  gen_test: riscv_instr_base_test
+  gen_opts: >
+    +require_signature_addr=1
+    +gen_debug_section=1
+    +no_ebreak=1
+    +no_branch_jump=1
+    +instr_cnt=10000
+    +no_csr_instr=1
+    +illegal_instr_ratio=20
+    +no_fence=1
+    +num_of_sub_program=0
+    +randomize_csr=0
+    +directed_instr_0=ibex_breakpoint_stream,20
+    +uvm_set_type_override=ibex_asm_program_gen,ibex_hardware_triggers_asm_program_gen
+    +uvm_set_type_override=riscv_debug_rom_gen,ibex_hardware_triggers_debug_rom_gen
+    +uvm_set_type_override=riscv_illegal_instr,ibex_hardware_triggers_illegal_instr
+  rtl_test: core_ibex_single_debug_pulse_test
+  sim_opts: >
+    +require_signature_addr=1
+    +enable_debug_seq=1
+    +enable_bad_intg_on_uninit_access=0
+  timeout_s: 300
+
 - test: riscv_debug_stress_test
   description: >
     Randomly assert debug_req_i more often, debug_rom is empty, with only a dret instruction
