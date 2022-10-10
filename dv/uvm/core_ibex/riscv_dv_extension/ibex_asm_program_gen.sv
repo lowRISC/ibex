@@ -69,6 +69,22 @@ class ibex_asm_program_gen extends riscv_asm_program_gen;
                     instr};
   endfunction
 
+  // ECALL trap handler
+  // For riscv-dv in Ibex, ECALL is no-longer used to end the test. Hence, redefine
+  // a simple version here that just increments MEPC+4 then calls 'mret'.
+  virtual function void gen_ecall_handler(int hart);
+    string instr[$];
+    dump_perf_stats(instr);
+    gen_register_dump(instr);
+    instr = {instr,
+             $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC),
+             $sformatf("addi  x%0d, x%0d, 4", cfg.gpr[0], cfg.gpr[0]),
+             $sformatf("csrw  0x%0x, x%0d", MEPC, cfg.gpr[0])
+             };
+    instr.push_back("mret");
+    gen_section(get_label("ecall_handler", hart), instr);
+  endfunction
+
   virtual function void gen_program_header();
     // Override the mstatus_mprv config because there is no current way to randomize writing to
     // mstatus.mprv in riscv-dv (it's constrained by set_mstatus_mprv argument to have either
