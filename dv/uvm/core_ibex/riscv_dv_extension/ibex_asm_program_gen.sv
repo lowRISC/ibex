@@ -70,8 +70,9 @@ class ibex_asm_program_gen extends riscv_asm_program_gen;
   endfunction
 
   // ECALL trap handler
-  // For riscv-dv in Ibex, ECALL is no-longer used to end the test. Hence, redefine
-  // a simple version here that just increments MEPC+4 then calls 'mret'.
+  // For riscv-dv in Ibex, ECALL is no-longer used to end the test.
+  // Hence, redefine a simple version here that just increments
+  // MEPC+4 then calls 'mret'. (ECALL is always 4-bytes in RV32)
   virtual function void gen_ecall_handler(int hart);
     string instr[$];
     dump_perf_stats(instr);

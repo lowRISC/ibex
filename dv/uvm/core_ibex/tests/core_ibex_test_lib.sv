@@ -1161,6 +1161,21 @@ class core_ibex_debug_single_step_test extends core_ibex_directed_test;
 
 endclass
 
+
+class core_ibex_single_debug_pulse_test extends core_ibex_directed_test;
+
+  `uvm_component_utils(core_ibex_single_debug_pulse_test)
+  `uvm_component_new
+
+    virtual task check_stimulus();
+      vseq.debug_seq_single_h.max_interval = 0;
+      // Start as soon as device is initialized.
+      vseq.start_debug_single_seq();
+      wait (test_done === 1'b1);
+    endtask
+
+endclass
+
 // Memory interface error test class
 class core_ibex_mem_error_test extends core_ibex_directed_test;
 
