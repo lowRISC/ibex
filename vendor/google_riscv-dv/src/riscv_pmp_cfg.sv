@@ -29,7 +29,7 @@ class riscv_pmp_cfg extends uvm_object;
   bit pmp_randomize = 0;
 
   // allow pmp randomization to cause address range overlap
-  rand bit pmp_allow_addr_overlap = 0;
+  bit pmp_allow_illegal_tor = 0;
 
   // By default, after returning from a PMP exception, we return to the exact same instruction that
   // resulted in a PMP exception to begin with, creating an infinite loop of taking an exception.
@@ -116,19 +116,21 @@ class riscv_pmp_cfg extends uvm_object;
     }
   }
 
-  constraint addr_overlapping_c {
+  constraint addr_legal_tor_c {
     foreach (pmp_cfg[i]) {
-      if (!pmp_allow_addr_overlap && i > 0) {
-        pmp_cfg[i].offset > pmp_cfg[i-1].offset;
+      // In case illegal TOR regions are disallowed always add the constraint, otherwise make the
+      // remove the constraint for 1 in every XLEN entries.
+      if (i > 0 && pmp_cfg[i].a == TOR && (!pmp_allow_illegal_tor || pmp_cfg[i].addr_mode > 0)) {
+        pmp_cfg[i].addr > pmp_cfg[i-1].addr;
       }
     }
   }
 
-  // Privileged spec states that in TOR mode, offset[i-1] < offset[i]
-  constraint tor_addr_overlap_c {
+  constraint addr_napot_mode_c {
     foreach (pmp_cfg[i]) {
-      if (pmp_cfg[i].a == TOR) {
-        pmp_allow_addr_overlap == 0;
+      if (pmp_cfg[i].a == NAPOT) {
+        pmp_cfg[i].addr | ((1 << pmp_cfg[i].addr_mode) - 1) == (1 << pmp_cfg[i].addr_mode) - 1;
+        pmp_cfg[i].addr & (1 << pmp_cfg[i].addr_mode) == 0;
       }
     }
   }
@@ -144,7 +146,7 @@ class riscv_pmp_cfg extends uvm_object;
     end
     get_int_arg_value("+pmp_granularity=", pmp_granularity);
     get_bool_arg_value("+pmp_randomize=", pmp_randomize);
-    get_bool_arg_value("+pmp_allow_addr_overlap=", pmp_allow_addr_overlap);
+    get_bool_arg_value("+pmp_allow_illegal_tor=", pmp_allow_illegal_tor);
     get_bool_arg_value("+suppress_pmp_setup=", suppress_pmp_setup);
     get_bool_arg_value("+enable_write_pmp_csr=", enable_write_pmp_csr);
     get_hex_arg_value("+pmp_max_offset=", pmp_max_offset);
@@ -292,7 +294,8 @@ class riscv_pmp_cfg extends uvm_object;
   function bit [XLEN - 1 : 0] format_addr(bit [XLEN - 1 : 0] addr);
     // For all ISAs, pmpaddr CSRs do not include the bottom two bits of the input address
     bit [XLEN - 1 : 0] shifted_addr;
-    shifted_addr = addr >> 2; case (XLEN)
+    shifted_addr = addr >> 2;
+    case (XLEN)
       // RV32 - pmpaddr is bits [33:2] of the whole 34 bit address
       // Return the input address right-shifted by 2 bits
       32: begin
@@ -710,9 +713,11 @@ class riscv_pmp_cfg extends uvm_object;
              // We must immediately jump to <test_done> since the CPU is taking a PMP exception,
              // but this routine is unable to find a matching PMP region for the faulting access -
              // there is a bug somewhere.
-             // In case of MMWP mode this is expected behavior, but we still need to exit the test.
-             // The same is true for MML for execute accesses.
-             $sformatf("19: la x%0d, test_done", scratch_reg[0]),
+             // In case of MMWP mode this is expected behavior, we should try to continue.
+             $sformatf("19: csrr x%0d, 0x%0x", scratch_reg[0], MSECCFG),
+             $sformatf("andi x%0d, x%0d, 2", scratch_reg[0], scratch_reg[0]),
+             $sformatf("bnez x%0d, 27f", scratch_reg[0]),
+             $sformatf("la x%0d, test_done", scratch_reg[0]),
              $sformatf("jalr x0, x%0d, 0", scratch_reg[0])
             };
 
@@ -868,6 +873,7 @@ class riscv_pmp_cfg extends uvm_object;
                  // Increase MEPC by 4 in case instruction is compressed.
                  $sformatf("addi x%0d, x%0d, 4", scratch_reg[0], scratch_reg[0]),
                  $sformatf("csrw 0x%0x, x%0d", MEPC, scratch_reg[0]),
+                 $sformatf("j 34f"),
                  // If neither is true then try to modify the PMP permission bits.
                  // The R bit is bit 0, and 1 << 0 = 1.
                  $sformatf("29: ori x%0d, x%0d, 1", scratch_reg[3], scratch_reg[3])
