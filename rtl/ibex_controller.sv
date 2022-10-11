@@ -424,8 +424,12 @@ module ibex_controller #(
 
   assign unused_irq_timer = irqs_i.irq_timer;
 
+  // Record the debug cause outside of the FSM
+  // The decision to enter debug_mode and the write of the cause to DCSR happen
+  // in seperate steps within the FSM. Hence, there are a small number of cycles
+  // where a change in external stimulus can cause the cause to be recorded incorrectly.
   assign debug_cause_d = trigger_match_i   ? DBG_CAUSE_TRIGGER :
-                         ebreak_into_debug ? DBG_CAUSE_EBREAK  :
+                         ebrk_insn_prio    ? DBG_CAUSE_EBREAK  :
                          debug_req_i       ? DBG_CAUSE_HALTREQ :
                          do_single_step_d  ? DBG_CAUSE_STEP    :
                                              DBG_CAUSE_NONE ;
