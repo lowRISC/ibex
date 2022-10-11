@@ -99,6 +99,13 @@ class riscv_pmp_cfg extends uvm_object;
     }
   }
 
+  constraint address_modes_c {
+    foreach (pmp_cfg[i]) {
+      pmp_cfg[i].addr_mode >= 0;
+      pmp_cfg[i].addr_mode <= XLEN;
+    }
+  }
+
   constraint grain_addr_mode_c {
     foreach (pmp_cfg[i]) {
       (pmp_granularity >= 1) -> (pmp_cfg[i].a != NA4);
@@ -116,6 +123,13 @@ class riscv_pmp_cfg extends uvm_object;
     }
   }
 
+  constraint modes_before_addr_c {
+    foreach (pmp_cfg[i]) {
+      solve pmp_cfg[i].a before pmp_cfg[i].addr;
+      solve pmp_cfg[i].addr_mode before pmp_cfg[i].addr;
+    }
+  }
+
   constraint addr_legal_tor_c {
     foreach (pmp_cfg[i]) {
       // In case illegal TOR regions are disallowed always add the constraint, otherwise make the
@@ -128,9 +142,15 @@ class riscv_pmp_cfg extends uvm_object;
 
   constraint addr_napot_mode_c {
     foreach (pmp_cfg[i]) {
+      // In case NAPOT is selected make sure that we randomly select a region mode and force the
+      // address to match that mode.
       if (pmp_cfg[i].a == NAPOT) {
-        pmp_cfg[i].addr | ((1 << pmp_cfg[i].addr_mode) - 1) == (1 << pmp_cfg[i].addr_mode) - 1;
-        pmp_cfg[i].addr & (1 << pmp_cfg[i].addr_mode) == 0;
+        // Make sure the bottom addr_mode - 1 bits are set to 1.
+        (pmp_cfg[i].addr & ((1 << pmp_cfg[i].addr_mode) - 1)) == ((1 << pmp_cfg[i].addr_mode) - 1);
+        if (pmp_cfg[i].addr_mode < XLEN) {
+          // Unless the largest region is selected make sure the bit just before the ones is set to 0.
+          (pmp_cfg[i].addr & (1 << pmp_cfg[i].addr_mode)) == 0;
+        }
       }
     }
   }

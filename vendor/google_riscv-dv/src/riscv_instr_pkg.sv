@@ -1245,7 +1245,7 @@ package riscv_instr_pkg;
     // PMP generation routine.
     bit [XLEN - 1 : 0]    offset;
     // The size of the region in case of NAPOT and overlap in case of TOR.
-    bit [$clog2(XLEN) - 1 : 0] addr_mode;
+    integer addr_mode;
 `else
   typedef struct{
     rand bit                   l;
@@ -1261,7 +1261,7 @@ package riscv_instr_pkg;
     // PMP generation routine.
     rand bit [XLEN - 1 : 0]    offset;
     // The size of the region in case of NAPOT and allows for top less than bottom in TOR when 0.
-    rand bit [$clog2(XLEN) - 1 : 0] addr_mode;
+    rand integer addr_mode;
 `endif
   } pmp_cfg_reg_t;
 
