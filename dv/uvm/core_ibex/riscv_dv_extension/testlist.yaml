@@ -740,6 +740,9 @@
     +enable_bad_intg_on_uninit_access=0
   rtl_params:
     PMPEnable: 1
+  sim_opts: >
+    +is_double_fault_detected_fatal=0
+    +enable_bad_intg_on_uninit_access=0
 
 - test: riscv_pmp_full_random_test
   desc: >
@@ -751,12 +754,20 @@
   gen_test: riscv_rand_instr_test
   gen_opts: >
     +instr_cnt=6000
-    +pmp_max_offset=00024000
     +pmp_randomize=1
-    +pmp_allow_addr_overlap=1
+    +pmp_max_offset=00040000
+    +pmp_allow_illegal_tor=1
+    +directed_instr_0=riscv_load_store_rand_instr_stream,40
+    +directed_instr_1=riscv_load_store_hazard_instr_stream,40
+    +directed_instr_2=riscv_multi_page_load_store_instr_stream,40
+    +directed_instr_3=riscv_load_store_rand_addr_instr_stream,40
+  sim_opts: >
+    +is_double_fault_detected_fatal=0
+    +enable_bad_intg_on_uninit_access=0
   rtl_test: core_ibex_base_test
   rtl_params:
     PMPEnable: 1
+  timeout_s: 180
 
 - test: riscv_epmp_mml_test
   desc: >
@@ -824,6 +835,8 @@
   rtl_test: core_ibex_base_test
   rtl_params:
     PMPEnable: 1
+  sim_opts: >
+    +is_double_fault_detected_fatal=0
 
 - test: riscv_epmp_mml_read_only_test
   desc: >
@@ -854,6 +867,8 @@
     +pmp_region_15=L:1,X:1,W:1,R:1
     +enable_write_pmp_csr=1
     +mseccfg=MML:1,MMWP:0,RLB:0
+  sim_opts: >
+    +is_double_fault_detected_fatal=0
   rtl_test: core_ibex_base_test
   rtl_params:
     PMPEnable: 1
@@ -875,6 +890,8 @@
   rtl_test: core_ibex_base_test
   rtl_params:
     PMPEnable: 1
+  sim_opts: >
+    +is_double_fault_detected_fatal=0
 
 - test: riscv_epmp_rlb_test
   desc: >
