@@ -4,6 +4,9 @@
 
 class core_ibex_env_cfg extends uvm_object;
 
+  virtual clk_rst_if              ibex_clk_vif;
+  virtual core_ibex_dut_probe_if  ibex_dut_vif;
+
   bit                           enable_irq_single_seq;
   bit                           enable_irq_multiple_seq;
   bit                           enable_irq_nmi_seq;
@@ -17,7 +20,13 @@ class core_ibex_env_cfg extends uvm_object;
   bit[31:0]                     signature_addr;
   rand scrambling_key_agent_cfg scrambling_key_cfg;
 
+  // Double-Fault detection in scoreboard
+  bit                          enable_double_fault_detector = 0;
+  int unsigned                 double_fault_threshold_consecutive = 100;
+  int unsigned                 double_fault_threshold_total = 1000;
+
   `uvm_object_utils_begin(core_ibex_env_cfg)
+    `uvm_field_int(enable_double_fault_detector, UVM_DEFAULT)
     `uvm_field_int(enable_irq_single_seq,   UVM_DEFAULT)
     `uvm_field_int(enable_irq_multiple_seq,   UVM_DEFAULT)
     `uvm_field_int(enable_irq_nmi_seq,   UVM_DEFAULT)
@@ -33,6 +42,7 @@ class core_ibex_env_cfg extends uvm_object;
 
   function new(string name = "");
     super.new(name);
+    void'($value$plusargs("enable_double_fault_detector=%0d", enable_double_fault_detector));
     void'($value$plusargs("enable_irq_single_seq=%0d", enable_irq_single_seq));
     void'($value$plusargs("enable_irq_multiple_seq=%0d", enable_irq_multiple_seq));
     void'($value$plusargs("enable_irq_nmi_seq=%0d", enable_irq_nmi_seq));
