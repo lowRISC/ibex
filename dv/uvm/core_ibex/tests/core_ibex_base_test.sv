@@ -211,38 +211,51 @@ class core_ibex_base_test extends uvm_test;
     end
   endfunction
 
-  // Use a RISCV_DV handshake signature to end the test.
-  // This process uses a different signature address (cfg.signature_addr - 0x4)
+  // Watch for all of the different critera for test pass/failure here
   virtual task wait_for_test_done();
     bit result;
 
-    // Make use of the 'test_done_port' which subscribes to all memory interface items.
-    // We can then watch for the correct message in isolation.
     fork
+      // - Use a RISCV_DV handshake signature to end the test.
+      // This process uses a different signature address (cfg.signature_addr - 0x4)
+      // Make use of the 'test_done_port' which subscribes to all memory interface items.
+      // We can then watch for the correct message in isolation.
       begin
         wait_for_mem_txn((cfg.signature_addr - 4'h4), TEST_RESULT, test_done_port);
         result = signature_data_q.pop_front();
         if (result == TEST_PASS) begin
-          test_done = 1'b1;
-          `uvm_info(`gfn, "Test PASSED!", UVM_LOW)
-          vseq.stop();
-          check_perf_stats();
-          // De-assert fetch enable to finish the test
-          clk_vif.wait_clks(10);
-          dut_vif.dut_cb.fetch_enable <= ibex_pkg::FetchEnableOff;
-          // Wait some time for the remaining instruction to finish
-          clk_vif.wait_clks(3000);
+          `uvm_info(`gfn, "Test done due to RISCV-DV handshake (payload=TEST_PASS)", UVM_LOW)
         end else if (result == TEST_FAIL) begin
-          `uvm_fatal(`gfn, "Test FAILED!")
+          `uvm_fatal(`gfn, "Test failed due to RISCV-DV handshake (payload=TEST_FAIL)")
         end else begin
           `uvm_fatal(`gfn, "Incorrectly formed handshake received at test-control address.")
         end
       end
+      // - End the test if we see too many of the following...
+      //   - double_faults
+      begin
+        if (cfg.enable_double_fault_detector) begin
+          env.scoreboard.dfd_wait_for_pass_events();
+          `uvm_info(`gfn, "Test done due to double_fault detector.", UVM_LOW)
+        end else begin
+          wait (test_done == 1'b1);
+        end
+      end
+      // - End the test by timeout if it doesn't terminate within a reasonable time.
       begin
         clk_vif.wait_clks(timeout_in_cycles);
         `uvm_fatal(`gfn, "TEST TIMEOUT!!")
       end
     join_any
+
+    test_done = 1'b1;
+    vseq.stop();
+    check_perf_stats();
+    // De-assert fetch enable to finish the test
+    clk_vif.wait_clks(10);
+    dut_vif.dut_cb.fetch_enable <= ibex_pkg::FetchEnableOff;
+    // Wait some time for the remaining instruction to finish
+    clk_vif.wait_clks(3000);
   endtask
 
 
