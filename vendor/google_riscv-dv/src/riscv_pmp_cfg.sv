@@ -616,27 +616,27 @@ class riscv_pmp_cfg extends uvm_object;
   //
   // TODO(udinator) : investigate switching branch targets to named labels instead of numbers
   //                  to better clarify where the multitude of jumps are actually going to.
-  function void gen_pmp_exception_routine(riscv_reg_t scratch_reg[6],
+  function void gen_pmp_exception_routine(riscv_reg_t scratch_reg[7],
                                           exception_cause_t fault_type,
                                           ref string instr[$]);
-    // mscratch       : loop counter
     // scratch_reg[0] : temporary storage
     // scratch_reg[1] : &pmpaddr[i]
     // scratch_reg[2] : &pmpcfg[i]
     // scratch_reg[3] : 8-bit configuration fields
     // scratch_reg[4] : 2-bit pmpcfg[i].A address matching mode
     // scratch_reg[5] : holds the previous pmpaddr[i] value (necessary for TOR matching)
+    // scratch_reg[6] : loop counter
     instr = {instr,
-             //////////////////////////////////////////////////
-             // Initialize loop counter and save to mscratch //
-             //////////////////////////////////////////////////
+             ////////////////////////////////////////////////////////
+             // Initialize loop counter and save to scratch_reg[6] //
+             ////////////////////////////////////////////////////////
              $sformatf("li x%0d, 0", scratch_reg[0]),
-             $sformatf("csrw 0x%0x, x%0d", MSCRATCH, scratch_reg[0]),
+             $sformatf("mv x%0d, x%0d", scratch_reg[6], scratch_reg[0]),
              $sformatf("li x%0d, 0", scratch_reg[5]),
              ////////////////////////////////////////////////////
              // calculate next pmpaddr and pmpcfg CSRs to read //
              ////////////////////////////////////////////////////
-             $sformatf("0: csrr x%0d, 0x%0x", scratch_reg[0], MSCRATCH),
+             $sformatf("0: mv x%0d, x%0d", scratch_reg[0], scratch_reg[6]),
              $sformatf("mv x%0d, x%0d", scratch_reg[4], scratch_reg[0])
             };
     // Generate a sequence of loads and branches that will compare the loop index to every
@@ -665,12 +665,11 @@ class riscv_pmp_cfg extends uvm_object;
              // get correct 8-bit configuration fields //
              ////////////////////////////////////////////
              $sformatf("17: li x%0d, %0d", scratch_reg[3], cfg_per_csr),
-             $sformatf("csrr x%0d, 0x%0x", scratch_reg[0], MSCRATCH),
              // calculate offset to left-shift pmpcfg[i] (scratch_reg[2]),
              // use scratch_reg[4] as temporary storage
              //
              // First calculate (loop_counter % cfg_per_csr)
-             $sformatf("slli x%0d, x%0d, %0d", scratch_reg[0], scratch_reg[0],
+             $sformatf("slli x%0d, x%0d, %0d", scratch_reg[0], scratch_reg[6],
                                                XLEN - $clog2(cfg_per_csr)),
              $sformatf("srli x%0d, x%0d, %0d", scratch_reg[0], scratch_reg[0],
                                                XLEN - $clog2(cfg_per_csr)),
@@ -716,13 +715,13 @@ class riscv_pmp_cfg extends uvm_object;
              /////////////////////////////////////////////////////////////////
              // increment loop counter and branch back to beginning of loop //
              /////////////////////////////////////////////////////////////////
-             $sformatf("18: csrr x%0d, 0x%0x", scratch_reg[0], MSCRATCH),
+             $sformatf("18: mv x%0d, x%0d", scratch_reg[0], scratch_reg[6]),
              // load pmpaddr[i] into scratch_reg[5] to store for iteration [i+1]
              $sformatf("mv x%0d, x%0d", scratch_reg[5], scratch_reg[1]),
              // increment loop counter by 1
              $sformatf("addi x%0d, x%0d, 1", scratch_reg[0], scratch_reg[0]),
-             // store loop counter to MSCRATCH
-             $sformatf("csrw 0x%0x, x%0d", MSCRATCH, scratch_reg[0]),
+             // store loop counter to scratch_reg[6]
+             $sformatf("mv x%0d, x%0d", scratch_reg[6], scratch_reg[0]),
              // load number of pmp regions - loop limit
              $sformatf("li x%0d, %0d", scratch_reg[1], pmp_num_regions),
              // if counter < pmp_num_regions => branch to beginning of loop,
@@ -757,8 +756,7 @@ class riscv_pmp_cfg extends uvm_object;
 
     // Sub-section to handle address matching mode TOR.
     instr = {instr,
-
-             $sformatf("21: csrr x%0d, 0x%0x", scratch_reg[0], MSCRATCH),
+             $sformatf("21: mv x%0d, x%0d", scratch_reg[0], scratch_reg[6]),
              $sformatf("csrr x%0d, 0x%0x", scratch_reg[4], MTVAL),
              $sformatf("srli x%0d, x%0d, 2", scratch_reg[4], scratch_reg[4]),
              // If loop_counter==0, compare fault_addr to 0
@@ -904,7 +902,6 @@ class riscv_pmp_cfg extends uvm_object;
       end
     endcase
     instr = {instr,
-             $sformatf("csrr x%0d, 0x%0x", scratch_reg[0], MSCRATCH),
              // Calculate (loop_counter % cfg_per_csr) to find the index of the correct
              // entry in pmpcfg[i].
              //
@@ -913,7 +910,7 @@ class riscv_pmp_cfg extends uvm_object;
              $sformatf("li x%0d, %0d", scratch_reg[4], XLEN - $clog2(cfg_per_csr)),
              // Now leftshift and rightshift loop_counter by this amount to clear all the upper
              // bits
-             $sformatf("sll x%0d, x%0d, x%0d", scratch_reg[0], scratch_reg[0], scratch_reg[4]),
+             $sformatf("sll x%0d, x%0d, x%0d", scratch_reg[0], scratch_reg[6], scratch_reg[4]),
              $sformatf("srl x%0d, x%0d, x%0d", scratch_reg[0], scratch_reg[0], scratch_reg[4]),
              // Multiply the index by 8 to get the shift amount.
              $sformatf("slli x%0d, x%0d, 3", scratch_reg[4], scratch_reg[0]),
@@ -922,7 +919,7 @@ class riscv_pmp_cfg extends uvm_object;
              // OR pmpcfg[i] with the updated configuration byte
              $sformatf("or x%0d, x%0d, x%0d", scratch_reg[2], scratch_reg[2], scratch_reg[3]),
              // Divide the loop counter by cfg_per_csr to determine which pmpcfg CSR to write to.
-             $sformatf("csrr x%0d, 0x%0x", scratch_reg[0], MSCRATCH),
+             $sformatf("mv x%0d, x%0d", scratch_reg[0], scratch_reg[6]),
              $sformatf("srli x%0d, x%0d, %0d", scratch_reg[0], scratch_reg[0], $clog2(cfg_per_csr)),
              // Write the updated pmpcfg[i] to the CSR bank and exit the handler.
              //
