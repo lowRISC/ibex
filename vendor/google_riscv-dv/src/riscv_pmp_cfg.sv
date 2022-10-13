@@ -170,7 +170,7 @@ class riscv_pmp_cfg extends uvm_object;
     get_bool_arg_value("+suppress_pmp_setup=", suppress_pmp_setup);
     get_bool_arg_value("+enable_write_pmp_csr=", enable_write_pmp_csr);
     get_hex_arg_value("+pmp_max_offset=", pmp_max_offset);
-    `uvm_info(`gfn, $sformatf("pmp max offset: 0x%0x", pmp_max_offset), UVM_LOW)
+    `uvm_info(`gfn, $sformatf("pmp max offset: 0x%08x", pmp_max_offset), UVM_LOW)
     pmp_cfg = new[pmp_num_regions];
     pmp_cfg_addr_valid = new[pmp_num_regions];
     pmp_cfg_already_configured = new[pmp_num_regions];
@@ -194,7 +194,7 @@ class riscv_pmp_cfg extends uvm_object;
   endfunction
 
   function void set_defaults();
-    `uvm_info(`gfn, $sformatf("MAX OFFSET: 0x%0x", pmp_max_offset), UVM_LOW)
+    `uvm_info(`gfn, $sformatf("MAX OFFSET: 0x%08x", pmp_max_offset), UVM_LOW)
     mseccfg.mml  = 1'b0;
     mseccfg.mmwp = 1'b0;
     mseccfg.rlb  = 1'b1;
@@ -466,7 +466,7 @@ class riscv_pmp_cfg extends uvm_object;
         end
         // Enable the selected config on region code_entry.
         cfg_bitmask = cfg_byte << ((code_entry % cfg_per_csr) * 8);
-        `uvm_info(`gfn, $sformatf("temporary code config: 0x%0x", cfg_bitmask), UVM_DEBUG)
+        `uvm_info(`gfn, $sformatf("temporary code config: 0x%08x", cfg_bitmask), UVM_DEBUG)
         instr.push_back($sformatf("li x%0d, 0x%0x", scratch_reg[0], cfg_bitmask));
         instr.push_back($sformatf("csrw 0x%0x, x%0d", base_pmpcfg_addr + (code_entry/cfg_per_csr),
                                   scratch_reg[0]));
@@ -543,12 +543,12 @@ class riscv_pmp_cfg extends uvm_object;
       pmp_id = i / cfg_per_csr;
       cfg_byte = {pmp_cfg[i].l, pmp_cfg[i].zero, pmp_cfg[i].a,
                   pmp_cfg[i].x, pmp_cfg[i].w,    pmp_cfg[i].r};
-      `uvm_info(`gfn, $sformatf("cfg_byte: 0x%0x", cfg_byte), UVM_LOW)
+      `uvm_info(`gfn, $sformatf("cfg_byte: 0x%02x", cfg_byte), UVM_LOW)
       // First write to the appropriate pmpaddr CSR.
       cfg_bitmask = cfg_byte << ((i % cfg_per_csr) * 8);
-      `uvm_info(`gfn, $sformatf("cfg_bitmask: 0x%0x", cfg_bitmask), UVM_DEBUG)
+      `uvm_info(`gfn, $sformatf("cfg_bitmask: 0x%08x", cfg_bitmask), UVM_DEBUG)
       pmp_word = pmp_word | cfg_bitmask;
-      `uvm_info(`gfn, $sformatf("pmp_word: 0x%0x", pmp_word), UVM_DEBUG)
+      `uvm_info(`gfn, $sformatf("pmp_word: 0x%08x", pmp_word), UVM_DEBUG)
       cfg_bitmask = 0;
       // If an actual address has been set from the command line, use this address,
       // otherwise use the default <main> + offset.
@@ -567,7 +567,7 @@ class riscv_pmp_cfg extends uvm_object;
           // In case an address was supplied by the test or full randomize is enabled.
           instr.push_back($sformatf("li x%0d, 0x%0x", scratch_reg[0], pmp_cfg[i].addr));
           instr.push_back($sformatf("csrw 0x%0x, x%0d", base_pmp_addr + i, scratch_reg[0]));
-          `uvm_info(`gfn, $sformatf("Address 0x%0x loaded into pmpaddr[%d] CSR", pmp_cfg[i].addr, i),
+          `uvm_info(`gfn, $sformatf("Value 0x%08x loaded into pmpaddr[%d] CSR, corresponding to address 0x%0x", pmp_cfg[i].addr, i, pmp_cfg[i].addr << 2),
                     UVM_LOW);
         end else begin
           // Add the offset to the base address to get the other pmpaddr values.
@@ -577,7 +577,7 @@ class riscv_pmp_cfg extends uvm_object;
                                     scratch_reg[0], scratch_reg[0], scratch_reg[1]));
           instr.push_back($sformatf("srli x%0d, x%0d, 2", scratch_reg[0], scratch_reg[0]));
           instr.push_back($sformatf("csrw 0x%0x, x%0d", base_pmp_addr + i, scratch_reg[0]));
-          `uvm_info(`gfn, $sformatf("Offset of pmp_addr_%d from main: 0x%0x", i,
+          `uvm_info(`gfn, $sformatf("Offset of pmp_addr_%d from main: 0x%08x", i,
                                     pmp_cfg[i].offset), UVM_LOW)
         end
       end
