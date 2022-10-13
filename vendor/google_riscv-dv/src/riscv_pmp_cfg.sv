@@ -406,15 +406,12 @@ class riscv_pmp_cfg extends uvm_object;
           `uvm_info(`gfn, $sformatf("Address of pmp_addr_%d is _start", code_entry - 1), UVM_LOW)
           pmp_cfg_already_configured[code_entry - 1] = 1'b1;
         end
-        // Load the address of the <main> + offset into PMP code entry.
-        instr.push_back($sformatf("la x%0d, main", scratch_reg[0]));
-        instr.push_back($sformatf("li x%0d, 0x%0x", scratch_reg[1], pmp_cfg[code_entry].offset));
-        instr.push_back($sformatf("add x%0d, x%0d, x%0d", scratch_reg[0], scratch_reg[0],
-                                  scratch_reg[1]));
+        // Load the address of the kernel_instr_end into PMP code entry.
+        instr.push_back($sformatf("la x%0d, kernel_instr_end", scratch_reg[0]));
         instr.push_back($sformatf("srli x%0d, x%0d, 2", scratch_reg[0], scratch_reg[0]));
         instr.push_back($sformatf("csrw 0x%0x, x%0d", base_pmp_addr + code_entry, scratch_reg[0]));
-        `uvm_info(`gfn, $sformatf("Offset of pmp_addr_%d from main: 0x%0x", code_entry,
-                                  pmp_cfg[code_entry].offset), UVM_LOW)
+        `uvm_info(`gfn, $sformatf("Address of pmp_addr_%d is kernel_instr_end", code_entry),
+                  UVM_LOW)
         pmp_cfg_already_configured[code_entry] = 1'b1;
 
         if (mseccfg.mml) begin
