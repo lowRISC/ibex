@@ -1127,4 +1127,8 @@ module ibex_top import ibex_pkg::*; #(
 
   `ASSERT_KNOWN(IbexDebugReqX, debug_req_i)
   `ASSERT_KNOWN(IbexFetchEnableX, fetch_enable_i)
+
+  // Dummy instructions may only write to register 0, which is a special register when dummy
+  // instructions are enabled.
+  `ASSERT(WaddrAZeroForDummyInstr, dummy_instr_id && rf_we_wb |-> rf_waddr_wb == '0)
 endmodule
