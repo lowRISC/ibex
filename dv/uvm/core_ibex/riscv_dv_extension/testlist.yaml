@@ -757,9 +757,7 @@
     +instr_cnt=6000
     +pmp_max_offset=00024000
     +pmp_randomize=1
-    +pmp_allow_illegal_tor=1
-  sim_opts: >
-    +enable_double_fault_detector=1
+    +pmp_allow_addr_overlap=1
   rtl_test: core_ibex_base_test
   rtl_params:
     PMPEnable: 1
