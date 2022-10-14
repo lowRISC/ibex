@@ -236,6 +236,10 @@ class core_ibex_base_test extends uvm_test;
       begin
         if (cfg.enable_double_fault_detector) begin
           env.scoreboard.dfd_wait_for_pass_events();
+          if (cfg.is_double_fault_detected_fatal) begin
+            `uvm_fatal(`gfn, "Fatal threshold for double_fault detector reached.")
+          end
+          // If we get here, join this fork to end the test gracefully.
           `uvm_info(`gfn, "Test done due to double_fault detector.", UVM_LOW)
         end else begin
           wait (test_done == 1'b1);
