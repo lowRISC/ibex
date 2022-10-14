@@ -95,6 +95,12 @@ class Cosim {
   // When an NMI is due to be taken that will occur at the next call of `step`.
   virtual void set_nmi(bool nmi) = 0;
 
+  // Set the state of the internal NMI (non-maskable interrupt) line.
+  // Behaviour wise this is almost as same as external NMI case explained at
+  // set_nmi method. Difference is that this one is a response from Ibex rather
+  // than an input.
+  virtual void set_nmi_int(bool nmi_int) = 0;
+
   // Set the debug request.
   //
   // When set to true the core will enter debug mode at the next step

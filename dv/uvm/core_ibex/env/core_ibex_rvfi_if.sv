@@ -28,6 +28,7 @@ interface core_ibex_rvfi_if(input logic clk);
   logic [31:0] mem_wdata;
   logic [31:0] ext_mip;
   logic        ext_nmi;
+  logic        ext_nmi_int;
   logic [31:0] ext_debug_req;
   logic [63:0] ext_mcycle;
 
@@ -61,6 +62,7 @@ interface core_ibex_rvfi_if(input logic clk);
     input mem_wdata;
     input ext_mip;
     input ext_nmi;
+    input ext_nmi_int;
     input ext_debug_req;
     input ext_mcycle;
     input ext_mhpmcounters;

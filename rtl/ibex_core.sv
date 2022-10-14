@@ -139,6 +139,7 @@ module ibex_core import ibex_pkg::*; #(
   output logic [31:0]                  rvfi_mem_wdata,
   output logic [31:0]                  rvfi_ext_mip,
   output logic                         rvfi_ext_nmi,
+  output logic                         rvfi_ext_nmi_int,
   output logic                         rvfi_ext_debug_req,
   output logic [63:0]                  rvfi_ext_mcycle,
   output logic [31:0]                  rvfi_ext_mhpmcounters [10],
@@ -1235,9 +1236,11 @@ module ibex_core import ibex_pkg::*; #(
 
   logic            new_debug_req;
   logic            new_nmi;
+  logic            new_nmi_int;
   logic            new_irq;
   ibex_pkg::irqs_t captured_mip;
   logic            captured_nmi;
+  logic            captured_nmi_int;
   logic            captured_debug_req;
   logic            captured_valid;
 
@@ -1245,6 +1248,7 @@ module ibex_core import ibex_pkg::*; #(
   // debug_req and MIP captured at IF -> ID transition so one extra stage
   ibex_pkg::irqs_t rvfi_ext_stage_mip              [RVFI_STAGES+1];
   logic            rvfi_ext_stage_nmi              [RVFI_STAGES+1];
+  logic            rvfi_ext_stage_nmi_int          [RVFI_STAGES+1];
   logic            rvfi_ext_stage_debug_req        [RVFI_STAGES+1];
   logic [63:0]     rvfi_ext_stage_mcycle           [RVFI_STAGES];
   logic [31:0]     rvfi_ext_stage_mhpmcounters     [RVFI_STAGES][10];
@@ -1293,6 +1297,7 @@ module ibex_core import ibex_pkg::*; #(
   end
 
   assign rvfi_ext_nmi              = rvfi_ext_stage_nmi              [RVFI_STAGES];
+  assign rvfi_ext_nmi_int          = rvfi_ext_stage_nmi_int          [RVFI_STAGES];
   assign rvfi_ext_debug_req        = rvfi_ext_stage_debug_req        [RVFI_STAGES];
   assign rvfi_ext_mcycle           = rvfi_ext_stage_mcycle           [RVFI_STAGES-1];
   assign rvfi_ext_mhpmcounters     = rvfi_ext_stage_mhpmcounters     [RVFI_STAGES-1];
@@ -1380,6 +1385,7 @@ module ibex_core import ibex_pkg::*; #(
   // appropriately.
   assign new_debug_req = (debug_req_i & ~debug_mode);
   assign new_nmi = irq_nm_i & ~nmi_mode & ~debug_mode;
+  assign new_nmi_int = id_stage_i.controller_i.irq_nm_int & ~nmi_mode & ~debug_mode;
   assign new_irq = irq_pending_o & csr_mstatus_mie & ~nmi_mode & ~debug_mode;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -1387,13 +1393,16 @@ module ibex_core import ibex_pkg::*; #(
       captured_valid     <= 1'b0;
       captured_mip       <= '0;
       captured_nmi       <= 1'b0;
+      captured_nmi_int   <= 1'b0;
       captured_debug_req <= 1'b0;
     end else  begin
       // Capture when ID stage has emptied out and something occurs that will cause a trap and we
       // haven't yet captured
-      if (~instr_valid_id & (new_debug_req | new_irq | new_nmi) & ~captured_valid) begin
+      if (~instr_valid_id & (new_debug_req | new_irq | new_nmi | new_nmi_int) &
+          ~captured_valid) begin
         captured_valid     <= 1'b1;
         captured_nmi       <= irq_nm_i;
+        captured_nmi_int   <= id_stage_i.controller_i.irq_nm_int;
         captured_mip       <= cs_registers_i.mip;
         captured_debug_req <= debug_req_i;
       end
@@ -1415,12 +1424,16 @@ module ibex_core import ibex_pkg::*; #(
     if (!rst_ni) begin
       rvfi_ext_stage_mip[0]       <= '0;
       rvfi_ext_stage_nmi[0]       <= '0;
+      rvfi_ext_stage_nmi_int[0]   <= '0;
       rvfi_ext_stage_debug_req[0] <= '0;
     end else if (if_stage_i.instr_valid_id_d & if_stage_i.instr_new_id_d) begin
       rvfi_ext_stage_mip[0]       <= instr_valid_id | ~captured_valid ? cs_registers_i.mip :
                                                                         captured_mip;
       rvfi_ext_stage_nmi[0]       <= instr_valid_id | ~captured_valid ? irq_nm_i :
                                                                         captured_nmi;
+      rvfi_ext_stage_nmi_int[0]   <=
+        instr_valid_id | ~captured_valid ? id_stage_i.controller_i.irq_nm_int :
+                                           captured_nmi_int;
       rvfi_ext_stage_debug_req[0] <= instr_valid_id | ~captured_valid ? debug_req_i        :
                                                                         captured_debug_req;
     end
@@ -1454,6 +1467,7 @@ module ibex_core import ibex_pkg::*; #(
         rvfi_stage_mem_addr[i]             <= '0;
         rvfi_ext_stage_mip[i+1]            <= '0;
         rvfi_ext_stage_nmi[i+1]            <= '0;
+        rvfi_ext_stage_nmi_int[i+1]        <= '0;
         rvfi_ext_stage_debug_req[i+1]      <= '0;
         rvfi_ext_stage_mcycle[i]           <= '0;
         rvfi_ext_stage_mhpmcounters[i]     <= '{10{'0}};
@@ -1489,6 +1503,7 @@ module ibex_core import ibex_pkg::*; #(
             rvfi_stage_mem_addr[i]             <= rvfi_mem_addr_d;
             rvfi_ext_stage_mip[i+1]            <= rvfi_ext_stage_mip[i];
             rvfi_ext_stage_nmi[i+1]            <= rvfi_ext_stage_nmi[i];
+            rvfi_ext_stage_nmi_int[i+1]        <= rvfi_ext_stage_nmi_int[i];
             rvfi_ext_stage_debug_req[i+1]      <= rvfi_ext_stage_debug_req[i];
             rvfi_ext_stage_mcycle[i]           <= cs_registers_i.mcycle_counter_i.counter_val_o;
             rvfi_ext_stage_ic_scr_key_valid[i] <= cs_registers_i.cpuctrlsts_ic_scr_key_valid_q;
@@ -1531,6 +1546,7 @@ module ibex_core import ibex_pkg::*; #(
 
             rvfi_ext_stage_mip[i+1]            <= rvfi_ext_stage_mip[i];
             rvfi_ext_stage_nmi[i+1]            <= rvfi_ext_stage_nmi[i];
+            rvfi_ext_stage_nmi_int[i+1]        <= rvfi_ext_stage_nmi_int[i];
             rvfi_ext_stage_debug_req[i+1]      <= rvfi_ext_stage_debug_req[i];
             rvfi_ext_stage_mcycle[i]           <= rvfi_ext_stage_mcycle[i-1];
             rvfi_ext_stage_ic_scr_key_valid[i] <= rvfi_ext_stage_ic_scr_key_valid[i-1];
