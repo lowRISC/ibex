@@ -36,7 +36,8 @@ class ibex_mem_intf_response_agent_cfg extends uvm_object;
   // Default set to 50% for zero delay to be picked
   int unsigned zero_delay_pct = 50;
 
-  `uvm_object_new
+  // CONTROL_KNOB : enable/disable to generation of bad integrity upon uninit accesses
+  bit enable_bad_intg_on_uninit_access = 1;
 
   constraint zero_delays_c {
     zero_delays dist {1 :/ zero_delay_pct,
@@ -52,5 +53,10 @@ class ibex_mem_intf_response_agent_cfg extends uvm_object;
     `uvm_field_int(zero_delays,               UVM_DEFAULT)
     `uvm_field_int(zero_delay_pct,            UVM_DEFAULT)
   `uvm_object_utils_end
+
+  function new(string name = "");
+    super.new(name);
+    void'($value$plusargs("enable_bad_intg_on_uninit_access=%0d", enable_bad_intg_on_uninit_access));
+  endfunction
 
 endclass
