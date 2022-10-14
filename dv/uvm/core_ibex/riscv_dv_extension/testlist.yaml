@@ -845,6 +845,8 @@
     +pmp_region_15=L:1,X:1,W:1,R:1
     +enable_write_pmp_csr=1
     +mseccfg=MML:1,MMWP:0,RLB:0
+  sim_opts: >
+    +enable_double_fault_detector=1
   rtl_test: core_ibex_base_test
   rtl_params:
     PMPEnable: 1
