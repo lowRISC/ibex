@@ -10,6 +10,7 @@ class ibex_rvfi_seq_item extends uvm_sequence_item;
   bit [63:0] order;
   bit [31:0] mip;
   bit        nmi;
+  bit        nmi_int;
   bit        debug_req;
   bit [63:0] mcycle;
 
@@ -25,6 +26,7 @@ class ibex_rvfi_seq_item extends uvm_sequence_item;
     `uvm_field_int (order, UVM_DEFAULT)
     `uvm_field_int (mip, UVM_DEFAULT)
     `uvm_field_int (nmi, UVM_DEFAULT)
+    `uvm_field_int (nmi_int, UVM_DEFAULT)
     `uvm_field_int (debug_req, UVM_DEFAULT)
     `uvm_field_int (mcycle, UVM_DEFAULT)
     `uvm_field_sarray_int (mhpmcounters, UVM_DEFAULT)

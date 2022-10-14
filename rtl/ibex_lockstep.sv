@@ -425,6 +425,7 @@ module ibex_lockstep import ibex_pkg::*; #(
     .rvfi_mem_wdata            (),
     .rvfi_ext_mip              (),
     .rvfi_ext_nmi              (),
+    .rvfi_ext_nmi_int          (),
     .rvfi_ext_debug_req        (),
     .rvfi_ext_mcycle           (),
     .rvfi_ext_mhpmcounters     (),

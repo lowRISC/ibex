@@ -28,6 +28,11 @@ void riscv_cosim_set_nmi(Cosim *cosim, svBit nmi) {
   cosim->set_nmi(nmi);
 }
 
+void riscv_cosim_set_nmi_int(Cosim *cosim, svBit nmi_int) {
+  assert(cosim);
+
+  cosim->set_nmi_int(nmi_int);
+}
 void riscv_cosim_set_debug_req(Cosim *cosim, svBit debug_req) {
   assert(cosim);
 

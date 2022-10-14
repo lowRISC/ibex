@@ -14,6 +14,7 @@ import "DPI-C" function int riscv_cosim_step(chandle cosim_handle, bit [4:0] wri
   bit [31:0] write_reg_data, bit [31:0] pc, bit sync_trap);
 import "DPI-C" function void riscv_cosim_set_mip(chandle cosim_handle, bit [31:0] mip);
 import "DPI-C" function void riscv_cosim_set_nmi(chandle cosim_handle, bit nmi);
+import "DPI-C" function void riscv_cosim_set_nmi_int(chandle cosim_handle, bit nmi_int);
 import "DPI-C" function void riscv_cosim_set_debug_req(chandle cosim_handle, bit debug_req);
 import "DPI-C" function void riscv_cosim_set_mcycle(chandle cosim_handle, bit [63:0] mcycle);
 import "DPI-C" function void riscv_cosim_set_csr(chandle cosim_handle, int csr_id,
