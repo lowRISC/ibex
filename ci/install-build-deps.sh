@@ -11,13 +11,13 @@ set -e
 [ -f /etc/os-release ] || (echo "/etc/os-release doesn't exist."; exit 1)
 . /etc/os-release
 
-[ ! -z "$VERILATOR_VERSION" ] || (echo "VERILATOR_VERSION must be set."; exit 1)
-[ ! -z "$VERIBLE_VERSION" ] || (echo "VERIBLE_VERSION must be set."; exit 1)
-[ ! -z "$RISCV_TOOLCHAIN_TAR_VERSION" ] || (echo "RISCV_TOOLCHAIN_TAR_VERSION must be set."; exit 1)
-[ ! -z "$RISCV_TOOLCHAIN_TAR_VARIANT" ] || (echo "RISCV_TOOLCHAIN_TAR_VARIANT must be set."; exit 1)
+[ -n "$VERILATOR_VERSION" ] || (echo "VERILATOR_VERSION must be set."; exit 1)
+[ -n "$VERIBLE_VERSION" ] || (echo "VERIBLE_VERSION must be set."; exit 1)
+[ -n "$RISCV_TOOLCHAIN_TAR_VERSION" ] || (echo "RISCV_TOOLCHAIN_TAR_VERSION must be set."; exit 1)
+[ -n "$RISCV_TOOLCHAIN_TAR_VARIANT" ] || (echo "RISCV_TOOLCHAIN_TAR_VARIANT must be set."; exit 1)
 
 SUDO_CMD=""
-if [ $(id -u) -ne 0 ]; then
+if [ "$(id -u)" -ne 0 ]; then
   SUDO_CMD="sudo "
 fi
 
@@ -51,16 +51,16 @@ case "$ID-$VERSION_ID" in
         wget \
         xz-utils
 
-    wget https://storage.googleapis.com/ibex-cosim-builds/ibex-cosim-$IBEX_COSIM_VERSION.tar.gz
+    wget https://storage.googleapis.com/ibex-cosim-builds/ibex-cosim-"$IBEX_COSIM_VERSION".tar.gz
     $SUDO_CMD mkdir -p /tools/riscv-isa-sim
     $SUDO_CMD chmod 777 /tools/riscv-isa-sim
-    $SUDO_CMD tar -C /tools/riscv-isa-sim -xvzf ibex-cosim-$IBEX_COSIM_VERSION.tar.gz --strip-components=1
+    $SUDO_CMD tar -C /tools/riscv-isa-sim -xvzf ibex-cosim-"$IBEX_COSIM_VERSION".tar.gz --strip-components=1
     echo "##vso[task.prependpath]/tools/riscv-isa-sim/bin"
 
-    wget https://storage.googleapis.com/verilator-builds/verilator-$VERILATOR_VERSION.tar.gz
+    wget https://storage.googleapis.com/verilator-builds/verilator-"$VERILATOR_VERSION".tar.gz
     $SUDO_CMD mkdir -p /tools/verilator
     $SUDO_CMD chmod 777 /tools/verilator
-    $SUDO_CMD tar -C /tools/verilator -xvzf verilator-$VERILATOR_VERSION.tar.gz
+    $SUDO_CMD tar -C /tools/verilator -xvzf verilator-"$VERILATOR_VERSION".tar.gz
     echo "##vso[task.prependpath]/tools/verilator/$VERILATOR_VERSION/bin"
     # Python dependencies
     #
