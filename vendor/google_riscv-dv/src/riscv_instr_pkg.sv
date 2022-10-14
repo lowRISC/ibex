@@ -1208,7 +1208,7 @@ package riscv_instr_pkg;
     WAW_HAZARD
   } hazard_e;
 
-  bit [11:0] default_include_csr_write[$] = {MSCRATCH};
+  riscv_csr_t default_include_csr_write[$] = {MSCRATCH};
 
   `include "riscv_core_setting.sv"
 
