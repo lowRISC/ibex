@@ -17,6 +17,7 @@ class core_ibex_vseq extends uvm_sequence;
   irq_drop_seq                                  irq_drop_seq_h;
   debug_seq                                     debug_seq_stress_h;
   debug_seq                                     debug_seq_single_h;
+  fetch_enable_seq                              fetch_enable_seq_h;
   core_ibex_env_cfg                             cfg;
   bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0]  data;
 
@@ -35,8 +36,17 @@ class core_ibex_vseq extends uvm_sequence;
     instr_intf_seq.m_mem = mem;
     data_intf_seq.m_mem  = mem;
     fork
-       instr_intf_seq.start(p_sequencer.instr_if_seqr);
-       data_intf_seq.start(p_sequencer.data_if_seqr);
+      instr_intf_seq.start(p_sequencer.instr_if_seqr);
+      data_intf_seq.start(p_sequencer.data_if_seqr);
+
+      if (!cfg.disable_fetch_enable_seq) begin
+        fetch_enable_seq_h = fetch_enable_seq::type_id::create("fetch_enable_seq_h");
+        fetch_enable_seq_h.iteration_modes = InfiniteRuns;
+        fetch_enable_seq_h.stimulus_delay_cycles_min = 1000;
+        fetch_enable_seq_h.stimulus_delay_cycles_max = 2000;
+
+        fetch_enable_seq_h.start(null);
+      end
     join_none
   endtask // pre_body
 
