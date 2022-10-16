@@ -60,6 +60,11 @@ class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
       enable_error = 1'b0;
       error_synch = 1'b1;
       aligned_addr = {req.addr[DATA_WIDTH-1:2], 2'b0};
+      // Do not inject any error to the handshake test_control_addr
+      // TODO: Parametrize this. Until then, this needs to be changed manually.
+      if (aligned_addr inside {32'h8ffffff8, 32'h8ffffffc}) begin
+        req.error = 1'b0;
+      end
       if (req.error) begin
         `DV_CHECK_STD_RANDOMIZE_FATAL(rand_data)
         req.data = rand_data;
