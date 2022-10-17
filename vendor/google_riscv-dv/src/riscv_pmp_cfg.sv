@@ -114,12 +114,7 @@ class riscv_pmp_cfg extends uvm_object;
 
   constraint addr_range_c {
     foreach (pmp_cfg[i]) {
-      // Offset of pmp_cfg[0] is always set to 0 from main.
-      if (i != 0) {
-        pmp_cfg[i].offset inside {[1 : pmp_max_offset]};
-      } else {
-        pmp_cfg[i].offset == 0;
-      }
+      pmp_cfg[i].offset inside {[1 : pmp_max_offset]};
     }
   }
 
@@ -135,7 +130,7 @@ class riscv_pmp_cfg extends uvm_object;
       // In case illegal TOR regions are disallowed always add the constraint, otherwise make the
       // remove the constraint for 1 in every XLEN entries.
       if (i > 0 && pmp_cfg[i].a == TOR && (!pmp_allow_illegal_tor || pmp_cfg[i].addr_mode > 0)) {
-        pmp_cfg[i].addr > pmp_cfg[i-1].addr;
+        pmp_cfg[i].offset > pmp_cfg[i-1].offset;
       }
     }
   }
@@ -560,7 +555,7 @@ class riscv_pmp_cfg extends uvm_object;
       //
       // Only set the address if it has not already been configured in the above routine.
       if (pmp_cfg_already_configured[i] == 1'b0 || pmp_cfg_addr_valid[i]) begin
-        if (pmp_cfg_addr_valid[i] || pmp_randomize) begin
+        if (pmp_cfg_addr_valid[i] || (pmp_randomize && pmp_cfg[i].a == NAPOT)) begin
           // In case an address was supplied by the test or full randomize is enabled.
           instr.push_back($sformatf("li x%0d, 0x%0x", scratch_reg[0], pmp_cfg[i].addr));
           instr.push_back($sformatf("csrw 0x%0x, x%0d", base_pmp_addr + i, scratch_reg[0]));
