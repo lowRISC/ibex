@@ -390,7 +390,7 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
                                                     MML_XRM, MML_XRM_XU, MML_RM_RU} &&
              binsof(cp_priv_lvl_dside) intersect {PRIV_LVL_M} &&
              binsof(cp_req_type_dside) intersect {PMP_ACC_WRITE} &&
-             binsof(pmp_dside_req_err) intersect {1});
+             binsof(pmp_dside_req_err) intersect {0});
           illegal_bins illegal_user_allow_write =
             // Ensuring MML is high and we are not in a W allowed configuration in User Mode
             (binsof(cp_region_priv_bits) intersect {MML_NONE, MML_RU, MML_WRM_RU, MML_XU, MML_XRU,
@@ -398,7 +398,7 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
                                                     MML_XRM, MML_XRM_XU, MML_RM_RU} &&
              binsof(cp_priv_lvl_dside) intersect {PRIV_LVL_U} &&
              binsof(cp_req_type_dside) intersect {PMP_ACC_WRITE} &&
-             binsof(pmp_dside_req_err) intersect {1});
+             binsof(pmp_dside_req_err) intersect {0});
 
           // Will never see a write access denied when write is allowed
           illegal_bins illegal_deny_write =
