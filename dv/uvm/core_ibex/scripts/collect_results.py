@@ -165,8 +165,6 @@ def main() -> int:
                 if trr.passed:
                     passing_tests.append(trr)
                 else:
-                    if (trr.failure_mode == Failure_Modes.TIMEOUT):
-                        trr.failure_message = f"[FAILURE] Simulation timed-out [{trr.timeout_s}s].\n"
                     failing_tests.append(trr)
             except RuntimeError as e:
                 failing_tests.append(

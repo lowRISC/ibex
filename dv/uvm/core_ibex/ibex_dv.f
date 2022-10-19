@@ -100,6 +100,8 @@ ${PRJ_DIR}/rtl/ibex_top.sv
 ${PRJ_DIR}/rtl/ibex_top_tracing.sv
 
 // Core DV files
++incdir+${PRJ_DIR}/dv/uvm/core_ibex/common
+${PRJ_DIR}/dv/uvm/core_ibex/common/date.c
 ${PRJ_DIR}/vendor/google_riscv-dv/src/riscv_signature_pkg.sv
 +incdir+${LOWRISC_IP_DIR}/dv/sv/dv_utils
 +incdir+${LOWRISC_IP_DIR}/dv/sv/dv_base_reg

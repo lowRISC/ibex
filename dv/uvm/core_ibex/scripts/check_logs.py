@@ -39,15 +39,19 @@ def compare_test_run(trr: TestRunResult) -> TestRunResult:
     # Have a look at the UVM log. Report a failure if an issue is seen.
     try:
         logger.debug(f"About to do Log processing: {trr.rtl_log}")
-        uvm_pass, uvm_log_lines = check_ibex_uvm_log(trr.rtl_log)
+        uvm_pass, uvm_log_lines, uvm_failure_mode = check_ibex_uvm_log(trr.rtl_log)
     except IOError as e:
         trr.passed = False
         trr.failure_mode = Failure_Modes.FILE_ERROR
         trr.failure_message = f"[FAILED] Could not open simulation log: {e}\n"
         return trr
     if not uvm_pass:
-        trr.failure_mode = Failure_Modes.LOG_ERROR
-        trr.failure_message = f"\n[FAILURE]: sim error seen in '{trr.rtl_log.name}'\n"
+        trr.failure_mode = uvm_failure_mode
+        if uvm_failure_mode == Failure_Modes.TIMEOUT:
+            trr.failure_message = "[FAILURE] Simulation ended gracefully due to timeout " \
+                                 f"[{trr.timeout_s}s].\n"
+        else:
+            trr.failure_message = f"\n[FAILED]: error seen in '{trr.rtl_log.name}'\n"
         if uvm_log_lines:
             trr.failure_message += \
                 "---------------*LOG-EXTRACT*----------------\n" + \
