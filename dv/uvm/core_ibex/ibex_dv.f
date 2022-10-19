@@ -129,13 +129,14 @@ ${LOWRISC_IP_DIR}/dv/sv/mem_model/mem_model_pkg.sv
 ${LOWRISC_IP_DIR}/dv/sv/push_pull_agent/push_pull_if.sv
 ${LOWRISC_IP_DIR}/dv/sv/push_pull_agent/push_pull_agent_pkg.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/common/ibex_mem_intf_agent/ibex_mem_intf.sv
-${PRJ_DIR}/dv/uvm/core_ibex/common/ibex_mem_intf_agent/ibex_mem_intf_agent_pkg.sv
+${PRJ_DIR}/dv/uvm/core_ibex/common/ibex_mem_intf_agent/ibex_mem_intf_pkg.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/common/irq_agent/irq_if.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/common/irq_agent/irq_agent_pkg.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/env/core_ibex_rvfi_if.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/common/ibex_cosim_agent/core_ibex_ifetch_if.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/common/ibex_cosim_agent/core_ibex_ifetch_pmp_if.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/common/ibex_cosim_agent/ibex_cosim_agent_pkg.sv
+${PRJ_DIR}/dv/uvm/core_ibex/common/ibex_mem_intf_agent/ibex_mem_intf_agent_pkg.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/env/core_ibex_instr_monitor_if.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/env/core_ibex_dut_probe_if.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/env/core_ibex_csr_if.sv
