@@ -78,6 +78,8 @@ def _main() -> int:
         user_subst_options=subst_vars_dict)
     logger.info(sim_cmds)
 
+    trr.timeout_s = (testopts.get('timeout_s') if (testopts.get('timeout_s') is not None) else
+                     md.run_rtl_timeout_s)
     trr.dir_test.mkdir(exist_ok=True, parents=True)
     trr.rtl_cmds   = [format_to_cmd(cmd) for cmd in sim_cmds]
     trr.rtl_stdout = trr.dir_test / 'rtl_sim_stdstreams.log'
@@ -95,7 +97,7 @@ def _main() -> int:
                 sim_fd.write(f"Running run-rtl command :\n{' '.join(cmd)}\n".encode())
                 run_one(md.verbose, cmd,
                         redirect_stdstreams=sim_fd,
-                        timeout_s=md.run_rtl_timeout_s,
+                        timeout_s=trr.timeout_s,
                         reraise=True)  # Allow us to catch timeout exceptions at this level
         except subprocess.TimeoutExpired:
             trr.failure_mode = Failure_Modes.TIMEOUT

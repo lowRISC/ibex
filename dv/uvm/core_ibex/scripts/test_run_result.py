@@ -41,6 +41,7 @@ class TestRunResult(scripts_lib.testdata_cls):
     # Message describing failure, includes a '[FAILED]: XXXX' line at the end.
     failure_mode: Optional[Failure_Modes] = None
     failure_message: Optional[str] = None
+    timeout_s: Optional[int] = None
 
     testdotseed: Optional[str] = None
     testname: Optional[str] = None        # Name of test
