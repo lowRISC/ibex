@@ -46,6 +46,8 @@ def _main() -> int:
     if sim_opts_raw:
         sim_opts += sim_opts_raw.replace('\n', '')
 
+    trr.timeout_s = (testopts.get('timeout_s') if (testopts.get('timeout_s') is not None) else
+                     md.run_rtl_timeout_s)
     trr.rtl_log         = trr.dir_test / 'rtl_sim.log'
     trr.rtl_trace       = trr.dir_test / 'trace_core_00000000.log'
     trr.iss_cosim_trace = trr.dir_test / f'{md.iss}_cosim_trace_core_00000000.log'
@@ -62,6 +64,7 @@ def _main() -> int:
         'rtl_trace': trr.rtl_trace.parent/'trace_core',
         'iss_cosim_trace': trr.iss_cosim_trace,
         'sim_opts': (f"+signature_addr={md.signature_addr}\n" +
+                     f"+test_timeout_s={trr.timeout_s}\n" +
                      f"{get_sim_opts(md.ibex_config, md.simulator)}\n" +
                      sim_opts)
     }
@@ -78,8 +81,6 @@ def _main() -> int:
         user_subst_options=subst_vars_dict)
     logger.info(sim_cmds)
 
-    trr.timeout_s = (testopts.get('timeout_s') if (testopts.get('timeout_s') is not None) else
-                     md.run_rtl_timeout_s)
     trr.dir_test.mkdir(exist_ok=True, parents=True)
     trr.rtl_cmds   = [format_to_cmd(cmd) for cmd in sim_cmds]
     trr.rtl_stdout = trr.dir_test / 'rtl_sim_stdstreams.log'
@@ -97,10 +98,12 @@ def _main() -> int:
                 sim_fd.write(f"Running run-rtl command :\n{' '.join(cmd)}\n".encode())
                 run_one(md.verbose, cmd,
                         redirect_stdstreams=sim_fd,
-                        timeout_s=trr.timeout_s,
+                        timeout_s=md.run_rtl_timeout_s+60,  # Ideally we time-out inside the simulation
                         reraise=True)  # Allow us to catch timeout exceptions at this level
         except subprocess.TimeoutExpired:
             trr.failure_mode = Failure_Modes.TIMEOUT
+            trr.failure_message = "[FAILURE] Simulation process killed due to timeout " \
+                                 f"[{md.run_rtl_timeout_s+60}s].\n"
 
     trr.export(write_yaml=True)
     # Always return 0 (success), even if the test failed. We've successfully

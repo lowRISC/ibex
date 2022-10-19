@@ -2,6 +2,8 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
+`include "date_dpi.svh"
+
 class core_ibex_base_test extends uvm_test;
 
   core_ibex_env                                   env;
@@ -14,6 +16,7 @@ class core_ibex_base_test extends uvm_test;
   mem_model_pkg::mem_model                        mem;
   core_ibex_vseq                                  vseq;
   bit                                             enable_irq_seq;
+  longint                                         timeout_seconds = 1800; // wall-clock seconds
   int unsigned                                    timeout_in_cycles = 100000000;
   int unsigned                                    max_quit_count  = 1;
   // If no signature_addr handshake functionality is desired between the testbench and the generated
@@ -213,6 +216,7 @@ class core_ibex_base_test extends uvm_test;
 
   // Watch for all of the different critera for test pass/failure here
   virtual task wait_for_test_done();
+    longint timeout_timestamp, ts;
     bit result;
 
     fork
@@ -249,6 +253,23 @@ class core_ibex_base_test extends uvm_test;
       begin
         clk_vif.wait_clks(timeout_in_cycles);
         `uvm_fatal(`gfn, "TEST TIMEOUT!!")
+      end
+      // - End the test gracefully by wall-clock timeout (gather coverage etc.)
+      //   The plusarg 'test_timeout_s' can be used to set this value.
+      begin
+        void'($value$plusargs("test_timeout_s=%0d", timeout_seconds));
+        `uvm_info(`gfn,
+                  $sformatf("Test wall-clock timeout is set to : %0ds", timeout_seconds),
+                  UVM_LOW)
+        timeout_timestamp = get_unix_timestamp() + timeout_seconds;
+        forever begin
+          // Check the wall-clock every 1000us of simulation time.
+          #1000us;
+          ts = get_unix_timestamp();
+          if (ts >= timeout_timestamp) break;
+        end
+        `uvm_fatal(`gfn,
+                   $sformatf("Test failed due to wall-clock timeout. [%0ds]", timeout_seconds))
       end
     join_any
 
