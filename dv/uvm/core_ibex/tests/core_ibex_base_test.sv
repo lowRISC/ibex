@@ -149,6 +149,10 @@ class core_ibex_base_test extends uvm_test;
     vseq = core_ibex_vseq::type_id::create("vseq");
     vseq.mem = mem;
     vseq.cfg = cfg;
+    // Connect the data memory seq to the cosim agent
+    // This allows the cosim memory to be updated to match when we generate random data in
+    // response to a read from uninit memory.
+    vseq.data_intf_seq.cosim_agent = env.cosim_agent;
   endfunction
 
   virtual function void connect_phase(uvm_phase phase);

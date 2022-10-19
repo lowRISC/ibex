@@ -10,6 +10,7 @@ class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
 
   ibex_mem_intf_seq_item item;
   mem_model              m_mem;
+  ibex_cosim_agent       cosim_agent;
   bit                    enable_error = 1'b0;
   // Used to ensure that whenever inject_error() is called, the very next transaction will inject an
   // error, and that enable_error will not be flipped back to 0 immediately
@@ -114,11 +115,12 @@ class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
         if (is_dmem_seq) begin
           // DMEM
           `DV_CHECK_STD_RANDOMIZE_FATAL(data)
-          // Update mem_model with the randomized data.
+          // Update mem_model(s) with the randomized data.
           `uvm_info(`gfn,
                     $sformatf("Addr is uninit! DMEM seq, returning random data 0x%0h", data),
                     UVM_MEDIUM)
-          write(addr, data);
+          write(addr, data);                       // Update UVM mem_model
+          cosim_agent.write_mem_word(addr, data);  // Update cosim mem_model
           return data;
         end else begin
           // IMEM
