@@ -185,7 +185,7 @@ module core_ibex_tb_top;
   assign rvfi_if.rd_addr              = dut.rvfi_rd_addr;
   assign rvfi_if.rd_wdata             = dut.rvfi_rd_wdata;
   assign rvfi_if.pc_rdata             = dut.rvfi_pc_rdata;
-  assign rvfi_if_pc_wdata             = dut.rvfi_pc_wdata;
+  assign rvfi_if.pc_wdata             = dut.rvfi_pc_wdata;
   assign rvfi_if.mem_addr             = dut.rvfi_mem_addr;
   assign rvfi_if.mem_rmask            = dut.rvfi_mem_rmask;
   assign rvfi_if.mem_rdata            = dut.rvfi_mem_rdata;
