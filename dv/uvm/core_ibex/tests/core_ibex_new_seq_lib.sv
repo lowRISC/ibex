@@ -63,6 +63,8 @@ class core_base_new_seq #(type REQ = uvm_sequence_item) extends uvm_sequence #(R
 
     `uvm_info(`gfn, $sformatf("Running the \"%s\" schedule for stimulus generation",
                               iteration_modes.name()), UVM_LOW)
+    stop_seq = 1'b0;
+    seq_finished = 1'b0;
     case (iteration_modes)
       SingleRun: begin
         drive_stimulus();
