@@ -96,11 +96,11 @@ module ibex_lockstep import ibex_pkg::*; #(
   input  crash_dump_t                  crash_dump_i,
   input  logic                         double_fault_seen_i,
 
-  input  fetch_enable_t                fetch_enable_i,
+  input  ibex_mubi_t                   fetch_enable_i,
   output logic                         alert_minor_o,
   output logic                         alert_major_internal_o,
   output logic                         alert_major_bus_o,
-  input  logic                         core_busy_i,
+  input  ibex_mubi_t                   core_busy_i,
   input  logic                         test_en_i,
   input  logic                         scan_rst_ni
 );
@@ -183,7 +183,7 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic [14:0]                 irq_fast;
     logic                        irq_nm;
     logic                        debug_req;
-    fetch_enable_t               fetch_enable;
+    ibex_mubi_t                  fetch_enable;
     logic                        ic_scr_key_valid;
   } delayed_inputs_t;
 
@@ -263,7 +263,7 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic                        irq_pending;
     crash_dump_t                 crash_dump;
     logic                        double_fault_seen;
-    logic                        core_busy;
+    ibex_mubi_t                  core_busy;
   } delayed_outputs_t;
 
   delayed_outputs_t [OutputsOffset-1:0]  core_outputs_q;

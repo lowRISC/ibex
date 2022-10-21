@@ -258,21 +258,21 @@ class fetch_enable_seq extends core_base_new_seq#(irq_seq_item);
       all_off_values = 0;
     end
 
-    dut_vif.dut_cb.fetch_enable <= ibex_pkg::FetchEnableOn;
+    dut_vif.dut_cb.fetch_enable <= ibex_pkg::IbexMuBiOn;
     super.body();
   endtask: body
 
   virtual task send_req();
-    ibex_pkg::fetch_enable_t fetch_enable_off;
-    int unsigned             off_delay;
+    ibex_pkg::ibex_mubi_t fetch_enable_off;
+    int unsigned          off_delay;
 
     if (all_off_values) begin
       // Randomise the MUBI fetch_enable value to be one of the many possible off values
       `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(fetch_enable_off,
-        fetch_enable_off != ibex_pkg::FetchEnableOn;)
+        fetch_enable_off != ibex_pkg::IbexMuBiOn;)
     end else begin
       // Otherwise use single fixed off value
-      fetch_enable_off = ibex_pkg::FetchEnableOff;
+      fetch_enable_off = ibex_pkg::IbexMuBiOff;
     end
 
     `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(off_delay,
@@ -280,7 +280,7 @@ class fetch_enable_seq extends core_base_new_seq#(irq_seq_item);
 
     dut_vif.dut_cb.fetch_enable <= fetch_enable_off;
     clk_vif.wait_clks(off_delay);
-    dut_vif.dut_cb.fetch_enable <= ibex_pkg::FetchEnableOn;
+    dut_vif.dut_cb.fetch_enable <= ibex_pkg::IbexMuBiOn;
 
   endtask
 

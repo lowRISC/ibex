@@ -171,10 +171,10 @@ class core_ibex_base_test extends uvm_test;
     enable_irq_seq = cfg.enable_irq_single_seq || cfg.enable_irq_multiple_seq;
     phase.raise_objection(this);
     cur_run_phase = phase;
-    dut_vif.dut_cb.fetch_enable <= ibex_pkg::FetchEnableOff;
+    dut_vif.dut_cb.fetch_enable <= ibex_pkg::IbexMuBiOff;
     clk_vif.wait_clks(100);
     load_binary_to_mem();
-    dut_vif.dut_cb.fetch_enable <= ibex_pkg::FetchEnableOn;
+    dut_vif.dut_cb.fetch_enable <= ibex_pkg::IbexMuBiOn;
     send_stimulus();
     wait_for_test_done();
     cur_run_phase = null;
@@ -282,7 +282,7 @@ class core_ibex_base_test extends uvm_test;
     check_perf_stats();
     // De-assert fetch enable to finish the test
     clk_vif.wait_clks(10);
-    dut_vif.dut_cb.fetch_enable <= ibex_pkg::FetchEnableOff;
+    dut_vif.dut_cb.fetch_enable <= ibex_pkg::IbexMuBiOff;
     // Wait some time for the remaining instruction to finish
     clk_vif.wait_clks(3000);
   endtask

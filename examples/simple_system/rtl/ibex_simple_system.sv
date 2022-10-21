@@ -253,7 +253,7 @@ module ibex_simple_system (
       .crash_dump_o           (),
       .double_fault_seen_o    (),
 
-      .fetch_enable_i         (ibex_pkg::FetchEnableOn),
+      .fetch_enable_i         (ibex_pkg::IbexMuBiOn),
       .alert_minor_o          (),
       .alert_major_internal_o (),
       .alert_major_bus_o      (),

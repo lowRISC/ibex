@@ -34,6 +34,7 @@ source syn_setup.sh
 
 LR_DEP_SOURCES=(
     "../vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_buf.sv"
+    "../vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_flop.sv"
 )
 
 mkdir -p "$LR_SYNTH_OUT_DIR/generated"
@@ -73,6 +74,7 @@ for file in ../rtl/*.sv; do
 # Make sure auto-generated primitives are resolved to generic primitives
 # where available.
   sed -i 's/prim_buf/prim_generic_buf/g'  "$LR_SYNTH_OUT_DIR"/generated/"${module}".v
+  sed -i 's/prim_flop/prim_generic_flop/g' "$LR_SYNTH_OUT_DIR"/generated/"${module}".v
 done
 
 # remove tracer (not needed for synthesis)
