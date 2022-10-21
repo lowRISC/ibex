@@ -81,6 +81,13 @@ class RegressionMetadata(scripts_lib.testdata_cls):
     riscvdv_fcov_log            : Optional[pathlib.Path]    = None
     riscvdv_fcov_stdout         : Optional[pathlib.Path]    = None
     riscvdv_fcov_cmds           : Optional[List[List[str]]] = None
+    cov_merge_db_list           : Optional[pathlib.Path]    = None
+    cov_merge_log               : Optional[pathlib.Path]    = None
+    cov_merge_stdout            : Optional[pathlib.Path]    = None
+    cov_merge_cmds              : Optional[List[List[str]]] = None
+    cov_report_log              : Optional[pathlib.Path]    = None
+    cov_report_stdout           : Optional[pathlib.Path]    = None
+    cov_report_cmds             : Optional[List[List[str]]] = None
     regr_log                    : Optional[pathlib.Path]    = None
     regr_log_junit              : Optional[pathlib.Path]    = None
     regr_log_junit_merged       : Optional[pathlib.Path]    = None
