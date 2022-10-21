@@ -9,7 +9,6 @@
 import argparse
 import logging
 import os
-import shutil
 import sys
 import pathlib3x as pathlib
 from typing import Set
@@ -19,24 +18,24 @@ from setup_imports import _OT_LOWRISC_IP
 from scripts_lib import run_one
 
 
-def find_cov_dirs(start_dir: pathlib.Path, simulator: str) -> Set[pathlib.Path]:
-    """Gather a set of the coverage databases/directories."""
-    cov_dirs = set()
+def find_cov_dbs(start_dir: pathlib.Path, simulator: str) -> Set[pathlib.Path]:
+    """Gather a set of the coverage databases."""
+    cov_dbs = set()
 
     if simulator == 'xlm':
         for p in start_dir.glob('**/*.ucd'):
             logging.info(f"Found coverage database (ucd) at {p}")
-            cov_dirs.add(p.parent)
+            cov_dbs.add(p)
     if simulator == 'vcs':
         for p in start_dir.glob('**/test.vdb'):
             logging.info(f"Found coverage database (vdb) at {p}")
-            cov_dirs.add(p.parent)
+            cov_dbs.add(p)
 
-    if not cov_dirs:
+    if not cov_dbs:
         logging.info(f"No coverage found for {simulator}")
         return 1
 
-    return cov_dirs
+    return cov_dbs
 
 
 def merge_cov_vcs(md: RegressionMetadata, cov_dirs: Set[pathlib.Path]) -> int:
@@ -51,40 +50,20 @@ def merge_cov_vcs(md: RegressionMetadata, cov_dirs: Set[pathlib.Path]) -> int:
     return run_one(md.verbose, cmd, redirect_stdstreams='/dev/null')
 
 
-def merge_cov_xlm(md: RegressionMetadata, cov_dirs: Set[pathlib.Path]) -> int:
+def merge_cov_xlm(md: RegressionMetadata, cov_dbs: Set[pathlib.Path]) -> int:
     """Merge xcelium-generated coverage using the OT scripts.
 
     The vendored-in OpenTitan IP contains .tcl scripts that can merge xcelium
     coverage using the Cadnece 'imc' Integrated-Metrics-Centre tool.
-
     """
     xcelium_scripts = _OT_LOWRISC_IP/'dv/tools/xcelium'
-
-    # The merge TCL code uses a glob to find all available scopes and previous
-    # runs. In order to actually get the databases we need to go up once so
-    # that the "*" finds the directory we've seen.
-    cov_dir_parents = ' '.join(str(d.parent) for d in cov_dirs)
-
-    # Get all needed directories for merge and report stages.
-    xlm_cov_dirs = {
-        'cov_merge_db_dir': str(md.dir_cov_merged),
-        'cov_report_dir': str(md.dir_cov_report),
-        'cov_db_dirs': cov_dir_parents
-    }
-    logging.info(f"xlm_cov_dirs : {xlm_cov_dirs}")
-
-    # Finally, set an environment variable containing all the directories that
-    # should be merged (this is how the list gets passed down to the TCL script
-    # that handles them)
-
-    xlm_env = os.environ.copy()
-    xlm_env.update(xlm_cov_dirs)
 
     imc_cmd = ["imc", "-64bit", "-licqueue"]
 
     # Update the metdadata file with the commands we're about to run
     with LockedMetadata(md.dir_metadata, __file__) as md:
 
+        md.cov_merge_db_list = md.dir_cov / 'cov_db_runfile'
         md.cov_merge_log = md.dir_cov / 'merge.log'
         md.cov_merge_stdout = md.dir_cov / 'merge.log.stdout'
         md.cov_merge_cmds = [(imc_cmd + ["-exec", str(xcelium_scripts/"cov_merge.tcl"),
@@ -95,6 +74,32 @@ def merge_cov_xlm(md: RegressionMetadata, cov_dirs: Set[pathlib.Path]) -> int:
         md.cov_report_cmds = [(imc_cmd + ["-load", str(md.dir_cov_merged),
                                           "-exec", str(xcelium_scripts/"cov_report.tcl"),
                                           "-logfile", str(md.dir_cov/'report.log')])]
+
+
+    # The merge TCL code uses a glob to find all available scopes and previous
+    # runs. In order to actually get the databases we need to go up once so
+    # that the "*" finds the directory we've seen.
+    # (Parent of the .ucm file?)
+    cov_dir_parents = ' '.join(str(d.parent.parent) for d in cov_dbs)
+
+    # Finally, set an environment variable containing all the directories that
+    # should be merged (this is how the list gets passed down to the TCL script
+    # that handles them)
+    xlm_cov_dirs = {
+        'cov_merge_db_dir': str(md.dir_cov_merged),
+        'cov_report_dir': str(md.dir_cov_report),
+        'cov_db_dirs': "",
+        'cov_db_runfile': str(md.cov_merge_db_list)
+    }
+    xlm_env = os.environ.copy()
+    xlm_env.update(xlm_cov_dirs)
+    logging.info(f"xlm_cov_dirs : {xlm_cov_dirs}")
+
+    # Dump the list of databases to a file, which will be read by the .tcl script
+    # (This prevents the argument list from getting too long when using lots of iterations)
+    with open(md.cov_merge_db_list, 'w') as fd:
+        # > The runs in <runfile> should be listed one per line.
+        fd.write(('\n'.join(str(d.parent) for d in cov_dbs))+'\n')
 
     # First do the merge
     md.dir_cov_merged.mkdir(exist_ok=True, parents=True)
@@ -129,14 +134,14 @@ def main():
 
     md.dir_cov.mkdir(exist_ok=True, parents=True)
 
-    # Compile a list of all directories that contain coverage databases
-    cov_dirs = find_cov_dirs(md.dir_run, md.simulator)
+    # Compile a list of all the coverage databases
+    cov_dbs = find_cov_dbs(md.dir_run, md.simulator)
 
     merge_funs = {
         'vcs': merge_cov_vcs,
         'xlm': merge_cov_xlm
     }
-    return merge_funs[md.simulator](md, cov_dirs)
+    return merge_funs[md.simulator](md, cov_dbs)
 
 
 if __name__ == '__main__':
