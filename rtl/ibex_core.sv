@@ -138,6 +138,7 @@ module ibex_core import ibex_pkg::*; #(
   output logic [31:0]                  rvfi_mem_wdata,
   output logic [31:0]                  rvfi_ext_mip,
   output logic                         rvfi_ext_nmi,
+  output logic                         rvfi_ext_nmi_int,
   output logic                         rvfi_ext_debug_req,
   output logic [63:0]                  rvfi_ext_mcycle,
   output logic [31:0]                  rvfi_ext_mhpmcounters [10],
@@ -1204,6 +1205,7 @@ module ibex_core import ibex_pkg::*; #(
 
   logic            new_debug_req;
   logic            new_nmi;
+  logic            new_nmi_int;
   logic            new_irq;
   ibex_pkg::irqs_t captured_mip;
   logic            captured_nmi;
@@ -1214,6 +1216,7 @@ module ibex_core import ibex_pkg::*; #(
   // debug_req and MIP captured at IF -> ID transition so one extra stage
   ibex_pkg::irqs_t rvfi_ext_stage_mip              [RVFI_STAGES+1];
   logic            rvfi_ext_stage_nmi              [RVFI_STAGES+1];
+  logic            rvfi_ext_stage_nmi_int          [RVFI_STAGES];
   logic            rvfi_ext_stage_debug_req        [RVFI_STAGES+1];
   logic [63:0]     rvfi_ext_stage_mcycle           [RVFI_STAGES];
   logic [31:0]     rvfi_ext_stage_mhpmcounters     [RVFI_STAGES][10];
@@ -1262,6 +1265,7 @@ module ibex_core import ibex_pkg::*; #(
   end
 
   assign rvfi_ext_nmi              = rvfi_ext_stage_nmi              [RVFI_STAGES];
+  assign rvfi_ext_nmi_int          = rvfi_ext_stage_nmi_int          [RVFI_STAGES-1];
   assign rvfi_ext_debug_req        = rvfi_ext_stage_debug_req        [RVFI_STAGES];
   assign rvfi_ext_mcycle           = rvfi_ext_stage_mcycle           [RVFI_STAGES-1];
   assign rvfi_ext_mhpmcounters     = rvfi_ext_stage_mhpmcounters     [RVFI_STAGES-1];
@@ -1309,7 +1313,7 @@ module ibex_core import ibex_pkg::*; #(
     end
 
     assign rvfi_trap_id = id_stage_i.controller_i.id_exception_o;
-    assign rvfi_trap_wb = id_stage_i.controller_i.exc_req_lsu;
+    assign rvfi_trap_wb = id_stage_i.controller_i.exc_req_lsu | new_nmi_int;
     // WB is instantly done in the tracking pipeline when a trap is progress through the pipeline
     assign rvfi_wb_done = instr_done_wb | (rvfi_stage_valid[0] & rvfi_stage_trap[0]);
   end else begin : gen_rvfi_no_wb_stage
@@ -1349,6 +1353,7 @@ module ibex_core import ibex_pkg::*; #(
   // appropriately.
   assign new_debug_req = (debug_req_i & ~debug_mode);
   assign new_nmi = irq_nm_i & ~nmi_mode & ~debug_mode;
+  assign new_nmi_int = id_stage_i.mem_resp_intg_err & ~nmi_mode & ~debug_mode;
   assign new_irq = irq_pending_o & csr_mstatus_mie & ~nmi_mode & ~debug_mode;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -1423,6 +1428,7 @@ module ibex_core import ibex_pkg::*; #(
         rvfi_stage_mem_addr[i]             <= '0;
         rvfi_ext_stage_mip[i+1]            <= '0;
         rvfi_ext_stage_nmi[i+1]            <= '0;
+        rvfi_ext_stage_nmi_int[i]          <= '0;
         rvfi_ext_stage_debug_req[i+1]      <= '0;
         rvfi_ext_stage_mcycle[i]           <= '0;
         rvfi_ext_stage_mhpmcounters[i]     <= '{10{'0}};
@@ -1500,6 +1506,8 @@ module ibex_core import ibex_pkg::*; #(
 
             rvfi_ext_stage_mip[i+1]            <= rvfi_ext_stage_mip[i];
             rvfi_ext_stage_nmi[i+1]            <= rvfi_ext_stage_nmi[i];
+            rvfi_ext_stage_nmi_int[i]          <= rvfi_ext_stage_nmi_int[i-1];
+            rvfi_ext_stage_nmi_int[i-1]        <= new_nmi_int;
             rvfi_ext_stage_debug_req[i+1]      <= rvfi_ext_stage_debug_req[i];
             rvfi_ext_stage_mcycle[i]           <= rvfi_ext_stage_mcycle[i-1];
             rvfi_ext_stage_ic_scr_key_valid[i] <= rvfi_ext_stage_ic_scr_key_valid[i-1];

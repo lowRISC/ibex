@@ -122,6 +122,7 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
       end
 
       riscv_cosim_set_nmi(cosim_handle, rvfi_instr.nmi);
+      riscv_cosim_set_nmi_int(cosim_handle, rvfi_instr.nmi_int);
       riscv_cosim_set_mip(cosim_handle, rvfi_instr.mip);
       riscv_cosim_set_debug_req(cosim_handle, rvfi_instr.debug_req);
       riscv_cosim_set_mcycle(cosim_handle, rvfi_instr.mcycle);

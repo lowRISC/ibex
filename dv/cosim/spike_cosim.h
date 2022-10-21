@@ -102,6 +102,7 @@ class SpikeCosim : public simif_t, public Cosim {
                        uint32_t initial_spike_pc);
   void set_mip(uint32_t mip) override;
   void set_nmi(bool nmi) override;
+  void set_nmi_int(bool nmi_int) override;
   void set_debug_req(bool debug_req) override;
   void set_mcycle(uint64_t mcycle) override;
   void set_csr(const int csr_num, const uint32_t new_val) override;

@@ -200,7 +200,8 @@ bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data,
 
   if (processor->get_state()->last_inst_pc == PC_INVALID) {
     if (!(processor->get_state()->mcause->read() & 0x80000000) ||
-        processor->get_state()->debug_mode) { // (Async-Traps are disabled in debug mode)
+        processor->get_state()
+            ->debug_mode) {  // (Async-Traps are disabled in debug mode)
       // Spike encountered a synchronous trap
       pending_sync_exception = true;
 
@@ -358,6 +359,12 @@ bool SpikeCosim::check_sync_trap(uint32_t write_reg,
     return false;
   }
 
+  // If we see an internal NMI, that means we receive an extra memory intf item.
+  // Deleting that is necessary since next Load/Store would fail otherwise.
+  if (processor->get_state()->mcause->read() == 0xFFFFFFE0) {
+    pending_dside_accesses.erase(pending_dside_accesses.begin());
+  }
+
   // Errors may have been generated outside of step() (e.g. in
   // check_mem_access()), return false if there are any.
   if (errors.size() != 0) {
@@ -469,6 +476,20 @@ void SpikeCosim::set_mip(uint32_t mip) {
 void SpikeCosim::set_nmi(bool nmi) {
   if (nmi && !nmi_mode && !processor->get_state()->debug_mode) {
     processor->get_state()->nmi = true;
+    nmi_mode = true;
+
+    // When NMI is set it is guaranteed NMI trap will be taken at the next step
+    // so save CSR state for recoverable NMI to mstack now.
+    mstack.mpp = get_field(processor->get_csr(CSR_MSTATUS), MSTATUS_MPP);
+    mstack.mpie = get_field(processor->get_csr(CSR_MSTATUS), MSTATUS_MPIE);
+    mstack.epc = processor->get_csr(CSR_MEPC);
+    mstack.cause = processor->get_csr(CSR_MCAUSE);
+  }
+}
+
+void SpikeCosim::set_nmi_int(bool nmi_int) {
+  if (nmi_int && !nmi_mode && !processor->get_state()->debug_mode) {
+    processor->get_state()->nmi_int = true;
     nmi_mode = true;
 
     // When NMI is set it is guaranteed NMI trap will be taken at the next step

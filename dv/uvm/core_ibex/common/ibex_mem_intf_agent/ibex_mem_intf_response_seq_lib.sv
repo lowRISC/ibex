@@ -10,6 +10,7 @@ class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
 
   ibex_mem_intf_seq_item item;
   mem_model              m_mem;
+  bit                    enable_intg_error = 1'b0;
   bit                    enable_error = 1'b0;
   // Used to ensure that whenever inject_error() is called, the very next transaction will inject an
   // error, and that enable_error will not be flipped back to 0 immediately
@@ -60,6 +61,12 @@ class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
       enable_error = 1'b0;
       error_synch = 1'b1;
       aligned_addr = {req.addr[DATA_WIDTH-1:2], 2'b0};
+      // Do not inject any error to the handshake test_control_addr
+      // TODO: Parametrize this. Until then, this needs to be changed manually.
+      if (aligned_addr inside {32'h8ffffff8, 32'h8ffffffc}) begin
+        req.error = 1'b0;
+        enable_intg_error = 1'b0;
+      end
       if (req.error) begin
         `DV_CHECK_STD_RANDOMIZE_FATAL(rand_data)
         req.data = rand_data;
@@ -85,7 +92,10 @@ class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
 
       // If data_was_uninitialized is true then we want to force bad integrity bits: invert the
       // correct ones, which we know will break things for the codes we use.
-      if (data_was_uninitialized) req.intg = ~req.intg;
+      if (data_was_uninitialized || enable_intg_error) begin
+        req.intg = ~req.intg;
+        enable_intg_error = 1'b0;
+      end
 
       `uvm_info(get_full_name(), $sformatf("Response transfer:\n%0s", req.sprint()), UVM_HIGH)
       start_item(req);
@@ -104,6 +114,10 @@ class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
 
   virtual function void inject_error();
     this.enable_error = 1'b1;
+  endfunction
+
+  virtual function void inject_intg_error();
+    this.enable_intg_error = 1'b1;
   endfunction
 
   virtual function bit get_error_synch();
