@@ -144,6 +144,7 @@ class RegressionMetadata(scripts_lib.testdata_cls):
         self.dir_instruction_generator   = self.dir_build/'instr_gen'
         self.dir_tb                      = self.dir_build/'tb'
         self.dir_run                     = self.dir_out/'run'
+        self.dir_tests                   = self.dir_run/'tests'
         self.dir_cov                     = self.dir_run/'coverage'
         self.dir_fcov                    = self.dir_cov/'fcov'
         self.dir_shared_cov              = self.dir_cov/'shared_cov'
@@ -367,10 +368,10 @@ def _main():
                 seed=seed,
                 rtl_simulator=md.simulator,
                 iss_cosim=md.iss,
-                dir_test=md.dir_run/tds_str,
+                dir_test=md.dir_tests / tds_str,
                 metadata_pickle_file=md.pickle_file,
                 pickle_file=trr_pickle_file,
-                yaml_file=(md.dir_run / tds_str / 'trr.yaml'))
+                yaml_file=(md.dir_tests / tds_str / 'trr.yaml'))
 
             # Save the path into a list in the regression metadata object for later.
             md.tests_pickle_files.append(trr.pickle_file)
