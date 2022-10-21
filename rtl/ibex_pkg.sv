@@ -653,14 +653,14 @@ package ibex_pkg;
   parameter logic [SCRAMBLE_NONCE_W-1:0] RndCnstIbexNonceDefault =
       64'hf79780bc735f3843;
 
-  // Fetch enable. Mult-bit signal used for security hardening. For non-secure implementation all
-  // bits other than the bottom bit are ignored.
-  typedef logic [3:0] fetch_enable_t;
+  // Mult-bit signal used for security hardening. For non-secure implementation all bits other than
+  // the bottom bit are ignored.
+  typedef logic [3:0] ibex_mubi_t;
 
   // Note that if adjusting these parameters it is assumed the bottom bit is set for On and unset
-  // for Off. This allows the use of FetchEnableOn/FetchEnableOff to work for both secure and
-  // non-secure Ibex. If this assumption is broken the RTL that uses the fetch_enable signal within
-  // `ibex_core` may need adjusting.
-  parameter fetch_enable_t FetchEnableOn  = 4'b0101;
-  parameter fetch_enable_t FetchEnableOff = 4'b1010;
+  // for Off. This allows the use of IbexMuBiOn/IbexMuBiOff to work for both secure and non-secure
+  // Ibex. If this assumption is broken the RTL that uses ibex_mubi_t types such as the fetch_enable
+  // and core_busy signals within `ibex_core` may need adjusting.
+  parameter ibex_mubi_t IbexMuBiOn  = 4'b0101;
+  parameter ibex_mubi_t IbexMuBiOff = 4'b1010;
 endpackage

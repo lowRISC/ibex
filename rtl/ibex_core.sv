@@ -147,11 +147,11 @@ module ibex_core import ibex_pkg::*; #(
 
   // CPU Control Signals
   // SEC_CM: FETCH.CTRL.LC_GATED
-  input  fetch_enable_t                fetch_enable_i,
+  input  ibex_mubi_t                   fetch_enable_i,
   output logic                         alert_minor_o,
   output logic                         alert_major_internal_o,
   output logic                         alert_major_bus_o,
-  output logic                         core_busy_o
+  output ibex_mubi_t                   core_busy_o
 );
 
   localparam int unsigned PMPNumChan      = 3;
@@ -368,7 +368,31 @@ module ibex_core import ibex_pkg::*; #(
 
   // Before going to sleep, wait for I- and D-side
   // interfaces to finish ongoing operations.
-  assign core_busy_o = ctrl_busy | if_busy | lsu_busy;
+  if (SecureIbex) begin : g_core_busy_secure
+    // For secure Ibex, the individual bits of core_busy_o are generated from different copies of
+    // the various busy signal.
+    localparam int unsigned NumBusySignals = 3;
+    localparam int unsigned NumBusyBits = $bits(ibex_mubi_t) * NumBusySignals;
+    logic [NumBusyBits-1:0] busy_bits_buf;
+    prim_buf #(
+      .Width(NumBusyBits)
+    ) u_fetch_enable_buf (
+      .in_i ({$bits(ibex_mubi_t){ctrl_busy, if_busy, lsu_busy}}),
+      .out_o(busy_bits_buf)
+    );
+
+    // Set core_busy_o to IbexMuBiOn if even a single input is high.
+    for (genvar i = 0; i < $bits(ibex_mubi_t); i++) begin : g_core_busy_bits
+      if (IbexMuBiOn[i] == 1'b1) begin : g_pos
+        assign core_busy_o[i] =  |busy_bits_buf[i*NumBusySignals +: NumBusySignals];
+      end else begin : g_neg
+        assign core_busy_o[i] = ~|busy_bits_buf[i*NumBusySignals +: NumBusySignals];
+      end
+    end
+  end else begin : g_core_busy_non_secure
+    // For non secure Ibex, synthesis is allowed to optimize core_busy_o.
+    assign core_busy_o = (ctrl_busy || if_busy || lsu_busy) ? IbexMuBiOn : IbexMuBiOff;
+  end
 
   //////////////
   // IF stage //
@@ -474,22 +498,21 @@ module ibex_core import ibex_pkg::*; #(
 
   // Multi-bit fetch enable used when SecureIbex == 1. When SecureIbex == 0 only use the bottom-bit
   // of fetch_enable_i. Ensure the multi-bit encoding has the bottom bit set for on and unset for
-  // off so FetchEnableOn/FetchEnableOff can be used without needing to know the value of
-  // SecureIbex.
-  `ASSERT_INIT(FetchEnableSecureOnBottomBitSet,    FetchEnableOn[0] == 1'b1)
-  `ASSERT_INIT(FetchEnableSecureOffBottomBitClear, FetchEnableOff[0] == 1'b0)
+  // off so IbexMuBiOn/IbexMuBiOff can be used without needing to know the value of SecureIbex.
+  `ASSERT_INIT(IbexMuBiSecureOnBottomBitSet,    IbexMuBiOn[0] == 1'b1)
+  `ASSERT_INIT(IbexMuBiSecureOffBottomBitClear, IbexMuBiOff[0] == 1'b0)
 
   // fetch_enable_i can be used to stop the core fetching new instructions
   if (SecureIbex) begin : g_instr_req_gated_secure
     // For secure Ibex fetch_enable_i must be a specific multi-bit pattern to enable instruction
     // fetch
     // SEC_CM: FETCH.CTRL.LC_GATED
-    assign instr_req_gated = instr_req_int & (fetch_enable_i == FetchEnableOn);
-    assign instr_exec      = fetch_enable_i == FetchEnableOn;
+    assign instr_req_gated = instr_req_int & (fetch_enable_i == IbexMuBiOn);
+    assign instr_exec      = fetch_enable_i == IbexMuBiOn;
   end else begin : g_instr_req_gated_non_secure
     // For non secure Ibex only the bottom bit of fetch enable is considered
     logic unused_fetch_enable;
-    assign unused_fetch_enable = ^fetch_enable_i[$bits(fetch_enable_t)-1:1];
+    assign unused_fetch_enable = ^fetch_enable_i[$bits(ibex_mubi_t)-1:1];
 
     assign instr_req_gated = instr_req_int & fetch_enable_i[0];
     assign instr_exec      = fetch_enable_i[0];
@@ -931,7 +954,7 @@ module ibex_core import ibex_pkg::*; #(
 
   // Keep track of the PC last seen in the ID stage when fetch is disabled
   logic [31:0]   pc_at_fetch_disable;
-  fetch_enable_t last_fetch_enable;
+  ibex_mubi_t    last_fetch_enable;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
@@ -940,7 +963,7 @@ module ibex_core import ibex_pkg::*; #(
     end else begin
       last_fetch_enable <= fetch_enable_i;
 
-      if ((fetch_enable_i != FetchEnableOn) && (last_fetch_enable == FetchEnableOn)) begin
+      if ((fetch_enable_i != IbexMuBiOn) && (last_fetch_enable == IbexMuBiOn)) begin
         pc_at_fetch_disable <= pc_id;
       end
     end
@@ -949,7 +972,7 @@ module ibex_core import ibex_pkg::*; #(
   // When fetch is disabled no instructions should be executed. Once fetch is disabled either the
   // ID/EX stage is not valid or the PC of the ID/EX stage must remain as it was at disable. The
   // ID/EX valid should not ressert once it has been cleared.
-  `ASSERT(NoExecWhenFetchEnableNotOn, fetch_enable_i != FetchEnableOn |=>
+  `ASSERT(NoExecWhenFetchEnableNotOn, fetch_enable_i != IbexMuBiOn |=>
     (~instr_valid_id || (pc_id == pc_at_fetch_disable)) && ~$rose(instr_valid_id))
 
   `endif

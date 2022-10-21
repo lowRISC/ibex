@@ -11,7 +11,7 @@ interface core_ibex_dut_probe_if(input logic clk);
   logic                    ebreak;
   logic                    dret;
   logic                    mret;
-  ibex_pkg::fetch_enable_t fetch_enable;
+  ibex_pkg::ibex_mubi_t    fetch_enable;
   logic                    core_sleep;
   logic                    alert_minor;
   logic                    alert_major_internal;

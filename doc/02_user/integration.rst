@@ -215,7 +215,7 @@ Interfaces
 |                            |                         |     | instructions in the ID/EX and WB       |
 |                            |                         |     | stages have finished. A multi-bit      |
 |                            |                         |     | encoding scheme is used. See           |
-|                            |                         |     | `FetchEnableOn` / `FetchEnableOff` in  |
+|                            |                         |     | `IbexMuBiOn` / `IbexMuBiOff` in        |
 |                            |                         |     | :file:`rtl/ibex_pkg.sv`                |
 +----------------------------+-------------------------+-----+----------------------------------------+
 | ``core_sleep_o``           | 1                       | out | Core in WFI with no outstanding data   |
