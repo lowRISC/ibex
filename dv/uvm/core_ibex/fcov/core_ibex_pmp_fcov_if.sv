@@ -263,7 +263,8 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
                binsof(pmp_iside_req_err) intersect {1});
             illegal_bins illegal_machine_deny_exec =
               // Ensuring MML is high and we are in a X allowed configuration in Machine Mode
-              (binsof(cp_region_priv_bits) intersect {MML_XM_XU, MML_XRM_XU, MML_XRM, MML_XM} &&
+              (binsof(cp_region_priv_bits) intersect {NONE, MML_XM_XU, MML_XRM_XU, MML_XRM,
+                                                      MML_XM} &&
                binsof(cp_priv_lvl_iside) intersect {PRIV_LVL_M} &&
                binsof(cp_req_type_iside) intersect {PMP_ACC_EXEC} &&
                binsof(pmp_iside_req_err) intersect {1});
@@ -314,7 +315,7 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
              binsof(pmp_iside2_req_err) intersect {1});
           illegal_bins illegal_machine_deny_exec =
             // Ensuring MML is high and we are in a X allowed configuration in Machine Mode
-            (binsof(cp_region_priv_bits) intersect {MML_XM_XU, MML_XRM_XU, MML_XRM, MML_XM} &&
+            (binsof(cp_region_priv_bits) intersect {NONE, MML_XM_XU, MML_XRM_XU, MML_XRM, MML_XM} &&
              binsof(cp_priv_lvl_iside2) intersect {PRIV_LVL_M} &&
              binsof(cp_req_type_iside2) intersect {PMP_ACC_EXEC} &&
              binsof(pmp_iside2_req_err) intersect {1});
@@ -364,7 +365,7 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
           illegal_bins illegal_machine_deny_read =
             // Ensuring MML is high and we are in a R allowed configuration in Machine Mode
             (binsof(cp_region_priv_bits) intersect {MML_WRM_RU, MML_WRM_WRU, MML_RM_RU, MML_RM,
-                                                    MML_WRM, MML_XRM, MML_XRM_XU} &&
+                                                    MML_WRM, MML_XRM, MML_XRM_XU, NONE} &&
              binsof(cp_priv_lvl_dside) intersect {PRIV_LVL_M} &&
              binsof(cp_req_type_dside) intersect {PMP_ACC_READ} &&
              binsof(pmp_dside_req_err) intersect {1});
@@ -408,7 +409,7 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
              binsof(pmp_dside_req_err) intersect {1});
           illegal_bins illegal_machine_deny_write =
             // Ensuring MML is high and we are in a W allowed configuration in Machine Mode
-            (binsof(cp_region_priv_bits) intersect {MML_WRM_WRU, MML_WRM_RU, MML_WRM} &&
+            (binsof(cp_region_priv_bits) intersect {MML_WRM_WRU, MML_WRM_RU, MML_WRM, NONE} &&
              binsof(cp_priv_lvl_dside) intersect {PRIV_LVL_M} &&
              binsof(cp_req_type_dside) intersect {PMP_ACC_WRITE} &&
              binsof(pmp_dside_req_err) intersect {1});
