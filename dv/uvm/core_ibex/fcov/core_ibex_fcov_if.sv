@@ -499,8 +499,6 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     `DV_FCOV_EXPR_SEEN(pipe_flush, id_stage_i.controller_i.fcov_pipe_flush)
     `DV_FCOV_EXPR_SEEN(single_step_taken, id_stage_i.controller_i.fcov_debug_single_step_taken)
     `DV_FCOV_EXPR_SEEN(insn_trigger_enter_debug, instr_id_matches_trigger_q)
-    `DV_FCOV_EXPR_SEEN(insn_trigger_exception, instr_id_matches_trigger_q &&
-                                               id_stage_i.controller_i.fcov_pipe_flush)
 
     cp_nmi_taken: coverpoint ((fcov_irqs[5] || fcov_irqs[4])) iff
                              (id_stage_i.controller_i.fcov_interrupt_taken);
