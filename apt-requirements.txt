@@ -19,6 +19,7 @@ build-essential
 clang-format
 cmake
 curl
+device-tree-compiler
 doxygen
 flex
 g++
