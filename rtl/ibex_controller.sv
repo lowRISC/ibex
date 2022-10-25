@@ -430,11 +430,11 @@ module ibex_controller #(
   // The decision to enter debug_mode and the write of the cause to DCSR happen
   // in seperate steps within the FSM. Hence, there are a small number of cycles
   // where a change in external stimulus can cause the cause to be recorded incorrectly.
-  assign debug_cause_d = trigger_match_i   ? DBG_CAUSE_TRIGGER :
-                         ebrk_insn_prio    ? DBG_CAUSE_EBREAK  :
-                         debug_req_i       ? DBG_CAUSE_HALTREQ :
-                         do_single_step_d  ? DBG_CAUSE_STEP    :
-                                             DBG_CAUSE_NONE ;
+  assign debug_cause_d = trigger_match_i                    ? DBG_CAUSE_TRIGGER :
+                         ebrk_insn_prio & ebreak_into_debug ? DBG_CAUSE_EBREAK  :
+                         debug_req_i                        ? DBG_CAUSE_HALTREQ :
+                         do_single_step_d                   ? DBG_CAUSE_STEP    :
+                                                              DBG_CAUSE_NONE ;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
