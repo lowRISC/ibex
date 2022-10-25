@@ -87,6 +87,8 @@
     +directed_instr_2=riscv_multi_page_load_store_instr_stream,40
     +directed_instr_3=riscv_load_store_rand_addr_instr_stream,40
   rtl_test: core_ibex_base_test
+  sim_opts: >
+    +enable_bad_intg_on_uninit_access=0
 
 - test: riscv_illegal_instr_test
   description: >
@@ -212,6 +214,7 @@
   sim_opts: >
     +require_signature_addr=1
     +enable_debug_seq=1
+    +enable_bad_intg_on_uninit_access=0
   compare_opts:
     compare_final_value_only: 1
     verbose: 1
@@ -360,6 +363,7 @@
     +require_signature_addr=1
     +enable_debug_seq=1
     +enable_irq_multiple_seq=1
+    +enable_bad_intg_on_uninit_access=0
   compare_opts:
     compare_final_value_only: 1
 
@@ -386,6 +390,7 @@
   rtl_test: core_ibex_assorted_traps_interrupts_debug_test
   sim_opts: >
     +require_signature_addr=1
+    +enable_bad_intg_on_uninit_access=0
 
 - test: riscv_single_interrupt_test
   description: >
@@ -442,6 +447,7 @@
     +enable_irq_multiple_seq=1
     +enable_irq_nmi_seq=1
     +enable_nested_irq=1
+    +enable_bad_intg_on_uninit_access=0
   compare_opts:
     compare_final_value_only: 1
 
@@ -584,6 +590,7 @@
     +require_signature_addr=1
     +max_interval=1500
     +enable_debug_seq=1
+    +enable_bad_intg_on_uninit_access=0
 
 - test: riscv_reset_test
   description: >
@@ -729,6 +736,8 @@
     +directed_instr_0=riscv_load_store_rand_addr_instr_stream,50
     +mseccfg=MML:0,MMWP:0,RLB:0
   rtl_test: core_ibex_base_test
+  sim_opts: >
+    +enable_bad_intg_on_uninit_access=0
   rtl_params:
     PMPEnable: 1
 
