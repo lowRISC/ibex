@@ -62,6 +62,9 @@ class SpikeCosim : public simif_t, public Cosim {
 
   bool pc_is_mret(uint32_t pc);
 
+  bool pc_is_debug_ebreak(uint32_t pc);
+  bool check_debug_ebreak(uint32_t write_reg, uint32_t pc, bool sync_trap);
+
   bool check_gpr_write(const commit_log_reg_t::value_type &reg_change,
                        uint32_t write_reg, uint32_t write_reg_data);
 

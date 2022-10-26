@@ -168,6 +168,17 @@ bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data,
   // The DUT has just produced an RVFI item
   // (parameters of this func is the data in the RVFI item).
 
+  // First check to see if this is an ebreak that should enter debug mode. These
+  // need specific handling. When spike steps over them it'll immediately step
+  // the next instruction (i.e. the first instruction of the debug handler) too.
+  // In effect it treats it as a transition to debug mode that doesn't retire
+  // any instruction so needs to execute the next instruction to step a single
+  // time. To deal with this if it's a debug ebreak we skip the rest of this
+  // function checking a few invariants on the debug ebreak first.
+  if (pc_is_debug_ebreak(pc)) {
+    return check_debug_ebreak(write_reg, pc, sync_trap);
+  }
+
   uint32_t initial_spike_pc;
   bool pending_sync_exception = false;
 
@@ -822,6 +833,63 @@ bool SpikeCosim::pc_is_mret(uint32_t pc) {
   }
 
   return insn == 0x30200073;
+}
+
+bool SpikeCosim::pc_is_debug_ebreak(uint32_t pc) {
+  uint32_t dcsr = processor->get_csr(CSR_DCSR);
+
+  // ebreak debug entry is controlled by the ebreakm (bit 15) and ebreaku (bit
+  // 12) fields of DCSR. If the appropriate bit of the current privlege level
+  // isn't set ebreak won't enter debug so return false.
+  if ((processor->get_state()->prv == PRV_M) && ((dcsr & 0x1000) == 0) ||
+      (processor->get_state()->prv == PRV_U) && ((dcsr & 0x8000) == 0)) {
+    return false;
+  }
+
+  // First check for 16-bit c.ebreak
+  uint16_t insn_16;
+  if (!backdoor_read_mem(pc, 2, reinterpret_cast<uint8_t *>(&insn_16))) {
+    return false;
+  }
+
+  if (insn_16 == 0x9002) {
+    return true;
+  }
+
+  // Not a c.ebreak, check for 32 bit ebreak
+  uint32_t insn_32;
+  if (!backdoor_read_mem(pc, 4, reinterpret_cast<uint8_t *>(&insn_32))) {
+    return false;
+  }
+
+  return insn_32 == 0x00100073;
+}
+
+bool SpikeCosim::check_debug_ebreak(uint32_t write_reg, uint32_t pc,
+                                    bool sync_trap) {
+  // A ebreak from the DUT should not write a register and will be reported as a
+  // 'sync_trap' (though doesn't act like a trap in various respects).
+
+  if (write_reg != 0) {
+    std::stringstream err_str;
+    err_str << "DUT executed ebreak at " << std::hex << pc
+            << " but also wrote register x" << std::dec << write_reg
+            << " which was unexpected";
+    errors.emplace_back(err_str.str());
+
+    return false;
+  }
+
+  if (!sync_trap) {
+    std::stringstream err_str;
+    err_str << "DUT executed ebreak at " << std::hex << pc
+            << " but didn't indicate a synchronous trap, which was unexpected";
+    errors.emplace_back(err_str.str());
+
+    return false;
+  }
+
+  return true;
 }
 
 unsigned int SpikeCosim::get_insn_cnt() { return insn_cnt; }
