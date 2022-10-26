@@ -10,6 +10,84 @@ class core_ibex_csr_test extends core_ibex_base_test;
 
 endclass
 
+// Test that corrupts the PC and checks that an appropriate alert occurs.
+class core_ibex_pc_intg_test extends core_ibex_base_test;
+
+  `uvm_component_utils(core_ibex_pc_intg_test)
+  `uvm_component_new
+
+  uvm_report_server rs;
+
+  virtual task send_stimulus();
+    string core_path, if_stage_path, glitch_path, core_busy_path, instr_seq_path,
+           alert_major_internal_path;
+    int unsigned bit_idx;
+    logic [31:0] orig_pc, glitch_mask, glitched_pc;
+    logic core_busy, exp_alert, alert_major_internal;
+
+    vseq.start(env.vseqr);
+    clk_vif.wait_n_clks($urandom_range(2000));
+
+    // Set path to the core and the PC to be glitched.
+    core_path = "core_ibex_tb_top.dut.u_ibex_top.u_ibex_core";
+    if_stage_path = $sformatf("%s.if_stage_i", core_path);
+    glitch_path = $sformatf("%s.pc_if_o", if_stage_path);
+
+    // Ensure we are still running (sample busy signal).  If not, skip the test without injecting an
+    // error.
+    core_busy_path = $sformatf("%s.core_busy_o", core_path);
+    `DV_CHECK_FATAL(uvm_hdl_read(core_busy_path, core_busy))
+    `DV_CHECK_FATAL(!$isunknown(core_busy))
+    if (core_busy != 1'b1) begin
+      `uvm_info(`gfn, "Skipping test because core is not busy when PC should be glitched", UVM_LOW)
+      return;
+    end
+
+    // Sample PC value prior to glitching.
+    `DV_CHECK_FATAL(uvm_hdl_read(glitch_path, orig_pc))
+
+    // Pick one bit in the PC and glitch it.
+    bit_idx = $urandom_range(31);
+    glitch_mask = 1 << bit_idx;
+    glitched_pc = orig_pc ^ glitch_mask;
+
+    // Disable TB assertion for alerts.
+    `DV_ASSERT_CTRL_REQ("tb_no_alerts_triggered", 1'b0)
+
+    // Force the glitched value onto the PC.
+    `DV_CHECK_FATAL(uvm_hdl_force(glitch_path, glitched_pc));
+    `uvm_info(`gfn, $sformatf("Forcing %s to value 'h%0x", glitch_path, glitched_pc), UVM_LOW)
+
+    // The check will only fire if the current instruction is a sequential one.  Depending on that
+    // we expect an alert or we don't.
+    instr_seq_path = $sformatf("%s.g_secure_pc.prev_instr_seq_d", if_stage_path);
+    `DV_CHECK_FATAL(uvm_hdl_read(instr_seq_path, exp_alert))
+    `DV_CHECK_FATAL(!$isunknown(exp_alert))
+
+    // Leave glitch applied for one clock cycle.
+    clk_vif.wait_n_clks(1);
+
+    // Check that the alert matches our expectation.
+    alert_major_internal_path = $sformatf("%s.alert_major_internal_o", core_path);
+    `DV_CHECK_FATAL(uvm_hdl_read(alert_major_internal_path, alert_major_internal))
+    `DV_CHECK_EQ_FATAL(alert_major_internal, exp_alert, "Major alert did not match expectation!")
+
+    // Release glitch.
+    `DV_CHECK_FATAL(uvm_hdl_release(glitch_path))
+    `uvm_info(`gfn, $sformatf("Releasing force of %s", glitch_path), UVM_LOW)
+
+    // Re-enable TB assertion for alerts.
+    `DV_ASSERT_CTRL_REQ("tb_no_alerts_triggered", 1'b1)
+
+    // Complete the test at this point because cosimulation does not know about the glitched PC and
+    // will mismatch.
+    rs = uvm_report_server::get_server();
+    rs.report_summarize();
+    $finish();
+  endtask
+
+endclass
+
 // Reset test
 class core_ibex_reset_test extends core_ibex_base_test;
 
