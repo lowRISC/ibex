@@ -901,6 +901,7 @@ class core_ibex_nested_irq_test extends core_ibex_directed_test;
     bit valid_irq;
     bit valid_nested_irq;
     int unsigned initial_irq_delay;
+    vseq.irq_raise_seq_h.max_delay = 5000;
     forever begin
       send_irq_stimulus_start(1'b1, 1'b0, valid_irq);
       if (valid_irq) begin
