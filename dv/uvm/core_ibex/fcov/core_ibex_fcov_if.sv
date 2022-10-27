@@ -529,8 +529,7 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
       bins out_of_flush0 = (FLUSH => DECODE);
       bins out_of_flush1 = (FLUSH => DBG_TAKEN_ID);
       bins out_of_flush2 = (FLUSH => WAIT_SLEEP);
-      bins out_of_flush3 = (FLUSH => IRQ_TAKEN);
-      bins out_of_flush4 = (FLUSH => DBG_TAKEN_IF);
+      bins out_of_flush3 = (FLUSH => DBG_TAKEN_IF);
       bins out_of_wait_sleep = (WAIT_SLEEP => SLEEP);
       bins out_of_sleep = (SLEEP => FIRST_FETCH);
       // TODO: VCS does not implement default sequence so illegal_bins will be empty
