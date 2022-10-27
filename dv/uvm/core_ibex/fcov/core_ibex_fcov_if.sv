@@ -494,6 +494,7 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     cp_debug_mode: coverpoint debug_mode;
 
     `DV_FCOV_EXPR_SEEN(debug_wakeup, id_stage_i.controller_i.fcov_debug_wakeup)
+    `DV_FCOV_EXPR_SEEN(all_debug_req, id_stage_i.controller_i.fcov_all_debug_req)
     `DV_FCOV_EXPR_SEEN(debug_entry_if, id_stage_i.controller_i.fcov_debug_entry_if)
     `DV_FCOV_EXPR_SEEN(debug_entry_id, id_stage_i.controller_i.fcov_debug_entry_id)
     `DV_FCOV_EXPR_SEEN(pipe_flush, id_stage_i.controller_i.fcov_pipe_flush)
@@ -582,8 +583,8 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     irq_wfi_cross: cross cp_controller_fsm_sleep, cs_registers_i.mstatus_q.mie iff
                          (id_stage_i.irq_pending_i | id_stage_i.irq_nm_i);
 
-    debug_wfi_cross: cross cp_controller_fsm_sleep, cp_debug_wakeup iff
-                           (id_stage_i.controller_i.fcov_debug_wakeup);
+    debug_wfi_cross: cross cp_controller_fsm_sleep, cp_all_debug_req iff
+                           (id_stage_i.controller_i.fcov_all_debug_req);
 
     priv_mode_instr_cross: cross cp_priv_mode_id, cp_id_instr_category {
       // No un-privileged CSRs on Ibex so no InstrCategoryCSRAccess in U mode (any CSR instruction
