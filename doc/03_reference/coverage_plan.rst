@@ -193,7 +193,6 @@ Each pipeline stage has some associated state.
     * ``FLUSH`` -> ``DECODE`` *
     * ``FLUSH`` -> ``DBG_TAKEN_ID``
     * ``FLUSH`` -> ``WAIT_SLEEP``
-    * ``FLUSH`` -> ``IRQ_TAKEN`` *
     * ``FLUSH`` -> ``DBG_TAKEN_IF`` *
     * ``WAIT_SLEEP`` -> ``SLEEP``
     * ``SLEEP`` -> ``FIRST_FETCH``
