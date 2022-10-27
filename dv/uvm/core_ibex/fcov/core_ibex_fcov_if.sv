@@ -585,7 +585,13 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     debug_wfi_cross: cross cp_controller_fsm_sleep, cp_debug_wakeup iff
                            (id_stage_i.controller_i.fcov_debug_wakeup);
 
-    priv_mode_instr_cross: cross cp_priv_mode_id, cp_id_instr_category;
+    priv_mode_instr_cross: cross cp_priv_mode_id, cp_id_instr_category {
+      // No un-privileged CSRs on Ibex so no InstrCategoryCSRAccess in U mode (any CSR instruction
+      // becomes InstrCategoryCSRIllegal).
+      illegal_bins umode_csr_access_illegal =
+        binsof(cp_id_instr_category) intersect {InstrCategoryCSRAccess} &&
+        binsof(cp_priv_mode_id) intersect {PRIV_LVL_U};
+    }
 
     stall_cross: cross cp_id_instr_category, cp_stall_type_id {
       illegal_bins illegal =
@@ -613,9 +619,13 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     }
 
     pipe_cross: cross cp_id_instr_category, cp_if_stage_state, cp_id_stage_state, wb_stage_state {
-      // When ID stage is empty instruction category must be none
-      illegal_bins illegal = !binsof(cp_id_instr_category) intersect {InstrCategoryNone} &&
-        binsof(cp_id_stage_state) intersect {PipeStageEmpty};
+      // When ID stage is empty the only legal instruction category is InstrCategoryNone. Conversly
+      // when the instruction category is InstrCategoryNone the only legal ID stage state is
+      // PipeStageEmpty.
+      illegal_bins illegal = (!binsof(cp_id_instr_category) intersect {InstrCategoryNone} &&
+        binsof(cp_id_stage_state) intersect {PipeStageEmpty}) ||
+      (binsof(cp_id_instr_category) intersect {InstrCategoryNone} &&
+        !binsof(cp_id_stage_state) intersect {PipeStageEmpty});
     }
 
     interrupt_taken_instr_cross: cross cp_nmi_taken, instr_unstalled_last,
