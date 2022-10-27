@@ -578,35 +578,6 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     misaligned_insn_bus_err_cross: cross id_stage_i.instr_fetch_err_i,
                                          id_stage_i.instr_fetch_err_plus2_i;
 
-    controller_instr_cross: cross cp_controller_fsm, cp_id_instr_category {
-    // Only expecting DECODE => FLUSH when we have the instruction categories constrained below.
-      bins decode_to_flush =
-        binsof(cp_controller_fsm.out_of_decode0) &&
-        binsof(cp_id_instr_category) intersect {InstrCategoryMRet, InstrCategoryDRet,
-                                                InstrCategoryEBreakDbg, InstrCategoryEBreakExc,
-                                                InstrCategoryECall, InstrCategoryFetchError,
-                                                InstrCategoryCSRAccess,
-                                                InstrCategoryCSRIllegal,
-                                                InstrCategoryUncompressedIllegal,
-                                                InstrCategoryCompressedIllegal,
-                                                InstrCategoryPrivIllegal,
-                                                InstrCategoryOtherIllegal};
-      bins decode_to_dbg = binsof(cp_controller_fsm.out_of_decode1);
-      bins decode_to_irq = binsof(cp_controller_fsm.out_of_decode2);
-    // Only expecting FLUSH => DECODE when we have the instruction categories constrained below.
-      bins flush_to_decode =
-        binsof(cp_controller_fsm.out_of_flush0) &&
-        !binsof(cp_id_instr_category) intersect {InstrCategoryEBreakDbg, InstrCategoryWFI};
-    // Only expecting FLUSH => IRQ_TAKEN when we have InstrCategoryCSRAccess in ID/EX
-      bins flush_to_irq_taken =
-        binsof(cp_controller_fsm.out_of_flush3) &&
-        binsof(cp_id_instr_category) intersect {InstrCategoryCSRAccess};
-    // Only expecting FLUSH => DEBUG_IF when we have InstrCategoryEBreakDbg in ID/EX
-      bins flush_to_dbg_if =
-        binsof(cp_controller_fsm.out_of_flush4) &&
-        !binsof(cp_id_instr_category) intersect {InstrCategoryEBreakDbg};
-    }
-
     // Include both mstatus.mie enabled/disabled because it should not affect wakeup condition
     irq_wfi_cross: cross cp_controller_fsm_sleep, cs_registers_i.mstatus_q.mie iff
                          (id_stage_i.irq_pending_i | id_stage_i.irq_nm_i);
