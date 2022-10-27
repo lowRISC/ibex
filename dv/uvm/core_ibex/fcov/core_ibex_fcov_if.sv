@@ -479,15 +479,6 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
       ignore_bins ignore = {`IGNORED_CSRS};
     }
 
-    // All CSR operations perform a read so we don't need to specify the CSR operation.
-    cp_ignored_csrs: coverpoint cs_registers_i.csr_addr_i iff (id_stage_i.csr_access_o) {
-      bins unimplemented_csrs_read = {`NOT_IMPLEMENTED_CSRS};
-    }
-
-    cp_ignored_csrs_w: coverpoint cs_registers_i.csr_addr_i iff (fcov_csr_write) {
-      bins unimplemented_csrs_written = {`NOT_IMPLEMENTED_CSRS};
-    }
-
     `DV_FCOV_EXPR_SEEN(csr_invalid_read_only, fcov_csr_read_only && cs_registers_i.illegal_csr)
     `DV_FCOV_EXPR_SEEN(csr_invalid_write, fcov_csr_write && cs_registers_i.illegal_csr)
 
