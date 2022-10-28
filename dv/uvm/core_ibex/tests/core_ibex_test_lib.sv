@@ -88,6 +88,117 @@ class core_ibex_pc_intg_test extends core_ibex_base_test;
 
 endclass
 
+// Test that corrupts data read from the register file and checks that an appropriate alert occurs.
+class core_ibex_rf_intg_test extends core_ibex_base_test;
+
+  `uvm_component_utils(core_ibex_rf_intg_test)
+  `uvm_component_new
+
+  uvm_report_server rs;
+
+  int unsigned reg_file_data_width;
+
+  string ibex_top_path = "core_ibex_tb_top.dut.u_ibex_top";
+
+  function automatic uvm_hdl_data_t read_data(string subpath);
+    uvm_hdl_data_t result;
+    string path = $sformatf("%s.%s", ibex_top_path, subpath);
+    `DV_CHECK_FATAL(uvm_hdl_read(path, result))
+    return result;
+  endfunction
+
+  function automatic int unsigned read_uint(string subpath);
+    return read_data(subpath);
+  endfunction
+
+  function automatic void force_data(string subpath, uvm_hdl_data_t value);
+    string path = $sformatf("%s.%s", ibex_top_path, subpath);
+    `DV_CHECK_FATAL(uvm_hdl_force(path, value))
+  endfunction
+
+  function automatic void release_force(string subpath);
+    string path = $sformatf("%s.%s", ibex_top_path, subpath);
+    `DV_CHECK_FATAL(uvm_hdl_release(path))
+  endfunction
+
+  virtual function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+
+    // Obtain value of parameter defining data width of register file.
+    reg_file_data_width = read_uint("RegFileDataWidth");
+  endfunction
+
+  virtual task send_stimulus();
+    bit port_idx;
+    string port_name;
+
+    vseq.start(env.vseqr);
+
+    // Pick port to corrupt.
+    port_idx = $urandom_range(1);
+    port_name = port_idx ? "rf_rdata_b_ecc" : "rf_rdata_a_ecc";
+
+    forever begin
+      logic rf_ren, rf_rd_wb_match;
+      int unsigned bit_idx;
+      uvm_hdl_data_t data, mask;
+      logic exp_alert, alert_major_internal;
+
+      clk_vif.wait_n_clks(1);
+
+      // Check if port is being read.
+      if (port_idx) begin
+        rf_ren = dut_vif.signal_probe_rf_ren_b(dv_utils_pkg::SignalProbeSample);
+        rf_rd_wb_match = dut_vif.signal_probe_rf_rd_b_wb_match(dv_utils_pkg::SignalProbeSample);
+      end else begin
+        rf_ren = dut_vif.signal_probe_rf_ren_a(dv_utils_pkg::SignalProbeSample);
+        rf_rd_wb_match = dut_vif.signal_probe_rf_rd_a_wb_match(dv_utils_pkg::SignalProbeSample);
+      end
+
+      // Only corrupt port if it is read.
+      if (!(rf_ren == 1'b1 && rf_rd_wb_match == 1'b0)) continue;
+
+      data = read_data(port_name);
+      `uvm_info(`gfn, $sformatf("Corrupting %s; original value: 'h%0x", port_name, data), UVM_LOW)
+
+      // Corrupt one bit of the data.
+      bit_idx = $urandom_range(reg_file_data_width - 1);
+      mask = 1 << bit_idx;
+      data ^= mask;
+
+      // Disable TB assertion for alerts.
+      `DV_ASSERT_CTRL_REQ("tb_no_alerts_triggered", 1'b0)
+
+      // Force the corrupt value.
+      `uvm_info(`gfn, $sformatf("Forcing corrupt value: 'h%0x", data), UVM_LOW)
+      force_data(port_name, data);
+
+      // Determine whether an alert is expected: if the instruction is valid.
+      exp_alert = read_data("u_ibex_core.instr_valid_id");
+
+      // Schedule a simulation step so the DUT can react.
+      #1step;
+
+      // Check if the major alert matches our expectation.
+      alert_major_internal = read_data("alert_major_internal_o");
+      `DV_CHECK_EQ_FATAL(alert_major_internal, exp_alert)
+
+      // Release force after one clock cycle.
+      clk_vif.wait_n_clks(1);
+      release_force(port_name);
+
+      // Complete test if alert has been correctly triggered.
+      if (exp_alert) break;
+    end
+
+    // Stop test at this point because cosim will mismatch.
+    rs = uvm_report_server::get_server();
+    rs.report_summarize();
+    $finish();
+  endtask
+
+endclass
+
 // Reset test
 class core_ibex_reset_test extends core_ibex_base_test;
 
