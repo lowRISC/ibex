@@ -653,6 +653,13 @@
   gen_test: riscv_rand_instr_test
   rtl_test: core_ibex_rf_intg_test
 
+- test: riscv_icache_intg_test
+  description: >
+    Randomly corrupt the instruction cache once in the middle of program execution
+  iterations: 15
+  gen_test: riscv_rand_instr_test
+  rtl_test: core_ibex_icache_intg_test
+
 - test: riscv_rv32im_instr_test
   description: >
     Random instruction test without compressed instructions

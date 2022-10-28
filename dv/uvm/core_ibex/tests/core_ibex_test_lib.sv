@@ -199,6 +199,275 @@ class core_ibex_rf_intg_test extends core_ibex_base_test;
 
 endclass
 
+// Test that corrupts the instruction cache and checks that an appropriate alert occurs.
+class core_ibex_icache_intg_test extends core_ibex_base_test;
+
+  `uvm_component_utils(core_ibex_icache_intg_test)
+  `uvm_component_new
+
+  string ibex_top_path = "core_ibex_tb_top.dut.u_ibex_top";
+
+  int unsigned num_ways, num_entries, tag_size, line_size;
+
+  bit data_valid[][];
+  bit tag_valid[][];
+
+  function automatic int unsigned read_uint(string subpath);
+    int unsigned result;
+    string path = $sformatf("%s.%s", ibex_top_path, subpath);
+    `DV_CHECK_FATAL(uvm_hdl_read(path, result))
+    return result;
+  endfunction
+
+  function automatic uvm_hdl_data_t read_data(string subpath);
+    uvm_hdl_data_t result;
+    string path = $sformatf("%s.%s", ibex_top_path, subpath);
+    `DV_CHECK_FATAL(uvm_hdl_read(path, result))
+    return result;
+  endfunction
+
+  function automatic void force_data(string subpath, uvm_hdl_data_t value);
+    string path = $sformatf("%s.%s", ibex_top_path, subpath);
+    `DV_CHECK_FATAL(uvm_hdl_force(path, value))
+  endfunction
+
+  function automatic void release_force(string subpath);
+    string path = $sformatf("%s.%s", ibex_top_path, subpath);
+    `DV_CHECK_FATAL(uvm_hdl_release(path))
+  endfunction
+
+  virtual function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+
+    // Obtain value of parameters defining shape of cache.
+    num_ways = ibex_pkg::IC_NUM_WAYS;
+    num_entries = 1 << ibex_pkg::IC_INDEX_W;
+    tag_size = read_uint("TagSizeECC");
+    line_size = read_uint("LineSizeECC");
+
+    // Initialize memory entry status arrays.
+    data_valid = new[num_ways];
+    foreach (data_valid[i]) data_valid[i] = new[num_entries];
+    tag_valid = new[num_ways];
+    foreach (tag_valid[i]) tag_valid[i] = new[num_entries];
+  endfunction
+
+  function automatic void reset_icache_status();
+    foreach (data_valid[i]) begin
+      foreach (data_valid[i][j]) data_valid[i][j] = 1'b0;
+    end
+    foreach (tag_valid[i]) begin
+      foreach (tag_valid[i][j]) tag_valid[i][j] = 1'b0;
+    end
+  endfunction
+
+  // Track the status of the instruction cache (optimistically).  Whenever a write to a data or tag
+  // entry is observed on the icache ports, that data or tag is set to valid in the test.  The test
+  // then uses this information to corrupt only data or tags that are considered valid.  The tracked
+  // status is a necessary but not sufficient condition for the actual validity of a data or tag.
+  task automatic track_icache_status();
+    reset_icache_status();
+    forever begin
+      uvm_hdl_data_t data_req, data_write, data_addr, tag_req, tag_write, tag_addr;
+      clk_vif.wait_clks(1);
+      if (!clk_vif.rst_n) begin
+        reset_icache_status();
+        continue;
+      end
+      // Set data entries to valid based on data writes.
+      data_req = dut_vif.signal_probe_ic_data_req(dv_utils_pkg::SignalProbeSample);
+      data_write = dut_vif.signal_probe_ic_data_write(dv_utils_pkg::SignalProbeSample);
+      if (data_req != '0 && data_write == 1'b1) begin
+        data_addr = dut_vif.signal_probe_ic_data_addr(dv_utils_pkg::SignalProbeSample);
+        for (int unsigned i = 0; i < num_ways; i++) begin
+          if (data_req[i]) data_valid[i][data_addr] = 1'b1;
+        end
+      end
+      // Set tag entries to valid based on tag writes.
+      tag_req = dut_vif.signal_probe_ic_tag_req(dv_utils_pkg::SignalProbeSample);
+      tag_write = dut_vif.signal_probe_ic_tag_write(dv_utils_pkg::SignalProbeSample);
+      if (tag_req != '0 && tag_write == 1'b1) begin
+        tag_addr = dut_vif.signal_probe_ic_tag_addr(dv_utils_pkg::SignalProbeSample);
+        for (int unsigned i = 0; i < num_ways; i++) begin
+          if (tag_req[i]) tag_valid[i][tag_addr] = 1'b1;
+        end
+      end
+    end
+  endtask
+
+  task automatic corrupt_used_icache_data();
+    clk_vif.wait_n_clks(1);
+    forever begin
+      uvm_hdl_data_t data_req, data_write, data_addr;
+      data_req = dut_vif.signal_probe_ic_data_req(dv_utils_pkg::SignalProbeSample);
+      data_write = dut_vif.signal_probe_ic_data_write(dv_utils_pkg::SignalProbeSample);
+
+      // Check if at least one data way is being read.
+      if (data_req != '0 && data_write == 1'b0) begin
+        int unsigned valid_and_used_ways[$];
+
+        // Probe the data address.
+        data_addr = dut_vif.signal_probe_ic_data_addr(dv_utils_pkg::SignalProbeSample);
+
+        // Find out which data ways are valid and used in this clock cycle.
+        for (int unsigned i = 0; i < num_ways; i++) begin
+          if (data_req[i] && data_valid[i][data_addr]) valid_and_used_ways.push_back(i);
+        end
+
+        // The response comes in the next clock cycle, so wait one cycle.
+        clk_vif.wait_n_clks(1);
+
+        // Check if at least one data way is valid and used.
+        if (valid_and_used_ways.size() > 0) begin
+          int unsigned way_idx, bit_idx;
+          uvm_hdl_data_t data_rdata, mask, lookup_valid, tag_hit, alert_minor;
+          logic exp_alert_minor;
+
+          `uvm_info(`gfn,
+              $sformatf("The following I$ data ways are valid and used in this clock cycle: %p",
+                        valid_and_used_ways), UVM_LOW)
+
+          // Pick a way to corrupt.
+          way_idx = $urandom_range(valid_and_used_ways.size() - 1);
+          `uvm_info(`gfn, $sformatf("Corrupting data way %0d", way_idx), UVM_LOW)
+
+          // Probe response data.
+          data_rdata = read_data($sformatf("ic_data_rdata[%0d]", way_idx));
+          `uvm_info(`gfn, $sformatf("Original data_rdata of way %0d: 'h%0x", way_idx, data_rdata),
+                    UVM_LOW)
+
+          // Pick a bit to corrupt.
+          bit_idx = $urandom_range(line_size - 1);
+          mask = 1 << bit_idx;
+          data_rdata ^= mask;
+          `uvm_info(`gfn, $sformatf("Corrupting data_rdata: 'h%0x", data_rdata), UVM_LOW)
+
+          // Disable TB assertion for alerts.
+          `DV_ASSERT_CTRL_REQ("tb_no_alerts_triggered", 1'b0)
+
+          // Force the corrupt value.
+          force_data($sformatf("ic_data_rdata[%0d]", way_idx), data_rdata);
+
+          // Give the DUT one clock cycle to react.
+          clk_vif.wait_n_clks(1);
+
+          // Decide if an error is expected: if the lookup is valid and the tag hit.
+          lookup_valid = read_data($sformatf(
+              "u_ibex_core.if_stage_i.gen_icache.icache_i.lookup_valid_ic1"));
+          tag_hit = read_data($sformatf(
+              "u_ibex_core.if_stage_i.gen_icache.icache_i.tag_hit_ic1"));
+          exp_alert_minor = lookup_valid & tag_hit;
+          `DV_CHECK_FATAL(!$isunknown(exp_alert_minor))
+
+          // Check that the minor alert matches the expectation.
+          alert_minor = dut_vif.signal_probe_alert_minor(dv_utils_pkg::SignalProbeSample);
+          `DV_CHECK_EQ_FATAL(alert_minor, exp_alert_minor)
+
+          // Release force and complete task.
+          release_force($sformatf("ic_data_rdata[%0d]", way_idx));
+          return;
+        end
+      end else begin
+        clk_vif.wait_n_clks(1);
+      end
+    end
+  endtask
+
+  task automatic corrupt_used_icache_tag();
+    clk_vif.wait_n_clks(1);
+    forever begin
+      uvm_hdl_data_t tag_req, tag_write, tag_addr;
+      tag_req = dut_vif.signal_probe_ic_tag_req(dv_utils_pkg::SignalProbeSample);
+      tag_write = dut_vif.signal_probe_ic_tag_write(dv_utils_pkg::SignalProbeSample);
+
+      // Check if at least one tag way is being read.
+      if (tag_req != '0 && tag_write == 1'b0) begin
+        int unsigned valid_and_used_ways[$];
+
+        // Probe the tag address.
+        tag_addr = dut_vif.signal_probe_ic_tag_addr(dv_utils_pkg::SignalProbeSample);
+
+        // Find out which tag ways are valid and used in this clock cycle.
+        for (int unsigned i = 0; i < num_ways; i++) begin
+          if (tag_req[i] && tag_valid[i][tag_addr]) valid_and_used_ways.push_back(i);
+        end
+
+        // The response comes in the next clock cycle, so wait one cycle.
+        clk_vif.wait_n_clks(1);
+
+        // Check if at least one tag way is valid and used.
+        if (valid_and_used_ways.size() > 0) begin
+          int unsigned way_idx, bit_idx;
+          uvm_hdl_data_t tag_rdata, mask, alert_minor;
+          logic lookup_valid;
+
+          `uvm_info(`gfn,
+              $sformatf("The following I$ tag ways are valid and used in this clock cycle: %p",
+                        valid_and_used_ways), UVM_LOW)
+
+          // Pick a way to corrupt.
+          way_idx = $urandom_range(valid_and_used_ways.size() - 1);
+          `uvm_info(`gfn, $sformatf("Corrupting tag way %0d", way_idx), UVM_LOW)
+
+          // Probe response data.
+          tag_rdata = read_data($sformatf("ic_tag_rdata[%0d]", way_idx));
+          `uvm_info(`gfn, $sformatf("Original tag_rdata of way %0d: 'h%0x", way_idx, tag_rdata),
+                    UVM_LOW)
+
+          // Pick a bit to corrupt.
+          bit_idx = $urandom_range(tag_size - 1);
+          mask = 1 << bit_idx;
+          tag_rdata ^= mask;
+          `uvm_info(`gfn, $sformatf("Corrupting tag_rdata: 'h%0x", tag_rdata), UVM_LOW)
+
+          // Disable TB assertion for alerts.
+          `DV_ASSERT_CTRL_REQ("tb_no_alerts_triggered", 1'b0)
+
+          // Force the corrupt value.
+          force_data($sformatf("ic_tag_rdata[%0d]", way_idx), tag_rdata);
+
+          // Give the DUT one clock cycle to react.
+          clk_vif.wait_n_clks(1);
+
+          // Decide if an error is expected: if the lookup is valid.
+          lookup_valid = read_data($sformatf(
+              "u_ibex_core.if_stage_i.gen_icache.icache_i.lookup_valid_ic1"));
+          `DV_CHECK_FATAL(!$isunknown(lookup_valid))
+
+          // Check that the minor alert matches the expectation.
+          alert_minor = dut_vif.signal_probe_alert_minor(dv_utils_pkg::SignalProbeSample);
+          `DV_CHECK_EQ_FATAL(alert_minor, lookup_valid)
+
+          // Release force and complete task.
+          release_force($sformatf("ic_tag_rdata[%0d]", way_idx));
+          return;
+        end
+      end else begin
+        clk_vif.wait_n_clks(1);
+      end
+    end
+  endtask
+
+  task automatic corrupt_used_icache_entries();
+    fork
+      corrupt_used_icache_data();
+      corrupt_used_icache_tag();
+    join_any
+
+    // Re-enable TB assertion for alerts.
+    `DV_ASSERT_CTRL_REQ("tb_no_alerts_triggered", 1'b1)
+  endtask
+
+  virtual task send_stimulus();
+    vseq.start(env.vseqr);
+    fork
+      track_icache_status();
+      corrupt_used_icache_entries();
+    join_any
+  endtask
+
+endclass
+
 // Reset test
 class core_ibex_reset_test extends core_ibex_base_test;
 
