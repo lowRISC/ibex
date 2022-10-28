@@ -73,5 +73,12 @@ interface core_ibex_dut_probe_if(input logic clk);
   `DV_CREATE_SIGNAL_PROBE_FUNCTION(signal_probe_rf_ren_b, rf_ren_b)
   `DV_CREATE_SIGNAL_PROBE_FUNCTION(signal_probe_rf_rd_a_wb_match, rf_rd_a_wb_match)
   `DV_CREATE_SIGNAL_PROBE_FUNCTION(signal_probe_rf_rd_b_wb_match, rf_rd_b_wb_match)
+  `DV_CREATE_SIGNAL_PROBE_FUNCTION(signal_probe_alert_minor, alert_minor)
+  `DV_CREATE_SIGNAL_PROBE_FUNCTION(signal_probe_ic_tag_req, ic_tag_req)
+  `DV_CREATE_SIGNAL_PROBE_FUNCTION(signal_probe_ic_tag_write, ic_tag_write)
+  `DV_CREATE_SIGNAL_PROBE_FUNCTION(signal_probe_ic_tag_addr, ic_tag_addr)
+  `DV_CREATE_SIGNAL_PROBE_FUNCTION(signal_probe_ic_data_req, ic_data_req)
+  `DV_CREATE_SIGNAL_PROBE_FUNCTION(signal_probe_ic_data_write, ic_data_write)
+  `DV_CREATE_SIGNAL_PROBE_FUNCTION(signal_probe_ic_data_addr, ic_data_addr)
 
 endinterface
