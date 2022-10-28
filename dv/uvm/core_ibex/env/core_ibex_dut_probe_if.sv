@@ -4,6 +4,9 @@
 
 // Interface to probe DUT internal signal
 interface core_ibex_dut_probe_if(input logic clk);
+
+  import uvm_pkg::*;
+
   logic                    reset;
   logic                    illegal_instr;
   logic                    ecall;
@@ -53,5 +56,10 @@ interface core_ibex_dut_probe_if(input logic clk);
   initial begin
     debug_req = 1'b0;
   end
+
+  `DV_CREATE_SIGNAL_PROBE_FUNCTION(signal_probe_rf_ren_a, rf_ren_a)
+  `DV_CREATE_SIGNAL_PROBE_FUNCTION(signal_probe_rf_ren_b, rf_ren_b)
+  `DV_CREATE_SIGNAL_PROBE_FUNCTION(signal_probe_rf_rd_a_wb_match, rf_rd_a_wb_match)
+  `DV_CREATE_SIGNAL_PROBE_FUNCTION(signal_probe_rf_rd_b_wb_match, rf_rd_b_wb_match)
 
 endinterface
