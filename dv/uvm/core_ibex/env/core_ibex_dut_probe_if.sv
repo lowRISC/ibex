@@ -21,6 +21,10 @@ interface core_ibex_dut_probe_if(input logic clk);
   ibex_pkg::ctrl_fsm_e     ctrl_fsm_cs;
   logic                    debug_mode;
   logic                    double_fault_seen;
+  logic                    rf_ren_a;
+  logic                    rf_ren_b;
+  logic                    rf_rd_a_wb_match;
+  logic                    rf_rd_b_wb_match;
 
   clocking dut_cb @(posedge clk);
     output fetch_enable;
@@ -40,6 +44,10 @@ interface core_ibex_dut_probe_if(input logic clk);
     input ctrl_fsm_cs;
     input debug_mode;
     input double_fault_seen;
+    input rf_ren_a;
+    input rf_ren_b;
+    input rf_rd_a_wb_match;
+    input rf_rd_b_wb_match;
   endclocking
 
   initial begin

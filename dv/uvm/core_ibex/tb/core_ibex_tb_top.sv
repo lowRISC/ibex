@@ -200,16 +200,21 @@ module core_ibex_tb_top;
   // Irq interface connections
   assign irq_vif.reset = ~rst_n;
   // Dut_if interface connections
-  assign dut_if.ecall         = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ecall_insn;
-  assign dut_if.wfi           = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.wfi_insn;
-  assign dut_if.ebreak        = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ebrk_insn;
-  assign dut_if.illegal_instr = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.illegal_insn_d;
-  assign dut_if.dret          = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.dret_insn;
-  assign dut_if.mret          = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.mret_insn;
-  assign dut_if.reset         = ~rst_n;
-  assign dut_if.priv_mode     = dut.u_ibex_top.u_ibex_core.priv_mode_id;
-  assign dut_if.ctrl_fsm_cs   = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ctrl_fsm_cs;
-  assign dut_if.debug_mode    = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.debug_mode_q;
+  assign dut_if.ecall            = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ecall_insn;
+  assign dut_if.wfi              = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.wfi_insn;
+  assign dut_if.ebreak           = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ebrk_insn;
+  assign dut_if.illegal_instr
+      = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.illegal_insn_d;
+  assign dut_if.dret             = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.dret_insn;
+  assign dut_if.mret             = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.mret_insn;
+  assign dut_if.reset            = ~rst_n;
+  assign dut_if.priv_mode        = dut.u_ibex_top.u_ibex_core.priv_mode_id;
+  assign dut_if.ctrl_fsm_cs      = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ctrl_fsm_cs;
+  assign dut_if.debug_mode       = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.debug_mode_q;
+  assign dut_if.rf_ren_a         = dut.u_ibex_top.u_ibex_core.rf_ren_a;
+  assign dut_if.rf_ren_b         = dut.u_ibex_top.u_ibex_core.rf_ren_b;
+  assign dut_if.rf_rd_a_wb_match = dut.u_ibex_top.u_ibex_core.rf_rd_a_wb_match;
+  assign dut_if.rf_rd_b_wb_match = dut.u_ibex_top.u_ibex_core.rf_rd_b_wb_match;
   // Instruction monitor connections
   assign instr_monitor_if.reset        = ~rst_n;
   assign instr_monitor_if.valid_id     = dut.u_ibex_top.u_ibex_core.id_stage_i.instr_valid_i;
