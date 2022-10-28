@@ -799,7 +799,7 @@
   rtl_test: core_ibex_base_test
   rtl_params:
     PMPEnable: 1
-  timeout_s: 180
+  timeout_s: 600
 
 - test: riscv_epmp_mml_test
   desc: >
