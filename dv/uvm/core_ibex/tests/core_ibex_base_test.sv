@@ -9,6 +9,8 @@ class core_ibex_base_test extends uvm_test;
   core_ibex_env                                   env;
   core_ibex_env_cfg                               cfg;
   core_ibex_cosim_cfg                             cosim_cfg;
+  ibex_mem_intf_response_agent_cfg                imem_cfg;
+  ibex_mem_intf_response_agent_cfg                dmem_cfg;
   virtual clk_rst_if                              clk_vif;
   virtual core_ibex_dut_probe_if                  dut_vif;
   virtual core_ibex_instr_monitor_if              instr_vif;
@@ -145,6 +147,20 @@ class core_ibex_base_test extends uvm_test;
     cosim_cfg.icache = icache;
 
     uvm_config_db#(core_ibex_cosim_cfg)::set(null, "*cosim_agent*", "cosim_cfg", cosim_cfg);
+
+    imem_cfg = ibex_mem_intf_response_agent_cfg::type_id::create("imem_cfg", this);
+    dmem_cfg = ibex_mem_intf_response_agent_cfg::type_id::create("dmem_cfg", this);
+    // Never create bad integrity bits in response to accessing uninit memory
+    // on the Iside, as the Ibex can fetch speculatively.
+    imem_cfg.enable_bad_intg_on_uninit_access = 0;
+    // By default, enable bad_intg on the Dside (read plusarg to overwrite this behaviour)
+    dmem_cfg.enable_bad_intg_on_uninit_access = 1;
+    void'($value$plusargs("enable_bad_intg_on_uninit_access=%0d",
+                          dmem_cfg.enable_bad_intg_on_uninit_access));
+    uvm_config_db#(ibex_mem_intf_response_agent_cfg)::
+      set(this, "*instr_if_response_agent*", "cfg", imem_cfg);
+    uvm_config_db#(ibex_mem_intf_response_agent_cfg)::
+      set(this, "*data_if_response_agent*", "cfg", dmem_cfg);
 
     uvm_config_db#(core_ibex_env_cfg)::set(this, "*", "cfg", cfg);
     mem = mem_model_pkg::mem_model#()::type_id::create("mem");
