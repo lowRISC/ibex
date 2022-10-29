@@ -159,6 +159,7 @@ module ibex_top import ibex_pkg::*; #(
   logic                        irq_pending;
   // Core <-> Register file signals
   logic                        dummy_instr_id;
+  logic                        dummy_instr_wb;
   logic [4:0]                  rf_raddr_a;
   logic [4:0]                  rf_raddr_b;
   logic [4:0]                  rf_waddr_wb;
@@ -327,6 +328,7 @@ module ibex_top import ibex_pkg::*; #(
     .data_err_i,
 
     .dummy_instr_id_o (dummy_instr_id),
+    .dummy_instr_wb_o (dummy_instr_wb),
     .rf_raddr_a_o     (rf_raddr_a),
     .rf_raddr_b_o     (rf_raddr_b),
     .rf_waddr_wb_o    (rf_waddr_wb),
@@ -418,6 +420,7 @@ module ibex_top import ibex_pkg::*; #(
 
       .test_en_i       (test_en_i),
       .dummy_instr_id_i(dummy_instr_id),
+      .dummy_instr_wb_i(dummy_instr_wb),
 
       .raddr_a_i(rf_raddr_a),
       .rdata_a_o(rf_rdata_a_ecc),
@@ -442,6 +445,7 @@ module ibex_top import ibex_pkg::*; #(
 
       .test_en_i       (test_en_i),
       .dummy_instr_id_i(dummy_instr_id),
+      .dummy_instr_wb_i(dummy_instr_wb),
 
       .raddr_a_i(rf_raddr_a),
       .rdata_a_o(rf_rdata_a_ecc),
@@ -466,6 +470,7 @@ module ibex_top import ibex_pkg::*; #(
 
       .test_en_i       (test_en_i),
       .dummy_instr_id_i(dummy_instr_id),
+      .dummy_instr_wb_i(dummy_instr_wb),
 
       .raddr_a_i(rf_raddr_a),
       .rdata_a_o(rf_rdata_a_ecc),
@@ -708,6 +713,7 @@ module ibex_top import ibex_pkg::*; #(
       data_rdata_core,
       data_err_i,
       dummy_instr_id,
+      dummy_instr_wb,
       rf_raddr_a,
       rf_raddr_b,
       rf_waddr_wb,
@@ -761,6 +767,7 @@ module ibex_top import ibex_pkg::*; #(
     logic                         data_err_local;
 
     logic                         dummy_instr_id_local;
+    logic                         dummy_instr_wb_local;
     logic [4:0]                   rf_raddr_a_local;
     logic [4:0]                   rf_raddr_b_local;
     logic [4:0]                   rf_waddr_wb_local;
@@ -813,6 +820,7 @@ module ibex_top import ibex_pkg::*; #(
       data_rdata_core,
       data_err_i,
       dummy_instr_id,
+      dummy_instr_wb,
       rf_raddr_a,
       rf_raddr_b,
       rf_waddr_wb,
@@ -862,6 +870,7 @@ module ibex_top import ibex_pkg::*; #(
       data_rdata_local,
       data_err_local,
       dummy_instr_id_local,
+      dummy_instr_wb_local,
       rf_raddr_a_local,
       rf_raddr_b_local,
       rf_waddr_wb_local,
@@ -968,6 +977,7 @@ module ibex_top import ibex_pkg::*; #(
       .data_err_i             (data_err_local),
 
       .dummy_instr_id_i       (dummy_instr_id_local),
+      .dummy_instr_wb_i       (dummy_instr_wb_local),
       .rf_raddr_a_i           (rf_raddr_a_local),
       .rf_raddr_b_i           (rf_raddr_b_local),
       .rf_waddr_wb_i          (rf_waddr_wb_local),
@@ -1156,5 +1166,5 @@ module ibex_top import ibex_pkg::*; #(
 
   // Dummy instructions may only write to register 0, which is a special register when dummy
   // instructions are enabled.
-  `ASSERT(WaddrAZeroForDummyInstr, dummy_instr_id && rf_we_wb |-> rf_waddr_wb == '0)
+  `ASSERT(WaddrAZeroForDummyInstr, dummy_instr_wb && rf_we_wb |-> rf_waddr_wb == '0)
 endmodule
