@@ -160,9 +160,8 @@ bool SpikeCosim::backdoor_read_mem(uint32_t addr, size_t len,
 // - If we catch a trap_t&, then the take_trap() fn updates the state of the
 //   processor, and when we call step() again we start executing in the new
 //   context of the trap (trap andler, new MSTATUS, debug rom, etc. etc.)
-bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data,
-                      uint32_t pc,
-                      bool sync_trap) {
+bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
+                      bool sync_trap, bool suppress_reg_write) {
   assert(write_reg < 32);
 
   // The DUT has just produced an RVFI item
@@ -180,7 +179,27 @@ bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data,
   }
 
   uint32_t initial_spike_pc;
+  uint32_t suppressed_write_reg;
+  uint32_t suppressed_write_reg_data;
   bool pending_sync_exception = false;
+
+  if (suppress_reg_write) {
+    // If Ibex suppressed a register write (which occurs when a load gets data
+    // with bad integrity) record the state of the destination register before
+    // we do the stop, so we can restore it after the step (as spike won't
+    // suppressed the register write).
+    //
+    // First check retired instruciton to ensure load suppression is correct
+    if (!check_suppress_reg_write(write_reg, pc, suppressed_write_reg)) {
+      return false;
+    }
+
+    // The check gives us the destination register the instruction would have
+    // written to (write_reg will be 0 to indicate to write). Record the
+    // contents of that register.
+    suppressed_write_reg_data =
+        processor->get_state()->XPR[suppressed_write_reg];
+  }
 
   // Before stepping Spike, record the current spike pc.
   // (If the current step causes a synchronous trap, it will be
@@ -276,7 +295,13 @@ bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data,
   }
   pending_iside_error = false;
 
-  if (!check_retired_instr(write_reg, write_reg_data, pc)) {
+  if (suppress_reg_write) {
+    // If we suppressed a register write restore the old register state now
+    processor->get_state()->XPR.write(suppressed_write_reg,
+                                      suppressed_write_reg_data);
+  }
+
+  if (!check_retired_instr(write_reg, write_reg_data, pc, suppress_reg_write)) {
     return false;
   }
 
@@ -285,8 +310,9 @@ bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data,
   return true;
 }
 
-bool SpikeCosim::check_retired_instr(uint32_t write_reg, uint32_t write_reg_data,
-                                     uint32_t dut_pc) {
+bool SpikeCosim::check_retired_instr(uint32_t write_reg,
+                                     uint32_t write_reg_data, uint32_t dut_pc,
+                                     bool suppress_reg_write) {
   // Check the retired instruction and all of its side-effects match those from
   // the DUT
 
@@ -320,7 +346,8 @@ bool SpikeCosim::check_retired_instr(uint32_t write_reg, uint32_t write_reg_data
       // should never see more than one GPR write per step
       assert(!gpr_write_seen);
 
-      if (!check_gpr_write(reg_change, write_reg, write_reg_data)) {
+      if (!suppress_reg_write &&
+          !check_gpr_write(reg_change, write_reg, write_reg_data)) {
         return false;
       }
 
@@ -424,6 +451,31 @@ bool SpikeCosim::check_gpr_write(const commit_log_reg_t::value_type &reg_change,
     err_str << "Register write data mismatch to x" << cosim_write_reg
             << " DUT: " << std::hex << write_reg_data
             << " expected: " << cosim_write_reg_data;
+    errors.emplace_back(err_str.str());
+
+    return false;
+  }
+
+  return true;
+}
+
+bool SpikeCosim::check_suppress_reg_write(uint32_t write_reg, uint32_t pc,
+                                          uint32_t &suppressed_write_reg) {
+  if (write_reg != 0) {
+    std::stringstream err_str;
+    err_str << "Instruction at " << std::hex << pc
+            << " indicated a suppressed register write but wrote to x"
+            << std::dec << write_reg;
+    errors.emplace_back(err_str.str());
+
+    return false;
+  }
+
+  if (!pc_is_load(pc, suppressed_write_reg)) {
+    std::stringstream err_str;
+    err_str << "Instruction at " << std::hex << pc
+            << " indicated a suppressed register write is it not a load"
+               " only loads can suppress register writes";
     errors.emplace_back(err_str.str());
 
     return false;
@@ -911,6 +963,46 @@ bool SpikeCosim::check_debug_ebreak(uint32_t write_reg, uint32_t pc,
   }
 
   return true;
+}
+
+bool SpikeCosim::pc_is_load(uint32_t pc, uint32_t &rd_out) {
+  uint16_t insn_16;
+
+  if (!backdoor_read_mem(pc, 2, reinterpret_cast<uint8_t *>(&insn_16))) {
+    return false;
+  }
+
+  // C.LW
+  if ((insn_16 & 0xE003) == 0x4000) {
+    rd_out = ((insn_16 >> 2) & 0x7) + 8;
+    return true;
+  }
+
+  // C.LWSP
+  if ((insn_16 & 0xE003) == 0x4002) {
+    rd_out = (insn_16 >> 7) & 0x1F;
+    return rd_out != 0;
+  }
+
+  uint16_t insn_32;
+
+  if (!backdoor_read_mem(pc, 4, reinterpret_cast<uint8_t *>(&insn_32))) {
+    return false;
+  }
+
+  // LB/LH/LW/LBU/LHU
+  if ((insn_32 & 0x7F) == 0x3) {
+    uint32_t func = (insn_32 >> 12) & 0x7;
+    if ((func == 0x3) || (func == 0x6) || (func == 0x7)) {
+      // Not valid load encodings
+      return false;
+    }
+
+    rd_out = (insn_32 >> 7) & 0x1F;
+    return true;
+  }
+
+  return false;
 }
 
 unsigned int SpikeCosim::get_insn_cnt() { return insn_cnt; }

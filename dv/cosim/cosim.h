@@ -72,7 +72,7 @@ class Cosim {
   //
   // Returns false if there are any errors; use `get_errors` to obtain details
   virtual bool step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
-                    bool sync_trap) = 0;
+                    bool sync_trap, bool suppress_reg_write) = 0;
 
   // When more than one of `set_mip`, `set_nmi` or `set_debug_req` is called
   // before `step` which one takes effect is chosen by the co-simulator. Which

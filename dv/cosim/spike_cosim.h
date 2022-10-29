@@ -61,12 +61,16 @@ class SpikeCosim : public simif_t, public Cosim {
                                       const uint8_t *bytes);
 
   bool pc_is_mret(uint32_t pc);
+  bool pc_is_load(uint32_t pc, uint32_t &rd_out);
 
   bool pc_is_debug_ebreak(uint32_t pc);
   bool check_debug_ebreak(uint32_t write_reg, uint32_t pc, bool sync_trap);
 
   bool check_gpr_write(const commit_log_reg_t::value_type &reg_change,
                        uint32_t write_reg, uint32_t write_reg_data);
+
+  bool check_suppress_reg_write(uint32_t write_reg, uint32_t pc,
+                                uint32_t &suppressed_write_reg);
 
   void on_csr_write(const commit_log_reg_t::value_type &reg_change);
 
@@ -101,10 +105,10 @@ class SpikeCosim : public simif_t, public Cosim {
                           const uint8_t *data_in) override;
   bool backdoor_read_mem(uint32_t addr, size_t len, uint8_t *data_out) override;
   bool step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
-            bool sync_trap) override;
+            bool sync_trap, bool suppress_reg_write) override;
 
   bool check_retired_instr(uint32_t write_reg, uint32_t write_reg_data,
-                           uint32_t pc);
+                           uint32_t dut_pc, bool suppress_reg_write);
   bool check_sync_trap(uint32_t write_reg, uint32_t pc,
                        uint32_t initial_spike_pc);
   void set_mip(uint32_t mip) override;
