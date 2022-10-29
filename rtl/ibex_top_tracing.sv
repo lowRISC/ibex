@@ -123,6 +123,7 @@ module ibex_top_tracing import ibex_pkg::*; #(
   logic        rvfi_ext_nmi;
   logic        rvfi_ext_nmi_int;
   logic        rvfi_ext_debug_req;
+  logic        rvfi_ext_rf_wr_suppress;
   logic [63:0] rvfi_ext_mcycle;
 
   logic [31:0] rvfi_ext_mhpmcounters [10];
@@ -137,6 +138,7 @@ module ibex_top_tracing import ibex_pkg::*; #(
   logic        unused_rvfi_ext_nmi;
   logic        unused_rvfi_ext_nmi_int;
   logic        unused_rvfi_ext_debug_req;
+  logic        unused_rvfi_ext_rf_wr_suppress;
   logic [63:0] unused_rvfi_ext_mcycle;
   logic        unused_rvfi_ext_ic_scr_key_valid;
 
@@ -146,6 +148,7 @@ module ibex_top_tracing import ibex_pkg::*; #(
   assign unused_rvfi_ext_nmi = rvfi_ext_nmi;
   assign unused_rvfi_ext_nmi_int = rvfi_ext_nmi_int;
   assign unused_rvfi_ext_debug_req = rvfi_ext_debug_req;
+  assign unused_rvfi_ext_rf_wr_suppress = rvfi_ext_rf_wr_suppress;
   assign unused_rvfi_ext_mcycle = rvfi_ext_mcycle;
   assign unused_perf_regs = rvfi_ext_mhpmcounters;
   assign unused_perf_regsh = rvfi_ext_mhpmcountersh;
@@ -247,6 +250,7 @@ module ibex_top_tracing import ibex_pkg::*; #(
     .rvfi_ext_nmi,
     .rvfi_ext_nmi_int,
     .rvfi_ext_debug_req,
+    .rvfi_ext_rf_wr_suppress,
     .rvfi_ext_mcycle,
     .rvfi_ext_mhpmcounters,
     .rvfi_ext_mhpmcountersh,

@@ -10,10 +10,13 @@
 
 int riscv_cosim_step(Cosim *cosim, const svBitVecVal *write_reg,
                      const svBitVecVal *write_reg_data, const svBitVecVal *pc,
-                     svBit sync_trap) {
+                     svBit sync_trap, svBit suppress_reg_write) {
   assert(cosim);
 
-  return cosim->step(write_reg[0], write_reg_data[0], pc[0], sync_trap) ? 1 : 0;
+  return cosim->step(write_reg[0], write_reg_data[0], pc[0], sync_trap,
+                     suppress_reg_write)
+             ? 1
+             : 0;
 }
 
 void riscv_cosim_set_mip(Cosim *cosim, const svBitVecVal *mip) {
