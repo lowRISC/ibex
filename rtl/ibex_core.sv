@@ -72,6 +72,7 @@ module ibex_core import ibex_pkg::*; #(
 
   // Register file interface
   output logic                         dummy_instr_id_o,
+  output logic                         dummy_instr_wb_o,
   output logic [4:0]                   rf_raddr_a_o,
   output logic [4:0]                   rf_raddr_b_o,
   output logic [4:0]                   rf_waddr_wb_o,
@@ -303,6 +304,7 @@ module ibex_core import ibex_pkg::*; #(
   logic           rf_write_wb;
   logic           outstanding_load_wb;
   logic           outstanding_store_wb;
+  logic           dummy_instr_wb;
 
   // Interrupts
   logic        nmi_mode;
@@ -789,8 +791,9 @@ module ibex_core import ibex_pkg::*; #(
   );
 
   ibex_wb_stage #(
-    .ResetAll       ( ResetAll       ),
-    .WritebackStage(WritebackStage)
+    .ResetAll         (ResetAll),
+    .WritebackStage   (WritebackStage),
+    .DummyInstructions(DummyInstructions)
   ) wb_stage_i (
     .clk_i                   (clk_i),
     .rst_ni                  (rst_ni),
@@ -814,6 +817,8 @@ module ibex_core import ibex_pkg::*; #(
     .rf_wdata_id_i(rf_wdata_id),
     .rf_we_id_i   (rf_we_id),
 
+    .dummy_instr_id_i(dummy_instr_id),
+
     .rf_wdata_lsu_i(rf_wdata_lsu),
     .rf_we_lsu_i   (rf_we_lsu),
 
@@ -822,6 +827,8 @@ module ibex_core import ibex_pkg::*; #(
     .rf_waddr_wb_o(rf_waddr_wb),
     .rf_wdata_wb_o(rf_wdata_wb),
     .rf_we_wb_o   (rf_we_wb),
+
+    .dummy_instr_wb_o(dummy_instr_wb),
 
     .lsu_resp_valid_i(lsu_resp_valid),
     .lsu_resp_err_i  (lsu_resp_err),
@@ -834,6 +841,7 @@ module ibex_core import ibex_pkg::*; #(
   /////////////////////////////
 
   assign dummy_instr_id_o = dummy_instr_id;
+  assign dummy_instr_wb_o = dummy_instr_wb;
   assign rf_raddr_a_o     = rf_raddr_a;
   assign rf_waddr_wb_o    = rf_waddr_wb;
   assign rf_we_wb_o       = rf_we_wb;
