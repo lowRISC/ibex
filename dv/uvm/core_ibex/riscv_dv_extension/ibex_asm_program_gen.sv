@@ -13,6 +13,7 @@ class ibex_asm_program_gen extends riscv_asm_program_gen;
 
   virtual function void gen_program();
     string instr[$];
+    bit disable_pmp_exception_handler = 0;
 
     default_include_csr_write = {
       MSCRATCH,
@@ -53,6 +54,11 @@ class ibex_asm_program_gen extends riscv_asm_program_gen;
     };
 
     riscv_csr_instr::create_csr_filter(cfg);
+
+    if ($value$plusargs("disable_pmp_exception_handler", disable_pmp_exception_handler) &&
+        disable_pmp_exception_handler) begin
+      cfg.pmp_cfg.enable_pmp_exception_handler = 0;
+    end
 
     super.gen_program();
 
