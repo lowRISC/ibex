@@ -565,7 +565,12 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
       (load_store_unit_i.fcov_mis_rvalid_2);
 
     misaligned_data_bus_err_cross: cross cp_misaligned_first_data_bus_err,
-                                         cp_misaligned_second_data_bus_err;
+                                         cp_misaligned_second_data_bus_err {
+      // Cannot see both bus errors together as they're signalled at different states of the load
+      // store unit FSM
+      illegal_bins illegal = binsof(cp_misaligned_first_data_bus_err) intersect {1'b1} &&
+        binsof(cp_misaligned_second_data_bus_err) intersect {1'b1};
+    }
 
     misaligned_insn_bus_err_cross: cross id_stage_i.instr_fetch_err_i,
                                          id_stage_i.instr_fetch_err_plus2_i;
