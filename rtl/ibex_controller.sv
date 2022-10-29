@@ -217,7 +217,7 @@ module ibex_controller #(
   // LSU exception requests
   assign exc_req_lsu = store_err_i | load_err_i;
 
-  assign id_exception_o = exc_req_d;
+  assign id_exception_o = exc_req_d & ~wb_exception_o;
 
   // special requests: special instructions, pipeline flushes, exceptions...
   // All terms in these expressions are qualified by instr_valid_i except exc_req_lsu which can come
