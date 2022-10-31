@@ -17,6 +17,7 @@ class core_ibex_base_test extends uvm_test;
   virtual core_ibex_csr_if                        csr_vif;
   mem_model_pkg::mem_model                        mem;
   core_ibex_vseq                                  vseq;
+  string                                          binary;
   bit                                             enable_irq_seq;
   longint                                         timeout_seconds = 1800; // wall-clock seconds
   int unsigned                                    timeout_in_cycles = 100000000;
@@ -189,7 +190,13 @@ class core_ibex_base_test extends uvm_test;
     cur_run_phase = phase;
     dut_vif.dut_cb.fetch_enable <= ibex_pkg::IbexMuBiOff;
     clk_vif.wait_clks(100);
-    load_binary_to_mem();
+
+    void'($value$plusargs("bin=%0s", binary));
+    if (binary == "")
+      `uvm_fatal(get_full_name(), "Please specify test binary by +bin=binary_name")
+    load_binary_to_mems();
+    `uvm_info(get_full_name(), $sformatf("Running test : %0s", binary), UVM_LOW)
+
     dut_vif.dut_cb.fetch_enable <= ibex_pkg::IbexMuBiOn;
     send_stimulus();
     wait_for_test_done();
@@ -214,24 +221,11 @@ class core_ibex_base_test extends uvm_test;
   virtual task check_perf_stats();
   endtask
 
-  function void load_binary_to_mem();
-    string      bin;
-    bit [7:0]   r8;
+  // Backdoor-load the test binary file into the memory models of both the DUT and the cosimulated ISS
+  function void load_binary_to_mems();
     bit [31:0]  addr = 32'h`BOOT_ADDR;
-    int         f_bin;
-    void'($value$plusargs("bin=%0s", bin));
-    if (bin == "")
-      `uvm_fatal(get_full_name(), "Please specify test binary by +bin=binary_name")
-    `uvm_info(get_full_name(), $sformatf("Running test : %0s", bin), UVM_LOW)
-    f_bin = $fopen(bin,"rb");
-    if (!f_bin)
-      `uvm_fatal(get_full_name(), $sformatf("Cannot open file %0s", bin))
-    while ($fread(r8,f_bin)) begin
-      `uvm_info(`gfn, $sformatf("Init mem [0x%h] = 0x%0h", addr, r8), UVM_FULL)
-      mem.write(addr, r8);                      // Populate RTL memory model
-      env.cosim_agent.write_mem_byte(addr, r8); // Populate ISS memory model
-      addr++;
-    end
+    vseq.load_binary_to_mem(addr, binary);            // Populate RTL memory model
+    env.cosim_agent.load_binary_to_mem(addr, binary); // Populate ISS memory model
   endfunction
 
   // Watch for all of the different critera for test pass/failure here
