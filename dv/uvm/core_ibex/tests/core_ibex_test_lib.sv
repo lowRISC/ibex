@@ -259,7 +259,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
   virtual task send_irq_stimulus_end();
     // As Ibex interrupts are level sensitive, core must write to memory mapped address to
     // indicate that irq stimulus be dropped
-    check_next_core_status(FINISHED_IRQ, "Core did not signal end of interrupt properly", 3000);
+    check_next_core_status(FINISHED_IRQ, "Core did not signal end of interrupt properly", 6000);
     // Will receive irq_seq_item indicating that lines have been dropped
     vseq.start_irq_drop_seq();
     // Want to skip this .get() call on the second MRET of nested interrupt scenarios
