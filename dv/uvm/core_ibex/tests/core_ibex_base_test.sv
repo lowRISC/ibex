@@ -195,10 +195,13 @@ class core_ibex_base_test extends uvm_test;
     if (binary == "")
       `uvm_fatal(get_full_name(), "Please specify test binary by +bin=binary_name")
     load_binary_to_mems();
-    `uvm_info(get_full_name(), $sformatf("Running test : %0s", binary), UVM_LOW)
+    `uvm_info(get_full_name(), $sformatf("Running test binary : %0s", binary), UVM_LOW)
 
     dut_vif.dut_cb.fetch_enable <= ibex_pkg::IbexMuBiOn;
-    send_stimulus();
+    fork
+      send_stimulus();
+      handle_reset();
+    join_none
     wait_for_test_done();
     cur_run_phase = null;
     phase.drop_objection(this);
@@ -224,9 +227,44 @@ class core_ibex_base_test extends uvm_test;
   // Backdoor-load the test binary file into the memory models of both the DUT and the cosimulated ISS
   function void load_binary_to_mems();
     bit [31:0]  addr = 32'h`BOOT_ADDR;
-    vseq.load_binary_to_mem(addr, binary);            // Populate RTL memory model
+    load_binary_to_dut_mem(addr, binary);             // Populate RTL memory model
     env.cosim_agent.load_binary_to_mem(addr, binary); // Populate ISS memory model
   endfunction
+
+  // Backdoor-load the test binary file into the DUT memory model
+  function void load_binary_to_dut_mem(bit[31:0] base_addr, string bin);
+     bit [7:0]  r8;
+     bit [31:0] addr = base_addr;
+     int        bin_fd;
+    bin_fd = $fopen(bin,"rb");
+    if (!bin_fd)
+      `uvm_fatal(get_full_name(), $sformatf("Cannot open file %0s", bin))
+    while ($fread(r8, bin_fd)) begin
+      `uvm_info(`gfn, $sformatf("Init mem [0x%h] = 0x%0h", addr, r8), UVM_FULL)
+      mem.write(addr, r8);
+      addr++;
+    end
+  endfunction
+
+  // Monitor the reset line, and sequence the resetting of the testbench environment
+  virtual task handle_reset();
+    forever begin
+      @(posedge dut_vif.reset);
+      `uvm_info(`gfn, "Reset now active", UVM_LOW)
+      // Tear-down testbench components
+      // Flush FIFOs
+      item_collected_port.flush();
+      irq_collected_port.flush();
+
+      @(negedge dut_vif.reset);
+      `uvm_info(`gfn, "Reset now inactive", UVM_LOW)
+      // Build-up testbench components
+
+      // Cosim must be re-initialized before loading the memory
+      env.reset();
+      load_binary_to_mems(); // Backdoor-load, 0-time
+    end
+  endtask : handle_reset
 
   // Watch for all of the different critera for test pass/failure here
   virtual task wait_for_test_done();

@@ -67,4 +67,14 @@ class ibex_cosim_agent extends uvm_agent;
     end
   endfunction
 
+  function void reset();
+    scoreboard.rvfi_port.flush();
+    scoreboard.dmem_port.flush();
+    scoreboard.imem_port.flush();
+    scoreboard.ifetch_port.flush();
+    scoreboard.ifetch_pmp_port.flush();
+
+    scoreboard.reset_e.trigger();
+  endfunction : reset
+
 endclass : ibex_cosim_agent

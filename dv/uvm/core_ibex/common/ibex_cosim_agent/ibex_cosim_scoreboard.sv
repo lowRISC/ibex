@@ -19,6 +19,8 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
 
   virtual core_ibex_instr_monitor_if              instr_vif;
 
+  uvm_event reset_e;
+
   bit failed_iside_accesses [bit[31:0]];
   bit iside_pmp_failure     [bit[31:0]];
 
@@ -40,6 +42,7 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
     ifetch_port     = new("ifetch_port", this);
     ifetch_pmp_port = new("ifetch_pmp_port", this);
     cosim_handle    = null;
+    reset_e         = new();
   endfunction
 
   function void build_phase(uvm_phase phase);
@@ -77,29 +80,25 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
   endfunction
 
   virtual task run_phase(uvm_phase phase);
-    wait (instr_vif.instr_cb.reset === 1'b0);
-
     forever begin
-      fork begin: isolation_fork
-        fork
-          run_cosim_rvfi();
-          run_cosim_dmem();
-          run_cosim_imem_errors();
-          if (cfg.probe_imem_for_errs) begin
-            run_cosim_imem();
-          end else begin
-            fork
-              run_cosim_ifetch();
-              run_cosim_ifetch_pmp();
-            join_any
-          end
-
-          wait (instr_vif.instr_cb.reset === 1'b1);
-        join_any
-        disable fork;
-      end join
-      if (instr_vif.instr_cb.reset === 1'b1) handle_reset();
-    end
+      @(negedge instr_vif.reset)
+      fork : isolation_fork
+        run_cosim_rvfi();
+        run_cosim_dmem();
+        run_cosim_imem_errors();
+        if (cfg.probe_imem_for_errs) begin
+          run_cosim_imem();
+        end else begin
+          fork
+            run_cosim_ifetch();
+            run_cosim_ifetch_pmp();
+          join_any
+        end
+      join_none
+      reset_e.wait_trigger();
+      disable fork;
+      handle_reset();
+    end // forever
   endtask : run_phase
 
   task run_cosim_rvfi();
@@ -294,6 +293,5 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
 
   task handle_reset();
     init_cosim();
-    wait (instr_vif.instr_cb.reset === 1'b0);
   endtask
 endclass : ibex_cosim_scoreboard
