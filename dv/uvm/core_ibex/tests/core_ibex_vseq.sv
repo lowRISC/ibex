@@ -31,6 +31,21 @@ class core_ibex_vseq extends uvm_sequence;
     data_intf_seq.is_dmem_seq = 1'b1;
   endfunction
 
+  // Backdoor-load the test binary file into the DUT memory model
+  function void load_binary_to_mem(bit[31:0] base_addr, string bin);
+    bit [7:0]  r8;
+    bit [31:0] addr = base_addr;
+    int        bin_fd;
+    bin_fd = $fopen(bin,"rb");
+    if (!bin_fd)
+      `uvm_fatal(get_full_name(), $sformatf("Cannot open file %0s", bin))
+    while ($fread(r8, bin_fd)) begin
+      `uvm_info(`gfn, $sformatf("Init mem [0x%h] = 0x%0h", addr, r8), UVM_FULL)
+      mem.write(addr, r8);
+      addr++;
+    end
+  endfunction
+
   // Start the memory-model sequences, which run forever() loops to respond to bus events
   virtual task pre_body();
     instr_intf_seq.m_mem = mem;

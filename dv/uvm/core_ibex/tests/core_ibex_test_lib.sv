@@ -36,7 +36,7 @@ class core_ibex_reset_test extends core_ibex_base_test;
           irq_collected_port.flush();
           // Reset testbench state
           env.reset();
-          load_binary_to_mem();
+          load_binary_to_mems();
         end
       join
       // Assert fetch_enable to have the core start executing from boot address
