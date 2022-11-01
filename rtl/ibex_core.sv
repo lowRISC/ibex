@@ -1741,6 +1741,10 @@ module ibex_core import ibex_pkg::*; #(
   //////////
 
 `ifndef SYNTHESIS
+  // fcov signals for V2S
+  `DV_FCOV_SIGNAL_GEN_IF(logic, rf_ecc_err_a_id, gen_regfile_ecc.rf_ecc_err_a_id, RegFileECC)
+  `DV_FCOV_SIGNAL_GEN_IF(logic, rf_ecc_err_b_id, gen_regfile_ecc.rf_ecc_err_b_id, RegFileECC)
+
   // fcov signals for CSR access. These are complicated by illegal accesses. Where an access is
   // legal `csr_op_en` signals the operation occurring, but this is deasserted where an access is
   // illegal. Instead `illegal_insn_id` confirms the instruction is taking an illegal instruction

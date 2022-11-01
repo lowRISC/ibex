@@ -299,6 +299,30 @@ Basic read/write functionality must be tested on all implemented CSRs.
 CSRs addresses do not need to be crossed with the variety of CSR instructions as these all use the same basic read & write interface into ``ibex_cs_registers``.
 Coverage of the above points will be sampled at the ``ibex_cs_registers`` interface (as opposed to sampling CSR instructions).
 
+Security Countermeasures
+^^^^^^^^^^^^^^^^^^^^^^^^
+For more detail about each security countermeasure in Ibex see :ref:`security`
+
+* ``cp_data_ind_timing`` - Enabling/Disabling "Data Independent Timing" feature.
+
+* ``cp_data_ind_timing_instr`` - Executing each instruction category while data independent timing feature is enabled.
+
+* ``cp_dummy_instr_en`` - Enabling/Disabling "Dummy Instruction Insertion" feature.
+
+* ``cp_dummy_instr_mask`` - Frequency of injection for the dummy instructions.
+
+* ``cp_dummy_instr_type`` - Type of the injected dummy instruction.
+
+* ``cp_dummy_instr`` - Executing each instruction category while dummy instruction insertion feature is enabled.
+
+* ``cp_rf_a_ecc_err``, ``cp_rf_b_ecc_err`` - Register file integrity (ECC) fault is seen for port A/B.
+
+* ``cp_icache_ecc_err`` - ICache has seen an integrity (ECC) fault.
+
+* ``cp_lockstep_err`` - Lockstep glitch fault seen.
+
+* ``cp_rf_we_glitch_err`` - Register file write enable glitch fault seen.
+
 Miscellaneous
 ^^^^^^^^^^^^^
 Various points of interest do not fit into the categories above.
@@ -348,3 +372,7 @@ There must be a documented reason a particular bin is added to the illegal or ig
 * ``pmp_iside_priv_bits_cross``, ``pmp_iside2_priv_bits_cross``, ``pmp_dside_priv_bits_cross``, PMP regions x permissions x access fail/pass x privilege level
 
   * Three crosses, one for each PMP channel (instruction, instruction 2 and data).
+
+* ``dummy_instr_config_cross`` - Dummy Instruction Type x Dummy Instruction Insertion Frequency to explore all possible configurations.
+
+* ``rf_ecc_err_cross`` - ECC Error on Port A x ECC Error on Port B to explore all possible combinations of reported ECC errors.
