@@ -162,6 +162,12 @@ module core_ibex_tb_top;
     !dut_if.alert_minor && !dut_if.alert_major_internal && !dut_if.alert_major_bus, clk, !rst_n)
   `DV_ASSERT_CTRL("tb_no_alerts_triggered", core_ibex_tb_top.NoAlertsTriggered)
 
+  assign dut.u_ibex_top.u_ibex_core.u_fcov_bind.rf_we_glitch_err =
+    dut.u_ibex_top.rf_alert_major_internal;
+
+  assign dut.u_ibex_top.u_ibex_core.u_fcov_bind.lockstep_glitch_err =
+    dut.u_ibex_top.lockstep_alert_major_internal;
+
   // Data load/store vif connection
   assign data_mem_vif.reset = ~rst_n;
   // Instruction fetch vif connnection

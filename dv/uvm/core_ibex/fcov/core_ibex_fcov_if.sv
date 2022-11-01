@@ -15,7 +15,10 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
   input debug_mode,
 
   input fcov_csr_read_only,
-  input fcov_csr_write
+  input fcov_csr_write,
+
+  input fcov_rf_ecc_err_a_id,
+  input fcov_rf_ecc_err_b_id
 );
   `include "dv_fcov_macros.svh"
   import uvm_pkg::*;
@@ -381,6 +384,10 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     (id_stall_type == IdStallTypeNone) && (id_stall_type_last != IdStallTypeNone) &&
     id_stall_type_last_valid;
 
+  // V2S Related Probes for Top-Level
+  logic rf_we_glitch_err;
+  logic lockstep_glitch_err;
+
   covergroup uarch_cg @(posedge clk_i);
     option.per_instance = 1;
     option.name = "uarch_cg";
@@ -422,6 +429,31 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     cp_if_stage_state : coverpoint if_stage_state;
     cp_id_stage_state : coverpoint id_stage_state;
     cp_wb_stage_state : coverpoint wb_stage_state;
+
+    // V2S Coverpoints
+    cp_data_ind_timing: coverpoint cs_registers_i.data_ind_timing_o;
+    cp_data_ind_timing_instr: coverpoint id_instr_category iff (cs_registers_i.data_ind_timing_o) {
+      // Not certain if InstrCategoryOtherIllegal can occur. Put it in illegal_bins for now and
+      // revisit if any issues are seen
+      illegal_bins illegal = {InstrCategoryOther, InstrCategoryOtherIllegal};
+    }
+
+    cp_dummy_instr_en: coverpoint cs_registers_i.dummy_instr_en_o;
+    cp_dummy_instr_mask: coverpoint cs_registers_i.dummy_instr_mask_o;
+    cp_dummy_instr_type: coverpoint if_stage_i.fcov_dummy_instr_type;
+    cp_dummy_instr: coverpoint id_instr_category iff (cs_registers_i.dummy_instr_en_o) {
+      // Not certain if InstrCategoryOtherIllegal can occur. Put it in illegal_bins for now and
+      // revisit if any issues are seen
+      illegal_bins illegal = {InstrCategoryOther, InstrCategoryOtherIllegal};
+    }
+
+    cp_rf_a_ecc_err: coverpoint fcov_rf_ecc_err_a_id;
+    cp_rf_b_ecc_err: coverpoint fcov_rf_ecc_err_b_id;
+
+    cp_icache_ecc_err : coverpoint if_stage_i.icache_ecc_error_o;
+
+    cp_lockstep_err : coverpoint lockstep_glitch_err;
+    cp_rf_we_glitch_err : coverpoint rf_we_glitch_err;
 
     // TODO: MRET/WFI in debug mode?
     // Specific cover points for these as `id_instr_category` will be InstrCategoryPrivIllegal when
@@ -673,6 +705,12 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
       // Only care about specific debug CSRs
       ignore_bins ignore = !binsof(cp_csr_write) intersect {`DEBUG_CSRS};
     }
+
+    dummy_instr_config_cross: cross cp_dummy_instr_type, cp_dummy_instr_mask
+                                iff (cs_registers_i.dummy_instr_en_o);
+
+    rf_ecc_err_cross: cross cp_rf_a_ecc_err, cp_rf_b_ecc_err
+                                iff (id_stage_i.instr_valid_i);
   endgroup
 
   bit en_uarch_cov;
