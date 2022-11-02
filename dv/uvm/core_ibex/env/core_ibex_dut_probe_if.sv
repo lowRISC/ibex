@@ -34,6 +34,22 @@ interface core_ibex_dut_probe_if(input logic clk);
   logic                              rf_ren_b;
   logic                              rf_rd_a_wb_match;
   logic                              rf_rd_b_wb_match;
+  logic                              sync_exc_seen;
+  logic                              irq_exc_seen;
+  logic                              csr_save_cause;
+  ibex_pkg::exc_cause_t              exc_cause;
+
+  always @(posedge clk or posedge reset) begin
+    if (reset) begin
+      irq_exc_seen <= 1'b0;
+    end else begin
+      if (ctrl_fsm_cs == ibex_pkg::IRQ_TAKEN) begin
+        irq_exc_seen <= 1'b1;
+      end else if (mret) begin
+        irq_exc_seen <= 1'b0;
+      end
+    end
+  end
 
   clocking dut_cb @(posedge clk);
     output fetch_enable;
@@ -63,6 +79,8 @@ interface core_ibex_dut_probe_if(input logic clk);
     input rf_ren_b;
     input rf_rd_a_wb_match;
     input rf_rd_b_wb_match;
+    input sync_exc_seen;
+    input irq_exc_seen;
   endclocking
 
   initial begin
