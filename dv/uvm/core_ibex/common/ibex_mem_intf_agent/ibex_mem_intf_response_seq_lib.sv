@@ -108,20 +108,19 @@ class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
     bit       byte_is_uninit = 1'b0;
     for (int i = (DATA_WIDTH / 8) - 1; i >= 0 ; i--) begin
       data = data << 8;
-      data[7:0] = read_byte(addr + i, byte_is_uninit);
+      byte_data = read_byte(addr + i, byte_is_uninit);
       if (byte_is_uninit) begin
         did_access_uninit_mem = 1'b1;
         // If any byte of the access comes back as uninit, bork the whole access.
         if (is_dmem_seq) begin
           // DMEM
-          `DV_CHECK_STD_RANDOMIZE_FATAL(data)
+          `DV_CHECK_STD_RANDOMIZE_FATAL(byte_data)
           // Update mem_model(s) with the randomized data.
           `uvm_info(`gfn,
                     $sformatf("Addr is uninit! DMEM seq, returning random data 0x%0h", data),
                     UVM_MEDIUM)
-          write(addr, data);                       // Update UVM mem_model
-          cosim_agent.write_mem_word(addr, data);  // Update cosim mem_model
-          return data;
+          m_mem.write_byte(addr + i, byte_data);           // Update UVM mem_model
+          cosim_agent.write_mem_byte(addr + i, byte_data); // Update cosim mem_model
         end else begin
           // IMEM
           `uvm_info(`gfn,
@@ -130,6 +129,7 @@ class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
           return {2{16'h0000}}; // 2x C.unimp instructions
         end
       end
+      data[7:0] = byte_data;
     end
     return data;
   endfunction
