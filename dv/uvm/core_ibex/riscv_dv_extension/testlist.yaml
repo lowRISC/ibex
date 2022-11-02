@@ -591,6 +591,7 @@
     +enable_mem_intg_err=0
     +enable_double_fault_detector=0
     +require_signature_addr=1
+    +enable_bad_intg_on_uninit_access=0
   compare_opts:
     compare_final_value_only: 1
 
@@ -610,6 +611,7 @@
     +enable_mem_intg_err=1
     +enable_double_fault_detector=0
     +require_signature_addr=1
+    +enable_bad_intg_on_uninit_access=0
   compare_opts:
     compare_final_value_only: 1
 
