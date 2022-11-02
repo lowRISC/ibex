@@ -76,6 +76,11 @@ class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
       end else if(item.read_write == WRITE) begin
         // Update memory_model
         write(aligned_addr, item.data);
+        if (p_sequencer.cfg.fixed_data_write_response) begin
+          // When fixed_data_write_response is set drive data in store response to fixed
+          // 32'hffffffff value. Integrity is calculated below.
+          req.data = 32'hffffffff;
+        end
       end
       // Add integrity bits
       {req.intg, req.data} = prim_secded_pkg::prim_secded_inv_39_32_enc(req.data);
