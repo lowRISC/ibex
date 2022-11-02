@@ -457,6 +457,12 @@ class core_ibex_base_test extends uvm_test;
     end while (signature_data != core_status);
   endtask
 
+  virtual task wait_for_core_exception(ibex_pkg::exc_cause_t exc_cause);
+    wait(dut_vif.ctrl_fsm_cs == ibex_pkg::FLUSH && dut_vif.exc_cause == exc_cause &&
+      dut_vif.csr_save_cause);
+    wait(dut_vif.ctrl_fsm_cs != ibex_pkg::FLUSH);
+  endtask
+
   virtual task wait_for_custom_test_done();
     wait (test_done == 1'b1);
   endtask
