@@ -438,18 +438,20 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
   // Task that waits for xRET to be asserted within a certain number of cycles
   virtual task wait_ret(string ret, int timeout);
     cur_run_phase.raise_objection(this);
-    fork
-      begin
-        wait_ret_raw(ret);
-      end
-      begin : ret_timeout
-        clk_vif.wait_clks(timeout);
-        `uvm_fatal(`gfn, $sformatf({"No %0s detected, or incorrect privilege mode switch in ",
-                                   "timeout period of %0d cycles"}, ret, timeout))
-      end
-    join_any
-    // Will only get here if dret successfully detected within timeout period
-    disable fork;
+    fork begin : isolation_fork
+      fork
+        begin
+          wait_ret_raw(ret);
+        end
+        begin : ret_timeout
+          clk_vif.wait_clks(timeout);
+          `uvm_fatal(`gfn, $sformatf({"No %0s detected, or incorrect privilege mode switch in ",
+                                     "timeout period of %0d cycles"}, ret, timeout))
+        end
+      join_any
+      // Will only get here if dret successfully detected within timeout period
+      disable fork;
+    end join
     cur_run_phase.drop_objection(this);
   endtask
 

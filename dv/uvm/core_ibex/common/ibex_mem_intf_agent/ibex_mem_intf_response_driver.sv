@@ -24,13 +24,15 @@ class ibex_mem_intf_response_driver extends uvm_driver #(ibex_mem_intf_seq_item)
     reset_signals();
     wait (cfg.vif.response_driver_cb.reset === 1'b0);
     forever begin
-      fork : drive_stimulus
-        send_grant();
-        get_and_drive();
-        wait (cfg.vif.response_driver_cb.reset === 1'b1);
-      join_any
-      // Will only be reached after mid-test reset
-      disable fork;
+      fork begin : isolation_fork
+        fork : drive_stimulus
+          send_grant();
+          get_and_drive();
+          wait (cfg.vif.response_driver_cb.reset === 1'b1);
+        join_any
+        // Will only be reached after mid-test reset
+        disable fork;
+      end join
       handle_reset();
     end
   endtask : run_phase
