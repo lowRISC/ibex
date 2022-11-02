@@ -400,21 +400,23 @@ class core_ibex_base_test extends uvm_test;
   virtual task check_next_core_status(core_status_t core_status, string error_msg = "",
                                       int timeout = 9999999);
     cur_run_phase.raise_objection(this);
-    fork
-      begin
-        wait_for_mem_txn(cfg.signature_addr, CORE_STATUS);
-        signature_data = signature_data_q.pop_front();
-        `DV_CHECK_EQ_FATAL(signature_data, core_status, error_msg);
-      end
-      begin : wait_timeout
-        clk_vif.wait_clks(timeout);
-        `uvm_fatal(`gfn,
-                   $sformatf("Did not receive core_status %0s within %0d cycle timeout period",
-                   core_status.name(), timeout))
-      end
-    join_any
-    // Will only get here if we successfully beat the timeout period
-    disable fork;
+    fork begin : isolation_fork
+      fork
+        begin
+          wait_for_mem_txn(cfg.signature_addr, CORE_STATUS);
+          signature_data = signature_data_q.pop_front();
+          `DV_CHECK_EQ_FATAL(signature_data, core_status, error_msg);
+        end
+        begin : wait_timeout
+          clk_vif.wait_clks(timeout);
+          `uvm_fatal(`gfn,
+                     $sformatf("Did not receive core_status %0s within %0d cycle timeout period",
+                     core_status.name(), timeout))
+        end
+      join_any
+      // Will only get here if we successfully beat the timeout period
+      disable fork;
+    end join
     cur_run_phase.drop_objection(this);
   endtask
 
@@ -422,23 +424,25 @@ class core_ibex_base_test extends uvm_test;
   virtual task wait_for_csr_write(csr_num_e csr, int timeout = 9999999);
     bit [11:0] csr_addr;
     cur_run_phase.raise_objection(this);
-    fork
-      begin
-        do begin
-          wait_for_mem_txn(cfg.signature_addr, WRITE_CSR);
-          csr_addr = signature_data_q.pop_front();
-          signature_data = signature_data_q.pop_front();
-        end while (csr_addr != csr);
-      end
-      begin : wait_timeout
-        clk_vif.wait_clks(timeout);
-        `uvm_fatal(`gfn,
-                   $sformatf("Did not receive write to csr 0x%0x within %0d cycle timeout period",
-                   csr, timeout))
-      end
-    join_any
-    // Will only get here if we successfully beat the timeout period
-    disable fork;
+    fork begin : isolation_fork
+      fork
+        begin
+          do begin
+            wait_for_mem_txn(cfg.signature_addr, WRITE_CSR);
+            csr_addr = signature_data_q.pop_front();
+            signature_data = signature_data_q.pop_front();
+          end while (csr_addr != csr);
+        end
+        begin : wait_timeout
+          clk_vif.wait_clks(timeout);
+          `uvm_fatal(`gfn,
+                     $sformatf("Did not receive write to csr 0x%0x within %0d cycle timeout period",
+                     csr, timeout))
+        end
+      join_any
+      // Will only get here if we successfully beat the timeout period
+      disable fork;
+    end join
     cur_run_phase.drop_objection(this);
   endtask
 
