@@ -590,6 +590,21 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
         binsof(cp_priv_mode_id) intersect {PRIV_LVL_U};
     }
 
+    priv_mode_irq_cross: cross cp_priv_mode_id, cp_interrupt_taken, cs_registers_i.mstatus_q.mie {
+      // No interrupt would be taken in M-mode when its mstatus.MIE = 0
+      illegal_bins mmode_mstatus_mie =
+        binsof(cs_registers_i.mstatus_q.mie) intersect {1'b0} &&
+        binsof(cp_priv_mode_id) intersect {PRIV_LVL_M};
+    }
+
+    priv_mode_exception_cross: cross cp_priv_mode_id, cp_ls_pmp_exception, cp_ls_error_exception {
+      illegal_bins pmp_and_error_exeption_both_or_none =
+        (binsof(cp_ls_pmp_exception) intersect {1'b1} &&
+         binsof(cp_ls_error_exception) intersect {1'b1}) ||
+        (binsof(cp_ls_pmp_exception) intersect {1'b0} &&
+         binsof(cp_ls_error_exception) intersect {1'b0});
+    }
+
     stall_cross: cross cp_id_instr_category, cp_stall_type_id {
       illegal_bins illegal =
         // Only Div, Mul, Branch and Jump instructions can see an instruction stall

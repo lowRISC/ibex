@@ -678,7 +678,10 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
     wait_for_csr_write(CSR_MSTATUS, 5000);
     mstatus = signature_data;
     `DV_CHECK_EQ_FATAL(mstatus[12:11], select_mode(), "Incorrect mstatus.mpp")
-    `DV_CHECK_EQ_FATAL(mstatus[7], 1'b1, "mstatus.mpie was not set to 1'b1 after entering handler")
+    // mstatus.MPIE must be 1 when trap from M mode otherwise not necessarily be 1
+    // as lower priv modes could trap when mstatus.MPIE is 0
+    `DV_CHECK_EQ_FATAL(mstatus[7] | ~&mstatus[12:11], 1'b1,
+        "mstatus.mpie was not set to 1'b1 after entering handler")
     `DV_CHECK_EQ_FATAL(mstatus[3], 1'b0, "mstatus.mie was not set to 1'b0 after entering handler")
     // check mcause against the interrupt id
     check_mcause(1'b1, irq_id);
