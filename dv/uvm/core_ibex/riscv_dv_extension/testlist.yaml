@@ -583,6 +583,8 @@
     +require_signature_addr=1
     +instr_cnt=10000
     +randomize_csr=1
+    +gen_all_csrs_by_default=1
+    +add_csr_write=MSTATUS,MEPC,MCAUSE,MTVAL,0x7c0,0x7c1
     +enable_unaligned_load_store=1
     +suppress_pmp_setup=1
     +disable_pmp_exception_handler=1
@@ -633,8 +635,8 @@
     +instr_cnt=10000
     +no_csr_instr=0
     +randomize_csr=1
-    +enable_illegal_csr_instruction=1
-    +enable_access_invalid_csr_level=1
+    +gen_all_csrs_by_default=1
+    +add_csr_write=MSTATUS,MEPC,MCAUSE,MTVAL,0x7c0,0x7c1
     +no_fence=0
     +no_wfi=0
     +num_of_sub_program=1
