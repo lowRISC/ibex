@@ -35,6 +35,14 @@ class dv_base_reg extends uvm_reg;
     atomic_en_shadow_wr = new(1);
   endfunction : new
 
+  // Create this register and its fields' IP-specific functional coverage.
+  function void create_cov();
+    dv_base_reg_field fields[$];
+    get_dv_base_reg_fields(fields);
+    foreach(fields[i]) fields[i].create_cov();
+    // Create register-specific covergroups here.
+  endfunction
+
   // this is similar to get_name, but it gets the
   // simple name of the aliased register instead.
   function string get_alias_name ();
@@ -235,6 +243,7 @@ class dv_base_reg extends uvm_reg;
              flds[i].update_shadowed_val(~wr_data);
           end else begin
             shadow_update_err = 1;
+            flds[i].sample_shadow_field_cov(.update_err(1));
           end
         end
       end
@@ -278,7 +287,7 @@ class dv_base_reg extends uvm_reg;
         return;
       end else begin
         `uvm_info(`gfn, $sformatf(
-            "Shadow reg %0s has update error, update rw.value from %0h to %0h",
+            "Update shadow reg %0s rw.value from %0h to %0h",
             get_name(), rw.value[0], get_committed_val()), UVM_HIGH)
         rw.value[0] = get_committed_val();
       end

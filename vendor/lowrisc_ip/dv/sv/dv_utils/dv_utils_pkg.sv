@@ -68,6 +68,13 @@ package dv_utils_pkg;
     BusOpRead  = 1'b1
   } bus_op_e;
 
+ // Enum representing a probe operation on an internal signal.
+  typedef enum {
+    SignalProbeSample,  // Sample the signal.
+    SignalProbeForce,   // Force the signal with some value.
+    SignalProbeRelease  // Release the previous force.
+  } signal_probe_e;
+
   // Enum representing a type of host requests - read only, write only or random read & write
   typedef enum int {
     HostReqNone      = 0,
@@ -137,16 +144,6 @@ package dv_utils_pkg;
     uvm_report_server report_server = uvm_report_server::get_server();
     return report_server.get_severity_count(UVM_FATAL) > 0;
   endfunction
-
-  // task that waits for the specfied timeout
-  task automatic wait_timeout(input uint    timeout_ns,
-                              input string  error_msg_id  = msg_id,
-                              input string  error_msg     = "timeout occurred!",
-                              input bit     report_fatal  = 1);
-    #(timeout_ns * 1ns);
-    if (report_fatal) `uvm_fatal(error_msg_id, error_msg)
-    else              `uvm_error(error_msg_id, error_msg)
-  endtask : wait_timeout
 
   // get masked data based on provided byte mask; if csr reg handle is provided (optional) then
   // masked bytes from csr's mirrored value are returned, else masked bytes are 0's

@@ -35,7 +35,7 @@ Signal | Type          | Description
 -------|---------------|------------------------------
 rnd_i  | input [RndW]  | current round number [0..(MaxRound-1)]
 s_i    | input [Width] | state input
-s_o    | output[Width] | permutated state output
+s_o    | output[Width] | permuted state output
 
 `s_i` and `s_o` are little-endian bitarrays.
 The [SHA3 spec][fibs-pub-202] shows how to convert the bitstream into the 5x5xW state cube.
@@ -86,4 +86,3 @@ The recommended default value of 24 rounds is used in this design,
 but an argument (changed with the `-r` flag) is provided for reference.
 The `keccak_rc.py` script creates 64 bit of constants and the `prim_keccak` module uses only lower bits of the constants if the `Width` is less than 1600.
 For instance, if `Width` is 800, lower 32bits of the round constant are used.
-

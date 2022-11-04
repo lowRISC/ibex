@@ -45,7 +45,7 @@
 // a delta is observed between the transit register and the current hardware value,
 // and a new handshake event is generated.
 //
-// The thrid scenario can be folded into the second scenario. The only difference
+// The third scenario can be folded into the second scenario. The only difference
 // is that of the 4 cases identified, only case 2 can happen since there is never a
 // software initiated update.
 
@@ -71,7 +71,7 @@ module prim_reg_cdc_arb #(
   // ds allows us to sample the destination domain register
   // one cycle earlier instead of waiting for it to be reflected
   // in the qs.
-  // This is important because a genearl use case is that interrupts
+  // This is important because a general use case is that interrupts
   // are captured alongside payloads from the destination domain into
   // the source domain. If we rely on `qs` only, then it is very likely
   // that the software observed value will be behind the interrupt
@@ -91,6 +91,13 @@ module prim_reg_cdc_arb #(
     StIdle,
     StWait
   } state_e;
+
+
+  // Only honor the incoming destinate update request if the incoming
+  // value is actually different from what is already completed in the
+  // handshake
+  logic dst_update;
+  assign dst_update = dst_update_i & (dst_qs_o != dst_ds_i);
 
   if (DstWrReq) begin : gen_wr_req
     logic dst_lat_q;
@@ -161,7 +168,7 @@ module prim_reg_cdc_arb #(
 
     // if a destination update is received when the system is idle and there is no
     // software side request, hw update must be selected.
-    `ASSERT(DstUpdateReqCheck_A, ##1 dst_update_i & !dst_req & !busy |=> id_q == SelHwReq,
+    `ASSERT(DstUpdateReqCheck_A, ##1 dst_update & !dst_req & !busy |=> id_q == SelHwReq,
       clk_dst_i, !rst_dst_ni)
 
     // if hw select was chosen, then it must be the case there was a destination update
@@ -195,7 +202,7 @@ module prim_reg_cdc_arb #(
             // there's a software issued request for change
             state_d = StWait;
             dst_lat_d = 1'b1;
-          end else if (dst_update_i) begin
+          end else if (dst_update) begin
             state_d = StWait;
             dst_lat_d = 1'b1;
           end else if (dst_qs_o != dst_qs_i) begin
@@ -239,23 +246,29 @@ module prim_reg_cdc_arb #(
 
     // once hardware makes an update request, we must eventually see an update pulse
     `ASSERT(ReqTimeout_A, $rose(id_q == SelHwReq) |-> s_eventually(src_update_o),
-      clk_src_i, !rst_src_ni)
+            clk_src_i, !rst_src_ni)
 
     `ifdef INC_ASSERT
+      //VCS coverage off
+      // pragma coverage off
+
       logic async_flag;
       always_ff @(posedge clk_dst_i or negedge rst_dst_ni or posedge src_update_o) begin
         if (!rst_dst_ni) begin
           async_flag <= '0;
         end else if (src_update_o) begin
           async_flag <= '0;
-        end else if (dst_update_i && !dst_req_o && !busy) begin
+        end else if (dst_update && !dst_req_o && !busy) begin
           async_flag <= 1'b1;
         end
       end
 
-     // once hardware makes an update request, we must eventually see an update pulse
-     `ASSERT(UpdateTimeout_A, $rose(async_flag) |-> s_eventually(src_update_o),
-       clk_src_i, !rst_src_ni)
+      //VCS coverage on
+      // pragma coverage on
+
+      // once hardware makes an update request, we must eventually see an update pulse
+      `ASSERT(UpdateTimeout_A, $rose(async_flag) |-> s_eventually(src_update_o),
+              clk_src_i, !rst_src_ni)
     `endif
 
   end else begin : gen_passthru
@@ -280,7 +293,7 @@ module prim_reg_cdc_arb #(
     );
 
     logic unused_sigs;
-    assign unused_sigs = |{dst_ds_i, dst_update_i};
+    assign unused_sigs = |{dst_ds_i, dst_update};
   end
 
 

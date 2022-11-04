@@ -127,7 +127,11 @@ module prim_clock_meas #(
         end
       end
 
+      //VCS coverage off
+      // pragma coverage off
       default:;
+      //VCS coverage on
+      // pragma coverage on
 
     endcase // unique case (state_q)
   end
@@ -151,17 +155,25 @@ module prim_clock_meas #(
     .dst_pulse_o(valid_ref)
   );
 
-  logic [RefCntWidth-1:0] cnt_ref;
-  assign valid = valid_ref & (int'(cnt_ref) == RefCnt - 1);
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) begin
-      cnt_ref <= '0;
-    end else if (!cnt_en && |cnt_ref) begin
-      cnt_ref <= '0;
-    end else if (cnt_en && valid) begin
-      cnt_ref <= '0;
-    end else if (cnt_en && valid_ref) begin
-      cnt_ref <= cnt_ref + 1'b1;
+
+  if (RefCnt == 1) begin : gen_degenerate_case
+    // if reference count is one, cnt_ref is always 0.
+    // So there is no need to maintain a counter, and
+    // valid just becomes valid_ref
+    assign valid = valid_ref;
+  end else begin : gen_normal_case
+    logic [RefCntWidth-1:0] cnt_ref;
+    assign valid = valid_ref & (int'(cnt_ref) == RefCnt - 1);
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        cnt_ref <= '0;
+      end else if (!cnt_en && |cnt_ref) begin
+        cnt_ref <= '0;
+      end else if (cnt_en && valid) begin
+        cnt_ref <= '0;
+      end else if (cnt_en && valid_ref) begin
+        cnt_ref <= cnt_ref + 1'b1;
+      end
     end
   end
 
@@ -177,7 +189,7 @@ module prim_clock_meas #(
     end else if (valid_o) begin
       cnt <= '0;
       cnt_ovfl <= '0;
-    end else if (cnt_en && cnt_ovfl) begin
+    end else if (cnt_ovfl) begin
       cnt <= '{default: '1};
     end else if (cnt_en) begin
       {cnt_ovfl, cnt} <= cnt + 1'b1;
