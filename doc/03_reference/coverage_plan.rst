@@ -315,6 +315,12 @@ For more detail about each security countermeasure in Ibex see :ref:`security`
 
 * ``cp_dummy_instr`` - Executing each instruction category while dummy instruction insertion feature is enabled.
 
+* ``cp_dummy_instr_if_stage`` - The IF stage handles a dummy instruction.
+
+* ``cp_dummy_instr_id_stage`` - The ID/EX stage handles a dummy instruction.
+
+* ``cp_dummy_instr_wb_stage`` - The WB stage handles a dummy instruction.
+
 * ``cp_rf_a_ecc_err``, ``cp_rf_b_ecc_err`` - Register file integrity (ECC) fault is seen for port A/B.
 
 * ``cp_icache_ecc_err`` - ICache has seen an integrity (ECC) fault.
