@@ -459,10 +459,11 @@ void SpikeCosim::leave_nmi_mode() {
 }
 
 void SpikeCosim::handle_cpuctrl_exception_entry() {
-  bool old_sync_exc_seen = change_cpuctrlsts_sync_exc_seen(true);
-
-  if (old_sync_exc_seen) {
-    set_cpuctrlsts_double_fault_seen();
+  if (!processor->get_state()->debug_mode) {
+    bool old_sync_exc_seen = change_cpuctrlsts_sync_exc_seen(true);
+    if (old_sync_exc_seen) {
+      set_cpuctrlsts_double_fault_seen();
+    }
   }
 }
 
