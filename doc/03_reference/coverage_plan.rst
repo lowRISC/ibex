@@ -382,3 +382,7 @@ There must be a documented reason a particular bin is added to the illegal or ig
 * ``dummy_instr_config_cross`` - Dummy Instruction Type x Dummy Instruction Insertion Frequency to explore all possible configurations.
 
 * ``rf_ecc_err_cross`` - ECC Error on Port A x ECC Error on Port B to explore all possible combinations of reported ECC errors.
+
+* ``debug_req_dummy_instr_{if,id,wb}_stage_cross`` - The IF, ID/EX, or WB stage handles a dummy instruction while a debug request arrives.
+
+* ``irq_pending_dummy_instr_{if,id,wb}_stage_cross`` - The IF, ID/EX, or WB stage handles a dummy instruction while an IRQ is pending.

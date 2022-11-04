@@ -711,11 +711,24 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
       ignore_bins ignore = !binsof(cp_csr_write) intersect {`DEBUG_CSRS};
     }
 
+    // V2S Crosses
+
     dummy_instr_config_cross: cross cp_dummy_instr_type, cp_dummy_instr_mask
                                 iff (cs_registers_i.dummy_instr_en_o);
 
     rf_ecc_err_cross: cross cp_rf_a_ecc_err, cp_rf_b_ecc_err
                                 iff (id_stage_i.instr_valid_i);
+
+    // Each stage sees a debug request while executing a dummy instruction.
+    debug_req_dummy_instr_if_stage_cross: cross cp_debug_req, cp_dummy_instr_if_stage;
+    debug_req_dummy_instr_id_stage_cross: cross cp_debug_req, cp_dummy_instr_id_stage;
+    debug_req_dummy_instr_wb_stage_cross: cross cp_debug_req, cp_dummy_instr_wb_stage;
+
+    // Each stage sees an interrupt request while executing a dummy instruction.
+    irq_pending_dummy_instr_if_stage_cross: cross cp_irq_pending, cp_dummy_instr_if_stage;
+    irq_pending_dummy_instr_id_stage_cross: cross cp_irq_pending, cp_dummy_instr_id_stage;
+    irq_pending_dummy_instr_wb_stage_cross: cross cp_irq_pending, cp_dummy_instr_wb_stage;
+
   endgroup
 
   bit en_uarch_cov;
