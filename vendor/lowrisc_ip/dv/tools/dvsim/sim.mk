@@ -95,12 +95,14 @@ ifneq (${sw_images},)
 				bazel_cmd="./bazelisk.sh"; \
 			else \
 				echo "Building \"$${bazel_label}\" on air-gapped machine."; \
+				bazel_opts+=" --define SPECIFY_BINDGEN_LIBSTDCXX=true"; \
 				bazel_opts+=" --distdir=$${BAZEL_DISTDIR} --repository_cache=$${BAZEL_CACHE}"; \
 				bazel_cmd="bazel"; \
 			fi; \
 			echo "Building with command: $${bazel_cmd} build $${bazel_opts} $${bazel_label}"; \
 			$${bazel_cmd} build $${bazel_opts} $${bazel_label}; \
-			for dep in $$($${bazel_cmd} cquery "labels(data, $${bazel_label})" \
+			for dep in $$($${bazel_cmd} cquery \
+				"labels(data, $${bazel_label}) union labels(srcs, $${bazel_label})" \
 				--ui_event_filters=-info \
 				--noshow_progress \
 				--output=starlark); do \

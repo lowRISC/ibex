@@ -9,7 +9,16 @@ virtual function void otp_write_lc_partition_state(lc_ctrl_state_pkg::lc_state_e
   for (int i = 0; i < LcStateSize; i += 4) begin
     write32(i + LcStateOffset, lc_state[i*8+:32]);
   end
-endfunction
+endfunction : otp_write_lc_partition_state
+
+virtual function lc_ctrl_state_pkg::lc_state_e otp_read_lc_partition_state();
+  lc_ctrl_state_pkg::lc_state_e lc_state;
+  for (int i = 0; i < LcStateSize; i += 4) begin
+    lc_state[i*8 +: 32] = read32(i + LcStateOffset);
+  end
+
+  return lc_state;
+endfunction : otp_read_lc_partition_state
 
 virtual function void otp_write_lc_partition_cnt(lc_ctrl_state_pkg::lc_cnt_e lc_cnt);
   for (int i = 0; i < LcTransitionCntSize; i += 4) begin
@@ -138,4 +147,30 @@ virtual function void otp_write_hw_cfg_partition(
   digest = cal_digest(HwCfgIdx, hw_cfg_data);
 
   write64(HwCfgDigestOffset, digest);
+endfunction
+
+// Functions that clear the provisioning state of the buffered partitions.
+// This is useful in tests that make front-door accesses for provisioning purposes.
+virtual function void otp_clear_secret0_partition();
+  for (int i = 0; i < Secret0Size; i += 4) begin
+    write32(i + Secret0Offset, 32'h0);
+  end
+endfunction
+
+virtual function void otp_clear_secret1_partition();
+  for (int i = 0; i < Secret1Size; i += 4) begin
+    write32(i + Secret1Offset, 32'h0);
+  end
+endfunction
+
+virtual function void otp_clear_secret2_partition();
+  for (int i = 0; i < Secret2Size; i += 4) begin
+    write32(i + Secret2Offset, 32'h0);
+  end
+endfunction
+
+virtual function void otp_clear_hw_cfg_partition();
+  for (int i = 0; i < HwCfgSize; i += 4) begin
+    write32(i + HwCfgOffset, 32'h0);
+  end
 endfunction

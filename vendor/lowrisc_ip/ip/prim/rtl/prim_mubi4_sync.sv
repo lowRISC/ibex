@@ -101,10 +101,46 @@ module prim_mubi4_sync
         );
       end
 
+// Note regarding SVAs below:
+//
+// 1) Without the sampled rst_ni pre-condition, this may cause false assertion failures right after
+// a reset release, since the "disable iff" condition with the rst_ni is sampled in the "observed"
+// SV scheduler region after all assignments have been evaluated (see also LRM section 16.12, page
+// 423). This is a simulation artifact due to reset synchronization in RTL, which releases rst_ni
+// on the active clock edge. This causes the assertion to evaluate although the reset was actually
+// 0 when entering this simulation cycle.
+//
+// 2) Similarly to 1) there can be sampling mismatches of the lc_en_i signal since that signal may
+// originate from a different clock domain. I.e., in cases where the lc_en_i signal changes exactly
+// at the same time that the clk_i signal rises, the SVA will not pick up that change in that clock
+// cycle, whereas RTL will because SVAs sample values in the "preponed" region. To that end we make
+// use of an RTL helper variable to sample the lc_en_i signal, hence ensuring that there are no
+// sampling mismatches.
+`ifdef INC_ASSERT
+      mubi4_t mubi_in_sva_q;
+      always_ff @(posedge clk_i) begin
+        mubi_in_sva_q <= mubi_i;
+      end
+      `ASSERT(OutputIfUnstable_A, sig_unstable |-> mubi_o == {NumCopies{reset_value}})
+      `ASSERT(OutputDelay_A,
+              rst_ni |-> ##[3:4] sig_unstable || mubi_o == {NumCopies{$past(mubi_in_sva_q, 2)}})
+`endif
     end else begin : gen_no_stable_chks
       assign mubi = mubi_sync;
+`ifdef INC_ASSERT
+      mubi4_t mubi_in_sva_q;
+      always_ff @(posedge clk_i) begin
+        mubi_in_sva_q <= mubi_i;
+      end
+      `ASSERT(OutputDelay_A,
+              rst_ni |-> ##3 (mubi_o == {NumCopies{$past(mubi_in_sva_q, 2)}} ||
+                              $past(mubi_in_sva_q, 2) != $past(mubi_in_sva_q, 1)))
+`endif
     end
   end else begin : gen_no_flops
+
+    //VCS coverage off
+    // pragma coverage off
 
     // This unused companion logic helps remove lint errors
     // for modules where clock and reset are used for assertions only
@@ -118,7 +154,12 @@ module prim_mubi4_sync
       end
     end
 
+    //VCS coverage on
+    // pragma coverage on
+
     assign mubi = MuBi4Width'(mubi_i);
+
+    `ASSERT(OutputDelay_A, mubi_o == {NumCopies{mubi_i}})
   end
 
   for (genvar j = 0; j < NumCopies; j++) begin : gen_buffs
@@ -138,28 +179,5 @@ module prim_mubi4_sync
 
   // The outputs should be known at all times.
   `ASSERT_KNOWN(OutputsKnown_A, mubi_o)
-
-  // If the multibit signal is in a transient state, we expect it
-  // to be stable again within one clock cycle.
-  // DV will exclude these three assertions by name, thus added a module name prefix to make it
-  // harder to accidentally replicate in other modules.
-  `ASSERT(PrimMubi4SyncCheckTransients_A,
-      !(mubi_i inside {MuBi4True, MuBi4False})
-      |=>
-      (mubi_i inside {MuBi4True, MuBi4False}))
-
-  // If a signal departs from passive state, we expect it to move to the active state
-  // with only one transient cycle in between.
-  `ASSERT(PrimMubi4SyncCheckTransients0_A,
-      $past(mubi_i == MuBi4False) &&
-      !(mubi_i inside {MuBi4True, MuBi4False})
-      |=>
-      (mubi_i == MuBi4True))
-
-  `ASSERT(PrimMubi4SyncCheckTransients1_A,
-      $past(mubi_i == MuBi4True) &&
-      !(mubi_i inside {MuBi4True, MuBi4False})
-      |=>
-      (mubi_i == MuBi4False))
 
 endmodule : prim_mubi4_sync

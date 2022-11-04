@@ -46,7 +46,35 @@ module prim_lc_sync #(
       .d_i(lc_en_i),
       .q_o(lc_en)
     );
+
+// Note regarding SVA below:
+//
+// 1) Without the sampled rst_ni pre-condition, this may cause false assertion failures right after
+// a reset release, since the "disable iff" condition with the rst_ni is sampled in the "observed"
+// SV scheduler region after all assignments have been evaluated (see also LRM section 16.12, page
+// 423). This is a simulation artifact due to reset synchronization in RTL, which releases rst_ni
+// on the active clock edge. This causes the assertion to evaluate although the reset was actually
+// 0 when entering this simulation cycle.
+//
+// 2) Similarly to 1) there can be sampling mismatches of the lc_en_i signal since that signal may
+// originate from a different clock domain. I.e., in cases where the lc_en_i signal changes exactly
+// at the same time that the clk_i signal rises, the SVA will not pick up that change in that clock
+// cycle, whereas RTL will because SVAs sample values in the "preponed" region. To that end we make
+// use of an RTL helper variable to sample the lc_en_i signal, hence ensuring that there are no
+// sampling mismatches.
+`ifdef INC_ASSERT
+      lc_ctrl_pkg::lc_tx_t lc_en_in_sva_q;
+      always_ff @(posedge clk_i) begin
+        lc_en_in_sva_q <= lc_en_i;
+      end
+    `ASSERT(OutputDelay_A,
+            rst_ni |-> ##3 lc_en_o == {NumCopies{$past(lc_en_in_sva_q, 2)}} ||
+                           ($past(lc_en_in_sva_q, 2) != $past(lc_en_in_sva_q, 1)))
+`endif
   end else begin : gen_no_flops
+    //VCS coverage off
+    // pragma coverage off
+
     // This unused companion logic helps remove lint errors
     // for modules where clock and reset are used for assertions only
     // or nothing at all.
@@ -59,8 +87,12 @@ module prim_lc_sync #(
          unused_logic <= lc_en_i;
       end
     end
+    //VCS coverage on
+    // pragma coverage on
 
     assign lc_en = lc_en_i;
+
+    `ASSERT(OutputDelay_A, lc_en_o == {NumCopies{lc_en_i}})
   end
 
   for (genvar j = 0; j < NumCopies; j++) begin : gen_buffs
@@ -80,28 +112,5 @@ module prim_lc_sync #(
 
   // The outputs should be known at all times.
   `ASSERT_KNOWN(OutputsKnown_A, lc_en_o)
-
-  // If the multibit signal is in a transient state, we expect it
-  // to be stable again within one clock cycle.
-  // DV will exclude these three assertions by name, thus added a module name prefix to make it
-  // harder to accidentally replicate in other modules.
-  `ASSERT(PrimLcSyncCheckTransients_A,
-      !(lc_en_i inside {lc_ctrl_pkg::On, lc_ctrl_pkg::Off})
-      |=>
-      (lc_en_i inside {lc_ctrl_pkg::On, lc_ctrl_pkg::Off}))
-
-  // If a signal departs from passive state, we expect it to move to the active state
-  // with only one transient cycle in between.
-  `ASSERT(PrimLcSyncCheckTransients0_A,
-      $past(lc_en_i == lc_ctrl_pkg::Off) &&
-      !(lc_en_i inside {lc_ctrl_pkg::On, lc_ctrl_pkg::Off})
-      |=>
-      (lc_en_i == lc_ctrl_pkg::On))
-
-  `ASSERT(PrimLcSyncCheckTransients1_A,
-      $past(lc_en_i == lc_ctrl_pkg::On) &&
-      !(lc_en_i inside {lc_ctrl_pkg::On, lc_ctrl_pkg::Off})
-      |=>
-      (lc_en_i == lc_ctrl_pkg::Off))
 
 endmodule : prim_lc_sync

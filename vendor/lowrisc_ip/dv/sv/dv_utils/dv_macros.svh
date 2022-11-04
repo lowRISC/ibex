@@ -85,7 +85,7 @@
 `ifndef DV_CHECK
   `define DV_CHECK(T_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!(T_)) begin \
+      if (T_) ; else begin \
         `dv_``SEV_($sformatf("Check failed (%s) %s ", `"T_`", MSG_), ID_) \
       end \
     end
@@ -94,7 +94,7 @@
 `ifndef DV_CHECK_EQ
   `define DV_CHECK_EQ(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!((ACT_) == (EXP_))) begin \
+      if ((ACT_) == (EXP_)) ; else begin \
         `dv_``SEV_($sformatf("Check failed %s == %s (%0d [0x%0h] vs %0d [0x%0h]) %s", \
                              `"ACT_`", `"EXP_`", ACT_, ACT_, EXP_, EXP_, MSG_), ID_) \
       end \
@@ -104,7 +104,7 @@
 `ifndef DV_CHECK_NE
   `define DV_CHECK_NE(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!((ACT_) != (EXP_))) begin \
+      if ((ACT_) != (EXP_)) ; else begin \
         `dv_``SEV_($sformatf("Check failed %s != %s (%0d [0x%0h] vs %0d [0x%0h]) %s", \
                              `"ACT_`", `"EXP_`", ACT_, ACT_, EXP_, EXP_, MSG_), ID_) \
       end \
@@ -114,7 +114,7 @@
 `ifndef DV_CHECK_CASE_EQ
   `define DV_CHECK_CASE_EQ(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!((ACT_) === (EXP_))) begin \
+      if ((ACT_) === (EXP_)) ; else begin \
         `dv_``SEV_($sformatf("Check failed %s === %s (0x%0h [%0b] vs 0x%0h [%0b]) %s", \
                              `"ACT_`", `"EXP_`", ACT_, ACT_, EXP_, EXP_, MSG_), ID_) \
       end \
@@ -124,7 +124,7 @@
 `ifndef DV_CHECK_CASE_NE
   `define DV_CHECK_CASE_NE(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!((ACT_) !== (EXP_))) begin \
+      if ((ACT_) !== (EXP_)) ; else begin \
         `dv_``SEV_($sformatf("Check failed %s !== %s (%0d [0x%0h] vs %0d [0x%0h]) %s", \
                              `"ACT_`", `"EXP_`", ACT_, ACT_, EXP_, EXP_, MSG_), ID_) \
       end \
@@ -134,7 +134,7 @@
 `ifndef DV_CHECK_LT
   `define DV_CHECK_LT(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!((ACT_) < (EXP_))) begin \
+      if ((ACT_) < (EXP_)) ; else begin \
         `dv_``SEV_($sformatf("Check failed %s < %s (%0d [0x%0h] vs %0d [0x%0h]) %s", \
                              `"ACT_`", `"EXP_`", ACT_, ACT_, EXP_, EXP_, MSG_), ID_) \
       end \
@@ -144,7 +144,7 @@
 `ifndef DV_CHECK_GT
   `define DV_CHECK_GT(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!((ACT_) > (EXP_))) begin \
+      if ((ACT_) > (EXP_)) ; else begin \
         `dv_``SEV_($sformatf("Check failed %s > %s (%0d [0x%0h] vs %0d [0x%0h]) %s", \
                              `"ACT_`", `"EXP_`", ACT_, ACT_, EXP_, EXP_, MSG_), ID_) \
       end \
@@ -154,7 +154,7 @@
 `ifndef DV_CHECK_LE
   `define DV_CHECK_LE(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!((ACT_) <= (EXP_))) begin \
+      if ((ACT_) <= (EXP_)) ; else begin \
         `dv_``SEV_($sformatf("Check failed %s <= %s (%0d [0x%0h] vs %0d [0x%0h]) %s", \
                              `"ACT_`", `"EXP_`", ACT_, ACT_, EXP_, EXP_, MSG_), ID_) \
       end \
@@ -164,7 +164,7 @@
 `ifndef DV_CHECK_GE
   `define DV_CHECK_GE(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!((ACT_) >= (EXP_))) begin \
+      if ((ACT_) >= (EXP_)) ; else begin \
         `dv_``SEV_($sformatf("Check failed %s >= %s (%0d [0x%0h] vs %0d [0x%0h]) %s", \
                              `"ACT_`", `"EXP_`", ACT_, ACT_, EXP_, EXP_, MSG_), ID_) \
       end \
@@ -173,15 +173,29 @@
 
 `ifndef DV_CHECK_STREQ
   `define DV_CHECK_STREQ(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
-    if (!((ACT_) == (EXP_))) begin \
-      `dv_``SEV_($sformatf("Check failed \"%s\" == \"%s\" %s", ACT_, EXP_, MSG_), ID_) \
+    begin \
+      if ((ACT_) == (EXP_)) ; else begin \
+        `dv_``SEV_($sformatf("Check failed \"%s\" == \"%s\" %s", ACT_, EXP_, MSG_), ID_) \
+      end \
     end
 `endif
 
 `ifndef DV_CHECK_STRNE
   `define DV_CHECK_STRNE(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
-    if (!((ACT_) != (EXP_))) begin \
-      `dv_``SEV_($sformatf("Check failed \"%s\" != \"%s\" %s", ACT_, EXP_, MSG_), ID_) \
+    begin \
+      if ((ACT_) != (EXP_)) ; else begin \
+        `dv_``SEV_($sformatf("Check failed \"%s\" != \"%s\" %s", ACT_, EXP_, MSG_), ID_) \
+      end \
+    end
+`endif
+
+`ifndef DV_CHECK_Q_EQ
+  `define DV_CHECK_Q_EQ(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
+    begin \
+      `DV_CHECK_EQ(ACT_.size(), EXP_.size(), MSG_, SEV_, ID_) \
+      foreach (ACT_[i]) begin \
+        `DV_CHECK_EQ(ACT_[i], EXP_[i], $sformatf("for i = %0d %s", i, MSG_), SEV_, ID_) \
+      end \
     end
 `endif
 
@@ -374,10 +388,20 @@
   end
 `endif
 
+// macro that waits for a given delay and then reports an error
+`ifndef DV_WAIT_TIMEOUT
+`define DV_WAIT_TIMEOUT(TIMEOUT_NS_, ID_  = `gfn, ERROR_MSG_ = "timeout occurred!", REPORT_FATAL_ = 1) \
+  begin \
+    #(TIMEOUT_NS_ * 1ns); \
+    if (REPORT_FATAL_) `dv_fatal(ERROR_MSG_, ID_) \
+    else               `dv_error(ERROR_MSG_, ID_) \
+  end
+`endif
+
 // wait a task or statement with timer watchdog
 `ifndef DV_SPINWAIT
 `define DV_SPINWAIT(WAIT_, MSG_ = "timeout occurred!", TIMEOUT_NS_ = default_spinwait_timeout_ns, ID_ =`gfn) \
-  `DV_SPINWAIT_EXIT(WAIT_, wait_timeout(TIMEOUT_NS_, ID_, MSG_);, "", ID_)
+  `DV_SPINWAIT_EXIT(WAIT_, `DV_WAIT_TIMEOUT(TIMEOUT_NS_, ID_, MSG_);, "", ID_)
 `endif
 
 // a shorthand of `DV_SPINWAIT(wait(...))
@@ -554,4 +578,34 @@
 // it can consume different data types directly without the need for casting.
 `ifndef DV_MAX2
   `define DV_MAX2(a, b) ((a) > (b) ? (a) : (b))
+`endif
+
+// Creates a signal probe function to sample / force / release an internal signal.
+//
+// If there is a need to sample / force an internal signal, then it must be done in the testbench,
+// or in an interface bound to the DUT. This macro creates a standardized signal probe function
+// meant to be invoked an interface. The generated function can then be invoked in test sequences
+// or other UVM classes. The macro takes 2 arguments - name of the function and the hierarchical
+// path to the signal. If invoked in an interface which is bound to the DUT, the signal can be a
+// partial hierarchical path within the DUT. The generated function accepts 2 arguments - the first
+// indicates the probe action (sample, force or release) of type dv_utils_pkg::signal_probe_e. The
+// second argument is the value to be forced. If sample action is chosen, then it returns the
+// sampled value (for other actions as well).
+//
+// The suggested naming convention for the function is:
+//   signal_probe_<DUT_or_IP_block_name>_<signal_name>
+//
+// This macro must be invoked in an interface or module.
+`ifndef DV_CREATE_SIGNAL_PROBE_FUNCTION
+`define DV_CREATE_SIGNAL_PROBE_FUNCTION(FUNC_NAME_, SIGNAL_PATH_, SIGNAL_WIDTH_ = uvm_pkg::UVM_HDL_MAX_WIDTH) \
+  function static logic [SIGNAL_WIDTH_-1:0] FUNC_NAME_(dv_utils_pkg::signal_probe_e kind,     \
+                                                       logic [SIGNAL_WIDTH_-1:0] value = '0); \
+    case (kind)                                                                               \
+      dv_utils_pkg::SignalProbeSample: ;                                                      \
+      dv_utils_pkg::SignalProbeForce: force SIGNAL_PATH_ = value;                             \
+      dv_utils_pkg::SignalProbeRelease: release SIGNAL_PATH_;                                 \
+      default: `uvm_fatal(`"FUNC_NAME_`", $sformatf("Bad value: %0d", kind))                  \
+    endcase                                                                                   \
+    return SIGNAL_PATH_;                                                                      \
+  endfunction
 `endif
