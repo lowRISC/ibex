@@ -689,6 +689,8 @@ module ibex_if_stage import ibex_pkg::*; #(
   // fcov signals for V2S
   `DV_FCOV_SIGNAL_GEN_IF(logic [1:0], dummy_instr_type,
     gen_dummy_instr.dummy_instr_i.lfsr_data.instr_type, DummyInstructions)
+  `DV_FCOV_SIGNAL_GEN_IF(logic, insert_dummy_instr,
+    gen_dummy_instr.insert_dummy_instr, DummyInstructions)
 `endif
 
   ////////////////

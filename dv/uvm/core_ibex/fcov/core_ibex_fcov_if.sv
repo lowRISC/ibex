@@ -447,6 +447,11 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
       illegal_bins illegal = {InstrCategoryOther, InstrCategoryOtherIllegal};
     }
 
+    // Each stage sees a dummy instruction.
+    cp_dummy_instr_if_stage: coverpoint if_stage_i.fcov_insert_dummy_instr;
+    cp_dummy_instr_id_stage: coverpoint if_stage_i.dummy_instr_id_o;
+    cp_dummy_instr_wb_stage: coverpoint wb_stage_i.dummy_instr_wb_o;
+
     cp_rf_a_ecc_err: coverpoint fcov_rf_ecc_err_a_id;
     cp_rf_b_ecc_err: coverpoint fcov_rf_ecc_err_b_id;
 
