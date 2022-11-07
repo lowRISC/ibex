@@ -240,8 +240,13 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
     forever begin
       // Wait for new instruction to appear in ID stage
       wait (instr_vif.instr_cb.valid_id &&
-            instr_vif.instr_cb.instr_new_id &&
-            latest_order != instr_vif.instr_cb.rvfi_order_id);
+            instr_vif.instr_cb.instr_new_id);
+      // Determine if we were here before. If so, that means this rvfi_order number was actually used
+      // twice (a load/store fault caused jumping to the handler). Delete the old iside_error_queue
+      // element.
+      if (latest_order == instr_vif.instr_cb.rvfi_order_id) begin
+        iside_error_queue.pop_back();
+      end
       // Determine if the instruction comes from an address that has seen an error that wasn't a PMP
       // error (the icache records both PMP errors and fetch errors with the same error bits). If a
       // fetch error was seen add the instruction order ID and address to iside_error_queue.
@@ -264,6 +269,8 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
       end
 
       latest_order = instr_vif.instr_cb.rvfi_order_id;
+
+      @(posedge instr_vif.clk);
     end
   endtask: run_cosim_imem_errors;
 
