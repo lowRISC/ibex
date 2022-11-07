@@ -140,7 +140,7 @@ ENV RISCV_OBJCOPY "${RISCV}/bin/riscv32-unknown-elf-objcopy"
 # Build and install Spike.
 RUN mkdir /tmp/spike && cd /tmp/spike \
     && git clone https://github.com/lowRISC/riscv-isa-sim && cd riscv-isa-sim \
-    && git checkout 0e306ce7b96b79ed67f9c9987ba30135e3f5aeff \
+    && git checkout 15fbd5680e44da699f828c67db15345822a47ef6 \
     && mkdir build && cd build \
     && ../configure --prefix=$RISCV --enable-commitlog --enable-misaligned \
     && make -j16 \
