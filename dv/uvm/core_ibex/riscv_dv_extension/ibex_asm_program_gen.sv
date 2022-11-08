@@ -12,7 +12,6 @@ class ibex_asm_program_gen extends riscv_asm_program_gen;
   `uvm_object_new
 
   virtual function void gen_program();
-    string instr[$];
     bit disable_pmp_exception_handler = 0;
 
     default_include_csr_write = {
@@ -61,18 +60,6 @@ class ibex_asm_program_gen extends riscv_asm_program_gen;
     end
 
     super.gen_program();
-
-    // Override the main gen_program() routine to append our own custom test_done/test_fail routines
-    // Generate test_done and test_fail routines at the end of the baseclass program.
-    gen_test_end(.result(TEST_PASS), .instr(instr));
-    instr_stream = {instr_stream,
-                    {format_string("test_done:", LABEL_STR_LEN)},
-                    instr};
-    instr.delete();
-    gen_test_end(.result(TEST_FAIL), .instr(instr));
-    instr_stream = {instr_stream,
-                    {format_string("test_fail:", LABEL_STR_LEN)},
-                    instr};
   endfunction
 
   // ECALL trap handler
@@ -157,6 +144,24 @@ class ibex_asm_program_gen extends riscv_asm_program_gen;
     end
 
     instr.push_back(str);
+  endfunction
+
+  virtual function void gen_init_section(int hart);
+    // This is a good location to put the test done and fail because PMP tests expect these
+    // sequences to be before the main function.
+    string instr[$];
+
+    super.gen_init_section(hart);
+
+    gen_test_end(.result(TEST_PASS), .instr(instr));
+    instr_stream = {instr_stream,
+                    {format_string("test_done:", LABEL_STR_LEN)},
+                    instr};
+    instr.delete();
+    gen_test_end(.result(TEST_FAIL), .instr(instr));
+    instr_stream = {instr_stream,
+                    {format_string("test_fail:", LABEL_STR_LEN)},
+                    instr};
   endfunction
 
 endclass
