@@ -1166,6 +1166,83 @@ module ibex_top import ibex_pkg::*; #(
 
     // data_err_i relevant to both reads and writes. Check it isn't X on any response.
     `ASSERT_KNOWN_IF(IbexDataRErrPayloadX, data_err_i, data_rvalid_i)
+
+    // Tracking logic and predictor for double_fault_seen_o output
+
+    // Returns 1'b1 if the provided instruction decodes to one that would write the sync_exc_bit of
+    // the CPUCTRLSTS CSR
+    function automatic logic insn_write_sync_exc_seen(logic [31:0] insn_bits);
+      return (insn_bits[6:0] == OPCODE_SYSTEM) &&
+             (insn_bits[14:12] inside {3'b001, 3'b010, 3'b011, 3'b101}) &&
+             (insn_bits[31:20] == CSR_CPUCTRLSTS);
+    endfunction
+
+    // Given an instruction that writes the sync_exc_bit of the CPUCTRLSTS CSR along with the value
+    // of the rs1 register read for that instruction and the current predicted sync_exc_bit bit
+    // return the new value of the sync_exc_bit after the instruction is executed.
+    function automatic logic new_sync_exc_bit(logic [31:0] insn_bits, logic [31:0] rs1,
+        logic cur_bit);
+      logic sync_exc_update_bit;
+
+      sync_exc_update_bit = insn_bits[14] ? 1'b0 : rs1[6];
+
+      case (insn_bits[13:12])
+        2'b01: return sync_exc_update_bit;
+        2'b10: return cur_bit | sync_exc_update_bit;
+        2'b11: return cur_bit & ~sync_exc_update_bit;
+        default: return 1'bx;
+      endcase
+    endfunction
+
+    localparam int DoubleFaultSeenLatency = 3;
+    logic [DoubleFaultSeenLatency-1:0] double_fault_seen_delay_buffer;
+    logic [DoubleFaultSeenLatency-2:0] double_fault_seen_delay_buffer_q;
+    logic                              sync_exc_seen;
+    logic                              new_sync_exc;
+    logic                              double_fault_seen_predicted;
+
+    assign new_sync_exc                = rvfi_valid & rvfi_trap & ~rvfi_ext_debug_mode;
+    assign double_fault_seen_predicted = sync_exc_seen & new_sync_exc;
+
+    // Depending on whether the exception comes from the WB or ID/EX stage the precise timing of the
+    // double_fault_seen_o output vs the double fault instruction being visible on RVFI differs. At
+    // the earliest extreme it can be asserted the same cycle the instruction is visible on the
+    // RVFI.  Buffer the last few cycles of double_fault_seen_o output for checking. We can
+    // guarantee the minimum spacing between double_fault_seen_o assertions  (occurring when the
+    // first instruction of an exception handler continuously double faults with a single cycle
+    // memory access time) is sufficient that we'll only see a single bit set in the delay buffer.
+    assign double_fault_seen_delay_buffer = {double_fault_seen_delay_buffer_q, double_fault_seen_o};
+
+    always @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        double_fault_seen_delay_buffer_q <= '0;
+        sync_exc_seen <= 1'b0;
+      end else begin
+        double_fault_seen_delay_buffer_q <=
+          double_fault_seen_delay_buffer[DoubleFaultSeenLatency-2:0];
+
+        if (new_sync_exc) begin
+          // Set flag when we see a new synchronous exception
+          sync_exc_seen <= 1'b1;
+        end else if (rvfi_valid && rvfi_insn == 32'h30200073) begin
+          // Clear flag when we see an MRET
+          sync_exc_seen <= 1'b0;
+        end else if (rvfi_valid && insn_write_sync_exc_seen(rvfi_insn)) begin
+          // Update predicted sync_exc_seen when the instruction modifies the relevant CPUCTRLSTS CSR
+          // bit.
+          sync_exc_seen <= new_sync_exc_bit(rvfi_insn, rvfi_rs1_rdata, sync_exc_seen);
+        end
+      end
+    end
+
+    // We should only have a single assertion of double_fault_seen in the delay buffer
+    `ASSERT(DoubleFaultSinglePulse, $onehot0(double_fault_seen_delay_buffer))
+    // If we predict a double_fault_seen_o we should see one in the delay buffer
+    `ASSERT(DoubleFaultPulseSeenOnDoubleFault,
+      double_fault_seen_predicted |-> |double_fault_seen_delay_buffer)
+    // If double_fault_seen_o is asserted we should see predict one occurring within a bounded time
+    `ASSERT(DoubleFaultPulseOnlyOnDoubleFault,
+      double_fault_seen_o |-> ##[0:DoubleFaultSeenLatency] double_fault_seen_predicted)
   `endif
 
   `ASSERT_KNOWN(IbexIrqX, {irq_software_i, irq_timer_i, irq_external_i, irq_fast_i, irq_nm_i})
