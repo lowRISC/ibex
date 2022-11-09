@@ -1117,15 +1117,21 @@ module ibex_top import ibex_pkg::*; #(
         end
       end
 
-      always_comb begin
-        pending_dside_accesses_d[i] = pending_dside_accesses_shifted[i];
+      if (i == 0) begin : g_track_first_entry
+        always_comb begin
+          pending_dside_accesses_d[i] = pending_dside_accesses_shifted[i];
 
-        if (data_req_o && data_gnt_i) begin
-          if (i == 0 && !pending_dside_accesses_shifted[i].valid) begin
+          if (data_req_o && data_gnt_i && !pending_dside_accesses_shifted[i].valid) begin
             pending_dside_accesses_d[i].valid = 1'b1;
             pending_dside_accesses_d[i].is_read = ~data_we_o;
-          end else if (pending_dside_accesses_shifted[i - 1].valid &
-                       !pending_dside_accesses_shifted[i].valid) begin
+          end
+        end
+      end else begin : g_track_other_entries
+        always_comb begin
+          pending_dside_accesses_d[i] = pending_dside_accesses_shifted[i];
+
+          if (data_req_o && data_gnt_i && pending_dside_accesses_shifted[i - 1].valid &&
+              !pending_dside_accesses_shifted[i].valid) begin
             pending_dside_accesses_d[i].valid = 1'b1;
             pending_dside_accesses_d[i].is_read = ~data_we_o;
           end
