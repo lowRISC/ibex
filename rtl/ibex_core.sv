@@ -1406,8 +1406,14 @@ module ibex_core import ibex_pkg::*; #(
     end else  begin
       // Capture when ID stage has emptied out and something occurs that will cause a trap and we
       // haven't yet captured
+      //
+      // When we already captured a trap, and there is upcoming nmi interrupt or
+      // a debug request then recapture as nmi or debug request are supposed to
+      // be serviced.
       if (~instr_valid_id & (new_debug_req | new_irq | new_nmi | new_nmi_int) &
-          ~captured_valid) begin
+          ((~captured_valid) |
+           (new_debug_req & ~captured_debug_req) |
+           (new_nmi & ~captured_nmi & ~captured_debug_req))) begin
         captured_valid     <= 1'b1;
         captured_nmi       <= irq_nm_i;
         captured_nmi_int   <= id_stage_i.controller_i.irq_nm_int;
