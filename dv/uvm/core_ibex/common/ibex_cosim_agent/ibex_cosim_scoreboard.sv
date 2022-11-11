@@ -17,9 +17,11 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
   uvm_tlm_analysis_fifo #(ibex_ifetch_seq_item)     ifetch_port;
   uvm_tlm_analysis_fifo #(ibex_ifetch_pmp_seq_item) ifetch_pmp_port;
 
-  virtual core_ibex_instr_monitor_if              instr_vif;
+  virtual core_ibex_instr_monitor_if instr_vif;
+  virtual core_ibex_dut_probe_if     dut_vif;
 
   uvm_event reset_e;
+  uvm_event check_inserted_iside_error_e;
 
   bit failed_iside_accesses [bit[31:0]];
   bit iside_pmp_failure     [bit[31:0]];
@@ -36,13 +38,14 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
   function new(string name="", uvm_component parent=null);
     super.new(name, parent);
 
-    rvfi_port       = new("rvfi_port", this);
-    dmem_port       = new("dmem_port", this);
-    imem_port       = new("imem_port", this);
-    ifetch_port     = new("ifetch_port", this);
-    ifetch_pmp_port = new("ifetch_pmp_port", this);
-    cosim_handle    = null;
-    reset_e         = new();
+    rvfi_port                    = new("rvfi_port", this);
+    dmem_port                    = new("dmem_port", this);
+    imem_port                    = new("imem_port", this);
+    ifetch_port                  = new("ifetch_port", this);
+    ifetch_pmp_port              = new("ifetch_pmp_port", this);
+    cosim_handle                 = null;
+    reset_e                      = new();
+    check_inserted_iside_error_e = new();
   endfunction
 
   function void build_phase(uvm_phase phase);
@@ -55,6 +58,11 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
     if (!uvm_config_db#(virtual core_ibex_instr_monitor_if)::get(null, "", "instr_monitor_if",
                                                                  instr_vif)) begin
       `uvm_fatal(`gfn, "Cannot get instr_monitor_if")
+    end
+
+    if (!uvm_config_db#(virtual core_ibex_dut_probe_if)::get(null, "", "dut_if",
+                                                                 dut_vif)) begin
+      `uvm_fatal(`gfn, "Cannot get dut_probe_if")
     end
 
     init_cosim();
@@ -86,6 +94,7 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
         run_cosim_rvfi();
         run_cosim_dmem();
         run_cosim_imem_errors();
+        run_cosim_prune_imem_errors();
         if (cfg.probe_imem_for_errs) begin
           run_cosim_imem();
         end else begin
@@ -107,17 +116,19 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
     forever begin
       rvfi_port.get(rvfi_instr);
 
-      // Remove entries from iside_error_queue where the instruction never reaches the RVFI
-      // interface because it was flushed.
-      while (iside_error_queue.size() > 0 && iside_error_queue[0].order < rvfi_instr.order) begin
-        iside_error_queue.pop_front();
-      end
+      if (iside_error_queue.size() > 0) begin
+        // Remove entries from iside_error_queue where the instruction never reaches the RVFI
+        // interface because it was flushed.
+        while (iside_error_queue.size() > 0 && iside_error_queue[0].order < rvfi_instr.order) begin
+          iside_error_queue.pop_front();
+        end
 
-      // Check if the top of the iside_error_queue relates to the current RVFI instruction. If so
-      // notify the cosim environment of an instruction error.
-      if (iside_error_queue.size() !=0 && iside_error_queue[0].order == rvfi_instr.order) begin
-        riscv_cosim_set_iside_error(cosim_handle, iside_error_queue[0].addr);
-        iside_error_queue.pop_front();
+        // Check if the top of the iside_error_queue relates to the current RVFI instruction. If so
+        // notify the cosim environment of an instruction error.
+        if (iside_error_queue.size() !=0 && iside_error_queue[0].order == rvfi_instr.order) begin
+          riscv_cosim_set_iside_error(cosim_handle, iside_error_queue[0].addr);
+          iside_error_queue.pop_front();
+        end
       end
 
       riscv_cosim_set_nmi(cosim_handle, rvfi_instr.nmi);
@@ -242,6 +253,16 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
       wait (instr_vif.instr_cb.valid_id &&
             instr_vif.instr_cb.instr_new_id &&
             latest_order != instr_vif.instr_cb.rvfi_order_id);
+
+      latest_order = instr_vif.instr_cb.rvfi_order_id;
+
+      if (dut_vif.dut_cb.wb_exception)
+        // If an exception in writeback occurs the instruction in ID will be flushed and hence not
+        // produce an iside error so skip the rest of the loop. A writeback exception may occur
+        // after this cycle before the instruction in ID moves out of the ID stage. The
+        // `run_cosim_prune_imem_errors` task deals with this case.
+        continue;
+
       // Determine if the instruction comes from an address that has seen an error that wasn't a PMP
       // error (the icache records both PMP errors and fetch errors with the same error bits). If a
       // fetch error was seen add the instruction order ID and address to iside_error_queue.
@@ -252,6 +273,7 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
       begin
         iside_error_queue.push_back('{order : instr_vif.instr_cb.rvfi_order_id,
                                       addr  : aligned_addr});
+        check_inserted_iside_error_e.trigger();
       end else if (!instr_vif.instr_cb.is_compressed_id &&
                    (instr_vif.instr_cb.pc_id & 32'h3) != 0 &&
                    failed_iside_accesses.exists(aligned_next_addr) &&
@@ -261,11 +283,35 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
         // side of the boundary
         iside_error_queue.push_back('{order : instr_vif.instr_cb.rvfi_order_id,
                                       addr  : aligned_next_addr});
+        check_inserted_iside_error_e.trigger();
       end
 
-      latest_order = instr_vif.instr_cb.rvfi_order_id;
     end
   endtask: run_cosim_imem_errors;
+
+  task run_cosim_prune_imem_errors();
+    // Errors are added to the iside error queue the first cycle the instruction that sees the error
+    // is in the ID stage. Cycles following this the writeback stage may cause an exception flushing
+    // the ID stage so the iside error never occurs. When this happens we need to pop the new iside
+    // error off the queue.
+    forever begin
+      // Wait until the `run_cosim_imem_errors` task notifies us it's added a error to the queue
+      check_inserted_iside_error_e.wait_ptrigger();
+      // Wait for the next clock
+      @(instr_vif.instr_cb);
+      // Wait for a new instruction or a writeback exception. When a new instruction has entered the
+      // ID stage and we haven't seen a writeback exception we know the instruction associated with the
+      // error just added to the queue isn't getting flushed.
+      wait (instr_vif.instr_cb.instr_new_id || dut_vif.dut_cb.wb_exception);
+
+      if (!instr_vif.instr_cb.instr_new_id && dut_vif.dut_cb.wb_exception) begin
+        // If we hit a writeback exception without seeing a new instruction then the newly added
+        // error relates to an instruction just flushed from the ID stage so pop it from the
+        // queue.
+        iside_error_queue.pop_back();
+      end
+    end
+  endtask: run_cosim_prune_imem_errors
 
   function string get_cosim_error_str();
       string error = "Cosim mismatch ";

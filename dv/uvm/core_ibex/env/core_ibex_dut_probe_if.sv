@@ -38,6 +38,7 @@ interface core_ibex_dut_probe_if(input logic clk);
   logic                              irq_exc_seen;
   logic                              csr_save_cause;
   ibex_pkg::exc_cause_t              exc_cause;
+  logic                              wb_exception;
 
   always @(posedge clk or posedge reset) begin
     if (reset) begin
@@ -81,6 +82,7 @@ interface core_ibex_dut_probe_if(input logic clk);
     input rf_rd_b_wb_match;
     input sync_exc_seen;
     input irq_exc_seen;
+    input wb_exception;
   endclocking
 
   initial begin
