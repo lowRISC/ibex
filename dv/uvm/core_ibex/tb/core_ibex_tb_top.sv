@@ -232,6 +232,7 @@ module core_ibex_tb_top;
   assign dut_if.sync_exc_seen    = dut.u_ibex_top.u_ibex_core.cs_registers_i.cpuctrlsts_part_q.sync_exc_seen;
   assign dut_if.csr_save_cause   = dut.u_ibex_top.u_ibex_core.csr_save_cause;
   assign dut_if.exc_cause        = dut.u_ibex_top.u_ibex_core.exc_cause;
+  assign dut_if.wb_exception     = dut.u_ibex_top.u_ibex_core.id_stage_i.wb_exception;
   // Instruction monitor connections
   assign instr_monitor_if.reset        = ~rst_n;
   assign instr_monitor_if.valid_id     = dut.u_ibex_top.u_ibex_core.id_stage_i.instr_valid_i;
