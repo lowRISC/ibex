@@ -58,6 +58,7 @@ class RegressionMetadata(scripts_lib.testdata_cls):
     iterations: Optional[int] = None
     signature_addr: str = ' '
     ibex_config: str = ' '
+    dut_cov_rtl_path: str = ''
 
     tests_and_counts: List[Tuple[str, int]] = field(default_factory=list)
     isa_ibex: Optional[str] = None

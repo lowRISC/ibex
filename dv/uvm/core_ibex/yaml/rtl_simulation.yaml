@@ -246,6 +246,8 @@
     cov_opts: >
       -coverage all
       -nowarn COVDEF
+      -covfile <xlm_cov_cfg_file>
+      -covdut ibex_top
     wave_opts: >
       -access rwc -linedebug
     cosim_opts: >

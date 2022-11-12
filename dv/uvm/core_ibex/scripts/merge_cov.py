@@ -89,7 +89,8 @@ def merge_cov_xlm(md: RegressionMetadata, cov_dbs: Set[pathlib.Path]) -> int:
         'cov_merge_db_dir': str(md.dir_cov_merged),
         'cov_report_dir': str(md.dir_cov_report),
         'cov_db_dirs': "",
-        'cov_db_runfile': str(md.cov_merge_db_list)
+        'cov_db_runfile': str(md.cov_merge_db_list),
+        "DUT_TOP": md.dut_cov_rtl_path
     }
     xlm_env = os.environ.copy()
     xlm_env.update(xlm_cov_dirs)
