@@ -1171,4 +1171,14 @@ module ibex_top import ibex_pkg::*; #(
   // Dummy instructions may only write to register 0, which is a special register when dummy
   // instructions are enabled.
   `ASSERT(WaddrAZeroForDummyInstr, dummy_instr_wb && rf_we_wb |-> rf_waddr_wb == '0)
+
+  // Ensure the crash dump is connected to the correct internal signals
+  `ASSERT(CrashDumpCurrentPCConn, crash_dump_o.current_pc === u_ibex_core.pc_id)
+  `ASSERT(CrashDumpNextPCConn, crash_dump_o.next_pc === u_ibex_core.pc_if)
+  `ASSERT(CrashDumpLastDataAddrConn,
+    crash_dump_o.last_data_addr === u_ibex_core.load_store_unit_i.addr_last_q)
+  `ASSERT(CrashDumpExceptionPCConn,
+    crash_dump_o.exception_pc === u_ibex_core.cs_registers_i.mepc_q)
+  `ASSERT(CrashDumpExceptionAddrConn,
+    crash_dump_o.exception_addr === u_ibex_core.cs_registers_i.mtval_q)
 endmodule
