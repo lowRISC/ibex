@@ -41,6 +41,9 @@ SIGNATURE_ADDR      := 8ffffffc
 ### Ibex top level parameters ###
 IBEX_CONFIG         := opentitan
 
+# Path to DUT used for coverage reports
+DUT_COV_RTL_PATH    := "ibex_top"
+
 ###############################################################################
 
 all: collect_results $(if $(filter 1,$(COV)),merge_cov,)
@@ -116,7 +119,8 @@ new-metadata-file := $(shell env PYTHONPATH=$(PYTHONPATH) python3 ./scripts/meta
   --args-list "\
   SEED=$(SEED) WAVES=$(WAVES) COV=$(COV) SIMULATOR=$(SIMULATOR) \
   ISS=$(ISS) TEST=$(TEST) VERBOSE=$(VERBOSE) ITERATIONS=$(ITERATIONS) \
-  SIGNATURE_ADDR=$(SIGNATURE_ADDR) IBEX_CONFIG=$(IBEX_CONFIG)")
+  SIGNATURE_ADDR=$(SIGNATURE_ADDR) IBEX_CONFIG=$(IBEX_CONFIG) \
+	DUT_COV_RTL_PATH=$(DUT_COV_RTL_PATH)")
 
 ### TODO ##
 # Evaluate input variables to more-cleverly schedule partial-rebuilds
