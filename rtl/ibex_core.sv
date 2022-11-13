@@ -141,6 +141,7 @@ module ibex_core import ibex_pkg::*; #(
   output logic                         rvfi_ext_nmi,
   output logic                         rvfi_ext_nmi_int,
   output logic                         rvfi_ext_debug_req,
+  output logic                         rvfi_ext_debug_mode,
   output logic                         rvfi_ext_rf_wr_suppress,
   output logic [63:0]                  rvfi_ext_mcycle,
   output logic [31:0]                  rvfi_ext_mhpmcounters [10],
@@ -1251,6 +1252,7 @@ module ibex_core import ibex_pkg::*; #(
   logic            rvfi_ext_stage_nmi              [RVFI_STAGES+1];
   logic            rvfi_ext_stage_nmi_int          [RVFI_STAGES+1];
   logic            rvfi_ext_stage_debug_req        [RVFI_STAGES+1];
+  logic            rvfi_ext_stage_debug_mode       [RVFI_STAGES];
   logic [63:0]     rvfi_ext_stage_mcycle           [RVFI_STAGES];
   logic [31:0]     rvfi_ext_stage_mhpmcounters     [RVFI_STAGES][10];
   logic [31:0]     rvfi_ext_stage_mhpmcountersh    [RVFI_STAGES][10];
@@ -1300,6 +1302,7 @@ module ibex_core import ibex_pkg::*; #(
   assign rvfi_ext_nmi              = rvfi_ext_stage_nmi              [RVFI_STAGES];
   assign rvfi_ext_nmi_int          = rvfi_ext_stage_nmi_int          [RVFI_STAGES];
   assign rvfi_ext_debug_req        = rvfi_ext_stage_debug_req        [RVFI_STAGES];
+  assign rvfi_ext_debug_mode       = rvfi_ext_stage_debug_mode       [RVFI_STAGES-1];
   assign rvfi_ext_mcycle           = rvfi_ext_stage_mcycle           [RVFI_STAGES-1];
   assign rvfi_ext_mhpmcounters     = rvfi_ext_stage_mhpmcounters     [RVFI_STAGES-1];
   assign rvfi_ext_mhpmcountersh    = rvfi_ext_stage_mhpmcountersh    [RVFI_STAGES-1];
@@ -1474,6 +1477,7 @@ module ibex_core import ibex_pkg::*; #(
         rvfi_ext_stage_nmi[i+1]            <= '0;
         rvfi_ext_stage_nmi_int[i+1]        <= '0;
         rvfi_ext_stage_debug_req[i+1]      <= '0;
+        rvfi_ext_stage_debug_mode[i]       <= '0;
         rvfi_ext_stage_mcycle[i]           <= '0;
         rvfi_ext_stage_mhpmcounters[i]     <= '{10{'0}};
         rvfi_ext_stage_mhpmcountersh[i]    <= '{10{'0}};
@@ -1510,6 +1514,7 @@ module ibex_core import ibex_pkg::*; #(
             rvfi_ext_stage_nmi[i+1]            <= rvfi_ext_stage_nmi[i];
             rvfi_ext_stage_nmi_int[i+1]        <= rvfi_ext_stage_nmi_int[i];
             rvfi_ext_stage_debug_req[i+1]      <= rvfi_ext_stage_debug_req[i];
+            rvfi_ext_stage_debug_mode[i]       <= debug_mode;
             rvfi_ext_stage_mcycle[i]           <= cs_registers_i.mcycle_counter_i.counter_val_o;
             rvfi_ext_stage_ic_scr_key_valid[i] <= cs_registers_i.cpuctrlsts_ic_scr_key_valid_q;
             // This is done this way because SystemVerilog does not support looping through
@@ -1553,6 +1558,7 @@ module ibex_core import ibex_pkg::*; #(
             rvfi_ext_stage_nmi[i+1]            <= rvfi_ext_stage_nmi[i];
             rvfi_ext_stage_nmi_int[i+1]        <= rvfi_ext_stage_nmi_int[i];
             rvfi_ext_stage_debug_req[i+1]      <= rvfi_ext_stage_debug_req[i];
+            rvfi_ext_stage_debug_mode[i]       <= rvfi_ext_stage_debug_mode[i-1];
             rvfi_ext_stage_mcycle[i]           <= rvfi_ext_stage_mcycle[i-1];
             rvfi_ext_stage_ic_scr_key_valid[i] <= rvfi_ext_stage_ic_scr_key_valid[i-1];
             rvfi_ext_stage_mhpmcounters[i]     <= rvfi_ext_stage_mhpmcounters[i-1];
