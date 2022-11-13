@@ -954,10 +954,10 @@ bool SpikeCosim::check_debug_ebreak(uint32_t write_reg, uint32_t pc,
     return false;
   }
 
-  if (!sync_trap) {
+  if (sync_trap) {
     std::stringstream err_str;
-    err_str << "DUT executed ebreak at " << std::hex << pc
-            << " but didn't indicate a synchronous trap, which was unexpected";
+    err_str << "DUT executed ebreak into debug at " << std::hex << pc
+            << " but indicated a synchronous trap, which was unexpected";
     errors.emplace_back(err_str.str());
 
     return false;

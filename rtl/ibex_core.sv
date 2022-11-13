@@ -1345,7 +1345,9 @@ module ibex_core import ibex_pkg::*; #(
       end
     end
 
-    assign rvfi_trap_id = id_stage_i.controller_i.id_exception_o;
+    assign rvfi_trap_id = id_stage_i.controller_i.id_exception_o &
+      ~(id_stage_i.ebrk_insn & id_stage_i.controller_i.ebreak_into_debug);
+
     assign rvfi_trap_wb = id_stage_i.controller_i.exc_req_lsu;
     // WB is instantly done in the tracking pipeline when a trap is progress through the pipeline
     assign rvfi_wb_done = rvfi_stage_valid[0] & (instr_done_wb | rvfi_stage_trap[0]);
@@ -1356,7 +1358,9 @@ module ibex_core import ibex_pkg::*; #(
     // Without writeback stage signal new instr_new_wb when instruction enters ID/EX to correctly
     // setup register write signals
     assign rvfi_instr_new_wb = instr_new_id;
-    assign rvfi_trap_id = id_stage_i.controller_i.exc_req_d | id_stage_i.controller_i.exc_req_lsu;
+    assign rvfi_trap_id =
+      (id_stage_i.controller_i.exc_req_d | id_stage_i.controller_i.exc_req_lsu) &
+      ~(id_stage_i.ebrk_insn & id_stage_i.controller_i.ebreak_into_debug);
     assign rvfi_trap_wb = 1'b0;
     assign rvfi_wb_done = instr_done_wb;
   end
