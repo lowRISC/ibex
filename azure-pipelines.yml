@@ -92,6 +92,8 @@ jobs:
       # Build CoreMark without performance counter dump for co-simulation testing
       make -C ./examples/sw/benchmarks/coremark SUPPRESS_PCOUNT_DUMP=1
       make -C ./examples/sw/simple_system/pmp_smoke_test
+      make -C ./examples/sw/simple_system/dit_test
+      make -C ./examples/sw/simple_system/dummy_instr_test
     displayName: Build tests for verilator co-simulation
 
   # Run Ibex RTL CI per supported configuration
