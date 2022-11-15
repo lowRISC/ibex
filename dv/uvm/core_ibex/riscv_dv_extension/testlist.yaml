@@ -844,6 +844,8 @@
     +directed_instr_3=riscv_load_store_rand_addr_instr_stream,40
     +directed_instr_4=ibex_rand_mseccfg_stream,1
     +directed_instr_6=ibex_valid_na4_stream,20
+    +directed_instr_7=ibex_cross_pmp_region_mem_access_stream,10
+    +enable_unaligned_load_store=1
   sim_opts: >
     +is_double_fault_detected_fatal=0
     +enable_bad_intg_on_uninit_access=0

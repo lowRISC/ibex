@@ -147,3 +147,93 @@ class ibex_valid_na4_stream extends riscv_directed_instr_stream;
   endfunction
 
 endclass
+
+class ibex_cross_pmp_region_mem_access_stream extends riscv_directed_instr_stream;
+  `uvm_object_utils(ibex_cross_pmp_region_mem_access_stream)
+
+  int unsigned pmp_region;
+  int unsigned region_mask;
+  int unsigned region_size;
+
+  function new (string name = "");
+    super.new(name);
+  endfunction
+
+  function void calc_region_params();
+    int unsigned cur_addr = cfg.pmp_cfg.pmp_cfg[pmp_region].addr;
+
+    region_size = 8;
+    region_mask = 32'hfffffffe;
+
+    for (int i = 0; i < 29; ++i) begin
+      if ((cur_addr & 1) == 0) break;
+      region_size *= 2;
+      cur_addr >>= 1;
+      region_mask <<= 1;
+    end
+  endfunction
+
+  function int unsigned pmp_region_top_addr();
+    return ((cfg.pmp_cfg.pmp_cfg[pmp_region].addr & region_mask) << 2) + region_size;
+  endfunction
+
+  function int unsigned pmp_region_bottom_addr();
+    return ((cfg.pmp_cfg.pmp_cfg[pmp_region].addr & region_mask) << 2);
+  endfunction
+
+  function void post_randomize();
+    int unsigned target_addr;
+    int unsigned offset;
+    riscv_pseudo_instr la_instr;
+    riscv_instr mem_instr;
+    bit access_at_top;
+
+    if (!std::randomize(pmp_region) with {
+          pmp_region > 1;
+          pmp_region < cfg.pmp_cfg.pmp_num_regions;
+          cfg.pmp_cfg.pmp_cfg[pmp_region].a == NAPOT;
+        })
+    begin
+      `uvm_info(`gfn,
+        {"WARNING: Cannot choose random NAPOT PMP region, skipping cross PMP region access ",
+         "generation"}, UVM_LOW)
+      return;
+    end
+
+    initialize_instr_list(2);
+
+    calc_region_params();
+
+    mem_instr = riscv_instr::get_load_store_instr({LH, LHU, LW, SH, SW});
+
+    std::randomize(access_at_top);
+
+    if (mem_instr.instr_name inside {LW, SW}) begin
+      std::randomize(offset) with {offset < 3;offset > 0;};
+    end else begin
+      offset = 1;
+    end
+
+    if (access_at_top) begin
+      target_addr = pmp_region_top_addr() - offset;
+    end else begin
+      target_addr = pmp_region_bottom_addr() - offset;
+    end
+
+    la_instr = riscv_pseudo_instr::type_id::create("la_instr");
+    la_instr.pseudo_instr_name = LA;
+    la_instr.has_label = 1'b0;
+    la_instr.atomic = 1'b1;
+    la_instr.imm_str = $sformatf("0x%x", target_addr);
+    la_instr.rd = cfg.gpr[1];
+
+    randomize_gpr(mem_instr);
+    mem_instr.has_imm = 0;
+    mem_instr.imm_str = "0";
+    mem_instr.rs1 = cfg.gpr[1];
+
+    instr_list = {la_instr, mem_instr};
+
+    super.post_randomize();
+  endfunction
+endclass
