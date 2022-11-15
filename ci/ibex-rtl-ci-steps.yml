@@ -80,4 +80,11 @@ steps:
         else
           echo "PMP not supported on ${{ config }}, skipping pmp_smoke_test"
         fi
+
+        if ./util/ibex_config.py ${{ config }} query_fields SecureIbex | grep -q 'SecureIbex=1'; then
+          ./ci/run-cosim-test.sh dit_test examples/sw/simple_system/dit_test/dit_test.elf
+          ./ci/run-cosim-test.sh dummy_instr_test examples/sw/simple_system/dummy_instr_test/dummy_instr_test.elf
+        else
+          echo "Security features not supported on ${{ config }}, skipping security feature tests"
+        fi
       displayName: Run Verilator co-sim tests for for ${{ config }}
