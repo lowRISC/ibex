@@ -121,21 +121,20 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
     assign pmp_iside2_nomatch = ~|pmp_iside2_match;
     assign pmp_dside_nomatch  = ~|pmp_dside_match;
 
-    assign misaligned_pmp_err_last = load_store_unit_i.fcov_ls_first_req ?
-                                       load_store_unit_i.data_pmp_err_i :
-                                       misaligned_pmp_err_last;
-
     // Store the Data Channel PMP match info from the first request to calculate boundary cross
     always @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
-        pmp_dside_match_last <= '0;
+        pmp_dside_match_last    <= '0;
+        misaligned_pmp_err_last <= 1'b0;
       end else if (load_store_unit_i.fcov_ls_first_req) begin
-        pmp_dside_match_last <= pmp_dside_match;
+        pmp_dside_match_last    <= pmp_dside_match;
+        misaligned_pmp_err_last <= load_store_unit_i.data_pmp_err_i;
       end
     end
 
     assign pmp_iside_boundary_cross = |(pmp_iside_match ^ pmp_iside2_match);
-    assign pmp_dside_boundary_cross = |(pmp_dside_match ^ pmp_dside_match_last);
+    assign pmp_dside_boundary_cross = |(pmp_dside_match ^ pmp_dside_match_last) &
+                                      load_store_unit_i.fcov_ls_second_req;
 
     for (genvar i_region = 0; i_region < PMPNumRegions; i_region += 1) begin : g_pmp_region_fcov
       pmp_priv_bits_e pmp_region_priv_bits;
@@ -513,7 +512,7 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
         iff (fcov_csr_write && cs_registers_i.csr_addr_i == CSR_MSECCFG) {
           // Trying to enable RLB when RLB is disabled and locked regions present will result
           // with an ignored write
-          bins sticky = binsof(cp_rlb) intersect {1} && binsof(cp_wdata_rlb) intersect {0}
+          bins sticky = binsof(cp_rlb) intersect {0} && binsof(cp_wdata_rlb) intersect {1}
             iff (cs_registers_i.g_pmp_registers.any_pmp_entry_locked);
       }
 
@@ -640,16 +639,26 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
         ignore_bins unsupported_priv_lvl =
           binsof(cs_registers_i.mstatus_q.mpp) intersect {PRIV_LVL_H, PRIV_LVL_S} ||
           binsof(cs_registers_i.priv_mode_id_o) intersect {PRIV_LVL_H, PRIV_LVL_S};
+
+        // Cannot have mprv set in U mode (as it is cleared when executing an `mret` which takes the
+        // hart into U mode).
+        illegal_bins no_mrpv_in_umode =
+          binsof(cs_registers_i.priv_mode_id_o) intersect {PRIV_LVL_U};
       }
 
-      pmp_instr_edge_cross: cross if_stage_i.instr_is_compressed_id_o,
+      pmp_instr_edge_cross: cross if_stage_i.instr_is_compressed_out,
                                   pmp_iside_req_err, pmp_iside2_req_err
-                              iff (pmp_iside_boundary_cross);
+                              iff (pmp_iside_boundary_cross) {
+        // Compressed instruction cannot see an error over the boundary as it only ever does
+        // a single 16-bit fetch.
+        illegal_bins no_iside2_err_on_compressed =
+          binsof(if_stage_i.instr_is_compressed_out) intersect {1'b1} &&
+          binsof(pmp_iside2_req_err) intersect {1'b1};
+      }
 
       misaligned_lsu_access_cross: cross misaligned_pmp_err_last,
-                                         load_store_unit_i.fcov_ls_mis_pmp_err_2,
-                                         pmp_dside_boundary_cross;
-
+                                         load_store_unit_i.fcov_ls_mis_pmp_err_2
+                                   iff (pmp_dside_boundary_cross);
     endgroup
 
     `DV_FCOV_INSTANTIATE_CG(pmp_top_cg, en_pmp_fcov)
