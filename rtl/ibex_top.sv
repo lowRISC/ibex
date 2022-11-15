@@ -1230,8 +1230,8 @@ module ibex_top import ibex_pkg::*; #(
           // Clear flag when we see an MRET
           sync_exc_seen <= 1'b0;
         end else if (rvfi_valid && insn_write_sync_exc_seen(rvfi_insn)) begin
-          // Update predicted sync_exc_seen when the instruction modifies the relevant CPUCTRLSTS CSR
-          // bit.
+          // Update predicted sync_exc_seen when the instruction modifies the relevant CPUCTRLSTS
+          // CSR bit.
           sync_exc_seen <= new_sync_exc_bit(rvfi_insn, rvfi_rs1_rdata, sync_exc_seen);
         end
       end
