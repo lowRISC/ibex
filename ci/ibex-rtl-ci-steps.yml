@@ -67,37 +67,16 @@ steps:
       displayName: Run RISC-V Compliance test for Ibex RV32IMC for ${{ config }}
 
     - bash: |
+        set -e
         source ci/setup-cosim.sh
         # Build simple system with co-simulation
         fusesoc --cores-root=. run --target=sim --setup --build lowrisc:ibex:ibex_simple_system_cosim $IBEX_CONFIG_OPTS
 
-        if [ $? != 0 ]; then
-          echo -n "##vso[task.logissue type=error]"
-          echo "Build Simple System with co-simulation failed. Run fusesoc --cores-root=. run --target=sim --setup --build lowrisc:ibex:ibex_simple_system_cosim $IBEX_CONFIG_OPTS to check and fix all errors."
-          exit 1
-        fi
+        # Run directed tests against simple system co-simulation
+        ./ci/run-cosim-test.sh --skip-pass-check CoreMark examples/sw/benchmarks/coremark/coremark.elf
 
-        echo "Running CoreMark"
-
-        build/lowrisc_ibex_ibex_simple_system_cosim_0/sim-verilator/Vibex_simple_system --meminit=ram,examples/sw/benchmarks/coremark/coremark.elf
-        if [ $? != 0 ]; then
-          echo -n "##vso[task.logissue type=error]"
-          echo "Running CoreMark failed co-simulation testing"
-          exit 1
-        fi
-
-        echo "CoreMark succeeded"
-
-        # Run pmp_smoke_test if the config supports PMP
         if ./util/ibex_config.py ${{ config }} query_fields PMPEnable | grep -q 'PMPEnable=1'; then
-          echo "Running pmp_smoke_test"
-          build/lowrisc_ibex_ibex_simple_system_cosim_0/sim-verilator/Vibex_simple_system --meminit=ram,examples/sw/simple_system/pmp_smoke_test/pmp_smoke_test.elf
-          if [ $? != 0 ]; then
-            echo -n "##vso[task.logissue type=error]"
-            echo "Running pmp_smoke_test failed co-simulation testing"
-            exit 1
-          fi
-          echo "pmp_smoke_test succeeded"
+          ./ci/run-cosim-test.sh --skip-pass-check pmp_smoke examples/sw/simple_system/pmp_smoke_test/pmp_smoke_test.elf
         else
           echo "PMP not supported on ${{ config }}, skipping pmp_smoke_test"
         fi
