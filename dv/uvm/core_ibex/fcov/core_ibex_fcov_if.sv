@@ -635,11 +635,9 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     }
 
     priv_mode_exception_cross: cross cp_priv_mode_id, cp_ls_pmp_exception, cp_ls_error_exception {
-      illegal_bins pmp_and_error_exeption_both_or_none =
+      illegal_bins pmp_and_error_exeption_both =
         (binsof(cp_ls_pmp_exception) intersect {1'b1} &&
-         binsof(cp_ls_error_exception) intersect {1'b1}) ||
-        (binsof(cp_ls_pmp_exception) intersect {1'b0} &&
-         binsof(cp_ls_error_exception) intersect {1'b0});
+         binsof(cp_ls_error_exception) intersect {1'b1});
     }
 
     stall_cross: cross cp_id_instr_category, cp_stall_type_id {
