@@ -1167,7 +1167,9 @@ module ibex_top import ibex_pkg::*; #(
     // data_err_i relevant to both reads and writes. Check it isn't X on any response.
     `ASSERT_KNOWN_IF(IbexDataRErrPayloadX, data_err_i, data_rvalid_i)
 
-    // Tracking logic and predictor for double_fault_seen_o output
+    `ifdef RVFI
+    // Tracking logic and predictor for double_fault_seen_o output, relies on RVFI so only include
+    // it where RVFI is available.
 
     // Returns 1'b1 if the provided instruction decodes to one that would write the sync_exc_bit of
     // the CPUCTRLSTS CSR
@@ -1243,6 +1245,7 @@ module ibex_top import ibex_pkg::*; #(
     // If double_fault_seen_o is asserted we should see predict one occurring within a bounded time
     `ASSERT(DoubleFaultPulseOnlyOnDoubleFault,
       double_fault_seen_o |-> ##[0:DoubleFaultSeenLatency] double_fault_seen_predicted)
+    `endif // RVFI
   `endif
 
   `ASSERT_KNOWN(IbexIrqX, {irq_software_i, irq_timer_i, irq_external_i, irq_fast_i, irq_nm_i})
