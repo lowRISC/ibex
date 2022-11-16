@@ -52,8 +52,8 @@ module ibex_riscv_compliance (
 
   localparam int unsigned NrDevices = 2;
   localparam int unsigned NrHosts = 3;
-  // 64 kB RAM. Must be a power of 2. Check bus configuration below when changing.
-  localparam int unsigned RamSizeWords = 64*1024/4;
+  // 2 mb RAM. Must be a power of 2. Check bus configuration below when changing.
+  localparam int unsigned RamSizeWords = 2*1024*1024/4;
 
   // host and device signals
   logic           host_req    [NrHosts];
@@ -84,7 +84,7 @@ module ibex_riscv_compliance (
   logic [31:0] cfg_device_addr_mask [NrDevices];
   assign cfg_device_addr_base[Ram] = 32'h0;
   assign cfg_device_addr_mask[Ram] = ~32'(RamSizeWords * 4 - 1);
-  assign cfg_device_addr_base[TestUtilDevice] = 32'h20000;
+  assign cfg_device_addr_base[TestUtilDevice] = 32'h82000000;
   assign cfg_device_addr_mask[TestUtilDevice] = ~32'h3FF; // 1 kB
 
   bus #(
@@ -167,7 +167,7 @@ module ibex_riscv_compliance (
 
       .hart_id_i              (32'b0                ),
       // First instruction executed is at 0x0 + 0x80
-      .boot_addr_i            (32'h00000000         ),
+      .boot_addr_i            (32'h80000000         ),
 
       .instr_req_o            (host_req[CoreI]      ),
       .instr_gnt_i            (host_gnt[CoreI]      ),
