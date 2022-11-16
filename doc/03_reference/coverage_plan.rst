@@ -325,9 +325,48 @@ For more detail about each security countermeasure in Ibex see :ref:`security`
 
 * ``cp_icache_ecc_err`` - ICache has seen an integrity (ECC) fault.
 
+* ``cp_mem_load_ecc_err`` - An ECC error has been seen on a load response
+
+* ``cp_mem_store_ecc_err`` - An ECC error has been seen on a store response
+
 * ``cp_lockstep_err`` - Lockstep glitch fault seen.
 
 * ``cp_rf_we_glitch_err`` - Register file write enable glitch fault seen.
+
+* ``cp_pc_mismatch_err`` - PC mismatch error seen.
+
+The :ref:`security features Ibex implements <security>` are given specific security countermeasure names in OpenTitan (see 'Security Countermeasures' in the `Hardware Interfaces <https://docs.opentitan.org/hw/ip/rv_core_ibex/doc/#hardware-interfaces>`_ documentation section).
+The mapping between security countermeasures and coverpoints that demonstrate it being used is given below.
+
++--------------------------------+-------------------------------------------------------+
+| Security Countermeasure        | Coverpoint(s)                                         |
++================================+=======================================================+
+| BUS.INTEGRITY                  | ``cp_mem_load_ecc_err`` ``cp_mem_store_ecc_err``      |
++--------------------------------+-------------------------------------------------------+
+| SCRAMBLE.KEY.SIDELOAD          | ``FENCE.I`` of ``cp_id_instr_category``               |
++--------------------------------+-------------------------------------------------------+
+| CORE.DATA_REG_SW.SCA           | ``cp_data_ind_timing`` ``cp_data_ind_timining_instr`` |
++--------------------------------+-------------------------------------------------------+
+| PC.CTRL_FLOW.CONSISTENCY       | ``cp_pc_mismatch_err``                                |
++--------------------------------+-------------------------------------------------------+
+| CTRL_FLOW.UNPREDICTABLE        | ``cp_dummy_instr`` and related coverpoints            |
++--------------------------------+-------------------------------------------------------+
+| DATA_REG_SW.INTEGRITY          | ``cp_rf_a_ecc_err`` ``cp_rf_b_ecc_err``               |
++--------------------------------+-------------------------------------------------------+
+| DATA_REG_SW.GLITCH_DETECT      | ``cp_rf_we_glitch_err``                               |
++--------------------------------+-------------------------------------------------------+
+| LOGIC.SHADOW                   | ``cp_lockstep_err``                                   |
++--------------------------------+-------------------------------------------------------+
+| FETCH.CTRL.LC_GATED            | ``cp_fetch_enable``                                   |
++--------------------------------+-------------------------------------------------------+
+| EXCEPTION.CTRL_FLOW.LOCAL_ESC  | ``cp_double_fault``                                   |
++--------------------------------+-------------------------------------------------------+
+| EXCEPTION.CTRL_FLOW.GLOBAL_ESC | ``cp_double_fault``                                   |
++--------------------------------+-------------------------------------------------------+
+| ICACHE.MEM.SCRAMBLE            | ``FENCE.I`` of ``cp_id_instr_category``               |
++--------------------------------+-------------------------------------------------------+
+| ICACHE.MEM.INTEGRITY           | ``cp_icache_ecc_err``                                 |
++--------------------------------+-------------------------------------------------------+
 
 Miscellaneous
 ^^^^^^^^^^^^^
@@ -335,6 +374,7 @@ Various points of interest do not fit into the categories above.
 
 * ``instr_unstalled`` - Instruction unstalled - Cover the cycle an instruction is unstalled having just been stalled.
 * ``cp_icache_enable`` - Enabling/Disabling ICache.
+* ``cp_fetch_enable`` - Fetch enabled and disabled via top-level ``fetch_enable_i`` input.
 
 Cross Coverage
 --------------
