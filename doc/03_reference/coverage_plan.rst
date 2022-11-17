@@ -280,6 +280,11 @@ PMP
 
 * Access close to PMP region modification that allows/disallows that access.
 
+* ``pmp_wr_exec_region`` - Explores behaviour around adding executable regions when MML is enabled.
+    Cross of current region configuration with region configuration that is being written and RLB setting.
+    It only considers regions that aren't currently executable with writes attempted to make them executable.
+    Non MML configurations are not sampled.
+
 CSRs
 ^^^^
 Basic read/write functionality must be tested on all implemented CSRs.
