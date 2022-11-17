@@ -138,6 +138,9 @@
     +no_fence=1
     +num_of_sub_program=0
     +randomize_csr=1
+    +directed_instr_0=ibex_rand_cpuctrlsts_stream,4
+    +toggle_dit=1
+    +toggle_dummy_instr=1
   rtl_test: core_ibex_debug_intr_basic_test
   sim_opts: >
     +require_signature_addr=1
@@ -435,6 +438,9 @@
     +enable_interrupt=1
     +enable_timer_irq=1
     +randomize_csr=1
+    +directed_instr_0=ibex_rand_cpuctrlsts_stream,4
+    +toggle_dit=1
+    +toggle_dummy_instr=1
   rtl_test: core_ibex_debug_intr_basic_test
   sim_opts: >
     +require_signature_addr=1
