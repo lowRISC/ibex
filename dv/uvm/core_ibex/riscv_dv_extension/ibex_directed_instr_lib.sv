@@ -317,3 +317,97 @@ class ibex_cross_pmp_region_mem_access_stream extends riscv_directed_instr_strea
     super.post_randomize();
   endfunction
 endclass
+
+class ibex_make_pmp_region_exec_stream extends riscv_directed_instr_stream;
+  `uvm_object_utils(ibex_make_pmp_region_exec_stream)
+
+  int unsigned pmp_region;
+
+  function new (string name = "");
+    super.new(name);
+  endfunction
+
+  function void post_randomize();
+    riscv_pseudo_instr li_bit_instr;
+    riscv_pseudo_instr li_cfg_instr;
+    riscv_instr instrs[7];
+    bit [31:0] pmpcfg_bits;
+    bit [31:0] pmpcfg_mask;
+    bit [3:0] new_cfg;
+    int pmpcfg_num;
+
+    if (cfg.init_privileged_mode != MACHINE_MODE) begin
+      // Cannot write to pmpcfgX CSRs in U Mode so skip inserting this sequence
+      return;
+    end
+
+    `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(pmp_region,
+      pmp_region > 1; pmp_region < cfg.pmp_cfg.pmp_num_regions;)
+
+    // Choose a new config which is executable when MML is set
+    // 4 config bits are {L, X, W, R}
+    `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(new_cfg, new_cfg inside {4'b0100, 4'b0101, 4'b0111,
+      4'b1100, 4'b1010, 4'b1110, 4'b1101};)
+
+    pmpcfg_num = pmp_region / 4;
+    pmpcfg_bits = {new_cfg[3], 4'b0, new_cfg[2:0]} << ((pmp_region % 4) * 8);
+    pmpcfg_mask = 32'b10000111 << ((pmp_region % 4) * 8);
+    pmpcfg_mask = ~pmpcfg_mask;
+
+    initialize_instr_list(7);
+
+    // Read the current PMP config masking out the bits we want to change an AND, adding the bits we
+    // want with an OR then write back to the CSR.
+    li_bit_instr = riscv_pseudo_instr::type_id::create("li_bit_instr");
+    li_bit_instr.pseudo_instr_name = LI;
+    li_bit_instr.has_label = 1'b0;
+    li_bit_instr.atomic = 1'b1;
+    li_bit_instr.imm_str = $sformatf("0x%x", pmpcfg_bits);
+    li_bit_instr.rd = cfg.gpr[0];
+    instrs[0] = li_bit_instr;
+
+    li_cfg_instr = riscv_pseudo_instr::type_id::create("li_cfg_instr");
+    li_cfg_instr.pseudo_instr_name = LI;
+    li_cfg_instr.has_label = 1'b0;
+    li_cfg_instr.atomic = 1'b1;
+    li_cfg_instr.imm_str = $sformatf("0x%x", pmpcfg_mask);
+    li_cfg_instr.rd = cfg.gpr[1];
+    instrs[1] = li_cfg_instr;
+
+    instrs[2] = riscv_instr::get_instr(CSRRSI);
+    instrs[2].atomic = 1'b0;
+    instrs[2].csr = PMPCFG0 + pmpcfg_num;
+    instrs[2].rd = cfg.gpr[2];
+    instrs[2].imm_str = "0";
+
+    instrs[3] = riscv_instr::get_instr(AND);
+    instrs[3].atomic = 1'b0;
+    instrs[3].rs1 = cfg.gpr[2];
+    instrs[3].rs2 = cfg.gpr[1];
+    instrs[3].rd = cfg.gpr[2];
+
+    instrs[4] = riscv_instr::get_instr(OR);
+    instrs[4].atomic = 1'b0;
+    instrs[4].rs1 = cfg.gpr[2];
+    instrs[4].rs2 = cfg.gpr[0];
+    instrs[4].rd = cfg.gpr[2];
+
+    instrs[5] = riscv_instr::get_instr(CSRRW);
+    instrs[5].atomic = 1'b0;
+    instrs[5].csr = PMPCFG0 + pmpcfg_num;
+    instrs[5].rd = '0;
+    instrs[5].rs1 = cfg.gpr[2];
+
+    // Immediately read back what we wrote, to check it has been dealt with correctly (i.e. write
+    // suppressed where it should be suppressed), as co-sim currently doesn't check CSR writes.
+    instrs[6] = riscv_instr::get_instr(CSRRS);
+    instrs[6].atomic = 1'b0;
+    instrs[6].csr = PMPCFG0 + pmpcfg_num;
+    instrs[6].rd = cfg.gpr[0];
+    instrs[6].rs1 = 0;
+
+    instr_list = instrs;
+
+    super.post_randomize();
+  endfunction
+endclass
