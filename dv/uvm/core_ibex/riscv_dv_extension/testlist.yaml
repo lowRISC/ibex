@@ -177,7 +177,7 @@
     +require_signature_addr=1
     +enable_debug_seq=1
     +enable_bad_intg_on_uninit_access=0
-  timeout_s: 300
+  timeout_s: 600
 
 - test: riscv_debug_stress_test
   description: >
