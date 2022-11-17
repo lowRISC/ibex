@@ -87,6 +87,86 @@ class ibex_rand_mseccfg_stream extends riscv_directed_instr_stream;
 
 endclass
 
+// Stream to randomly toggle different Ibex specific feature enables in cpuctrlsts
+class ibex_rand_cpuctrlsts_stream extends riscv_directed_instr_stream;
+
+  `uvm_object_utils(ibex_rand_cpuctrlsts_stream)
+
+  function new(string name = "");
+    super.new(name);
+  endfunction
+
+  function void post_randomize();
+    riscv_instr instrs[4];
+    bit toggle_dit;
+    bit toggle_dummy_instr;
+    bit toggle_icache;
+    bit icache_en;
+    bit dit_en;
+    bit dummy_instr_en;
+    bit [2:0] dummy_instr_mask;
+    bit [8:0] cpuctrlsts_mask;
+    bit [5:0] cpuctrlsts_val;
+
+    if (cfg.init_privileged_mode != MACHINE_MODE) begin
+      // Cannot write to cpuctrlsts when we're doing a U mode test
+      return;
+    end
+
+    // DIT is Data Independent Timing
+    if (!$value$plusargs("toggle_dit", toggle_dit)) begin
+      toggle_dit = 1'b0;
+    end
+
+    if (!$value$plusargs("toggle_dummy_instr", toggle_dummy_instr)) begin
+      toggle_dummy_instr = 1'b0;
+    end
+
+    if (!$value$plusargs("toggle_icache", toggle_icache)) begin
+      toggle_icache = 1'b0;
+    end
+
+    `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(icache_en, if (!toggle_icache) icache_en == 0;);
+    `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(dit_en, if (!toggle_dit) dit_en == 0;);
+    `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(dummy_instr_en,
+      if (!toggle_dummy_instr) dummy_instr_en == 0;);
+    `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(dummy_instr_mask,
+      if (!toggle_dummy_instr) dummy_instr_mask == 0;);
+
+    cpuctrlsts_mask = {3'b111, {4{!dummy_instr_en}}, !dit_en, !icache_en};
+    cpuctrlsts_val = {dummy_instr_mask, dummy_instr_en, dit_en, icache_en};
+
+    initialize_instr_list(4);
+
+    instrs[0] = riscv_instr::get_instr(CSRRSI);
+    instrs[0].atomic = 1'b0;
+    instrs[0].csr = 12'h7c0;
+    instrs[0].rd = cfg.gpr[0];
+    instrs[0].imm_str = "0";
+
+    instrs[1] = riscv_instr::get_instr(ANDI);
+    instrs[1].atomic = 1'b0;
+    instrs[1].rs1 = cfg.gpr[0];
+    instrs[1].rd = cfg.gpr[0];
+    instrs[1].imm_str = $sformatf("0x%0x", cpuctrlsts_mask);
+
+    instrs[2] = riscv_instr::get_instr(ORI);
+    instrs[2].atomic = 1'b0;
+    instrs[2].rs1 = cfg.gpr[0];
+    instrs[2].rd = cfg.gpr[0];
+    instrs[2].imm_str = $sformatf("0x%0x", cpuctrlsts_val);
+
+    instrs[3] = riscv_instr::get_instr(CSRRW);
+    instrs[3].atomic = 1'b0;
+    instrs[3].csr = 12'h7c0;
+    instrs[3].rd = '0;
+    instrs[3].rs1 = cfg.gpr[0];
+
+    instr_list = instrs;
+  endfunction
+
+endclass
+
 // Define a short riscv-dv directed instruction stream to set a valid NA4 address/config
 class ibex_valid_na4_stream extends riscv_directed_instr_stream;
 
