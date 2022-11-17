@@ -827,9 +827,11 @@
 - test: riscv_pmp_full_random_test
   desc: >
     Completely randomize the boot mode, mstatus.mprv, and all PMP configuration,
-    and allow PMP regions to overlap.
-    A large number of iterations will be required since this introduces a huge
-    state space of configurations.
+    and allow PMP regions to overlap.  A large number of iterations will be
+    required since this introduces a huge state space of configurations.  Some
+    configurations result in very slow execution as every instruction ends up
+    generating a fault. As this is still a useful test a short timeout with
+    pass on timeout is enabled.
   iterations: 600
   gen_test: riscv_rand_instr_test
   gen_opts: >
@@ -848,6 +850,7 @@
     +enable_unaligned_load_store=1
   sim_opts: >
     +is_double_fault_detected_fatal=0
+    +is_timeout_s_fatal=0
     +enable_bad_intg_on_uninit_access=0
   rtl_test: core_ibex_base_test
   rtl_params:
