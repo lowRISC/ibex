@@ -68,13 +68,13 @@ def output_results_text(passing_tests: List[TestRunResult],
                         dest: TextIO):
     '''Write results in text form to dest'''
 
-    print(box_comment('Details of failing tests'), file=dest)
+    print('\n'+box_comment('Details of failing tests'), file=dest)
     if not bool(failing_tests):
         print("No failing tests. Nice job!", file=dest)
     for trr in failing_tests:
         print(gen_test_run_result_text(trr), file=dest)
 
-    print(box_comment('Details of passing tests'), file=dest)
+    print('\n'+box_comment('Details of passing tests'), file=dest)
     if not bool(passing_tests):
         print("No passing tests. Hmmmm...", file=dest)
     for trr in passing_tests:

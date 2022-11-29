@@ -20,7 +20,6 @@ from dataclasses import field
 from typeguard import typechecked
 import portalocker
 import signal
-import shutil
 
 import setup_imports
 import scripts_lib
@@ -28,6 +27,7 @@ import ibex_cmd
 import ibex_config
 import lib as riscvdv_lib
 from test_run_result import TestRunResult, TestType
+import directed_test_schema
 
 import logging
 logger = logging.getLogger(__name__)
@@ -115,11 +115,12 @@ class RegressionMetadata(scripts_lib.testdata_cls):
     dir_cov_merged              : pathlib.Path = field(init=False, compare=False, default_factory=pathlib.Path)
     dir_cov_report              : pathlib.Path = field(init=False, compare=False, default_factory=pathlib.Path)
 
-    tests_pickle_files: Optional[List[pathlib.Path]] = None
+    tests_pickle_files: List[pathlib.Path] = field(init=False, compare=False, default_factory=lambda:[])
 
     def __post_init__(self):
         """Construct all the dependent metadata."""
         self._setup_directories()
+
         self.pickle_file                 = self.dir_metadata/'metadata.pickle'
         self.yaml_file                   = self.dir_metadata/'metadata.yaml'
         self.ibex_configs                = self.ibex_root/'ibex_configs.yaml'
@@ -132,20 +133,6 @@ class RegressionMetadata(scripts_lib.testdata_cls):
         self.directed_test_data          = self.directed_test_dir/'directed_testlist.yaml'
 
         self.environment_variables       = dict(os.environ)
-
-    def _get_ibex_metadata(self):
-        """Get the desired ibex_config parameters.
-
-        # Any extra derivative data can be setup here.
-        """
-        if self.iterations is not None and self.iterations <= 0:
-            raise RuntimeError('Bad --iterations argument: must be positive')
-        if self.seed < 0:
-            raise RuntimeError('Bad --start_seed argument: must be non-negative')
-
-        cfg = ibex_cmd.get_config(self.ibex_config)
-        self.isa_ibex, self.isa_iss = ibex_cmd.get_isas_for_config(cfg)
-
 
     def _setup_directories(self):
         """Set the directory variables which contain all other build factors."""
@@ -164,11 +151,24 @@ class RegressionMetadata(scripts_lib.testdata_cls):
         self.dir_cov_merged              = self.dir_cov/'merged'
         self.dir_cov_report              = self.dir_cov/'report'
 
+    def _get_ibex_metadata(self):
+        """Get the desired ibex_config parameters.
+
+        # Any extra derivative data can be setup here.
+        """
+        if self.iterations is not None and self.iterations <= 0:
+            raise RuntimeError('Bad --iterations argument: must be positive')
+        if self.seed < 0:
+            raise RuntimeError('Bad --start_seed argument: must be non-negative')
+
+        cfg = ibex_cmd.get_config(self.ibex_config)
+        self.isa_ibex, self.isa_iss = ibex_cmd.get_isas_for_config(cfg)
+
     @classmethod
     def arg_list_initializer(cls,
-                            dir_metadata: pathlib.Path,
-                            dir_out: pathlib.Path,
-                            args_list: str):
+                             dir_metadata: pathlib.Path,
+                             dir_out: pathlib.Path,
+                             args_list: str):
         """Initialize fields from an input str of 'KEY=VALUE KEY2=VALUE2' form.
 
         Usings args_list: str is convenient for constructing from a higher level,
@@ -182,23 +182,18 @@ class RegressionMetadata(scripts_lib.testdata_cls):
 
         Returns a constructed RegressionMetadata object.
         """
-        if dir_out is pathlib.Path():
-            raise RuntimeError("self.dir_metadata must be initialized)")
-        if dir_metadata is pathlib.Path():
-            raise RuntimeError("self.dir_metadata must be initialized)")
-
         dummy_obj = RegressionMetadata()
         dummy = dataclasses.asdict(dummy_obj)
         logger.debug(dummy)  # Useful to see types of all the k,v pairs
 
-        # Any fields declared in the class initialization (see above) can be populated
-        # by constructing a dict with keys matching the fields, and then passing **dict
-        # to the construction of the class. We do this here to populate from 'args_list'.
+        # Any fields declared in the class initialization (see above) can be
+        # populated by constructing a dict with keys matching the fields, and
+        # then passing **dict to the construction of the class. We do this here
+        # to populate from 'args_list'.
         args_dict = {}
         args_dict['raw_args_str'] = args_list
-        args_dict['raw_args_dict'] = {k: v for k, v in
-                                      (pair.split('=', maxsplit=1)
-                                       for pair in shlex.split(args_list))}
+        args_dict['raw_args_dict'] = {k: v for k, v in (pair.split('=', maxsplit=1)
+                                           for pair in shlex.split(args_list))}
 
         kv_tuples = (pair.split('=', maxsplit=1) for pair in shlex.split(args_list))
         kv_dict = {k.lower(): v for k, v in kv_tuples}
@@ -243,14 +238,6 @@ class RegressionMetadata(scripts_lib.testdata_cls):
             dir_metadata=dir_metadata.resolve(),
             **args_dict)
 
-        # Fetch/set more derivative metadata specific to the ibex
-        md._get_ibex_metadata()
-
-        # Setup the tests/counts we are going to use, by parsing the
-        # riscv-dv/directed-test structured data.
-        # eg. testlist.yaml / directed_testlist.yaml
-        md.tests_and_counts = md.get_tests_and_counts()
-
         return md
 
     @classmethod
@@ -271,9 +258,7 @@ class RegressionMetadata(scripts_lib.testdata_cls):
 
         If iterations is provided, it should be a positive number and overrides the
         number of iterations for each test.
-
         """
-
         riscvdv_matched_list: ibex_cmd._TestEntries = self.process_riscvdv_testlist()
         directed_matched_list: ibex_cmd._TestEntries = self.process_directed_testlist()
 
@@ -291,49 +276,44 @@ class RegressionMetadata(scripts_lib.testdata_cls):
         # Convert to desired output format (and check for well-formedness)
         ret = []
         for test in riscvdv_filtered_list:
-            name = test['test']
-            iterations = test['iterations']
-            assert isinstance(name, str) and isinstance(iterations, int)
-            assert iterations > 0
+            name, iterations = (test['test'], test['iterations'])
+            assert isinstance(name, str) and isinstance(iterations, int) \
+                                         and iterations > 0
             ret.append((name, iterations, TestType.RISCVDV))
         for test in directed_filtered_list:
-            name = test['test']
-            iterations = test['iterations']
-            assert isinstance(name, str) and isinstance(iterations, int)
-            assert iterations > 0
+            name, iterations = (test['test'], test['iterations'])
+            assert isinstance(name, str) and isinstance(iterations, int) \
+                                         and iterations > 0
             ret.append((name, iterations, TestType.DIRECTED))
 
         return ret
 
-    def process_riscvdv_testlist(self) -> [ibex_cmd._TestEntries]:
+    def process_riscvdv_testlist(self) -> ibex_cmd._TestEntries:
         """Extract test information from the riscvdv testlist yaml."""
-        matched_list: [ibex_cmd._TestEntries] = []
+        matched_list: ibex_cmd._TestEntries = []
 
         # Get all the tests from the 'testlist' that match the 'test' argument.
         riscvdv_lib.process_regression_list(
             testlist=self.ibex_riscvdv_testlist,
-            test=(self.test if self.test is not None else 'all'),
+            test=(self.test or 'all'),
             iterations=(self.iterations or 0),
             matched_list=matched_list,
             riscv_dv_root=self.riscvdv_root)
 
         return matched_list
 
-    def process_directed_testlist(self) -> [ibex_cmd._TestEntries]:
+    def process_directed_testlist(self) -> ibex_cmd._TestEntries:
         """Extract test information from the directed_test yaml.
 
         Employ a similar format to the riscv-dv testlist structure to
         define directed tests.
         """
+        m = directed_test_schema.import_model(self.directed_test_data)
+
         matched_list: ibex_cmd._TestEntries = []
-
-        yaml_data = scripts_lib.read_yaml(self.directed_test_data)
-        mult_test = self.test.split(',')
-
-        for entry in yaml_data:
-            if (entry['test'] in mult_test) or (self.test == "all"):
-                if (self.iterations is not None) and (entry['iterations'] > 0):
-                    entry['iterations'] = self.iterations
+        for entry in m.get('tests'):
+            if (entry.get('test') in self.test.split(',')) or (self.test == "all"):
+                entry.update({'iterations': (self.iterations or entry['iterations'])})
                 if entry['iterations'] > 0:
                     matched_list.append(entry)
 
@@ -346,7 +326,7 @@ class Ops(Enum):
     CREATE = 'create_metadata'
     PRINT_FIELD = 'print_field'
 
-    def __str__(self):
+    def __str__(self):  # noqa
         return self.value
 
 
@@ -357,11 +337,7 @@ def _main():
     parser.add_argument('--dir-out', type=pathlib.Path, required=False)
     parser.add_argument('--args-list', type=str, required=False)
     parser.add_argument('--field', type=str, required=False)
-
     args = parser.parse_args()
-
-    # Parse all variables from the argument string, and then add them
-    # to the metadata object
 
     if args.op == Ops.CREATE:
         """
@@ -374,19 +350,26 @@ def _main():
             logger.error("Build metadata already exists, not recreating from scratch.")
             return
 
-        md = RegressionMetadata.arg_list_initializer(dir_metadata=args.dir_metadata,
-                                                     dir_out=args.dir_out,
-                                                     args_list=args.args_list)
+        md = RegressionMetadata.arg_list_initializer(
+            dir_metadata=args.dir_metadata,
+            dir_out=args.dir_out,
+            args_list=args.args_list)
 
-        # Setup metadata objects for each of the tests to be run. Construct a list of these
-        # objects inside the regression_metadata object constructed above, so we can easily
-        # find and import them later, and give each test object a link back to this top-level
-        # object that defines the wider regression.
+        # Fetch/set more derivative metadata specific to the ibex
+        md._get_ibex_metadata()
 
-        md.tests_pickle_files = []
-
+        # Setup the tests/counts we are going to use, by parsing the
+        # riscv-dv/directed-test structured data.
+        # eg. testlist.yaml / directed_testlist.yaml
+        md.tests_and_counts = md.get_tests_and_counts()
         if not md.tests_and_counts:
-            raise RuntimeError("md.tests_and_counts is empty, cant get TEST.SEED strings.")
+            raise RuntimeError("md.tests_and_counts is empty, cannot get TEST.SEED strings.")
+
+        # Setup metadata objects for each of the tests to be run. Construct a
+        # list of these objects inside the regression_metadata object
+        # constructed above, so we can easily find and import them later, and
+        # give each test object a link back to this top-level object that
+        # defines the wider regression.
         for test, count, testtype in md.tests_and_counts:
             for testseed in range(md.seed, md.seed + count):
                 tds_str = f"{test}.{testseed}"
@@ -405,6 +388,12 @@ def _main():
                     metadata_pickle_file=md.pickle_file,
                     pickle_file=md.dir_metadata/(tds_str + ".pickle"),
                     yaml_file=md.dir_tests/tds_str/'trr.yaml')
+
+                # Get the data from the directed test yaml that we need to construct the command.
+                if testtype == TestType.DIRECTED:
+                    trr.directed_data = (next(filter(
+                        lambda i: i['test'] == test,
+                        directed_test_schema.import_model(md.directed_test_data).get('tests'))))
 
                 # Save the path into a list in the regression metadata object for later.
                 md.tests_pickle_files.append(trr.pickle_file)

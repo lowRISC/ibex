@@ -16,6 +16,7 @@ pathlib3x  # Backports some useful features
 typing-utils  # Ditto
 typeguard
 portalocker
+pydantic
 
 # Needed by dvsim.py (not actually used in Ibex)
 hjson
