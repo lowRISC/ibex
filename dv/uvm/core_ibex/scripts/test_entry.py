@@ -35,7 +35,7 @@ def get_test_entry(testname: str, testlist: pathlib.Path) -> TestEntry:
     yaml_data = scripts_lib.read_yaml(testlist)
 
     for entry in yaml_data:
-        if entry['test'] == testname:
+        if entry.get('test') == testname:
             return entry
 
     raise RuntimeError('No matching test entry for {!r}'.format(testname))

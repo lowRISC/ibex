@@ -79,7 +79,6 @@ def get_riscvdv_compile_cmds(md: RegressionMetadata, trr: TestRunResult) -> List
         for word in cmd:
             for old, new in rewrites:
                 word = word.replace(old, new)
-
             if str(placeholder) in word:
                 raise RuntimeError("Couldn't replace every copy of "
                                    f"placeholder in {cmd}")
@@ -98,37 +97,27 @@ def get_directed_compile_cmds(md: RegressionMetadata, trr: TestRunResult) -> Lis
         if e not in env:
             raise RuntimeError("Missing required environment variables for the RISCV TOOLCHAIN")
 
-    # Get the data from the directed test yaml that we need to construct the command.
-    directed_data = read_yaml(md.directed_test_data)
-    trr.directed_data = next(filter(lambda item: (item.get('test') == trr.testname), directed_data), None)
-
-    directed_dir = md.directed_test_dir
-    includes = directed_dir/(pathlib.Path(trr.directed_data.get('includes')))
-    ld = directed_dir/(pathlib.Path(trr.directed_data.get('ld_script')))
-
-    trr.assembly = directed_dir/trr.directed_data.get('test_srcs')
+    trr.assembly = trr.directed_data.get('test_srcs')
     trr.objectfile = trr.dir_test/'test.o'
     trr.binary = trr.dir_test/'test.bin'
 
-    # Compose the compilation command
-    riscv_gcc_arg = trr.directed_data.get('gcc_opts') + \
-                    f" -I{includes}" + \
-                    f" -T{ld}"
+    # Compose the compilation commands
     riscv_gcc_cmd = " ".join([env.get('RISCV_GCC'),
-                              riscv_gcc_arg,
+                              trr.directed_data.get('gcc_opts'),
+                              f"-I{trr.directed_data.get('includes')}",
+                              f"-T{trr.directed_data.get('ld_script')}",
                               f"-o {trr.objectfile}",
                               f"{trr.assembly}"])
     riscv_gcc_bin_cmd = " ".join([env.get('RISCV_OBJCOPY'),
-                              f"-O binary {trr.objectfile}",
-                              f"{trr.binary}"])
+                                  f"-O binary {trr.objectfile}",
+                                  f"{trr.binary}"])
     return [shlex.split(riscv_gcc_cmd), shlex.split(riscv_gcc_bin_cmd)]
 
 
 def _main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--dir-metadata', type=pathlib.Path, required=True)
-    parser.add_argument('--test-dot-seed', type=read_test_dot_seed, required=False)
-    parser.add_argument('--bin', type=pathlib.Path, required=False)
+    parser.add_argument('--test-dot-seed', type=read_test_dot_seed, required=True)
     args = parser.parse_args()
     tds = args.test_dot_seed
     md = RegressionMetadata.construct_from_metadata_dir(args.dir_metadata)
@@ -141,14 +130,15 @@ def _main() -> int:
         cmds = get_directed_compile_cmds(md, trr)
         trr.compile_asm_log = trr.dir_test/'compile.directed.log'
 
-    # Finally, run all the commands
     trr.compile_asm_cmds = [format_to_cmd(cmd) for cmd in cmds]
     trr.export(write_yaml=True)
 
-    for cmd in trr.compile_asm_cmds:
-        ret = run_one(md.verbose, cmd)
-        if ret != 0:
-            return ret
+    # Finally, run all the commands
+    with trr.compile_asm_log.open('wb') as fd:
+        for cmd in trr.compile_asm_cmds:
+            ret = run_one(md.verbose, cmd, redirect_stdstreams=fd)
+            if ret != 0:
+                return ret
 
 
 if __name__ == '__main__':
