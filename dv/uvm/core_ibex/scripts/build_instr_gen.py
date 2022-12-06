@@ -42,8 +42,13 @@ def _main() -> int:
              '--output', md.dir_instruction_generator,
              '--isa', md.isa_ibex,
              '--end_signature_addr', md.signature_addr])]
-
-    retcode = run_one(md.verbose, md.riscvdv_build_cmds[0], redirect_stdstreams=md.riscvdv_build_stdout)
+    if md.is_directed == True:
+        test_path = 'directed_tests/'+md.test+'/'+md.test+'.S'
+        default_test_path = str(md.dir_tests)+'/'+md.test+'.'+str(md.seed)+'/test.S'
+        cp_cmd = ['cp', test_path, default_test_path]
+        retcode = run_one(md.verbose, cp_cmd, redirect_stdstreams=md.riscvdv_build_stdout)
+    else:
+        retcode = run_one(md.verbose, md.riscvdv_build_cmds[0], redirect_stdstreams=md.riscvdv_build_stdout)
 
     return retcode
 

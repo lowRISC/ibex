@@ -6,6 +6,7 @@
 
 import argparse
 import os
+import subprocess
 import re
 import shlex
 import shutil
@@ -150,7 +151,6 @@ def _main() -> int:
     tds = args.test_dot_seed
     md = RegressionMetadata.construct_from_metadata_dir(args.dir_metadata)
     trr = TestRunResult.construct_from_metadata_dir(args.dir_metadata, f"{tds[0]}.{tds[1]}")
-
     cfg = get_config(md.ibex_config)
 
     inst_overrides = [
@@ -196,45 +196,67 @@ def _main() -> int:
         trr.dir_test.mkdir(parents=True, exist_ok=True)
         trr.riscvdv_run_gen_stdout = md.dir_instruction_generator/'riscvdv_cmds.log'
         trr.riscvdv_run_gen_cmds   = [format_to_cmd(cmd)]
-        # Run riscv-dv to generate commands. This is rather chatty, so redirect
-        # its output to a log file.
-        gen_retcode = run_one(md.verbose, trr.riscvdv_run_gen_cmds[0],
-                              redirect_stdstreams=trr.riscvdv_run_gen_stdout)
-        if gen_retcode:
-            return gen_retcode
+        if md.is_directed:
+            directed_tests_path = str(md.ibex_dv_root)+'/directed_tests '
+            linker_path = str(md.ibex_dv_root)+'/directed_tests/link.ld '
+            test_directory_path = str(md.dir_tests)+'/'+md.test+'.'+str(md.seed)
+            riscv_gcc = 'riscv32-unknown-elf-gcc -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles'
+            riscv_gcc_arg = ' -I'+directed_tests_path+' -T'+linker_path
+            test_assembly = test_directory_path+'/test.S '
+            test_object = test_directory_path+'/test.o '
+            riscv_gcc_cmd = riscv_gcc+riscv_gcc_arg+test_assembly+'-o '+test_object
+            gen_retcode = os.system(riscv_gcc_cmd)
+            if gen_retcode:
+                return gen_retcode
+            test_binary = test_directory_path+'/test.bin '
+            riscv_gcc_objcopy_cmd = 'riscv32-unknown-elf-objcopy -O binary '+test_object+test_binary
+            gen_retcode = os.system(riscv_gcc_objcopy_cmd)
+            if gen_retcode:
+                return gen_retcode
 
-        # Those commands assume the riscv-dv directory layout, where the build
-        # and run directories are the same. Transform each of the commands as
-        # necessary to point at the built generator
-        cmds = reloc_commands(str(placeholder),
-                              str(md.dir_instruction_generator.resolve()),
-                              td,
-                              md.simulator,
-                              trr.testname,
-                              str(orig_list))
+            # gen_retcode = run_one(md.verbose, [riscv_gcc_cmd],
+            #                     redirect_stdstreams=trr.riscvdv_run_gen_stdout)
+        else:
+            # Run riscv-dv to generate commands. This is rather chatty, so redirect
+            # its output to a log file.
+            gen_retcode = run_one(md.verbose, trr.riscvdv_run_gen_cmds[0],
+                                redirect_stdstreams=trr.riscvdv_run_gen_stdout)
+            if gen_retcode:
+                return gen_retcode
 
-        trr.riscvdv_run_cmds   = [format_to_cmd(cmd) for cmd in cmds]
-        trr.riscvdv_run_stdout = md.dir_instruction_generator/'riscvdv_run.log'
-        trr.assembly           = trr.dir_test / 'test.S'
-        # Open up a file to take output from running the commands
-        with trr.riscvdv_run_stdout.open('w') as log_fd:
-            # Run the commands in sequence to create outputs in the temporary
-            # directory. Redirect stdout and stderr to gen_log
-            ret = 0
-            for cmd in trr.riscvdv_run_cmds:
-                ret = run_one(md.verbose, cmd, redirect_stdstreams=log_fd)
-                if ret != 0:
-                    break
+            # Those commands assume the riscv-dv directory layout, where the build
+            # and run directories are the same. Transform each of the commands as
+            # necessary to point at the built generator
+            cmds = reloc_commands(str(placeholder),
+                                str(md.dir_instruction_generator.resolve()),
+                                td,
+                                md.simulator,
+                                trr.testname,
+                                str(orig_list))
 
-        test_file_copies = {
-            'riscv_csr_test': [('riscv_csr_test_0.S', 'test.S', False)]
-        }
-        default_file_copies = [('gen.log', 'gen.log', True),
-                               ('test_0.S', 'test.S', False)]
+            trr.riscvdv_run_cmds   = [format_to_cmd(cmd) for cmd in cmds]
+            trr.riscvdv_run_stdout = md.dir_instruction_generator/'riscvdv_run.log'
+            trr.assembly           = trr.dir_test / 'test.S'
+        if not(md.is_directed):
+            # Open up a file to take output from running the commands
+            with trr.riscvdv_run_stdout.open('w') as log_fd:
+                # Run the commands in sequence to create outputs in the temporary
+                # directory. Redirect stdout and stderr to gen_log
+                ret = 0
+                for cmd in trr.riscvdv_run_cmds:
+                    ret = run_one(md.verbose, cmd, redirect_stdstreams=log_fd)
+                    if ret != 0:
+                        break
 
-        file_copies = test_file_copies.get(trr.testname, default_file_copies)
+            test_file_copies = {
+                'riscv_csr_test': [('riscv_csr_test_0.S', 'test.S', False)]
+            }
+            default_file_copies = [('gen.log', 'gen.log', True),
+                                   ('test_0.S', 'test.S', False)]
 
-        do_file_copies(td, trr.dir_test, file_copies, ret != 0)
+            file_copies = test_file_copies.get(trr.testname, default_file_copies)
+
+            do_file_copies(td, trr.dir_test, file_copies, ret != 0)
 
     trr.export(write_yaml=True)
 

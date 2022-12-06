@@ -863,11 +863,15 @@
     PMPEnable: 1
   timeout_s: 180
 
-- test: riscv_pmp_region_exec_test
+- test: riscv_pmp_custom_test
   desc: >
-    A more specialised pmp_full_random_test that attempts to make regions
-    executable whilst MML is set.
-  iterations: 20
+    Completely randomize the boot mode, mstatus.mprv, and all PMP configuration,
+    and allow PMP regions to overlap.  A large number of iterations will be
+    required since this introduces a huge state space of configurations.  Some
+    configurations result in very slow execution as every instruction ends up
+    generating a fault. As this is still a useful test a short timeout with
+    pass on timeout is enabled.
+  iterations: 600
   gen_test: riscv_rand_instr_test
   gen_opts: >
     +instr_cnt=6000
@@ -875,11 +879,8 @@
     +pmp_randomize=1
     +pmp_max_offset=00040000
     +pmp_allow_illegal_tor=1
-    +directed_instr_0=riscv_load_store_rand_instr_stream,40
-    +directed_instr_1=ibex_make_pmp_region_exec_stream,5
+    +directed_instr_0=ibex_cross_pmp_region_mem_access_stream,10
     +enable_unaligned_load_store=1
-    +boot_mode=m
-    +mseccfg=MML:1,MMWP:0,RLB:0
   sim_opts: >
     +is_double_fault_detected_fatal=0
     +is_timeout_s_fatal=0
@@ -1100,3 +1101,10 @@
   rtl_test: core_ibex_base_test
   rtl_params:
     RV32B: ["ibex_pkg::RV32BFull", "ibex_pkg::RV32BOTEarlGrey", "ibex_pkg::RV32BBalanced"]
+
+- test: empty
+  desc: >
+    Empty directed test
+  is_directed: True
+  rtl_test: core_ibex_base_test
+  iterations: 1

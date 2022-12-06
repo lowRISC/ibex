@@ -45,6 +45,7 @@ class TestRunResult(scripts_lib.testdata_cls):
 
     testdotseed: Optional[str] = None
     testname: Optional[str] = None        # Name of test
+    is_directed: Optional[bool] = None    # Is it directed test?
     seed: Optional[int] = None            # Seed of test
     binary: Optional[pathlib.Path] = None # Path to test binary
     rtl_simulator: Optional[str] = None   # Which simulator is used

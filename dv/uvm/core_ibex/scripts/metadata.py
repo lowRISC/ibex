@@ -56,6 +56,7 @@ class RegressionMetadata(scripts_lib.testdata_cls):
     test: str = ' '
     verbose: bool = False
     iterations: Optional[int] = None
+    is_directed: bool = True
     signature_addr: str = ' '
     ibex_config: str = ' '
     dut_cov_rtl_path: str = ''

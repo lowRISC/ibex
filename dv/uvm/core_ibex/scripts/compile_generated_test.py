@@ -91,10 +91,11 @@ def _main() -> int:
     trr.compile_asm_cmds = [format_to_cmd(cmd) for cmd in new_cmds]
     trr.export(write_yaml=True)
 
-    for cmd in trr.compile_asm_cmds:
-        ret = run_one(md.verbose, cmd)
-        if ret != 0:
-            return ret
+    if not(md.is_directed):
+        for cmd in trr.compile_asm_cmds:
+            ret = run_one(md.verbose, cmd)
+            if ret != 0:
+                return ret
 
 
 if __name__ == '__main__':
