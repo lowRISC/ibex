@@ -1,0 +1,25 @@
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+##########################################################
+
+# This file largely copies the formatting of the testlist.yaml
+# used by riscv-dv, but only specifies directed tests.
+
+
+##########################################################
+
+
+- test: empty
+  desc: >
+    Empty directed test
+  iterations: 1
+  test_srcs: empty/empty.S
+  ld_script: "link.ld"
+  includes: "."
+  gcc_opts: "-static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles"
+  rtl_test: core_ibex_base_test
+  rtl_params:
+    PMPEnable: 1
+  timeout_s: 300
