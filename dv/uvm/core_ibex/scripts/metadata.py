@@ -20,16 +20,18 @@ from dataclasses import field
 from typeguard import typechecked
 import portalocker
 import signal
+import shutil
 
 import setup_imports
 import scripts_lib
 import ibex_cmd
 import ibex_config
 import lib as riscvdv_lib
-from test_run_result import TestRunResult
+from test_run_result import TestRunResult, TestType
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 
 @typechecked
@@ -60,7 +62,7 @@ class RegressionMetadata(scripts_lib.testdata_cls):
     ibex_config: str = ' '
     dut_cov_rtl_path: str = ''
 
-    tests_and_counts: List[Tuple[str, int]] = field(default_factory=list)
+    tests_and_counts: List[Tuple[str, int, TestType]] = field(default_factory=list)
     isa_ibex: Optional[str] = None
     isa_iss: Optional[str] = None
     run_rtl_timeout_s: int = 1800
@@ -71,6 +73,8 @@ class RegressionMetadata(scripts_lib.testdata_cls):
     ibex_riscvdv_customtarget   : pathlib.Path = field(init=False, compare=False, default_factory=pathlib.Path)
     ibex_riscvdv_testlist       : pathlib.Path = field(init=False, compare=False, default_factory=pathlib.Path)
     ibex_riscvdv_csr            : pathlib.Path = field(init=False, compare=False, default_factory=pathlib.Path)
+    directed_test_dir           : pathlib.Path = field(init=False, compare=False, default_factory=pathlib.Path)
+    directed_test_data          : pathlib.Path = field(init=False, compare=False, default_factory=pathlib.Path)
 
     # Build logs and commands
     riscvdv_build_log           : Optional[pathlib.Path]    = None
@@ -124,6 +128,8 @@ class RegressionMetadata(scripts_lib.testdata_cls):
         self.ibex_riscvdv_customtarget   = self.ibex_dv_root/'riscv_dv_extension'
         self.ibex_riscvdv_testlist       = self.ibex_riscvdv_customtarget/'testlist.yaml'
         self.ibex_riscvdv_csr            = self.ibex_riscvdv_customtarget/'csr_description.yaml'
+        self.directed_test_dir           = self.ibex_dv_root/'directed_tests'
+        self.directed_test_data          = self.directed_test_dir/'directed_testlist.yaml'
 
         self.environment_variables       = dict(os.environ)
 
@@ -139,7 +145,6 @@ class RegressionMetadata(scripts_lib.testdata_cls):
 
         cfg = ibex_cmd.get_config(self.ibex_config)
         self.isa_ibex, self.isa_iss = ibex_cmd.get_isas_for_config(cfg)
-        self.tests_and_counts = self.get_tests_and_counts()
 
 
     def _setup_directories(self):
@@ -241,6 +246,11 @@ class RegressionMetadata(scripts_lib.testdata_cls):
         # Fetch/set more derivative metadata specific to the ibex
         md._get_ibex_metadata()
 
+        # Setup the tests/counts we are going to use, by parsing the
+        # riscv-dv/directed-test structured data.
+        # eg. testlist.yaml / directed_testlist.yaml
+        md.tests_and_counts = md.get_tests_and_counts()
+
         return md
 
     @classmethod
@@ -251,7 +261,7 @@ class RegressionMetadata(scripts_lib.testdata_cls):
         md = cls.construct_from_pickle(md_pickle)
         return md
 
-    def get_tests_and_counts(self) -> List[Tuple[str, int]]:
+    def get_tests_and_counts(self) -> List[Tuple[str, int, TestType]]:
         """Get a list of tests and the number of iterations to run of each.
 
         ibex_config should be the name of the Ibex configuration to be tested.
@@ -263,59 +273,71 @@ class RegressionMetadata(scripts_lib.testdata_cls):
         number of iterations for each test.
 
         """
-        rv_testlist = self.ibex_riscvdv_testlist
-        rv_test = self.test if self.test is not None else 'all'
-        rv_iterations = self.iterations or 0
 
-        # Get all the tests that match the test argument, scaling as necessary with
-        # the iterations argument.
-        matched_list = []  # type: _TestEntries
-        riscvdv_lib.process_regression_list(
-            testlist=rv_testlist,
-            test=rv_test,
-            iterations=rv_iterations,
-            matched_list=matched_list,
-            riscv_dv_root=self.riscvdv_root)
-        if not matched_list:
-            raise RuntimeError("Cannot find {} in {}".format(self.test, self.testlist))
+        riscvdv_matched_list: ibex_cmd._TestEntries = self.process_riscvdv_testlist()
+        directed_matched_list: ibex_cmd._TestEntries = self.process_directed_testlist()
+
+        if not (riscvdv_matched_list or directed_matched_list):
+            raise RuntimeError("No matching tests found in testlists.")
 
         # Filter tests by the chosen ibex configuration
-        filtered_list = ibex_cmd.filter_tests_by_config(
+        riscvdv_filtered_list = ibex_cmd.filter_tests_by_config(
             ibex_config.parse_config(self.ibex_config, str(self.ibex_configs)),
-            matched_list)
+            riscvdv_matched_list)
+        directed_filtered_list = ibex_cmd.filter_tests_by_config(
+            ibex_config.parse_config(self.ibex_config, str(self.ibex_configs)),
+            directed_matched_list)
 
         # Convert to desired output format (and check for well-formedness)
         ret = []
-        for test in filtered_list:
+        for test in riscvdv_filtered_list:
             name = test['test']
             iterations = test['iterations']
             assert isinstance(name, str) and isinstance(iterations, int)
             assert iterations > 0
-            ret.append((name, iterations))
+            ret.append((name, iterations, TestType.RISCVDV))
+        for test in directed_filtered_list:
+            name = test['test']
+            iterations = test['iterations']
+            assert isinstance(name, str) and isinstance(iterations, int)
+            assert iterations > 0
+            ret.append((name, iterations, TestType.DIRECTED))
 
         return ret
 
-    def tds(self, give_tuple: bool = False) -> Union[List[str],
-                                                     List[Tuple[str, int]]]:
-        """Return the TEST.SEED strings for all the tests configured in the regression.
+    def process_riscvdv_testlist(self) -> [ibex_cmd._TestEntries]:
+        """Extract test information from the riscvdv testlist yaml."""
+        matched_list: [ibex_cmd._TestEntries] = []
 
-        By default returns a list of strs which are TEST.SEED, but can return a list of
-        tuples as (TEST, SEED)
+        # Get all the tests from the 'testlist' that match the 'test' argument.
+        riscvdv_lib.process_regression_list(
+            testlist=self.ibex_riscvdv_testlist,
+            test=(self.test if self.test is not None else 'all'),
+            iterations=(self.iterations or 0),
+            matched_list=matched_list,
+            riscv_dv_root=self.riscvdv_root)
+
+        return matched_list
+
+    def process_directed_testlist(self) -> [ibex_cmd._TestEntries]:
+        """Extract test information from the directed_test yaml.
+
+        Employ a similar format to the riscv-dv testlist structure to
+        define directed tests.
         """
-        if not self.tests_and_counts:
-            raise RuntimeError("self.tests_and_counts is empty, cant get TEST.SEED strings.")
-        tds_list = []
-        for test, count in self.tests_and_counts:
-            for i in range(count):
-                if give_tuple:
-                    tds = (test, self.seed + i)
-                else:
-                    tds = f"{test}.{self.seed + i}"
-                tds_list.append(tds)
+        matched_list: ibex_cmd._TestEntries = []
 
-        return tds_list
+        yaml_data = scripts_lib.read_yaml(self.directed_test_data)
+        mult_test = self.test.split(',')
 
+        for entry in yaml_data:
+            if (entry['test'] in mult_test) or (self.test == "all"):
+                if (self.iterations is not None) and (entry['iterations'] > 0):
+                    entry['iterations'] = self.iterations
+                if entry['iterations'] > 0:
+                    matched_list.append(entry)
 
+        return matched_list
 
 
 class Ops(Enum):
@@ -323,7 +345,6 @@ class Ops(Enum):
 
     CREATE = 'create_metadata'
     PRINT_FIELD = 'print_field'
-    TESTS_AND_SEEDS = 'tests_and_seeds'
 
     def __str__(self):
         return self.value
@@ -353,8 +374,8 @@ def _main():
             logger.error("Build metadata already exists, not recreating from scratch.")
             return
 
-        md = RegressionMetadata.arg_list_initializer(dir_metadata=pathlib.Path(args.dir_metadata),
-                                                     dir_out=pathlib.Path(args.dir_out),
+        md = RegressionMetadata.arg_list_initializer(dir_metadata=args.dir_metadata,
+                                                     dir_out=args.dir_out,
                                                      args_list=args.args_list)
 
         # Setup metadata objects for each of the tests to be run. Construct a list of these
@@ -363,28 +384,32 @@ def _main():
         # object that defines the wider regression.
 
         md.tests_pickle_files = []
-        for test, seed in md.tds(give_tuple=True):
-            tds_str = f"{test}.{seed}"
-            trr_pickle_file = md.dir_metadata / (tds_str + ".pickle")
 
-            # Initialize TestRunResult object
-            trr = TestRunResult(
-                passed=None,
-                failure_message=None,
-                testdotseed=tds_str,
-                testname=test,
-                seed=seed,
-                rtl_simulator=md.simulator,
-                iss_cosim=md.iss,
-                dir_test=md.dir_tests / tds_str,
-                metadata_pickle_file=md.pickle_file,
-                pickle_file=trr_pickle_file,
-                yaml_file=(md.dir_tests / tds_str / 'trr.yaml'))
+        if not md.tests_and_counts:
+            raise RuntimeError("md.tests_and_counts is empty, cant get TEST.SEED strings.")
+        for test, count, testtype in md.tests_and_counts:
+            for testseed in range(md.seed, md.seed + count):
+                tds_str = f"{test}.{testseed}"
 
-            # Save the path into a list in the regression metadata object for later.
-            md.tests_pickle_files.append(trr.pickle_file)
-            # Export the trr structure to disk.
-            trr.export(write_yaml=True)
+                # Initialize TestRunResult object
+                trr = TestRunResult(
+                    passed=None,
+                    failure_message=None,
+                    testtype=testtype,
+                    testdotseed=tds_str,
+                    testname=test,
+                    seed=testseed,
+                    rtl_simulator=md.simulator,
+                    iss_cosim=md.iss,
+                    dir_test=md.dir_tests/tds_str,
+                    metadata_pickle_file=md.pickle_file,
+                    pickle_file=md.dir_metadata/(tds_str + ".pickle"),
+                    yaml_file=md.dir_tests/tds_str/'trr.yaml')
+
+                # Save the path into a list in the regression metadata object for later.
+                md.tests_pickle_files.append(trr.pickle_file)
+                # Export the trr structure to disk.
+                trr.export(write_yaml=True)
 
         # Export here to commit new RegressionMetadata object to disk.
         md.export(write_yaml=True)
@@ -393,19 +418,30 @@ def _main():
 
         md = RegressionMetadata.construct_from_metadata_dir(args.dir_metadata)
 
+        # We have some special fields that contain lists of tests, so check those first.
+        if (args.field == 'riscvdv_tds'):
+            tds_list = []
+            for test, count, testtype in md.tests_and_counts:
+                for testseed in range(md.seed, md.seed + count):
+                    if testtype == TestType.RISCVDV:
+                        tds_list.append(f"{test}.{testseed}")
+            print(" ".join(tds_list))
+            return
+        if (args.field == 'directed_tds'):
+            tds_list = []
+            for test, count, testtype in md.tests_and_counts:
+                for testseed in range(md.seed, md.seed + count):
+                    if testtype == TestType.DIRECTED:
+                        tds_list.append(f"{test}.{testseed}")
+            print(" ".join(tds_list))
+            return
+
         value = getattr(md, args.field)
         if value is None:
             raise RuntimeError("Field requested is not present or not set in the regression metadata object")
 
         logger.debug(f"Returning value of field {args.field} as {value}")
         print(str(value))  # Captured into Makefile variable
-
-    if args.op == Ops.TESTS_AND_SEEDS:
-        """Return a list of TEST.SEED for all the valid tests"""
-
-        md = RegressionMetadata.construct_from_metadata_dir(args.dir_metadata)
-        for tds in md.tds():
-            print(tds)
 
 
 class LockedMetadata():

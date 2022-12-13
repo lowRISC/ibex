@@ -15,7 +15,7 @@ import riscvdv_interface
 from scripts_lib import run_one, format_to_cmd
 from test_entry import read_test_dot_seed, get_test_entry
 from metadata import RegressionMetadata
-from test_run_result import TestRunResult, Failure_Modes
+from test_run_result import TestRunResult, Failure_Modes, TestType
 
 import logging
 logger = logging.getLogger(__name__)
@@ -31,7 +31,10 @@ def _main() -> int:
     md = RegressionMetadata.construct_from_metadata_dir(args.dir_metadata)
     trr = TestRunResult.construct_from_metadata_dir(args.dir_metadata, f"{tds[0]}.{tds[1]}")
 
-    testopts = get_test_entry(trr.testname)  # From testlist.yaml
+    testopts = get_test_entry(testname=trr.testname,
+                              testlist=(md.ibex_riscvdv_testlist
+                                        if (trr.testtype == TestType.RISCVDV) else
+                                        md.directed_test_data))
 
     if not os.path.exists(trr.binary):
         raise RuntimeError(
