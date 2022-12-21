@@ -1,3 +1,9 @@
+# Description:
+#   Test to access misalign address between a PMP
+# and a non-PMP region. PMP region allows access
+# so the purpose is to check the implementation
+# behavior of multiple accesses.
+
 #include "riscv_test.h"
 #include "test_macros.h"
 
