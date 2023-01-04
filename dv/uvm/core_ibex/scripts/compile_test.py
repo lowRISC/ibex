@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Compile the different test sources to create binaries, ready for simulation."""
 
 # Copyright lowRISC contributors.
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
-
+"""Compile the different test sources to create binaries, ready for simulation."""
 
 import argparse
 from typing import Tuple, Dict, List
