@@ -295,7 +295,9 @@ class RegressionMetadata(scripts_lib.testdata_cls):
         # Get all the tests from the 'testlist' that match the 'test' argument.
         riscvdv_lib.process_regression_list(
             testlist=self.ibex_riscvdv_testlist,
-            test=(self.test or 'all'),
+            test=('all' if any(x in self.test.split(',')
+                               for x in ['all_riscvdv', 'all']) else
+                  self.test),
             iterations=(self.iterations or 0),
             matched_list=matched_list,
             riscv_dv_root=self.riscvdv_root)
@@ -312,7 +314,9 @@ class RegressionMetadata(scripts_lib.testdata_cls):
 
         matched_list: ibex_cmd._TestEntries = []
         for entry in m.get('tests'):
-            if (entry.get('test') in self.test.split(',')) or (self.test == "all"):
+            select_test = any(x in self.test.split(',')
+                              for x in ['all_directed', entry.get('test')])
+            if select_test:
                 entry.update({'iterations': (self.iterations or entry['iterations'])})
                 if entry['iterations'] > 0:
                     matched_list.append(entry)
