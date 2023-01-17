@@ -69,7 +69,7 @@ case "$ID-$VERSION_ID" in
     # an older version of a package must be used for a certain Python version.
     # If that information is not read, pip installs the latest version, which
     # then fails to run.
-    $SUDO_CMD pip3 install -U pip setuptools
+    $SUDO_CMD pip3 install -U pip "setuptools<66.0.0"
 
     $SUDO_CMD pip3 install -r python-requirements.txt
 
