@@ -1,0 +1,23 @@
+#=======================================================================
+# Makefrag for rv64mi tests
+#-----------------------------------------------------------------------
+
+rv64mi_sc_tests = \
+	access \
+	breakpoint \
+	csr \
+	mcsr \
+	illegal \
+	ma_fetch \
+	ma_addr \
+	scall \
+	sbreak \
+	ld-misaligned \
+	lw-misaligned \
+	lh-misaligned \
+	sh-misaligned \
+	sw-misaligned \
+	sd-misaligned \
+	zicntr \
+
+rv64mi_p_tests = $(addprefix rv64mi-p-, $(rv64mi_sc_tests))

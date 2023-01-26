@@ -1,0 +1,8 @@
+#=======================================================================
+# Makefrag for rv64mzicbo tests
+#-----------------------------------------------------------------------
+
+rv64mzicbo_sc_tests = \
+	zero \
+
+rv64mzicbo_p_tests = $(addprefix rv64mzicbo-p-, $(rv64mzicbo_sc_tests))
