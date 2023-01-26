@@ -1,3 +1,8 @@
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+###############################################################################
 # Description:
 #   Test to access misalign address between a PMP
 # and a non-PMP region. PMP region allows access
