@@ -1,4 +1,7 @@
 // Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+
 // Ibex specific macros
 #define SIGNATURE_ADDR 0x8ffffff8
 
