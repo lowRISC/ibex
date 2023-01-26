@@ -1,3 +1,4 @@
+// Copyright lowRISC contributors.
 // Ibex specific macros
 #define SIGNATURE_ADDR 0x8ffffff8
 

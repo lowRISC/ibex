@@ -17,6 +17,9 @@
   ld_script: link.ld
   includes: .
   gcc_opts: -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
+            -I../../../vendor/riscv-test-env/
+            -I../../../vendor/riscv-test-env/p/
+            -I../../../vendor/riscv-tests/isa/macros/scalar/
   rtl_test: core_ibex_base_test
   rtl_params:
     PMPEnable: 1
@@ -27,4 +30,11 @@
     Empty directed test
   iterations: 1
   test_srcs: empty/empty.S
+  config: base
+
+- test: access_pmp_overlap
+  desc: >
+    PMP access basic test
+  iterations: 1
+  test_srcs: access_pmp_overlap/access_pmp_overlap.S
   config: base

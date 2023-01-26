@@ -5,6 +5,7 @@
 #define _ENV_PHYSICAL_SINGLE_CORE_H
 
 #include "encoding.h"
+#include "ibex_macros.h"
 
 //-----------------------------------------------------------------------
 // Begin Macro

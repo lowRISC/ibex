@@ -10,6 +10,10 @@
 RVTEST_RV64M
 RVTEST_CODE_BEGIN
 
+  # setting machine handler
+  la   t0, mtvec_handler
+  csrw mtvec, t0
+
   # setting the PMP region
   la   t0, pmp_region_start
   srli t1, t0, PMP_SHIFT
@@ -23,7 +27,13 @@ RVTEST_CODE_BEGIN
   # access across the boundary between PMP and non-PMP
   lw   t1, -2(t0)
 
+  j pass
+
   TEST_PASSFAIL
+
+.balign 256
+mtvec_handler:
+  j fail
 
 RVTEST_CODE_END
 
