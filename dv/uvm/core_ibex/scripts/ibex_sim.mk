@@ -46,7 +46,7 @@ $(METADATA-DIR)/tb.compile.stamp: \
 	@touch $@
 
 ###############################################################################
-# Run ibex RTL simulation with randomly-generated program and uvm stimulus
+# Run ibex RTL simulation with random or directed test and uvm stimulus
 
 $(rtl-sim-logs): $(TESTS-DIR)/%/$(rtl-sim-logfile): \
   $(TB-COMPILE-STAMP) $(TESTS-DIR)/%/test.bin scripts/run_rtl.py
