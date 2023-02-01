@@ -23,7 +23,6 @@ all: collect_results $(if $(filter 1,$(COV)),merge_cov,)
 # Environment variables
 
 TOOLCHAIN           := ${RISCV_TOOLCHAIN}
-EXT_DIR             := riscv_dv_extension
 
 export IBEX_ROOT      := $(realpath ../../../)
 export PRJ_DIR        := $(realpath ../../..)
@@ -32,7 +31,6 @@ export LOWRISC_IP_DIR := $(realpath ${PRJ_DIR}/vendor/lowrisc_ip)
 # Needed for tcl files that are used with Cadence tools.
 export dv_root := $(realpath ../../../vendor/lowrisc_ip/dv)
 export DUT_TOP := ibex_top
-
 
 ###############################################################################
 # Here we express the different build artifacts that the Makefile uses to

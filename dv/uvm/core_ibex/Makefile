@@ -75,13 +75,6 @@ run:
 
 ###############################################################################
 
-.PHONY: clean
-clean:
-	rm -f $(EXT_DIR)/riscv_core_setting.sv
-	rm -rf $(OUT-DIR)
-
-###############################################################################
-
 # This is the top-level output directory. Everything we generate goes in
 # here.
 OUT := out
@@ -91,5 +84,15 @@ OUT := out
 # the way avoids ugly double slashes if $(OUT) happens to end in a /.
 export OUT-DIR      := $(dir $(OUT)/)
 export METADATA-DIR := $(OUT-DIR)metadata
+
+# riscv-dv extension directory
+export EXT_DIR             := riscv_dv_extension
+
+###############################################################################
+
+.PHONY: clean
+clean:
+	rm -rf $(OUT-DIR)
+	rm -f $(EXT_DIR)/riscv_core_setting.sv
 
 ###############################################################################
