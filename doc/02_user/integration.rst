@@ -28,6 +28,63 @@ The vendor ID and implementation ID (``mvendorid`` and ``mimpid``) both read as 
 Implementers may wish to use other values here.
 Please see the RISC-V Privileged Architecture specification for more details on what these IDs represent and how they should be chosen.
 
+.. _integration-prims:
+
+Primitives
+----------
+
+Ibex uses a number of primitive modules (that are held outside the :file:`rtl/` which contains the Ibex RTL).
+Full implementations of these primitives are provided in the Ibex repository but implementors may wish to provide their own implementations.
+Some of the primitives are only used for specific Ibex configurations so can be ignored/removed if you're not using one of those configurations.
+
+The mandatory primitives (used by all configurations) are:
+ * ``prim_buf`` - A buffer, used to ensure security critical logic isn't optimized out in synthesis (by applying suitable constraints to prim_buf).
+   In configurations where ``SecureIbex == 0`` it must exist but can be implemented as a straight passthrough.
+ * ``prim_clock_gating`` - A clock gate.
+
+The configuration dependent primitives are:
+ * ``prim_clock_mux2`` - A clock mux, used by the lockstep duplicate core.
+   Required where ``SecureIbex == 1``.
+ * ``prim_flop`` - A flip flop, used to ensure security critical logic isn't optimized out in synthesis (by applying suitable constraints to prim_flop).
+   Required where ``SecureIbex == 1``.
+ * ``prim_ram_1p`` - A single ported RAM.
+   Required where ``ICache == 1``.
+ * ``prim_ram_1p_scr`` - A single ported RAM which scrambles its contents with cryptographic primitives.
+   Required where ``ICache == 1`` and ``SecureIbex == 1``.
+ * ``prim_lfsr`` - Linear feedback shift register, used for pseudo random number generation for dummy instruction insertion.
+   Required where ``SecureIbex == 1``.
+ * ``prim_onehot_check`` - Checks a onehot signal is correct, for detecting fault injection attacks.
+   Required where ``SecureIbex == 1``.
+ * ``prim_secded_X`` - Various primitives to encode and decode SECDED (single error correct, double error detect) error detection and correction codes.
+   Required where ``SecureIbex == 1``.
+
+Primitives exclusively used by other primitives:
+ * ``prim_present`` / ``prim_prince`` / ``prim_subst_perm`` - Cryptographic primitives used by ``prim_ram_1p_scr``.
+ * ``prim_ram_1p_adv`` - Wrapper around ``prim_ram_1p`` that adds support for ECC, used by ``prim_ram_1p_scr``.
+
+.. _integration-fusesoc-files:
+
+RTL File List
+-------------
+
+Ibex flows use `FuseSoC <https://github.com/olofk/fusesoc>`_ to gather needed RTL files and run builds.
+If you want to use Ibex without FuseSoC the following FuseSoC command will copy all the needed files into a build directory.
+
+.. code-block:: bash
+
+  fusesoc --cores-root . run --target=lint --setup --build-root ./build/ibex_out lowrisc:ibex:ibex_top
+
+FuseSoC uses Python and it can be installed using pip.
+
+.. code-block:: bash
+
+  pip3 install -U -r python-requirements.txt
+
+Ibex uses a `custom fork of FuseSoC <https://github.com/lowRISC/fusesoc/tree/ot>`_, so you must install it via this method rather than installing FuseSoC separately.
+
+The RTL will be in :file:`./build/ibex_out/src` which is further divided into different sub-directories.
+A file list containing paths to all of the RTL files can be found in :file:`./build/ibex_out/ibex-verilator/lowrisc_ibex_ibex_top_0.1.vc`.
+
 Instantiation Template
 ----------------------
 
