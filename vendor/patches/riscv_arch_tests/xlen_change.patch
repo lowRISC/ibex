@@ -1,0 +1,12 @@
+diff --git a/riscv-test-suite/env/arch_test.h b/riscv-test-suite/env/arch_test.h
+index e542123b9..d731973fd 100644
+--- a/riscv-test-suite/env/arch_test.h
++++ b/riscv-test-suite/env/arch_test.h
+@@ -86,6 +86,7 @@
+ 
+ #include "encoding.h"
+ #include "test_macros.h"
++#define XLEN __riscv_xlen
+ #define MIN(a,b) (((a)<(b))?(a):(b))
+ #define MAX(a,b) (((a)>(b))?(a):(b))
+ #define BIT(addr, bit) (((addr)>>(bit))&1)
