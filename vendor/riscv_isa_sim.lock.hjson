@@ -8,7 +8,7 @@
 {
   upstream:
   {
-    url: https://github.com/joxie/riscv-isa-sim
-    rev: c2186bf1731b2a123ccc785ce9585861d370886f
+    url: https://github.com/Saad525/riscv-isa-sim
+    rev: 9d44dcb2818c98412f9a264076d568dd5566d7f1
   }
 }
