@@ -109,7 +109,14 @@ def list_tests(dir):
 def _main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--add_tests',
-                        type=str, required=True)
+                        type=str, required=True,
+                        help='''List test-suite name(s) from following:
+                              1) riscv-tests
+                              2) riscv-arch-tests
+                              3) epmp-tests
+
+                              e.g. --add_tests=riscv-tests,epmp_tests
+                              ''')
 
     args = parser.parse_args()
     test_suite = args.add_tests
@@ -122,15 +129,15 @@ def _main() -> int:
     # add headers and configs
     add_configs()
 
-    if 'riscv-tests' in test_suite_list:
+    if 'riscv-tests' in test_suite_list or test_suite == 'all':
         isa_tests = {'rv32mi', 'rv32uc', 'rv32ui', 'rv32um'}
         append_directed_testlist(isa_tests, '../../../../vendor/riscv-tests/isa/', 'riscv-tests', 1)
 
-    if 'riscv-arch-tests' in test_suite_list:
+    if 'riscv-arch-tests' in test_suite_list or test_suite == 'all':
         arch_tests = {'rv32i_m/B/src', 'rv32i_m/C/src', 'rv32i_m/I/src', 'rv32i_m/M/src', 'rv32i_m/Zifencei/src'}
         append_directed_testlist(arch_tests, '../../../../vendor/riscv-arch-tests/riscv-test-suite/', 'riscv-arch-tests', 1)
 
-    if 'epmp-tests' in test_suite_list:
+    if 'epmp-tests' in test_suite_list or test_suite == 'all':
         append_directed_testlist({'outputs'}, '../../../../vendor/riscv-isa-sim/tests/mseccfg/gengen_src/', 'epmp-tests', 0)
 
     # Always return 0 (success), even if the test failed. We've successfully
