@@ -690,7 +690,30 @@ void SpikeCosim::fixup_csr(int csr_num, uint32_t csr_val) {
       if (any_interrupt && int_interrupt) {
         new_val |= 0x7fffffe0;
       }
+#ifdef OLD_SPIKE
+      processor->set_csr(csr_num, new_val);
+#else
+      processor->put_csr(csr_num, new_val);
+#endif
+      break;
+    }
+    case CSR_MTVEC: {
+      uint32_t mtvec_and_mask = 0xffffff00;
+      uint32_t mtvec_or_mask = 0x1;
 
+      // For Ibex, mtvec.MODE is set to vectored and
+      // mtvec.BASE must be 256-byte aligned
+      reg_t new_val = (csr_val & mtvec_and_mask) | mtvec_or_mask;
+#ifdef OLD_SPIKE
+      processor->set_csr(csr_num, new_val);
+#else
+      processor->put_csr(csr_num, new_val);
+#endif
+      break;
+    }
+    case CSR_MISA: {
+      // For Ibex, misa is hardwired
+      reg_t new_val = 0x40901104;
 #ifdef OLD_SPIKE
       processor->set_csr(csr_num, new_val);
 #else
