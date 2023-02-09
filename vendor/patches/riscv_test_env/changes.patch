@@ -1,5 +1,5 @@
 diff --git a/p/riscv_test.h b/p/riscv_test.h
-index fe14f086..18fdc0a7 100644
+index a8c50c7a5..f57fb4423 100644
 --- a/p/riscv_test.h
 +++ b/p/riscv_test.h
 @@ -1,9 +1,11 @@
@@ -15,7 +15,23 @@ index fe14f086..18fdc0a7 100644
  
  //-----------------------------------------------------------------------
  // Begin Macro
-@@ -190,14 +192,13 @@ handle_exception:                                                       \
+@@ -153,14 +155,12 @@
+ #define EXTRA_TVEC_MACHINE
+ #define EXTRA_INIT
+ #define EXTRA_INIT_TIMER
+-#define FILTER_TRAP
+-#define FILTER_PAGE_FAULT
+ 
+ #define INTERRUPT_HANDLER j other_exception /* No interrupts should occur */
+ 
+ #define RVTEST_CODE_BEGIN                                               \
+         .section .text.init;                                            \
+-        .align  6;                                                      \
++        .org 0x80;                                                      \
+         .weak stvec_handler;                                            \
+         .weak mtvec_handler;                                            \
+         .globl _start;                                                  \
+@@ -192,14 +192,13 @@ handle_exception:                                                       \
    1:    ori TESTNUM, TESTNUM, 1337;                                     \
    write_tohost:                                                         \
          sw TESTNUM, tohost, t5;                                         \
@@ -32,7 +48,7 @@ index fe14f086..18fdc0a7 100644
          li TESTNUM, 0;                                                  \
          la t0, trap_vector;                                             \
          csrw mtvec, t0;                                                 \
-@@ -212,7 +213,7 @@ reset_vector:                                                           \
+@@ -214,7 +213,7 @@ reset_vector:                                                           \
                 (1 << CAUSE_MISALIGNED_FETCH) |                          \
                 (1 << CAUSE_USER_ECALL) |                                \
                 (1 << CAUSE_BREAKPOINT);                                 \
@@ -41,7 +57,7 @@ index fe14f086..18fdc0a7 100644
  1:      csrwi mstatus, 0;                                               \
          init;                                                           \
          EXTRA_INIT;                                                     \
-@@ -236,20 +237,24 @@ reset_vector:                                                           \
+@@ -238,20 +237,24 @@ reset_vector:                                                           \
  
  #define RVTEST_PASS                                                     \
          fence;                                                          \
@@ -76,7 +92,7 @@ index fe14f086..18fdc0a7 100644
  
  //-----------------------------------------------------------------------
  // Data Section Macro
-@@ -260,8 +265,8 @@ reset_vector:                                                           \
+@@ -262,8 +265,8 @@ reset_vector:                                                           \
  #define RVTEST_DATA_BEGIN                                               \
          EXTRA_DATA                                                      \
          .pushsection .tohost,"aw",@progbits;                            \
