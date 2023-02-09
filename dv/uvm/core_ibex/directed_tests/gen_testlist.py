@@ -14,7 +14,7 @@ import os
 import argparse
 import sys
 
-def add_configs():
+def add_configs_and_handwritten_directed_tests():
     testlist_string = '''# Copyright lowRISC contributors.
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
@@ -68,6 +68,26 @@ def add_configs():
     PMPEnable: 1
   timeout_s: 300
 '''
+    # Populate any handwritten directed tests below
+    # and with suitable config
+    available_directed_tests = '''
+# Custom directed tests
+
+- test: empty
+  desc: >
+    Empty directed test
+  iterations: 1
+  test_srcs: empty/empty.S
+  config: riscv-tests
+
+- test: access_pmp_overlap
+  desc: >
+    PMP access basic test
+  iterations: 1
+  test_srcs: access_pmp_overlap/access_pmp_overlap.S
+  config: riscv-tests
+'''
+    testlist_string += available_directed_tests
     with open('directed_testlist.yaml', "a") as f:
         f.write(testlist_string)
 
@@ -126,8 +146,8 @@ def _main() -> int:
     with open('directed_testlist.yaml','r+') as file:
         file.truncate(0)
 
-    # add headers and configs
-    add_configs()
+    # add headers and configs, also adding any handwritten directed tests
+    add_configs_and_handwritten_directed_tests()
 
     if 'riscv-tests' in test_suite_list or test_suite == 'all':
         isa_tests = {'rv32mi', 'rv32uc', 'rv32ui', 'rv32um'}
