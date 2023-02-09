@@ -24,6 +24,16 @@
 extra_boot:                                                             \
         EXTRA_INIT                                                      \
         ret;                                                            \
+.global trap_filter;                                                    \
+trap_filter:                                                            \
+        FILTER_TRAP                                                     \
+        li a0, 0;                                                       \
+        ret;                                                            \
+.global pf_filter;                                                      \
+pf_filter:                                                              \
+        FILTER_PAGE_FAULT                                               \
+        li a0, 0;                                                       \
+        ret;                                                            \
         .global userstart;                                              \
 userstart:                                                              \
         init

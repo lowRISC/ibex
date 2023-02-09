@@ -136,8 +136,14 @@ static void evict(unsigned long addr)
   }
 }
 
+extern int pf_filter(uintptr_t addr, uintptr_t *pte, int *copy);
+extern int trap_filter(trapframe_t *tf);
+
 void handle_fault(uintptr_t addr, uintptr_t cause)
 {
+  uintptr_t filter_encodings = 0;
+  int copy_page = 1;
+
   assert(addr >= PGSIZE && addr < MAX_TEST_PAGES * PGSIZE);
   addr = addr/PGSIZE*PGSIZE;
 
@@ -159,6 +165,11 @@ void handle_fault(uintptr_t addr, uintptr_t cause)
     freelist_tail = 0;
 
   uintptr_t new_pte = (node->addr >> PGSHIFT << PTE_PPN_SHIFT) | PTE_V | PTE_U | PTE_R | PTE_W | PTE_X;
+
+  if (pf_filter(addr, &filter_encodings, &copy_page)) {
+      new_pte = (node->addr >> PGSHIFT << PTE_PPN_SHIFT) | filter_encodings;
+  }
+
   user_llpt[addr/PGSIZE] = new_pte | PTE_A | PTE_D;
   flush_page(addr);
 
@@ -177,6 +188,10 @@ void handle_fault(uintptr_t addr, uintptr_t cause)
 
 void handle_trap(trapframe_t* tf)
 {
+  if (trap_filter(tf)) {
+    pop_tf(tf);
+  }
+
   if (tf->cause == CAUSE_USER_ECALL)
   {
     int n = tf->gpr[10];
