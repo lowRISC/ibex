@@ -19,9 +19,6 @@ The RISC-V Formal Interface (RVFI) is used to provide information about retired 
 The RVFI has been extended to provide interrupt and debug information and the value of the ``mcycle`` CSR.
 These extended signals have the prefix ``rvfi_ext``
 
-The co-simulation system is EXPERIMENTAL.
-It is disabled by default in the UVM DV environment currently, however it is intended to become the primary checking method for the UVM testbench.
-
 Setup and Usage
 ---------------
 
