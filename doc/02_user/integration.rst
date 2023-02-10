@@ -198,26 +198,23 @@ Parameters
 |                              |                     |            | "ibex_pkg::RegFileFPGA": Register file for FPGA targets               |
 |                              |                     |            | "ibex_pkg::RegFileLatch": Latch-based register file for ASIC targets  |
 +------------------------------+---------------------+------------+-----------------------------------------------------------------------+
-| ``BranchTargetALU``          | bit                 | 0          | *EXPERIMENTAL* - Enables branch target ALU removing a stall           |
-|                              |                     |            | cycle from taken branches                                             |
+| ``BranchTargetALU``          | bit                 | 0          | Enables branch target ALU removing a stall cycle from taken branches  |
 +------------------------------+---------------------+------------+-----------------------------------------------------------------------+
-| ``WritebackStage``           | bit                 | 0          | *EXPERIMENTAL* - Enables third pipeline stage (writeback)             |
-|                              |                     |            | improving performance of loads and stores                             |
+| ``WritebackStage``           | bit                 | 0          | Enables third pipeline stage (writeback) improving performance of     |
+|                              |                     |            | loads and stores                                                      |
 +------------------------------+---------------------+------------+-----------------------------------------------------------------------+
-| ``ICache``                   | bit                 | 0          | *EXPERIMENTAL* Enable instruction cache instead of prefetch           |
-|                              |                     |            | buffer                                                                |
+| ``ICache``                   | bit                 | 0          | Enable instruction cache instead of prefetch buffer                   |
 +------------------------------+---------------------+------------+-----------------------------------------------------------------------+
-| ``ICacheECC``                | bit                 | 0          | *EXPERIMENTAL* Enable SECDED ECC protection in ICache (if             |
-|                              |                     |            | ICache == 1)                                                          |
+| ``ICacheECC``                | bit                 | 0          | Enable SECDED ECC protection in ICache (if  ICache == 1)              |
 +------------------------------+---------------------+------------+-----------------------------------------------------------------------+
-| ``ICacheScramble``           | bit                 | 0          | *EXPERIMENTAL* Enabling this parameter replaces tag and data RAMs of  |
-|                              |                     |            | ICache with scrambling RAM primitives.                                |
+| ``ICacheScramble``           | bit                 | 0          | Enabling this parameter replaces tag and data RAMs of ICache with     |
+|                              |                     |            | scrambling RAM primitives.                                            |
 +------------------------------+---------------------+------------+-----------------------------------------------------------------------+
 | ``BranchPrediction``         | bit                 | 0          | *EXPERIMENTAL* Enable Static branch prediction                        |
 +------------------------------+---------------------+------------+-----------------------------------------------------------------------+
-| ``SecureIbex``               | bit                 | 0          | *EXPERIMENTAL* Enable various additional features targeting           |
-|                              |                     |            | secure code execution. Note: SecureIbex == 1'b1 and                   |
-|                              |                     |            | RV32M == ibex_pkg::RV32MNone is an illegal combination.               |
+| ``SecureIbex``               | bit                 | 0          | Enable various additional features targeting secure code execution.   |
+|                              |                     |            | Note: SecureIbex == 1'b1 and  RV32M == ibex_pkg::RV32MNone is an      |
+|                              |                     |            | illegal combination.                                                  |
 +------------------------------+---------------------+------------+-----------------------------------------------------------------------+
 | ``RndCnstLfsrSeed``          | lfsr_seed_t         | see above  | Set the starting seed of the LFSR used to generate dummy instructions |
 |                              |                     |            | (only relevant when SecureIbex == 1'b1)                               |
