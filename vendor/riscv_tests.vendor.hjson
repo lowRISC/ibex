@@ -9,4 +9,8 @@
     url: "https://github.com/riscv-software-src/riscv-tests",
     rev: "master",
   },
+  exclude_from_upstream: [
+    "env/",
+    "debug/programs/encoding.h"
+  ]
 }
