@@ -86,6 +86,7 @@
 
 #include "encoding.h"
 #include "test_macros.h"
+#define XLEN __riscv_xlen
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define BIT(addr, bit) (((addr)>>(bit))&1)
@@ -103,8 +104,6 @@
 #define IMMMSK     ( (1 << IMMSZ)-1)
 #define LIMMSZ     (WDBITS-IMMSZ)
 #define LIMMMSK    ( (1 <<LIMMSZ)-1)
-
-#define XLEN __riscv_xlen
 
 #define ALIGNSZ ((XLEN>>5)+2)   // log2(XLEN): 2,3,4 for XLEN 32,64,128
 #if XLEN>FLEN
