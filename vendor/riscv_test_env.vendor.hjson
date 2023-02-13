@@ -9,4 +9,5 @@
     url: "https://github.com/riscv/riscv-test-env",
     rev: "master",
   },
+  patch_dir: "patches/riscv_test_env"
 }

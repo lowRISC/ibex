@@ -1,5 +1,5 @@
 diff --git a/p/riscv_test.h b/p/riscv_test.h
-index a8c50c7a5..f57fb4423 100644
+index a8c50c7a5..49054033c 100644
 --- a/p/riscv_test.h
 +++ b/p/riscv_test.h
 @@ -1,9 +1,11 @@
@@ -15,7 +15,7 @@ index a8c50c7a5..f57fb4423 100644
  
  //-----------------------------------------------------------------------
  // Begin Macro
-@@ -153,14 +155,12 @@
+@@ -153,21 +155,19 @@
  #define EXTRA_TVEC_MACHINE
  #define EXTRA_INIT
  #define EXTRA_INIT_TIMER
@@ -31,6 +31,14 @@ index a8c50c7a5..f57fb4423 100644
          .weak stvec_handler;                                            \
          .weak mtvec_handler;                                            \
          .globl _start;                                                  \
+ _start:                                                                 \
+         /* reset vector */                                              \
+         j reset_vector;                                                 \
+-        .align 2;                                                       \
++        .balign 256;                                                    \
+ trap_vector:                                                            \
+         /* test whether the test came from pass/fail */                 \
+         csrr t5, mcause;                                                \
 @@ -192,14 +192,13 @@ handle_exception:                                                       \
    1:    ori TESTNUM, TESTNUM, 1337;                                     \
    write_tohost:                                                         \
