@@ -1,4 +1,8 @@
 # CHANGELOG
+
+## [3.6.2] - 2023-02-08
+- Remove RV64IB from ISA list of zext test. 
+
 ## [3.6.1] - 2023-01-28
 - Fix satp restore condition.
 

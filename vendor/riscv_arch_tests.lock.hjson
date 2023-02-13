@@ -9,6 +9,6 @@
   upstream:
   {
     url: https://github.com/riscv-non-isa/riscv-arch-test
-    rev: 89fbfec7f67fedfbbcf6de374e32c902669317e9
+    rev: a3b7f0c2cf89652b8a0cba3146890c512ff8ba44
   }
 }
