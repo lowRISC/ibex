@@ -17,6 +17,7 @@ typing-utils  # Ditto
 typeguard
 portalocker
 pydantic
+svg.py
 
 # Needed by dvsim.py (not actually used in Ibex)
 hjson

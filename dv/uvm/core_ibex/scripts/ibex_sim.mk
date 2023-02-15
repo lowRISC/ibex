@@ -71,12 +71,19 @@ $(comp-results): $(TESTS-DIR)/%/trr.yaml: \
 # Generate RISCV-DV functional coverage
 # TODO(udi) - add B extension
 
+# When COV == 0 this step (and the merge step below) still run, but just
+# generate a stamp file without performing the coverage related actions. This is
+# to allow the final collect_results.py step to run where COV == 0 (as it needs
+# to declare coverage as a dependency to ensure it gets run after coverage merge
+# when COV == 1).
 $(METADATA-DIR)/fcov.stamp: $(comp-results) \
   scripts/get_fcov.py
+ifeq ($(COV), 1)
 	@echo Generating RISCV_DV functional coverage
 	$(verb)env PYTHONPATH=$(PYTHONPATH) \
 	scripts/get_fcov.py \
 	  --dir-metadata $(METADATA-DIR)
+endif
 	@touch $@
 
 ###############################################################################
@@ -86,16 +93,18 @@ $(METADATA-DIR)/fcov.stamp: $(comp-results) \
 
 $(METADATA-DIR)/merge.cov.stamp: $(FCOV-STAMP) \
   scripts/merge_cov.py
+ifeq ($(COV), 1)
 	@echo Merging all recorded coverage data into a single report
 	$(verb)env PYTHONPATH=$(PYTHONPATH) \
 	scripts/merge_cov.py \
 	  --dir-metadata $(METADATA-DIR)
+endif
 	@touch $@
 
 ###############################################################################
 # Generate the summarized regression log
 
-$(METADATA-DIR)/regr.log.stamp: scripts/collect_results.py $(comp-results)
+$(METADATA-DIR)/regr.log.stamp: scripts/collect_results.py $(comp-results) $(MERGE-COV-STAMP)
 	@echo Collecting up results of tests into report regr.log
 	$(verb)env PYTHONPATH=$(PYTHONPATH) \
 	./scripts/collect_results.py \

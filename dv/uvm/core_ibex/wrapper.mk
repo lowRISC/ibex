@@ -4,7 +4,7 @@
 
 ###############################################################################
 
-all: collect_results $(if $(filter 1,$(COV)),merge_cov,)
+all: collect_results
 
 # Build Stages
 .PHONY: core_config            # riscvdv

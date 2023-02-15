@@ -20,6 +20,8 @@ from dataclasses import field
 from typeguard import typechecked
 import portalocker
 import signal
+import subprocess
+from datetime import datetime, timezone
 
 import setup_imports
 import scripts_lib
@@ -32,7 +34,8 @@ import directed_test_schema
 import logging
 logger = logging.getLogger(__name__)
 
-
+def get_git_revision_hash() -> str:
+    return subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('ascii').strip()
 
 @typechecked
 @dataclasses.dataclass
@@ -44,6 +47,8 @@ class RegressionMetadata(scripts_lib.testdata_cls):
 
     dir_out: pathlib.Path = pathlib.Path()
     dir_metadata: pathlib.Path = pathlib.Path()
+    git_commit: str = ''
+    creation_datetime: datetime = datetime.now(timezone.utc)
     pickle_file : pathlib.Path = field(init=False, compare=False, default_factory=pathlib.Path)
     yaml_file   : pathlib.Path = field(init=False, compare=False, default_factory=pathlib.Path)
 
@@ -168,6 +173,7 @@ class RegressionMetadata(scripts_lib.testdata_cls):
     def arg_list_initializer(cls,
                              dir_metadata: pathlib.Path,
                              dir_out: pathlib.Path,
+                             git_commit: str,
                              args_list: str):
         """Initialize fields from an input str of 'KEY=VALUE KEY2=VALUE2' form.
 
@@ -236,6 +242,8 @@ class RegressionMetadata(scripts_lib.testdata_cls):
         md = cls(
             dir_out=dir_out.resolve(),
             dir_metadata=dir_metadata.resolve(),
+            git_commit=git_commit,
+            creation_datetime=datetime.now(timezone.utc),
             **args_dict)
 
         return md
@@ -357,6 +365,7 @@ def _main():
         md = RegressionMetadata.arg_list_initializer(
             dir_metadata=args.dir_metadata,
             dir_out=args.dir_out,
+            git_commit=get_git_revision_hash(),
             args_list=args.args_list)
 
         # Fetch/set more derivative metadata specific to the ibex
