@@ -73,10 +73,12 @@ $(comp-results): $(TESTS-DIR)/%/trr.yaml: \
 
 $(METADATA-DIR)/fcov.stamp: $(comp-results) \
   scripts/get_fcov.py
+ifeq ($(COV), 1)
 	@echo Generating RISCV_DV functional coverage
 	$(verb)env PYTHONPATH=$(PYTHONPATH) \
 	scripts/get_fcov.py \
 	  --dir-metadata $(METADATA-DIR)
+endif
 	@touch $@
 
 ###############################################################################
@@ -86,16 +88,18 @@ $(METADATA-DIR)/fcov.stamp: $(comp-results) \
 
 $(METADATA-DIR)/merge.cov.stamp: $(FCOV-STAMP) \
   scripts/merge_cov.py
+ifeq ($(COV), 1)
 	@echo Merging all recorded coverage data into a single report
 	$(verb)env PYTHONPATH=$(PYTHONPATH) \
 	scripts/merge_cov.py \
 	  --dir-metadata $(METADATA-DIR)
+endif
 	@touch $@
 
 ###############################################################################
 # Generate the summarized regression log
 
-$(METADATA-DIR)/regr.log.stamp: scripts/collect_results.py $(comp-results)
+$(METADATA-DIR)/regr.log.stamp: scripts/collect_results.py $(comp-results) $(MERGE-COV-STAMP)
 	@echo Collecting up results of tests into report regr.log
 	$(verb)env PYTHONPATH=$(PYTHONPATH) \
 	./scripts/collect_results.py \
