@@ -30,3 +30,8 @@
 // test result - should be stored at sign_addr[8]
 #define TEST_PASS 0x0
 #define TEST_FAIL 0x1
+
+#define CSR_MSECCFG 0x747
+#define MSECCFG_MML 0x1
+#define MSECCFG_MMWP 0x2
+#define MSECCFG_RLB 0x4
