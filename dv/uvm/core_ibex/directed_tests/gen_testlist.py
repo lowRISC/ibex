@@ -80,6 +80,162 @@ def add_configs_and_handwritten_directed_tests():
   test_srcs: empty/empty.S
   config: riscv-tests
 
+- test: pmp_mseccfg_test_rlb1_l0_0
+  desc: >
+    mseccfg test
+  iterations: 1
+  test_srcs: pmp_mseccfg_test/pmp_mseccfg_test.S
+  config: riscv-tests
+  gcc_opts: -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
+            -I../../../vendor/riscv-test-env/
+            -I../../../vendor/riscv-test-env/p/
+            -I../../../vendor/riscv-tests/isa/macros/scalar/
+            -DPMP_REGION=4 -DRLB -DSET_PMP_L=0 -DSET_PMP_L_PREV=0
+
+- test: pmp_mseccfg_test_rlb1_l0_1
+  desc: >
+    mseccfg test
+  iterations: 1
+  test_srcs: pmp_mseccfg_test/pmp_mseccfg_test.S
+  config: riscv-tests
+  gcc_opts: -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
+            -I../../../vendor/riscv-test-env/
+            -I../../../vendor/riscv-test-env/p/
+            -I../../../vendor/riscv-tests/isa/macros/scalar/
+            -DPMP_REGION=4 -DRLB -DSET_PMP_L=1 -DSET_PMP_L_PREV=0
+
+- test: pmp_mseccfg_test_rlb1_l1_0
+  desc: >
+    mseccfg test
+  iterations: 1
+  test_srcs: pmp_mseccfg_test/pmp_mseccfg_test.S
+  config: riscv-tests
+  gcc_opts: -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
+            -I../../../vendor/riscv-test-env/
+            -I../../../vendor/riscv-test-env/p/
+            -I../../../vendor/riscv-tests/isa/macros/scalar/
+            -DPMP_REGION=4 -DRLB -DSET_PMP_L=0 -DSET_PMP_L_PREV=1
+
+- test: pmp_mseccfg_test_rlb1_l1_1
+  desc: >
+    mseccfg test
+  iterations: 1
+  test_srcs: pmp_mseccfg_test/pmp_mseccfg_test.S
+  config: riscv-tests
+  gcc_opts: -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
+            -I../../../vendor/riscv-test-env/
+            -I../../../vendor/riscv-test-env/p/
+            -I../../../vendor/riscv-tests/isa/macros/scalar/
+            -DPMP_REGION=4 -DRLB -DSET_PMP_L=1 -DSET_PMP_L_PREV=1
+
+- test: pmp_mseccfg_test_rlb0_l0_0
+  desc: >
+    mseccfg test
+  iterations: 1
+  test_srcs: pmp_mseccfg_test/pmp_mseccfg_test.S
+  config: riscv-tests
+  gcc_opts: -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
+            -I../../../vendor/riscv-test-env/
+            -I../../../vendor/riscv-test-env/p/
+            -I../../../vendor/riscv-tests/isa/macros/scalar/
+            -DPMP_REGION=4 -DSET_PMP_L=0 -DSET_PMP_L_PREV=0
+
+- test: pmp_mseccfg_test_rlb0_l0_1_next_l1
+  desc: >
+    mseccfg test
+  iterations: 1
+  test_srcs: pmp_mseccfg_test/pmp_mseccfg_test.S
+  config: riscv-tests
+  gcc_opts: -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
+            -I../../../vendor/riscv-test-env/
+            -I../../../vendor/riscv-test-env/p/
+            -I../../../vendor/riscv-tests/isa/macros/scalar/
+            -DSET_PMP_L=1 -DSET_PMP_L_PREV=0 -DPMP_NEXT_L1
+
+- test: pmp_mseccfg_test_rlb0_l0_1_next_l1_r1
+  desc: >
+    mseccfg test
+  iterations: 1
+  test_srcs: pmp_mseccfg_test/pmp_mseccfg_test.S
+  config: riscv-tests
+  gcc_opts: -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
+            -I../../../vendor/riscv-test-env/
+            -I../../../vendor/riscv-test-env/p/
+            -I../../../vendor/riscv-tests/isa/macros/scalar/
+            -DSET_PMP_L=1 -DSET_PMP_L_PREV=0 -DPMP_NEXT_L1_R1
+
+- test: pmp_mseccfg_test_rlb0_l0_1_next_l1_w1
+  desc: >
+    mseccfg test
+  iterations: 1
+  test_srcs: pmp_mseccfg_test/pmp_mseccfg_test.S
+  config: riscv-tests
+  gcc_opts: -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
+            -I../../../vendor/riscv-test-env/
+            -I../../../vendor/riscv-test-env/p/
+            -I../../../vendor/riscv-tests/isa/macros/scalar/
+            -DSET_PMP_L=1 -DSET_PMP_L_PREV=0 -DPMP_NEXT_L1_W1
+
+- test: pmp_mseccfg_test_rlb0_l0_1_next_l1_x1
+  desc: >
+    mseccfg test
+  iterations: 1
+  test_srcs: pmp_mseccfg_test/pmp_mseccfg_test.S
+  config: riscv-tests
+  gcc_opts: -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
+            -I../../../vendor/riscv-test-env/
+            -I../../../vendor/riscv-test-env/p/
+            -I../../../vendor/riscv-tests/isa/macros/scalar/
+            -DSET_PMP_L=1 -DSET_PMP_L_PREV=0 -DPMP_NEXT_L1_X1
+
+- test: pmp_mseccfg_test_rlb0_l0_1_next_l1_r1_w1
+  desc: >
+    mseccfg test
+  iterations: 1
+  test_srcs: pmp_mseccfg_test/pmp_mseccfg_test.S
+  config: riscv-tests
+  gcc_opts: -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
+            -I../../../vendor/riscv-test-env/
+            -I../../../vendor/riscv-test-env/p/
+            -I../../../vendor/riscv-tests/isa/macros/scalar/
+            -DSET_PMP_L=1 -DSET_PMP_L_PREV=0 -DPMP_NEXT_L1_R1_W1
+
+- test: pmp_mseccfg_test_rlb0_l0_1_next_l1_r1_x1
+  desc: >
+    mseccfg test
+  iterations: 1
+  test_srcs: pmp_mseccfg_test/pmp_mseccfg_test.S
+  config: riscv-tests
+  gcc_opts: -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
+            -I../../../vendor/riscv-test-env/
+            -I../../../vendor/riscv-test-env/p/
+            -I../../../vendor/riscv-tests/isa/macros/scalar/
+            -DSET_PMP_L=1 -DSET_PMP_L_PREV=0 -DPMP_NEXT_L1_R1_X1
+
+- test: pmp_mseccfg_test_rlb0_l0_1_next_l1_w1_x1
+  desc: >
+    mseccfg test
+  iterations: 1
+  test_srcs: pmp_mseccfg_test/pmp_mseccfg_test.S
+  config: riscv-tests
+  gcc_opts: -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
+            -I../../../vendor/riscv-test-env/
+            -I../../../vendor/riscv-test-env/p/
+            -I../../../vendor/riscv-tests/isa/macros/scalar/
+            -DSET_PMP_L=1 -DSET_PMP_L_PREV=0 -DPMP_NEXT_L1_W1_X1
+
+- test: pmp_mseccfg_test_rlb0_l0_1_next_l1_r1_w1_x1
+  desc: >
+    mseccfg test
+  iterations: 1
+  test_srcs: pmp_mseccfg_test/pmp_mseccfg_test.S
+  config: riscv-tests
+  gcc_opts: -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
+            -I../../../vendor/riscv-test-env/
+            -I../../../vendor/riscv-test-env/p/
+            -I../../../vendor/riscv-tests/isa/macros/scalar/
+            -DSET_PMP_L=1 -DSET_PMP_L_PREV=0 -DPMP_NEXT_L1_R1_W1_X1
+
 - test: access_pmp_overlap
   desc: >
     PMP access basic test
