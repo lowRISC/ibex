@@ -9,6 +9,7 @@
 # at start, mid and end of the PMP region.
 #   Target of test is to achieve functional coverage for rewriting 
 # permissions in PMP regions with RLB 0/1.
+#   Test accesses in both M-mode and U-mode.
 
 #include "riscv_test.h"
 #include "test_macros.h"
@@ -33,9 +34,32 @@
   SET_PMP_TOR(pmp_region_end, pmp_region_start, pmp_permissions | PMP_TOR, region_high, region_low) \
   RW_ACCESSES(pmp_region_start, PMP_GRAN)
 
+#define ACCESS_REGION(region, offset) \
+  la t0, region;                      \
+  jalr a0, offset(t0);
+
+#define EXEC_ACCESS_IN_M_MODE(region) \
+  ACCESS_REGION(region, 0);           \
+  ACCESS_REGION(region, -2);
+
+#define EXEC_ACCESS_IN_U_MODE(region) \
+  SWITCH_TO_U_MODE_LABEL(region);     \
+  la s0, region;                      \
+  addi s0, s0, -2;                    \
+  SWITCH_TO_U_MODE_REG(s0);
+
+#ifdef U_MODE
+  #define EXEC_ACCESS(region)     \
+    EXEC_ACCESS_IN_U_MODE(region)
+#else
+  #define EXEC_ACCESS(region)     \
+    EXEC_ACCESS_IN_M_MODE(region)
+#endif
+
 #define SET_PMP_AND_ACCESS_NAPOT(pmp_permissions, region)                        \
   SET_PMP_NAPOT(pmp_region_start, PMP_GRAN, pmp_permissions | PMP_NAPOT, region) \
-  RW_ACCESSES(pmp_region_start, PMP_GRAN)
+  RW_ACCESSES(pmp_region_start, PMP_GRAN)                                        \
+  EXEC_ACCESS(pmp_region_start)
 
 #define SET_DIFF_PMP_CFG(pmp_region, pmp_l, pmp_l_prev)               \
   PREV_PMP_CFG(pmp_l_prev, pmp_region, pmp_l)                         \
@@ -123,6 +147,12 @@ RVTEST_CODE_BEGIN
   # resetting all PMP regions and mseccfg
   RESET_PMP
 
+  # placing 0xffffffff just before pmp_region_start so in
+  # order to deal with boundary instsr as uncompressed
+  li t0, 0xffffffff
+  la t1, pmp_region_start
+  sw t0, -4(t1)
+
 #ifdef RLB
   SET_MSECCFG(MSECCFG_RLB)
 #endif
@@ -160,7 +190,24 @@ RVTEST_CODE_BEGIN
 
 .balign 256
 mtvec_handler:
+  csrr t0, mcause
+  li t1, CAUSE_FETCH_ACCESS
+  beq t0, t1, restore_to_pc_before_access_fault
+  # jump to a valid PC if illegal instruction
+  # which would be when PMP has execute permissions
+  # in pmp_region_start
+  li t1, CAUSE_ILLEGAL_INSTRUCTION
+  beq t0, t1, restore_to_pc_before_access_fault
   SKIP_PC
+  j ret_from_mhandler
+
+restore_to_pc_before_access_fault:
+  csrw mepc, a0
+
+ret_from_mhandler:
+  # always return to m-mode
+  li t0, MSTATUS_MPP
+  csrs mstatus, t0
   mret
 
 RVTEST_CODE_END
@@ -169,7 +216,9 @@ RVTEST_CODE_END
 RVTEST_DATA_BEGIN
 
 .balign PMP_GRAN
-pmp_region_start: .zero PMP_GRAN
+pmp_region_start:
+  jr a0
+  .zero (PMP_GRAN-4)
 pmp_region_end:
   TEST_DATA
 

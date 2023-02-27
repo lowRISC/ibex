@@ -98,20 +98,51 @@
   1 : addi t0, t0, 2; \
   csrw mepc, t0;
 
-#Accesses at start, mid and end of PMP range
-#define RW_ACCESSES(pmp_addr, gran) \
-  la s0, pmp_addr;                  \
-  lw s1, 0(s0);                     \
-  sw s1, 0(s0);                     \
-  li s1, gran / 2;                  \
-  add s2, s0, s1;                   \
-  lw s1, 0(s2);                     \
-  sw s1, 0(s2);                     \
-  li s1, gran - 4;                  \
-  add s2, s0, s1;                   \
-  lw s1, 0(s2);                     \
+#define RW_ACCESSES_IN_M_MODE(pmp_addr, gran) \
+  la s0, pmp_addr;                            \
+  lw s1, 0(s0);                               \
+  sw s1, 0(s0);                               \
+  li s1, gran / 2;                            \
+  add s2, s0, s1;                             \
+  lw s1, 0(s2);                               \
+  sw s1, 0(s2);                               \
+  li s1, gran - 4;                            \
+  add s2, s0, s1;                             \
+  lw s1, 0(s2);                               \
   sw s1, 0(s2);
+
+#define RW_ACCESSES_IN_U_MODE(pmp_addr, gran) \
+  la s0, pmp_addr;                            \
+  SWITCH_TO_U_MODE_LABEL(1f);                 \
+  1 : lw s1, 0(s0);                           \
+  SWITCH_TO_U_MODE_LABEL(1f);                 \
+  1 : sw s1, 0(s0);
+
+#Accesses at start, mid and end of PMP range
+
+#ifdef U_MODE
+#define RW_ACCESSES(pmp_addr, gran) RW_ACCESSES_IN_U_MODE(pmp_addr, gran)
+#else
+#define RW_ACCESSES(pmp_addr, gran) RW_ACCESSES_IN_M_MODE(pmp_addr, gran)
+#endif
 
 #define SET_MSECCFG(val) \
   li t1, val;            \
   csrs CSR_MSECCFG, t1;
+
+#define SWITCH_TO_U_MODE_LABEL(label) \
+  li t0, MSTATUS_MPP;                 \
+  csrc mstatus, t0;                   \
+  la t0, label;                       \
+  csrw mepc, t0;                      \
+  la a0, 1f;                          \
+  mret;                               \
+  1:
+
+#define SWITCH_TO_U_MODE_REG(reg) \
+  li t0, MSTATUS_MPP;             \
+  csrc mstatus, t0;               \
+  csrw mepc, reg;                 \
+  la a0, 1f;                      \
+  mret;                           \
+  1:
