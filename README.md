@@ -1,4 +1,7 @@
-[![Build Status](https://dev.azure.com/lowrisc/ibex/_apis/build/status/lowRISC.ibex?branchName=master)](https://dev.azure.com/lowrisc/ibex/_build/latest?definitionId=3&branchName=master)
+[Ibex OpenTitan configuration Nightly Regression](https://ibex.reports.lowrisc.org/opentitan/latest/report.html)
+<a href="https://ibex.reports.lowrisc.org/opentitan/latest/report.html">
+  <img src="https://ibex.reports.lowrisc.org/opentitan/latest/summary.svg">
+</a>
 
 # Ibex RISC-V Core
 
