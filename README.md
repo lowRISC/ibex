@@ -34,7 +34,7 @@ These are configurations on which lowRISC is focusing for performance evaluation
 | Performance (CoreMark/MHz) | 0.904 | 2.47 | 3.13 | 3.13 |
 | Area - Yosys (kGE) | 16.85 | 26.60 | 32.48 | 66.02 |
 | Area - Commercial (estimated kGE) | ~15 | ~24 | ~30 | ~61 |
-| Verification status | Red | Green | Amber | Amber |
+| Verification status | Red | Green | Green | Green |
 
 Notes:
 
