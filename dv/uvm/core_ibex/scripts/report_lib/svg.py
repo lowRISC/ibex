@@ -14,7 +14,8 @@ SVG_DASHBOARD_STYLE = dedent("""
     .text { font: 12px sans-serif;
             text-anchor: middle;
             dominant-baseline: middle;}
-    .name { font-weight: bold; }
+    .name { fill: white; }
+    .value { fill: black; }
 """)
 SVG_DASHBOARD_VALUE_WIDTH = 60
 SVG_DASHBOARD_NAME_BG_COLOUR = "#666"
@@ -146,6 +147,7 @@ def output_results_svg(test_summary_dict: Dict[str, Dict[str, int]],
     regression_dashboard = Dashboard(dashboard_elements, SVG_DASHBOARD_GAP)
     summary_svg = svg.SVG(
             width = regression_dashboard.calc_total_width(),
+            height = SVG_DASHBOARD_HEIGHT,
             elements = [svg.Style(text=SVG_DASHBOARD_STYLE)] +
                        regression_dashboard.create_svg_elements()
     )
