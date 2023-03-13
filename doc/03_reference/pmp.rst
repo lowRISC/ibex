@@ -3,7 +3,7 @@
 Physical Memory Protection (PMP)
 ================================
 
-The Physical Memory Protection (PMP) unit implements region-based memory access checking in-accordance with the RISC-V Privileged Specification, version 1.12 and implements the `PMP Enhancements for memory access and execution prevention on Machine mode (Smepmp) version 1.0  https://github.com/riscv/riscv-tee/blob/191b563b08b31cc2974d604a3b670d8666a2e093/Smepmp/Smepmp.pdf>`_ extension.
+The Physical Memory Protection (PMP) unit implements region-based memory access checking in-accordance with the RISC-V Privileged Specification, version 1.12 and implements the `PMP Enhancements for memory access and execution prevention on Machine mode (Smepmp) version 1.0  <https://github.com/riscv/riscv-tee/blob/191b563b08b31cc2974d604a3b670d8666a2e093/Smepmp/Smepmp.pdf>`_ extension.
 The following configuration parameters are available to control PMP checking:
 
 +----------------+---------------+----------------------------------------------------------+
@@ -36,7 +36,7 @@ When the granularity is greater than zero, NA4 mode is not available and will be
 PMP Enhancements
 ----------------
 
-These are described in more detail in `PMP Enhancements for memory access and execution prevention on Machine mode (Smepmp) version 1.0  https://github.com/riscv/riscv-tee/blob/191b563b08b31cc2974d604a3b670d8666a2e093/Smepmp/Smepmp.pdf>`_.
+These are described in more detail in `PMP Enhancements for memory access and execution prevention on Machine mode (Smepmp) version 1.0 <https://github.com/riscv/riscv-tee/blob/191b563b08b31cc2974d604a3b670d8666a2e093/Smepmp/Smepmp.pdf>`_.
 If Ibex is configured to include PMP (PMPEnable is not zero) the PMP enhancements are always included.
 Use of the enhanced behavior is optional, if no writes to ``mseccfg`` occur PMP behavior will remain exactly as if Smepmp was not implemented.
 The enhancements add:

@@ -9,7 +9,7 @@ It follows these specifications:
   Ibex implements the Machine ISA version 1.12.
 * `RISC-V External Debug Support, version 0.13.2 <https://content.riscv.org/wp-content/uploads/2019/03/riscv-debug-release.pdf>`_
 * `RISC-V Bit-Manipulation Extension, version 1.0.0 <https://github.com/riscv/riscv-bitmanip/releases/download/1.0.0/bitmanip-1.0.0-38-g865e7a7.pdf>`_ and `version 0.93 (draft from January 10, 2021) <https://github.com/riscv/riscv-bitmanip/blob/master/bitmanip-0.93.pdf>`_
-* `PMP Enhancements for memory access and execution prevention on Machine mode (Smepmp) version 1.0  https://github.com/riscv/riscv-tee/blob/191b563b08b31cc2974d604a3b670d8666a2e093/Smepmp/Smepmp.pdf>`_
+* `PMP Enhancements for memory access and execution prevention on Machine mode (Smepmp) version 1.0 <https://github.com/riscv/riscv-tee/blob/191b563b08b31cc2974d604a3b670d8666a2e093/Smepmp/Smepmp.pdf>`_
 
 Many features in the RISC-V specification are optional, and Ibex can be parametrized to enable or disable some of them.
 
