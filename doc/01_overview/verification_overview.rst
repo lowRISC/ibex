@@ -17,4 +17,6 @@ Current verification closure effort is focussed on the ``opentitan`` configurati
 Verification maturity is tracked via :ref:`verification_stages` that are `defined by the OpenTitan project <https://docs.opentitan.org/doc/project/development_stages/#hardware-verification-stages-v>`_.
 Ibex has achieved **V2S** for the `opentitan` configuration, broadly this means verification is almost complete (over 90% code and functional coverage hit with over 90% regression pass rate with test plan and coverage plan fully implemented) but not yet closed.
 
-Nightly regression results are not yet published but we aim to do this soon.
+Nightly regression results, including a coverage summary and details of test failures, for the ``opentitan`` Ibex configuration are published at https://ibex.reports.lowrisc.org/opentitan/latest/report.html. Below is a summary of these results:
+
+.. image:: https://ibex.reports.lowrisc.org/opentitan/latest/summary.svg
