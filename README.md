@@ -12,8 +12,6 @@ seen multiple tape-outs. Ibex supports the Integer (I) or Embedded (E),
 Integer Multiplication and Division (M), Compressed (C), and B (Bit
 Manipulation) extensions.
 
-The block diagram below shows the *small* parametrization with a 2-stage
-pipeline.
 <p align="center"><img src="doc/03_reference/images/blockdiagram.svg" width="650"></p>
 
 Ibex was initially developed as part of the [PULP platform](https://www.pulp-platform.org)
