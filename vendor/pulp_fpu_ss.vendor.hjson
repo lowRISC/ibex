@@ -1,0 +1,21 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{
+  name: "pulp_fpu_ss",
+  target_dir: "pulp_fpu_ss",
+
+  upstream: {
+      url: "https://github.com/pulp-platform/fpu_ss"
+      rev: "main"
+  }
+
+  exclude_from_upstream: [
+    "bhv",
+    "fpnew",
+    ".gitmodules",
+
+  ]
+
+  patch_dir: "patches/pulp_fpu_ss"
+}

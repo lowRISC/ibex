@@ -1,0 +1,69 @@
+From f571a1b9f9300b443afc0732aa85dfa90688b6a8 Mon Sep 17 00:00:00 2001
+From: Pirmin Vogel <vogelpi@lowrisc.org>
+Date: Fri, 31 Mar 2023 13:53:06 +0200
+Subject: [PATCH] Add .core files for FuseSoC
+
+Signed-off-by: Pirmin Vogel <vogelpi@lowrisc.org>
+
+diff --git a/fpnew.core b/fpnew.core
+new file mode 100644
+index 0000000..c6c6685
+--- /dev/null
++++ b/fpnew.core
+@@ -0,0 +1,33 @@
++CAPI=2:
++# Copyright lowRISC contributors.
++# Licensed under the Apache License, Version 2.0, see LICENSE for details.
++# SPDX-License-Identifier: Apache-2.0
++name: "lowrisc:ibex:fpnew:0.1"
++description: "fpnew"
++
++filesets:
++  files_rtl:
++    depend:
++      - pulp-platform.org::common_cells:1.20.0
++      - lowrisc:ibex:fpnew_pkg
++      - lowrisc:ibex:fpnew_divsqrt
++    files:
++      - src/fpnew_top.sv
++      - src/fpnew_cast_multi.sv
++      - src/fpnew_classifier.sv
++      - src/fpnew_divsqrt_multi.sv
++      - src/fpnew_fma.sv
++      - src/fpnew_fma_multi.sv
++      - src/fpnew_noncomp.sv
++      - src/fpnew_opgroup_block.sv
++      - src/fpnew_opgroup_fmt_slice.sv
++      - src/fpnew_opgroup_multifmt_slice.sv
++      - src/fpnew_rounding.sv
++    file_type: systemVerilogSource
++
++targets:
++  default: &default_target
++    filesets:
++      - files_rtl
++    toplevel: fpnew_top
++    default_tool: vcs
+diff --git a/fpnew_pkg.core b/fpnew_pkg.core
+new file mode 100644
+index 0000000..aeb8d55
+--- /dev/null
++++ b/fpnew_pkg.core
+@@ -0,0 +1,17 @@
++CAPI=2:
++# Copyright lowRISC contributors.
++# Licensed under the Apache License, Version 2.0, see LICENSE for details.
++# SPDX-License-Identifier: Apache-2.0
++name: "lowrisc:ibex:fpnew_pkg:0.1"
++description: "fpnew package"
++
++filesets:
++  files_rtl:
++    files:
++      - src/fpnew_pkg.sv
++    file_type: systemVerilogSource
++
++targets:
++  default:
++    filesets:
++      - files_rtl

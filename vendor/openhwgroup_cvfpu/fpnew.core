@@ -1,0 +1,33 @@
+CAPI=2:
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+name: "lowrisc:ibex:fpnew:0.1"
+description: "fpnew"
+
+filesets:
+  files_rtl:
+    depend:
+      - pulp-platform.org::common_cells:1.20.0
+      - lowrisc:ibex:fpnew_pkg
+      - lowrisc:ibex:fpnew_divsqrt
+    files:
+      - src/fpnew_top.sv
+      - src/fpnew_cast_multi.sv
+      - src/fpnew_classifier.sv
+      - src/fpnew_divsqrt_multi.sv
+      - src/fpnew_fma.sv
+      - src/fpnew_fma_multi.sv
+      - src/fpnew_noncomp.sv
+      - src/fpnew_opgroup_block.sv
+      - src/fpnew_opgroup_fmt_slice.sv
+      - src/fpnew_opgroup_multifmt_slice.sv
+      - src/fpnew_rounding.sv
+    file_type: systemVerilogSource
+
+targets:
+  default: &default_target
+    filesets:
+      - files_rtl
+    toplevel: fpnew_top
+    default_tool: vcs

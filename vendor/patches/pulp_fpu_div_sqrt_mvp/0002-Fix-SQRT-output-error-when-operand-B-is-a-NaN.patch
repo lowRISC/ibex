@@ -1,0 +1,23 @@
+From 6ed71f0b638698b56f2cb188da91cea0b54f8dd6 Mon Sep 17 00:00:00 2001
+From: Pirmin Vogel <vogelpi@lowrisc.org>
+Date: Fri, 31 Mar 2023 13:48:06 +0200
+Subject: [PATCH 2/2] Fix SQRT output error when operand B is a NaN
+
+This resolves pulp-platform/fpu_div_sqrt_mvp#7. See also
+pulp-platform/fpu_div_sqrt_mvp#13.
+
+Signed-off-by: Pirmin Vogel <vogelpi@lowrisc.org>
+
+diff --git a/hdl/norm_div_sqrt_mvp.sv b/hdl/norm_div_sqrt_mvp.sv
+index 590abe9..7803e66 100644
+--- a/hdl/norm_div_sqrt_mvp.sv
++++ b/hdl/norm_div_sqrt_mvp.sv
+@@ -125,7 +125,7 @@ module norm_div_sqrt_mvp
+            NV_OP_S = SNaN_SI;
+          end
+ 
+-      else if(NaN_b_SI)   //if b is NaN, return NaN
++      else if(Div_enable_SI && NaN_b_SI)   //if b is NaN, return NaN
+         begin
+           Div_Zero_S=1'b0;
+           Exp_OF_S=1'b0;

@@ -1,0 +1,18 @@
+From 2ba463988dd137c5b9165193f728b06f53c59149 Mon Sep 17 00:00:00 2001
+From: Pirmin Vogel <vogelpi@lowrisc.org>
+Date: Fri, 31 Mar 2023 15:56:44 +0200
+Subject: [PATCH 3/3] Add missing newline at end of file
+
+Signed-off-by: Pirmin Vogel <vogelpi@lowrisc.org>
+
+diff --git a/src/fpu_ss_instr_pkg.sv b/src/fpu_ss_instr_pkg.sv
+index c1b92d7..411ea5a 100644
+--- a/src/fpu_ss_instr_pkg.sv
++++ b/src/fpu_ss_instr_pkg.sv
+@@ -496,4 +496,4 @@ package fpu_ss_instr_pkg;
+   localparam logic [31:0] VFDOTPEX_S_R_B     = 32'b1001011??????????111?????0110011;
+   localparam logic [31:0] VFAVG_B            = 32'b1010110??????????011?????0110011;
+   localparam logic [31:0] VFAVG_R_B          = 32'b1010110??????????111?????0110011;
+-endpackage // fpu_ss_instr_pkg
+\ No newline at end of file
++endpackage // fpu_ss_instr_pkg

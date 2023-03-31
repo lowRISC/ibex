@@ -1,0 +1,26 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{
+  name: "openhwgroup_cvfpu",
+  target_dir: "openhwgroup_cvfpu",
+
+  upstream: {
+      url: "https://github.com/openhwgroup/cvfpu"
+      rev: "1d0ac3b"
+  }
+
+  exclude_from_upstream: [
+    "src/common_cells"
+    "src/fpu_div_sqrt_mvp"
+    "tb",
+    ".gitignore",
+    ".gitmodules",
+    "Bender.yml",
+    "CITATION.cff",
+    "ips_list.yml",
+    "src_files.yml",
+  ]
+
+  patch_dir: "patches/openhwgroup_cvfpu"
+}

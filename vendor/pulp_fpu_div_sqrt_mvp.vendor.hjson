@@ -1,0 +1,21 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{
+  name: "pulp_fpu_div_sqrt_mvp",
+  target_dir: "pulp_fpu_div_sqrt_mvp",
+
+  upstream: {
+      url: "https://github.com/pulp-platform/fpu_div_sqrt_mvp"
+      rev: "86e1f55"
+  }
+
+  exclude_from_upstream: [
+    "document",
+    "hdl/.gitignore",
+    "Bender.yml",
+    "src_files.yml",
+  ]
+  
+  patch_dir: "patches/pulp_fpu_div_sqrt_mvp"
+}

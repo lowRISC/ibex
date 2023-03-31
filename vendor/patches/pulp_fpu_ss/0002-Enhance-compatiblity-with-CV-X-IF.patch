@@ -1,0 +1,252 @@
+From 5c9dc35171b39ebfc56e6005b87346d727ccab61 Mon Sep 17 00:00:00 2001
+From: Pirmin Vogel <vogelpi@lowrisc.org>
+Date: Fri, 31 Mar 2023 12:07:47 +0200
+Subject: [PATCH 2/3] Enhance compatiblity with CV-X-IF
+
+These changes have been done by @bertwhl.
+
+Signed-off-by: Pirmin Vogel <vogelpi@lowrisc.org>
+
+diff --git a/src/fpu_ss.sv b/src/fpu_ss.sv
+index f8c5f19..736fe36 100644
+--- a/src/fpu_ss.sv
++++ b/src/fpu_ss.sv
+@@ -131,6 +131,7 @@ module fpu_ss
+   fpnew_pkg::int_format_e                         int_fmt;
+   logic                                           rd_is_fp;
+   logic                                           csr_instr;
++  logic                                           csr_instr_rec;
+   logic                                           vectorial_op;
+   logic                                           op_mode;
+   logic                                           use_fpu;
+@@ -198,9 +199,9 @@ module fpu_ss
+   assign x_issue_resp_o.accept = prd_rsp.p_accept;
+   assign x_issue_resp_o.writeback = prd_rsp.p_writeback;
+   assign x_issue_resp_o.loadstore = prd_rsp.p_is_mem_op;
+-  assign x_issue_resp_o.float = '0;
+   assign x_issue_resp_o.dualwrite = '0;
+   assign x_issue_resp_o.dualread  = '0;
++  assign x_issue_resp_o.ecswrite  = '0;
+   assign x_issue_resp_o.exc = '0;
+ 
+   // input buffer signal assignment
+@@ -232,8 +233,10 @@ module fpu_ss
+ 
+   // memory request signal assignments
+   assign x_mem_req_o.mode   = in_buf_pop_data.mode;
+-  assign x_mem_req_o.size   = instr[14:12];
++  assign x_mem_req_o.size   = {1'b0, instr[14:12]};
+   assign x_mem_req_o.id     = in_buf_pop_data.id;
++  assign x_mem_req_o.attr   = 2'b00;
++  assign x_mem_req_o.be     = 4'b1111;
+ 
+   always_comb begin
+     x_mem_req_o.wdata = fpr_operands[1];
+@@ -380,7 +383,8 @@ module fpu_ss
+       .csr_wb_o           (csr_wb),
+       .csr_wb_addr_o      (csr_wb_addr),
+       .csr_wb_id_o        (csr_wb_id),
+-      .csr_instr_o        (csr_instr)
++      .csr_instr_o        (csr_instr),
++      .csr_instr_rec_o    (csr_instr_rec)
+   );
+ 
+   // ------------------------
+@@ -462,7 +466,8 @@ module fpu_ss
+       // Result Interface
+       .x_result_ready_i(x_result_ready_i),
+       .x_result_valid_o(x_result_valid_o),
+-      .csr_instr_i(csr_instr)
++      .csr_instr_i(csr_instr),
++      .csr_instr_rec_i(csr_instr_rec)
+   );
+ 
+   // -------------------------------------
+@@ -644,6 +649,8 @@ module fpu_ss
+   // -------------------------
+   assign x_result_o.exc     = 1'b0;  // no errors can occur for now
+   assign x_result_o.exccode = '0; // no errors can occur for now
++  assign x_result_o.err     = 1'b0;
++  assign x_result_o.dbg     = 1'b0;
+ 
+   always_comb begin
+     x_result_o.data = fpu_result;
+@@ -655,12 +662,16 @@ module fpu_ss
+   always_comb begin
+     x_result_o.rd = '0;
+     x_result_o.id = '0;
+-    if (fpu_out_valid & x_result_valid_o & x_result_ready_i) begin
+-      x_result_o.rd = fpu_tag_out.addr;
+-      x_result_o.id = fpu_tag_out.id;
+-    end else if (x_result_valid_o & x_result_ready_i & ~fpu_out_valid) begin
+-      x_result_o.rd = csr_wb_addr;
+-      x_result_o.id = csr_wb_id;
++    if (x_result_valid_o) begin
++      if (fpu_out_valid) begin
++        x_result_o.rd = fpu_tag_out.addr;
++        x_result_o.id = fpu_tag_out.id;
++      end else if (csr_instr) begin
++        x_result_o.rd = csr_wb_addr;
++        x_result_o.id = csr_wb_id;
++      end else begin
++        x_result_o.id = mem_pop_data.id;
++      end
+     end
+   end
+ 
+@@ -674,7 +685,7 @@ module fpu_ss
+   always_comb begin
+     x_result_o.ecswe   = '0;
+     x_result_o.ecsdata = '0;
+-    if (fpu_out_valid & x_result_valid_o & x_result_ready_i & fpu_tag_out.rd_is_fp) begin
++    if (fpu_out_valid & x_result_valid_o & fpu_tag_out.rd_is_fp) begin
+       x_result_o.ecswe   = 3'b010;
+       x_result_o.ecsdata = 6'b001100;
+     end
+diff --git a/src/fpu_ss_controller.sv b/src/fpu_ss_controller.sv
+index d85fa1f..dc55284 100644
+--- a/src/fpu_ss_controller.sv
++++ b/src/fpu_ss_controller.sv
+@@ -89,7 +89,8 @@ module fpu_ss_controller
+     // Result Interface
+     input  logic x_result_ready_i,
+     output logic x_result_valid_o,
+-    input  logic csr_instr_i
++    input  logic csr_instr_i,
++    input  logic csr_instr_rec_i
+ );
+ 
+   // dependencies and forwarding
+@@ -132,7 +133,7 @@ module fpu_ss_controller
+   // ------------
+   always_comb begin
+     in_buf_pop_ready_o = 1'b0;
+-    if ((fpu_in_valid_o & fpu_in_ready_i) | (x_result_hs & csr_instr_i) | x_mem_req_hs) begin
++    if ((fpu_in_valid_o & fpu_in_ready_i) | csr_instr_rec_i | x_mem_req_hs) begin
+       in_buf_pop_ready_o = 1'b1;
+     end
+   end
+@@ -187,7 +188,7 @@ module fpu_ss_controller
+   // Memory Interface and Memory Buffer
+   // ----------------------------------
+   assign x_mem_req_hs = x_mem_valid_o & x_mem_ready_i;
+-  assign x_mem_req_spec_o = 1'b0;  // no speculative memory operations -> hardwire to 0
++  assign x_mem_req_spec_o = 1'b1;  // no speculative memory operations -> hardwire to 0
+ 
+   assign mem_push_valid_o = x_mem_req_hs;
+   assign mem_pop_ready_o = x_mem_result_valid_i;
+@@ -195,7 +196,7 @@ module fpu_ss_controller
+   always_comb begin
+     x_mem_valid_o = 1'b0;
+     if ((is_load_i | is_store_i) & ~dep_rs_o & ~dep_rd_o & in_buf_pop_valid_i & mem_push_ready_i
+-       & (x_issue_ready_i | INPUT_BUFFER_DEPTH)) begin
++       & (x_issue_ready_i || (INPUT_BUFFER_DEPTH != 0))) begin
+       x_mem_valid_o = 1'b1;
+     end
+   end
+@@ -235,7 +236,7 @@ module fpu_ss_controller
+   assign x_result_hs = x_result_ready_i & x_result_valid_o;
+   always_comb begin
+     x_result_valid_o = 1'b0;
+-    if (fpu_out_valid_i | csr_instr_i) begin
++    if (fpu_out_valid_i | csr_instr_i | x_mem_result_valid_i) begin
+       x_result_valid_o = 1'b1;
+     end
+   end
+diff --git a/src/fpu_ss_csr.sv b/src/fpu_ss_csr.sv
+index 238c17a..82a7068 100644
+--- a/src/fpu_ss_csr.sv
++++ b/src/fpu_ss_csr.sv
+@@ -26,7 +26,8 @@ module fpu_ss_csr (
+     output logic                      csr_wb_o,
+     output logic               [ 4:0] csr_wb_addr_o,
+     output logic               [ 3:0] csr_wb_id_o,
+-    output logic                      csr_instr_o
++    output logic                      csr_instr_o,
++    output logic                      csr_instr_rec_o
+ 
+ );
+ 
+@@ -108,6 +109,25 @@ module fpu_ss_csr (
+     endcase
+   end
+ 
++  always_comb begin
++    csr_instr_rec_o = 1'b0;
++    if (in_buf_pop_valid_i) begin
++      unique casez (instr_i)
++        fpu_ss_instr_pkg::CSRRW_FSCSR,  // Swap value in fcsr with the one in rs1
++        fpu_ss_instr_pkg::CSRRS_FRCSR,  // Read value from fcsr and copy to int reg
++        fpu_ss_instr_pkg::CSRRW_FSRM,  // Swap frm value in fcsr with the one in rs1
++        fpu_ss_instr_pkg::CSRRS_FRRM, // Read frm from fcsr and copy to int reg (zeropadding at the front)
++        fpu_ss_instr_pkg::CSRRWI_FSRMI, // Swap frm value in fcsr with the one in the immediat instr_i [17:15] (immediat is at [19:15])
++        fpu_ss_instr_pkg::CSRRW_FSFLAGS,  // Swap fflags value in fcsr with the one in rs1
++        fpu_ss_instr_pkg::CSRRS_FRFLAGS, // Read fflags from fcsr and copy to int reg (zeropadding at the front)
++        fpu_ss_instr_pkg::CSRRWI_FSFLAGSI: begin // Swap frm value in fcsr with the one in the immediat instr_i [19:15] (immediat is at [19:15])
++          csr_instr_rec_o = 1'b1;
++        end
++        default:;
++      endcase
++    end
++  end
++
+   always_ff @(posedge clk_i, negedge rst_ni) begin
+     if (~rst_ni) begin
+       fcsr_q <= '0;
+diff --git a/src/fpu_ss_pkg.sv b/src/fpu_ss_pkg.sv
+index 7bead3c..228a2a2 100644
+--- a/src/fpu_ss_pkg.sv
++++ b/src/fpu_ss_pkg.sv
+@@ -49,10 +49,10 @@ package fpu_ss_pkg;
+   typedef struct packed {
+     logic accept;
+     logic writeback;
+-    logic float;
+     logic dualwrite;
+     logic dualread;
+     logic loadstore;
++    logic ecswrite;
+     logic exc;
+   } x_issue_resp_t;
+ 
+@@ -62,14 +62,16 @@ package fpu_ss_pkg;
+   } x_commit_t;
+ 
+   typedef struct packed {
+-    logic [ X_ID_WIDTH-1:0] id;
+-    logic [           31:0] addr;
+-    logic [            1:0] mode;
+-    logic [            1:0] size;
+-    logic                   we;
+-    logic [X_MEM_WIDTH-1:0] wdata;
+-    logic                   last;
+-    logic                   spec;
++    logic [ X_ID_WIDTH-1:0]   id;
++    logic [           31:0]   addr;
++    logic [            1:0]   mode;
++    logic                     we;
++    logic [            2:0]   size;
++    logic [X_MEM_WIDTH/8-1:0] be;
++    logic [1:0]               attr;
++    logic [X_MEM_WIDTH-1:0]   wdata;
++    logic                     last;
++    logic                     spec;
+   } x_mem_req_t;
+ 
+   typedef struct packed {
+@@ -94,6 +96,8 @@ package fpu_ss_pkg;
+     logic [               5:0] ecsdata;
+     logic                      exc;
+     logic [               5:0] exccode;
++    logic                      dbg;
++    logic                      err;
+   } x_result_t;
+ 
+   // --------------
+@@ -230,4 +234,4 @@ package fpu_ss_pkg;
+   },  // CONV
+   PipeConfig: fpnew_pkg::BEFORE};
+ 
+-endpackage // fpu_ss_pkg
+\ No newline at end of file
++endpackage // fpu_ss_pkg

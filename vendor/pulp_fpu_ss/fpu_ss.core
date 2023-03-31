@@ -1,0 +1,29 @@
+CAPI=2:
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+name: "lowrisc:ibex:fpu_ss:0.1"
+description: "FPU subsystem"
+
+filesets:
+  files_rtl:
+    depend:
+      - pulp-platform.org::common_cells:1.20.0
+      - lowrisc:ibex:fpnew
+      - lowrisc:ibex:fpu_ss_pkg
+    files:
+      - src/fpu_ss.sv
+      - src/fpu_ss_compressed_predecoder.sv
+      - src/fpu_ss_predecoder.sv
+      - src/fpu_ss_decoder.sv
+      - src/fpu_ss_regfile.sv
+      - src/fpu_ss_csr.sv
+      - src/fpu_ss_controller.sv
+    file_type: systemVerilogSource
+
+targets:
+  default: &default_target
+    filesets:
+      - files_rtl
+    toplevel: fpu_ss
+    default_tool: vcs

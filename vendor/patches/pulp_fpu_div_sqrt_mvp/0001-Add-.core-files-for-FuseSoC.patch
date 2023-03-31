@@ -1,0 +1,39 @@
+From 2ced6cec673abae147f4dcaa99e63fc92ece2228 Mon Sep 17 00:00:00 2001
+From: Pirmin Vogel <vogelpi@lowrisc.org>
+Date: Fri, 31 Mar 2023 13:46:00 +0200
+Subject: [PATCH 1/2] Add .core files for FuseSoC
+
+Signed-off-by: Pirmin Vogel <vogelpi@lowrisc.org>
+
+diff --git a/fpu_div_sprt_mvp.core b/fpu_div_sprt_mvp.core
+new file mode 100644
+index 0000000..9a899f0
+--- /dev/null
++++ b/fpu_div_sprt_mvp.core
+@@ -0,0 +1,26 @@
++CAPI=2:
++# Copyright lowRISC contributors.
++# Licensed under the Apache License, Version 2.0, see LICENSE for details.
++# SPDX-License-Identifier: Apache-2.0
++name: "lowrisc:ibex:fpnew_divsqrt:0.1"
++description: "fpnew_divsqrt"
++
++filesets:
++  files_rtl:
++    files:
++      - hdl/defs_div_sqrt_mvp.sv
++      - hdl/control_mvp.sv
++      - hdl/div_sqrt_mvp_wrapper.sv
++      - hdl/div_sqrt_top_mvp.sv
++      - hdl/iteration_div_sqrt_mvp.sv
++      - hdl/norm_div_sqrt_mvp.sv
++      - hdl/nrbd_nrsc_mvp.sv
++      - hdl/preprocess_mvp.sv
++    file_type: systemVerilogSource
++
++targets:
++  default: &default_target
++    filesets:
++      - files_rtl
++    toplevel: div_sqrt_top_mvp
++    default_tool: vcs

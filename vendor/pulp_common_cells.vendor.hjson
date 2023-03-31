@@ -1,0 +1,28 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{
+  name: "pulp_common_cells",
+  target_dir: "pulp_common_cells",
+
+  upstream: {
+      url: "https://github.com/pulp-platform/common_cells"
+      rev: "6aeee85"
+  }
+
+  exclude_from_upstream: [
+    ".github",
+    "ci",
+    "formal",
+    "test",
+    ".gitignore",
+    ".gitlab-ci.yml",
+    ".travis.yml",
+    "Bender.yml",
+    "Makefile",
+    "ips_list.yml",
+    "src_files.yml",
+  ]
+  
+  patch_dir: "patches/pulp_common_cells"
+}
