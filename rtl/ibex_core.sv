@@ -1643,7 +1643,7 @@ module ibex_core import ibex_pkg::*; #(
 
   // Capture read data from LSU when it becomes valid
   always_comb begin
-    if (lsu_resp_valid) begin
+    if (lsu_rdata_valid) begin
       rvfi_mem_rdata_d = rf_wdata_lsu;
     end else begin
       rvfi_mem_rdata_d = rvfi_mem_rdata_q;
