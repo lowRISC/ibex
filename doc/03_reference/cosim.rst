@@ -133,7 +133,15 @@ The DV environment is responsible for determining when to call ``set_mip``, ``se
 
 The state of the incoming interrupts and debug request is sampled when an instruction moves from IF to ID/EX.
 The sampled state is tracked with the rest of the RVFI pipeline and used to call ``set_mip``, ``set_debug_req`` and ``set_nmi`` when the instruction is output by the RVFI.
-See the comments in :file:`rtl/ibex_core.sv`, around the ``new_debug_req``, ``new_nmi`` and ``new_irq`` signals for further details.
+
+A complication occurs when more than one interrupt or debug requests occur between individual instruction fetches.
+One interrupt or debug request may take priority over another when they all occur together but when they occur in time is important as well.
+If interrupt and debug request notification is associated exclusively with retired instructions the co-simulation system cannot correctly prioritise multiple interrupts and debug requests.
+To deal with this the RVFI can also signal an interrupt event not associated with an instruction by setting ``rvfi_ext_irq_valid`` without setting ``rvfi_valid``.
+When this is set the interrupt related RVFI signals are valid and provide the interrupt state.
+The RVFI is used in this way, as opposed to a separate notification interface, so the interrupt notifications are ordered relative to the retired instructions.
+
+See the comments in :file:`rtl/ibex_core.sv`, around the ``new_debug_req``, ``new_nmi``, ``new_irq`` and ``rvfi_irq_valid`` signals for further details.
 
 Memory Access Checking and Bus Errors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
