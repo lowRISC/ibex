@@ -16,7 +16,7 @@ Only VCS is supported as a simulator, though no VCS specific functionality is re
 To run the co-simulation system, a particular version of Spike is required (see the Setup and Usage section, below).
 
 The RISC-V Formal Interface (RVFI) is used to provide information about retired instructions and instructions that produce synchronous traps for checking.
-The RVFI has been extended to provide interrupt and debug information and the value of the ``mcycle`` CSR.
+The RVFI has been extended to provide interrupt and debug information and the value of various CSRs that are harder to model (e.g. ``mcycle``).
 These extended signals have the prefix ``rvfi_ext``
 
 Setup and Usage
