@@ -1494,7 +1494,6 @@ module ibex_core import ibex_pkg::*; #(
         if (i == 0) begin
           if (rvfi_id_done) begin
             rvfi_stage_halt[i]      <= '0;
-            // TODO: Sort this out for writeback stage
             rvfi_stage_trap[i]                 <= rvfi_trap_id;
             rvfi_stage_intr[i]                 <= rvfi_intr_d;
             rvfi_stage_order[i]                <= rvfi_stage_order_d;
@@ -1791,7 +1790,6 @@ module ibex_core import ibex_pkg::*; #(
           g_pmp.pmp_i.region_match_all[PMP_D][i_region] & data_req_out)
       // pmp_cfg[5:6] is reserved and because of that the width of it inside cs_registers module
       // is 6-bit.
-      // TODO: Cover writes to the reserved bits
       `DV_FCOV_SIGNAL(logic, warl_check_pmpcfg,
           fcov_csr_write &&
           (cs_registers_i.g_pmp_registers.g_pmp_csrs[i_region].u_pmp_cfg_csr.wr_data_i !=
