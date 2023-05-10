@@ -49,7 +49,8 @@ case "$ID-$VERSION_ID" in
         libelf-dev \
         clang-format \
         wget \
-        xz-utils
+        xz-utils \
+        libcairo2-dev
 
     wget https://storage.googleapis.com/ibex-cosim-builds/ibex-cosim-"$IBEX_COSIM_VERSION".tar.gz
     $SUDO_CMD mkdir -p /tools/riscv-isa-sim
