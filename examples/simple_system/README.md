@@ -68,10 +68,17 @@ built as described above. Use
 `./examples/sw/simple_system/hello_test/hello_test.elf` to run the `hello_test`
 binary.
 
-Pass `-t` to get an FST trace of execution that can be viewed with
-[GTKWave](http://gtkwave.sourceforge.net/). If using the `hello_test`
-binary the simulator will halt itself, outputting some simulation
-statistics:
+Pass `-t` to get an FST/VCD trace of execution that can be viewed with
+[GTKWave](http://gtkwave.sourceforge.net/).
+
+By default a FST file is created in your current directory.
+
+To produce a VCD file, remove the Verilator flags `--trace-fst` and
+`-DVM_TRACE_FMT_FST` in ibex_simple_system.core before building the simulator
+binary.
+
+If using the `hello_test` binary the simulator will halt itself, outputting some
+simulation statistics:
 
 ```
 Simulation statistics
