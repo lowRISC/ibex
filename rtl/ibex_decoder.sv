@@ -551,6 +551,9 @@ module ibex_decoder #(
               multdiv_signed_mode_o = 2'b00;
               illegal_insn          = (RV32M == RV32MNone) ? 1'b1 : 1'b0;
             end
+            //zicond
+            {7'b000_0111, 3'b101},
+            {7'b000_0111, 3'b111}:illegal_insn = 1'b0;
             default: begin
               illegal_insn = 1'b1;
             end
