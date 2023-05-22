@@ -42,7 +42,7 @@ module simulator_ctrl #(
   localparam logic [7:0] SIM_CTRL_ADDR = 8'h2;
 
   logic [7:0] ctrl_addr;
-  logic [2:0] sim_finish = 3'b000;
+  logic [2:0] sim_finish;
 
   integer log_fd;
 
