@@ -210,7 +210,7 @@ module ibex_simple_system (
       .clk_i                  (clk_sys),
       .rst_ni                 (rst_sys_n),
 
-      .test_en_i              ('b0),
+      .test_en_i              (1'b0),
       .scan_rst_ni            (1'b1),
       .ram_cfg_i              (prim_ram_1p_pkg::RAM_1P_CFG_DEFAULT),
 
@@ -249,7 +249,7 @@ module ibex_simple_system (
       .scramble_nonce_i       ('0),
       .scramble_req_o         (),
 
-      .debug_req_i            ('b0),
+      .debug_req_i            (1'b0),
       .crash_dump_o           (),
       .double_fault_seen_o    (),
 
