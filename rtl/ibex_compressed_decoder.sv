@@ -63,9 +63,64 @@ module ibex_compressed_decoder (
                        2'b00, {OPCODE_STORE}};
           end
 
+          3'b100: begin // loads and stores
+             unique case (instr_i[12:10])
+               3'b000: begin
+                  // c.lbu -> lbu  rd', imm(rs1')
+                  instr_o = {10'b0, instr_i[5], instr_i[6], 2'b01, instr_i[9:7],
+                             3'b100, 2'b01, instr_i[4:2], {OPCODE_LOAD}};
+               end
+
+               3'b001: begin
+                  unique case (instr_i[6])
+                    1'b0: begin
+                       // c.lhu -> lhu rd', imm(rs1')
+                       instr_o = {10'b0, instr_i[5], 1'b0, 2'b01, instr_i[9:7],
+                                  3'b101, 2'b01, instr_i[4:2], {OPCODE_LOAD}};
+                    end
+                    1'b1: begin
+                       // c.lh -> lh rd', imm(rs1')
+                        instr_o = {10'b0, instr_i[5], 1'b0, 2'b01, instr_i[9:7],
+                                  3'b001, 2'b01, instr_i[4:2], {OPCODE_LOAD}};
+                    end
+
+                    default: begin
+                       illegal_instr_o = 1'b1;
+                    end
+                  endcase
+               end
+
+               3'b010: begin
+                  // c.sb -> sb rs2', imm(rs1')
+                  instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7],
+                             3'b000, 3'b0, instr_i[5], instr_i[6], {OPCODE_STORE}};
+               end
+
+               3'b011: begin
+                  unique case (instr_i[6])
+                    1'b0: begin
+                       // c.sh -> sh rs2', imm(rs1') // The instr_i[6] should always be zero according to the reference
+                      instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7],
+                                 3'b001, 3'b0, instr_i[5], 1'b0, {OPCODE_STORE}};
+                    end
+                    1'b1: begin
+                      illegal_instr_o = 1'b1;
+                    end
+
+                    default: begin
+                       illegal_instr_o = 1'b1;
+                    end
+                  endcase
+               end
+
+               default: begin
+                  illegal_instr_o = 1'b1;
+               end
+             endcase // unique case (instr_i[12:10])
+          end
+
           3'b001,
           3'b011,
-          3'b100,
           3'b101,
           3'b111: begin
             illegal_instr_o = 1'b1;
@@ -165,12 +220,60 @@ module ibex_compressed_decoder (
                   end
 
                   3'b100,
-                  3'b101,
-                  3'b110,
+                  3'b101: begin
+                     // 100: c.subw
+                     // 101: c.addw
+                     illegal_instr_o = 1'b1;
+                  end
+
+                  3'b110: begin
+                     // c.mul -> m.mul rsd', rsd', rs2'
+                     instr_o = {7'b0000001, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7],
+                                3'b000, 2'b01, instr_i[9:7], {OPCODE_OP}};
+                  end
+
                   3'b111: begin
-                    // 100: c.subw
-                    // 101: c.addw
-                    illegal_instr_o = 1'b1;
+                    unique case ({instr_i[4:2]})
+                      3'b000: begin
+                         // c.zext.b -> andi rsd', rsd', 8'hff
+                         instr_o = {4'b0, 8'hff, 2'b01, instr_i[9:7], 3'b111,
+                                    2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+
+                      end
+
+                      3'b001: begin
+                         // c.sext.b -> sext.b rsd', rsd'
+                         instr_o = {7'b0110000, 5'b00100, 2'b01, instr_i[9:7],
+                                    3'b001, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+                      end
+
+                      3'b010: begin
+                         // c.zext.h -> zext.h rsd', rsd'
+                         instr_o = {7'b0000100, 5'b0, 2'b01, instr_i[9:7],
+                                    3'b100, 2'b01, instr_i[9:7], {OPCODE_OP}};
+                      end
+
+                      3'b011: begin
+                         // c.sext.h -> sext.h rsd', rsd'
+                         instr_o = {7'b0110000, 5'b00101, 2'b01, instr_i[9:7],
+                                    3'b001, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+                      end
+
+                      3'b100: begin
+                         // c.zext.w -> add.uw: only valid instruction for RV64 cores
+                         illegal_instr_o = 1'b1;
+                      end
+
+                      3'b101: begin
+                         // c.not -> xori rsd', rsd', -1
+                         instr_o = {12'hfff, 2'b01, instr_i[9:7], 3'b100,
+                                    2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+                      end
+
+                      default: begin
+                         illegal_instr_o = 1'b1;
+                      end
+                    endcase
                   end
 
                   default: begin

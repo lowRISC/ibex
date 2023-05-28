@@ -603,6 +603,11 @@ module ibex_tracer (
     decoded_str = $sformatf("%s\t%0x", mnemonic, rvfi_pc_wdata);
   endfunction
 
+  function automatic void decode_Zc_cu_insn(input string mnemonic);
+    data_accessed = RS1 | RD; // RS1 == RD
+    decoded_str = $sformatf("%s\tx%0d", mnemonic, rvfi_rd_addr);
+  endfunction
+
   function automatic void decode_compressed_load_insn(input string mnemonic);
     logic [7:0] imm;
 
@@ -612,6 +617,20 @@ module ibex_tracer (
     end else begin
       // C.LWSP
       imm = {rvfi_insn[3:2], rvfi_insn[12], rvfi_insn[6:4], 2'b00};
+    end
+    data_accessed = RS1 | RD | MEM;
+    decoded_str = $sformatf("%s\tx%0d,%0d(x%0d)", mnemonic, rvfi_rd_addr, imm, rvfi_rs1_addr);
+  endfunction
+
+  function automatic void decode_Zc_load_insn(input string mnemonic);
+    logic [1:0] imm;
+
+    if (rvfi_insn[10] == 1'b0) begin
+      // C.LBU
+      imm = {rvfi_insn[5], rvfi_insn[6]};
+    end else begin
+      // C.LHU, C.LH
+      imm = {rvfi_insn[5], 1'b0};
     end
     data_accessed = RS1 | RD | MEM;
     decoded_str = $sformatf("%s\tx%0d,%0d(x%0d)", mnemonic, rvfi_rd_addr, imm, rvfi_rs1_addr);
@@ -628,6 +647,20 @@ module ibex_tracer (
     end
     data_accessed = RS1 | RS2 | MEM;
     decoded_str = $sformatf("%s\tx%0d,%0d(x%0d)", mnemonic, rvfi_rs2_addr, imm, rvfi_rs1_addr);
+  endfunction
+
+  function automatic void decode_Zc_store_insn(input string mnemonic);
+    logic [1:0] imm;
+
+    if (rvfi_insn[10] == 1'b0) begin
+      // C.SB
+      imm = {rvfi_insn[5], rvfi_insn[6]};
+    end else begin
+      // C.SH
+      imm = {rvfi_insn[5], 1'b0};
+    end
+    data_accessed = RS1 | RS2 | MEM;
+    decoded_str = $sformatf("%s\tx%0d,%0d(x%0d)", mnemonic, rvfi_rd_addr, imm, rvfi_rs1_addr);
   endfunction
 
   function automatic void decode_load_insn();
@@ -803,6 +836,13 @@ module ibex_tracer (
           end
           INSN_CLW:        decode_compressed_load_insn("c.lw");
           INSN_CSW:        decode_compressed_store_insn("c.sw");
+          // Zc extension C0
+          INSN_CLBU:        decode_Zc_load_insn("c.lbu");
+          INSN_CLHU:        decode_Zc_load_insn("c.lhu");
+          INSN_CLH:         decode_Zc_load_insn("c.lh");
+          INSN_CSB:         decode_Zc_store_insn("c.sb");
+          INSN_CSH:         decode_Zc_store_insn("c.sh");
+
           // C1 Opcodes
           INSN_CADDI:      decode_ci_caddi_insn("c.addi");
           INSN_CJAL:       decode_cj_insn("c.jal");
@@ -825,6 +865,14 @@ module ibex_tracer (
           INSN_CAND:       decode_cs_insn("c.and");
           INSN_CBEQZ:      decode_cb_insn("c.beqz");
           INSN_CBNEZ:      decode_cb_insn("c.bnez");
+          // Zc extension C1
+          INSN_CZEXTB:     decode_Zc_cu_insn("c.zext.b");
+          INSN_CSEXTB:     decode_Zc_cu_insn("c.sext.b");
+          INSN_CZEXTH:     decode_Zc_cu_insn("c.zext.h");
+          INSN_CSEXTH:     decode_Zc_cu_insn("c.sext.h");
+          INSN_CNOT:       decode_Zc_cu_insn("c.not");
+          INSN_CMUL:       decode_cs_insn("c.mul");
+
           // C2 Opcodes
           INSN_CSLLI:      decode_ci_cslli_insn("c.slli");
           INSN_CLWSP:      decode_compressed_load_insn("c.lwsp");
