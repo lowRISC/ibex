@@ -575,10 +575,10 @@ module ibex_cs_registers #(
     mtval_en     = 1'b0;
     mtval_d      = csr_wdata_int;
     mtvec_en     = csr_mtvec_init_i;
-    // mtvec.MODE set to vectored
+    // mtvec.MODE default set to vectored,but can change to direct
     // mtvec.BASE must be 256-byte aligned
     mtvec_d      = csr_mtvec_init_i ? {boot_addr_i[31:8], 6'b0, 2'b01} :
-                                      {csr_wdata_int[31:8], 6'b0, 2'b01};
+                                      {csr_wdata_int[31:8], 6'b0, csr_wdata_int[1:0]};
     dcsr_en      = 1'b0;
     dcsr_d       = dcsr_q;
     depc_d       = {csr_wdata_int[31:1], 1'b0};
@@ -634,7 +634,13 @@ module ibex_cs_registers #(
         CSR_MTVAL: mtval_en = 1'b1;
 
         // mtvec
-        CSR_MTVEC: mtvec_en = 1'b1;
+        CSR_MTVEC: begin
+          mtvec_en = 1'b1;
+          // Change to direct MODE if software writes an unsupported value
+          if ((mtvec_d[1:0] != 2'b00) && (mtvec_d[1:0] != 2'b01)) begin
+            mtvec_d[1:0] = 2'b00;
+          end
+        end
 
         CSR_DCSR: begin
           dcsr_d = csr_wdata_int;
