@@ -463,11 +463,12 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
              ((!pmp_region_priv_bits[2] && pmp_region_priv_bits != MML_XM_XU) ||
               pmp_region_priv_bits inside {MML_WRM_WRU, MML_RM_RU})) {
 
-          // Only interested in MML configuration
-          ignore_bins non_mml_in = binsof(pmp_region_priv_bits) with (!pmp_region_priv_bits[4]);
+          // Only interested in MML configuration, so ignore anything where the top bit is not set
+          ignore_bins non_mml_in =
+            binsof(pmp_region_priv_bits) with (pmp_region_priv_bits >> 4 == 5'b0);
 
           ignore_bins non_mml_out =
-            binsof(pmp_region_priv_bits_wr) with (!pmp_region_priv_bits_wr[4]);
+            binsof(pmp_region_priv_bits_wr) with (pmp_region_priv_bits_wr >> 4 == 5'b0);
 
           // Only interested in starting configs that weren't executable so ignore executable
           // regions
