@@ -113,6 +113,10 @@
   lw s1, 0(s2);                               \
   sw s1, 0(s2);
 
+// This assumes a PMP access failure on the read and write where the handler
+// jumps back to the failing access in M mode. If the access succeeds it remains
+// in U mode and the second SWITCH_TO_U_MODE will trap (due to attempting a
+// write to mstatus).
 #define RW_ACCESSES_IN_U_MODE(pmp_addr, gran) \
   la s0, pmp_addr;                            \
   SWITCH_TO_U_MODE_LABEL(1f);                 \
