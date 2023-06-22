@@ -53,11 +53,13 @@
   li t1, pmp_cfg;                        \
   sll t1, t1, t0;                        \
   csrw pmpcfg1, t1;                      \
+  j 4f;                                  \
   2 : li t2, 11;                         \
   bgt t1, t2, 3f;                        \
   li t1, pmp_cfg;                        \
   sll t1, t1, t0;                        \
   csrw pmpcfg2, t1;                      \
+  j 4f;                                  \
   3 : li t2, 15;                         \
   bgt t1, t2, 4f;                        \
   li t1, pmp_cfg;                        \
