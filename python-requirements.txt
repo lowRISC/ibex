@@ -16,7 +16,7 @@ pathlib3x  # Backports some useful features
 typing-utils  # Ditto
 typeguard ~= 2.13
 portalocker
-pydantic
+pydantic < 2.0
 svg.py
 
 # Needed by dvsim.py (not actually used in Ibex)
