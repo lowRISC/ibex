@@ -210,6 +210,153 @@ package dv_utils_pkg;
     join_none
   endtask : poll_for_stop
 
+  // Extracts the address and size of a const symbol in a SW test (supplied as an ELF file).
+  //
+  // Used by a testbench to modify the given symbol in an executable (elf) generated for an embedded
+  // CPU within the DUT. This function only returns the extracted address and size of the symbol
+  // using the readelf utility. Readelf comes with binutils, a package typically available on linux
+  // machines. If not available, the assumption is, it can be relatively easily installed.
+  // The actual job of writing the new value into the symbol is handled externally (often via a
+  // backdoor mechanism to write the memory).
+  // Return 1 on success and 0 on failure.
+  function automatic bit sw_symbol_get_addr_size(input string elf_file,
+                                                 input string symbol,
+                                                 input bit does_not_exist_ok,
+                                                 output longint unsigned addr,
+                                                 output longint unsigned size);
+
+    string msg_id = "sw_symbol_get_addr_size";
+    string escaped_symbol = "";
+    string symbol_for_filename = "";
+
+    `DV_CHECK_STRNE_FATAL(elf_file, "", "Input arg \"elf_file\" cannot be an empty string", msg_id)
+    `DV_CHECK_STRNE_FATAL(symbol,   "", "Input arg \"symbol\" cannot be an empty string", msg_id)
+
+    // If the symbol has special characters, such as '$', escape it for the cmd below, but when
+    // creating the file, omit the special characters entirely.
+    foreach (symbol[i]) begin
+      if (symbol[i] == "$") begin
+        escaped_symbol = {escaped_symbol, "\\", symbol[i]};
+      end else begin
+        escaped_symbol = {escaped_symbol, symbol[i]};
+        symbol_for_filename = {symbol_for_filename, symbol[i]};
+      end
+    end
+
+    begin
+      int ret;
+      string line;
+      int out_file_d = 0;
+      string out_file = $sformatf("%0s.dat", symbol_for_filename);
+      string cmd = $sformatf(
+          // use `--wide` to avoid truncating the output, in case of long symbol name
+          // `\s%0s$` ensures we are looking for an exact match, with no pre- or postfixes.
+          "/usr/bin/readelf -s --wide %0s | grep \"\\s%0s$\" | awk \'{print $2\" \"$3}\' > %0s",
+          elf_file, escaped_symbol, out_file);
+
+      // TODO #3838: shell pipes are bad 'mkay?
+      ret = $system(cmd);
+      `DV_CHECK_EQ_FATAL(ret, 0, $sformatf("Command \"%0s\" failed with exit code %0d", cmd, ret),
+                         msg_id)
+
+      out_file_d = $fopen(out_file, "r");
+      `DV_CHECK_FATAL(out_file_d, $sformatf("Failed to open \"%0s\"", out_file), msg_id)
+
+      ret = $fgets(line, out_file_d);
+
+      // If the symbol did not exist in the elf (empty file), and we are ok with that, then return.
+      if (!ret && does_not_exist_ok) return 0;
+
+      `DV_CHECK_FATAL(ret, $sformatf("Failed to read line from \"%0s\"", out_file), msg_id)
+
+      // The first line should have the addr in hex followed by its size as integer.
+      ret = $sscanf(line, "%h %d", addr, size);
+      `DV_CHECK_EQ_FATAL(ret, 2, $sformatf("Failed to extract {addr size} from line \"%0s\"", line),
+                         msg_id)
+
+      // Attempt to read the next line should be met with EOF.
+      void'($fgets(line, out_file_d));
+      ret = $feof(out_file_d);
+      `DV_CHECK_FATAL(ret, $sformatf("EOF expected to be reached for \"%0s\"", out_file), msg_id)
+      $fclose(out_file_d);
+
+      ret = $system($sformatf("rm -rf %0s", out_file));
+      `DV_CHECK_EQ_FATAL(ret, 0, $sformatf("Failed to delete \"%0s\"", out_file), msg_id)
+      return 1;
+    end
+  endfunction
+
+  // Reads VMEM file contents into a queue of data.
+  //
+  // TODO: Add support for non-contiguous memory.
+  // TODO: Add support for ECC bits.
+  // TODO: Add support for non-BUS_DW sized VMEM data.
+  // vmem_file: Path to VMEM image, compatible with $readmemh mathod.
+  // vmem_data: A queue of BUS_DW sized data returned to the caller.
+  function automatic void read_vmem(input string vmem_file,
+                                    output logic [bus_params_pkg::BUS_DW-1:0] vmem_data[$]);
+    int fd;
+    uvm_reg_addr_t last_addr;
+    string text, msg = "\n", lines[$];
+
+    fd = $fopen(vmem_file, "r");
+    `DV_CHECK_FATAL(fd, $sformatf("Failed to open \"%0s\"", vmem_file), msg_id)
+    while (!$feof(fd)) begin
+      string line;
+      void'($fgets(line, fd));
+      line = str_utils_pkg::str_strip(line);
+      if (line == "") continue;
+      text = {text, line, "\n"};
+    end
+    $fclose(fd);
+    `DV_CHECK_STRNE_FATAL(text, "", , msg_id)
+
+    // Remove all block and single comments.
+    text = str_utils_pkg::str_remove_sections(.s(text), .start_delim("/*"), .end_delim("*/"));
+    text = str_utils_pkg::str_remove_sections(.s(text), .start_delim("//"), .end_delim("\n"),
+                                              .remove_end_delim(0));
+
+    vmem_data.delete();
+    str_utils_pkg::str_split(text, lines, "\n");
+    foreach (lines[i]) begin
+      string tokens[$];
+      uvm_reg_addr_t addr;
+
+      // Split the line by space. The first item must be the address that starts with '@'.
+      str_utils_pkg::str_split(lines[i], tokens, " ");
+      `DV_CHECK_FATAL(tokens.size() >= 2,
+                      $sformatf("Line \"%s\" in VMEM file %s appears to be malformed",
+                                lines[i], vmem_file), msg_id)
+      if (!str_utils_pkg::str_starts_with(tokens[0], "@")) begin
+        `uvm_fatal(msg_id, $sformatf({"The first word \"%s\" on line \"%s\" in the VMEM file %s ",
+                                      " does not appear to be a valid address"},
+                                    tokens[0], lines[i], vmem_file))
+      end
+      tokens[0] = tokens[0].substr(1, tokens[0].len() - 1);
+      `DV_CHECK_FATAL(tokens[0].len() <= bus_params_pkg::BUS_AW / 8 * 2,
+                      $sformatf("Address width > %0d bytes is not supported: 0x%0s",
+                                bus_params_pkg::BUS_AW / 8, tokens[0]), msg_id)
+      addr = tokens[0].atohex();
+      tokens = tokens[1:$];
+      if (i > 0) begin
+        `DV_CHECK_FATAL(addr == last_addr,
+                        $sformatf("Non-contiguous data unsupported - last_addr: 0x%0h, addr: 0x%0h",
+                                  last_addr, addr), msg_id)
+      end
+      foreach (tokens[i]) begin
+        logic [bus_params_pkg::BUS_DW-1:0] data;
+        `DV_CHECK_FATAL(tokens[i].len() <= bus_params_pkg::BUS_DW / 8 * 2,
+                        $sformatf("Data width > %0d bytes is not supported: 0x%0s",
+                                  bus_params_pkg::BUS_DW / 8, tokens[i]), msg_id)
+        data = tokens[i].atohex();
+        msg = {msg, $sformatf("[0x%0h] = 0x%0h\n", addr + i, data)};
+        vmem_data.push_back(data);
+      end
+      last_addr = addr + tokens.size();
+    end
+    `uvm_info(msg_id, $sformatf("Contents of VMEM file %s:%s", vmem_file, msg), UVM_HIGH)
+  endfunction
+
   // sources
 `ifdef UVM
   `include "dv_report_catcher.sv"

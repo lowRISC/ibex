@@ -22,8 +22,11 @@ module prim_sync_reqack_data #(
                                              // default.
   parameter bit          DataSrc2Dst = 1'b1, // Direction of data flow: 1'b1 = SRC to DST,
                                              //                         1'b0 = DST to SRC
-  parameter bit          DataReg     = 1'b0  // Enable optional register stage for data,
+  parameter bit          DataReg     = 1'b0, // Enable optional register stage for data,
                                              // only usable with DataSrc2Dst == 1'b0.
+  parameter bit          EnRzHs      = 1'b0  // By Default, we the faster NRZ handshake protocol
+                                             // (EnRzHs = 0) is used. Enable the RZ handshake
+                                             // protocol if the FSMs need to be partial-reset-safe.
 ) (
   input  clk_src_i,       // REQ side, SRC domain
   input  rst_src_ni,      // REQ side, SRC domain
@@ -45,7 +48,8 @@ module prim_sync_reqack_data #(
   // REQ/ACK synchronizer primitive //
   ////////////////////////////////////
   prim_sync_reqack #(
-    .EnRstChks(EnRstChks)
+    .EnRstChks(EnRstChks),
+    .EnRzHs(EnRzHs)
   ) u_prim_sync_reqack (
     .clk_src_i,
     .rst_src_ni,
@@ -96,21 +100,26 @@ module prim_sync_reqack_data #(
 `ifdef INC_ASSERT
     //VCS coverage off
     // pragma coverage off
-    logic chk_flag;
-    always_ff @(posedge clk_src_i or negedge rst_src_ni or negedge rst_dst_ni) begin
-      if (!rst_src_ni || !rst_dst_ni) begin
-        chk_flag <= '0;
-      end else if (src_req_i && !chk_flag) begin
-        chk_flag <= 1'b1;
+    logic effective_rst_n;
+    assign effective_rst_n = rst_src_ni && rst_dst_ni;
+
+    logic chk_flag_d, chk_flag_q;
+    assign chk_flag_d = src_req_i && !chk_flag_q ? 1'b1 : chk_flag_q;
+
+    always_ff @(posedge clk_src_i or negedge effective_rst_n) begin
+      if (!effective_rst_n) begin
+        chk_flag_q <= '0;
+      end else begin
+        chk_flag_q <= chk_flag_d;
       end
     end
     //VCS coverage on
     // pragma coverage on
 
     // SRC domain cannot change data while waiting for ACK.
-    `ASSERT(SyncReqAckDataHoldSrc2Dst, !$stable(data_i) && chk_flag |->
+    `ASSERT(SyncReqAckDataHoldSrc2Dst, !$stable(data_i) && chk_flag_q |->
         (!src_req_i || (src_req_i && src_ack_o)),
-        clk_src_i, !rst_src_ni || !rst_dst_ni || !chk_flag)
+        clk_src_i, !rst_src_ni || !rst_dst_ni || !chk_flag_q)
 
     // Register stage cannot be used.
     `ASSERT_INIT(SyncReqAckDataReg, DataSrc2Dst && !DataReg)
@@ -140,24 +149,29 @@ module prim_sync_reqack_data #(
 `ifdef INC_ASSERT
     //VCS coverage off
     // pragma coverage off
-    logic chk_flag;
-    always_ff @(posedge clk_src_i or negedge rst_src_ni or negedge rst_dst_ni) begin
-      if (!rst_src_ni || !rst_dst_ni) begin
-        chk_flag <= '0;
-      end else if (src_req_i && !chk_flag) begin
-        chk_flag <= 1'b1;
+    logic effective_rst_n;
+    assign effective_rst_n = rst_src_ni && rst_dst_ni;
+
+    logic chk_flag_d, chk_flag_q;
+    assign chk_flag_d = src_req_i && !chk_flag_q ? 1'b1 : chk_flag_q;
+
+    always_ff @(posedge clk_src_i or negedge effective_rst_n) begin
+      if (!effective_rst_n) begin
+        chk_flag_q <= '0;
+      end else begin
+        chk_flag_q <= chk_flag_d;
       end
     end
     //VCS coverage on
     // pragma coverage on
 
     `ASSERT(SyncReqAckDataHoldDst2SrcA,
-            chk_flag && src_req_i && src_ack_o |->
+            chk_flag_q && src_req_i && src_ack_o |->
             $past(data_o, 2) == data_o && $past(data_o) == data_o,
-            clk_src_i, !rst_src_ni || !rst_dst_ni || !chk_flag)
+            clk_src_i, !rst_src_ni || !rst_dst_ni || !chk_flag_q)
     `ASSERT(SyncReqAckDataHoldDst2SrcB,
-            chk_flag && $past(src_req_i && src_ack_o) |-> $past(data_o) == data_o,
-            clk_src_i, !rst_src_ni || !rst_dst_ni || !chk_flag)
+            chk_flag_q && $past(src_req_i && src_ack_o) |-> $past(data_o) == data_o,
+            clk_src_i, !rst_src_ni || !rst_dst_ni || !chk_flag_q)
 `endif
   end
 

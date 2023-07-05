@@ -95,37 +95,45 @@ ifneq (${sw_images},)
 			cp ${proj_root}/$${prebuilt_path} $${run_dir}/`basename $${prebuilt_path}`; \
 		else \
 			echo "Building SW image \"$${bazel_label}\"."; \
+			bazel_airgapped_opts=""; \
 			bazel_opts="${sw_build_opts} --define DISABLE_VERILATOR_BUILD=true"; \
 			bazel_opts+=" --//hw/ip/otp_ctrl/data:img_seed=${seed}"; \
 			if [[ "${build_seed}" != "None" ]]; then \
+				bazel_opts+=" --//hw/ip/otp_ctrl/data:lc_seed=${build_seed}"; \
 				bazel_opts+=" --//hw/ip/otp_ctrl/data:otp_seed=${build_seed}"; \
+			fi; \
+			if [[ -n $${BAZEL_OTP_DATA_PERM_FLAG} ]]; then \
+				bazel_opts+=" --//hw/ip/otp_ctrl/data:data_perm=$${BAZEL_OTP_DATA_PERM_FLAG}"; \
 			fi; \
 			if [[ -z $${BAZEL_PYTHON_WHEELS_REPO} ]]; then \
 				echo "Building \"$${bazel_label}\" on network connected machine."; \
 				bazel_cmd="./bazelisk.sh"; \
 			else \
 				echo "Building \"$${bazel_label}\" on air-gapped machine."; \
-				bazel_opts+=" --define SPECIFY_BINDGEN_LIBSTDCXX=true"; \
-				bazel_opts+=" --distdir=$${BAZEL_DISTDIR} --repository_cache=$${BAZEL_CACHE}"; \
+				bazel_airgapped_opts+=" --define SPECIFY_BINDGEN_LIBSTDCXX=true"; \
+				bazel_airgapped_opts+=" --distdir=$${BAZEL_DISTDIR}"; \
+				bazel_airgapped_opts+=" --repository_cache=$${BAZEL_CACHE}"; \
 				bazel_cmd="bazel"; \
 			fi; \
 			echo "Building with command: $${bazel_cmd} build $${bazel_opts} $${bazel_label}"; \
-			$${bazel_cmd} build $${bazel_opts} $${bazel_label}; \
-			for dep in $$($${bazel_cmd} cquery \
+			$${bazel_cmd} build $${bazel_airgapped_opts} $${bazel_opts} $${bazel_label}; \
+			for dep in $$($${bazel_cmd} cquery $${bazel_airgapped_opts} \
 				$${bazel_cquery} \
 				--ui_event_filters=-info \
 				--noshow_progress \
 				--output=starlark); do \
-				if [[ $$dep != //hw* ]] && [[ $$dep != //util* ]] && [[ $$dep != //sw/host* ]]; then \
-					for artifact in $$($${bazel_cmd} cquery $${dep} \
+				if [[ $$dep == //hw/ip/otp_ctrl/data* ]] || \
+				  ([[ $$dep != //hw* ]] && [[ $$dep != //util* ]] && [[ $$dep != //sw/host* ]]); then \
+					for artifact in $$($${bazel_cmd} cquery $${bazel_airgapped_opts} $${dep} \
 						--ui_event_filters=-info \
 						--noshow_progress \
 						--output=starlark \
 						--starlark:expr="\"\\n\".join([f.path for f in target.files.to_list()])"); do \
 						cp -f $${artifact} $${run_dir}/$$(basename $${artifact}); \
-						if [[ $$artifact == *.scr.vmem ]]; then \
+						if [[ $$artifact == *.bin && \
+							-f "$$(echo $${artifact} | cut -d. -f 1).elf" ]]; then \
 							cp -f "$$(echo $${artifact} | cut -d. -f 1).elf" \
-								$${run_dir}/$$(basename "$${artifact%.*.scr.vmem}.elf"); \
+								$${run_dir}/$$(basename -s .bin $${artifact}).elf; \
 						fi; \
 					done; \
 				fi; \

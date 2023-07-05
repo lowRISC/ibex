@@ -306,29 +306,29 @@ module prim_alert_sender
     endsequence
 
   `ifndef FPV_ALERT_NO_SIGINT_ERR
-    // check propagation of sigint issues to output within three cycles
+    // check propagation of sigint issues to output within three cycles, or four due to CDC
     // shift sequence to the right to avoid reset effects.
     `ASSERT(SigIntPing_A, ##1 PingSigInt_S |->
-        ##3 alert_tx_o.alert_p == alert_tx_o.alert_n)
+        ##[3:4] alert_tx_o.alert_p == alert_tx_o.alert_n)
     `ASSERT(SigIntAck_A, ##1 AckSigInt_S |->
-        ##3 alert_tx_o.alert_p == alert_tx_o.alert_n)
+        ##[3:4] alert_tx_o.alert_p == alert_tx_o.alert_n)
   `endif
 
     // Test in-band FSM reset request (via signal integrity error)
-    `ASSERT(InBandInitFsm_A, PingSigInt_S or AckSigInt_S |-> ##3 state_q == Idle)
-    `ASSERT(InBandInitPing_A, PingSigInt_S or AckSigInt_S |-> ##3 !ping_set_q)
+    `ASSERT(InBandInitFsm_A, PingSigInt_S or AckSigInt_S |-> ##[3:4] state_q == Idle)
+    `ASSERT(InBandInitPing_A, PingSigInt_S or AckSigInt_S |-> ##[3:4] !ping_set_q)
     // output must be driven diff unless sigint issue detected
     `ASSERT(DiffEncoding_A, (alert_rx_i.ack_p ^ alert_rx_i.ack_n) &&
         (alert_rx_i.ping_p ^ alert_rx_i.ping_n) |->
-        ##[3:4] alert_tx_o.alert_p ^ alert_tx_o.alert_n)
+        ##[3:5] alert_tx_o.alert_p ^ alert_tx_o.alert_n)
 
     // handshakes can take indefinite time if blocked due to sigint on outgoing
     // lines (which is not visible here). thus, we only check whether the
     // handshake is correctly initiated and defer the full handshake checking to the testbench.
-    // TODO: add the staggered cases as well
     `ASSERT(PingHs_A, ##1 $changed(alert_rx_i.ping_p) &&
         (alert_rx_i.ping_p ^ alert_rx_i.ping_n) ##2 state_q == Idle |=>
-        $rose(alert_tx_o.alert_p), clk_i, !rst_ni || (alert_tx_o.alert_p == alert_tx_o.alert_n))
+        ##[0:1] $rose(alert_tx_o.alert_p), clk_i,
+        !rst_ni || (alert_tx_o.alert_p == alert_tx_o.alert_n))
   end else begin : gen_sync_assert
     sequence PingSigInt_S;
       alert_rx_i.ping_p == alert_rx_i.ping_n;

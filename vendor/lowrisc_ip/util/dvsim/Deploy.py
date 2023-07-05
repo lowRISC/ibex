@@ -377,9 +377,10 @@ class CompileSim(Deploy):
 
         if self.sim_cfg.args.build_timeout_mins is not None:
             self.build_timeout_mins = self.sim_cfg.args.build_timeout_mins
+
         if self.build_timeout_mins:
-            log.debug("Timeout for job \"%s\" is %d minutes.",
-                      self.name, self.build_timeout_mins)
+            log.debug("Timeout for job \"%s\" is %d minutes.", self.name,
+                      self.build_timeout_mins)
 
     def pre_launch(self):
         # Delete old coverage database directories before building again. We
@@ -391,7 +392,7 @@ class CompileSim(Deploy):
 
         Limit build jobs to 60 minutes if the timeout is not set.
         """
-        return self.build_timeout_mins if self.build_timeout_mins else 60
+        return self.build_timeout_mins if self.build_timeout_mins is not None else 60
 
 
 class CompileOneShot(Deploy):
@@ -428,7 +429,10 @@ class CompileOneShot(Deploy):
             "report_opts": False
         })
 
-        self.mandatory_misc_attrs.update({"build_fail_patterns": False})
+        self.mandatory_misc_attrs.update({
+            "build_fail_patterns": False,
+            "build_pass_patterns": False
+        })
 
     def _set_attrs(self):
         super()._extract_attrs(self.build_mode_obj.__dict__)
@@ -438,19 +442,21 @@ class CompileOneShot(Deploy):
         self.build_mode = self.name
         self.job_name += f"_{self.build_mode}"
         self.fail_patterns = self.build_fail_patterns
+        self.pass_patterns = self.build_pass_patterns
 
         if self.sim_cfg.args.build_timeout_mins is not None:
             self.build_timeout_mins = self.sim_cfg.args.build_timeout_mins
+
         if self.build_timeout_mins:
-            log.debug("Timeout for job \"%s\" is %d minutes.",
-                      self.name, self.build_timeout_mins)
+            log.debug("Timeout for job \"%s\" is %d minutes.", self.name,
+                      self.build_timeout_mins)
 
     def get_timeout_mins(self):
         """Returns the timeout in minutes.
 
         Limit build jobs to 60 minutes if the timeout is not set.
         """
-        return self.build_timeout_mins if self.build_timeout_mins else 60
+        return self.build_timeout_mins if self.build_timeout_mins is not None else 60
 
 
 class RunTest(Deploy):
@@ -504,6 +510,7 @@ class RunTest(Deploy):
             "run_fail_patterns": False,
             "run_pass_patterns": False,
             "run_timeout_mins": False,
+            "run_timeout_multiplier": False,
         })
 
     def _set_attrs(self):
@@ -526,9 +533,22 @@ class RunTest(Deploy):
 
         if self.sim_cfg.args.run_timeout_mins is not None:
             self.run_timeout_mins = self.sim_cfg.args.run_timeout_mins
+
+        if self.sim_cfg.args.run_timeout_multiplier is not None:
+            self.run_timeout_multiplier = (
+                self.sim_cfg.args.run_timeout_multiplier)
+
+        if self.run_timeout_mins and self.run_timeout_multiplier:
+            self.run_timeout_mins = int(self.run_timeout_mins *
+                                        self.run_timeout_multiplier)
+
+        if self.run_timeout_multiplier:
+            log.debug("Timeout multiplier for job \"%s\" is %f.",
+                      self.full_name, self.run_timeout_multiplier)
+
         if self.run_timeout_mins:
-            log.debug("Timeout for job \"%s\" is %d minutes.",
-                      self.full_name, self.run_timeout_mins)
+            log.debug("Timeout for job \"%s\" is %d minutes.", self.full_name,
+                      self.run_timeout_mins)
 
     def pre_launch(self):
         self.launcher.renew_odir = True
@@ -556,7 +576,7 @@ class RunTest(Deploy):
 
         Limit run jobs to 60 minutes if the timeout is not set.
         """
-        return self.run_timeout_mins if self.run_timeout_mins else 60
+        return self.run_timeout_mins if self.run_timeout_mins is not None else 60
 
     def extract_info_from_log(self, log_text: List):
         """Extracts the time the design was simulated for, from the log."""
@@ -702,6 +722,7 @@ class CovReport(Deploy):
         # Keep track of coverage results, once the job is finished.
         self.cov_total = ""
         self.cov_results = ""
+        self.cov_results_dict = dict()
 
     def post_finish(self, status):
         """Extract the coverage results summary for the dashboard.
@@ -721,6 +742,8 @@ class CovReport(Deploy):
                                     headers="firstrow",
                                     tablefmt="pipe",
                                     colalign=colalign)
+        for tup in zip(*results):
+            self.cov_results_dict[tup[0]] = tup[1]
 
 
 class CovAnalyze(Deploy):
