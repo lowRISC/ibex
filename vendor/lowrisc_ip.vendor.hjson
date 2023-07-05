@@ -11,12 +11,12 @@
     }
 
     mapping: [
-        {from: "hw/dv/sv/common_ifs",  to: "dv/sv/common_ifs"},
-        {from: "hw/dv/sv/csr_utils",   to: "dv/sv/csr_utils"},
-        {from: "hw/dv/sv/dv_base_reg", to: "dv/sv/dv_base_reg"},
-        {from: "hw/dv/sv/mem_model",   to: "dv/sv/mem_model"},
-        {from: "hw/dv/sv/mem_bkdr_util",   to: "dv/sv/mem_bkdr_util"},
-        {from: "hw/dv/sv/str_utils",   to: "dv/sv/str_utils"},
+        {from: "hw/dv/sv/common_ifs",    to: "dv/sv/common_ifs"},
+        {from: "hw/dv/sv/csr_utils",     to: "dv/sv/csr_utils"},
+        {from: "hw/dv/sv/dv_base_reg",   to: "dv/sv/dv_base_reg"},
+        {from: "hw/dv/sv/mem_model",     to: "dv/sv/mem_model"},
+        {from: "hw/dv/sv/mem_bkdr_util", to: "dv/sv/mem_bkdr_util"},
+        {from: "hw/dv/sv/str_utils",     to: "dv/sv/str_utils"},
 
         // We apply a patch to fix the bus_params_pkg core file name when
         // vendoring in dv_lib and dv_utils. This allows us to have an
@@ -44,16 +44,16 @@
             patch_dir: "dv_tools"
         },
 
-        {from: "hw/dv/verilator",      to: "dv/verilator"},
+        {from: "hw/dv/verilator",    to: "dv/verilator"},
 
-        {from: "hw/ip/prim",           to: "ip/prim"},
-        {from: "hw/ip/prim_generic",   to: "ip/prim_generic"},
-        {from: "hw/ip/prim_xilinx",    to: "ip/prim_xilinx"},
+        {from: "hw/ip/prim",         to: "ip/prim"},
+        {from: "hw/ip/prim_generic", to: "ip/prim_generic"},
+        {from: "hw/ip/prim_xilinx",  to: "ip/prim_xilinx"},
 
-        {from: "hw/lint",              to: "lint"},
+        {from: "hw/lint",            to: "lint"},
 
-        {from: "util/dvsim",           to: "util/dvsim"},
-        {from: "util/uvmdvgen",        to: "util/uvmdvgen"},
+        {from: "util/dvsim",         to: "util/dvsim"},
+        {from: "util/uvmdvgen",      to: "util/uvmdvgen"},
     ]
 
     patch_dir: "patches/lowrisc_ip"
