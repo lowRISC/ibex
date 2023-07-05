@@ -53,7 +53,7 @@
 - tool: questa
   compile:
     cmd:
-      - "vmap mtiUvm $QUESTA_HOME/questasim/uvm-1.2"
+      - "vmap mtiUvm $QUESTA_HOME/uvm-1.2"
       - "vlog -64
         +incdir+<setting>
         +incdir+<user_extension>
