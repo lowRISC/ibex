@@ -161,6 +161,12 @@ class dv_base_reg_block extends uvm_reg_block;
     end
   endfunction
 
+  function bit has_shadowed_regs();
+    dv_base_reg regs[$];
+    get_shadowed_regs(regs);
+    return (regs.size() > 0);
+  endfunction
+
   // Internal function, used to compute the address mask for this register block.
   //
   // This is quite an expensive computation, so we memoize the results in addr_mask[map].
@@ -171,10 +177,14 @@ class dv_base_reg_block extends uvm_reg_block;
     uvm_reg_block  blocks[$];
     int unsigned   alignment;
 
-    // TODO: assume IP only contains 1 reg block, find a better way to handle chip-level and IP
-    // with multiple reg blocks
+    // Assumption:
+    // Only chip-level RAL has multiple sub reg_blocks. Its addr_mask is '1
+    // In block-level, we have one RAL for one TLUL interface. We don't put multiple reg_block in a
+    // RAL, as UVM RAL can't handle the case that each sub-block uses a different map:
+    //  - ral.blk1 -> use map_TL1
+    //  - ral.blk2 -> use map_TL2
     get_blocks(blocks);
-    if (blocks.size > 0) begin
+    if (blocks.size > 0) begin // if true, this is a chip-level RAL
       addr_mask[map] = '1;
       return;
     end

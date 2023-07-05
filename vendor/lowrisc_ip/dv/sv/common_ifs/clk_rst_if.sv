@@ -24,6 +24,7 @@ interface clk_rst_if #(
   `include "dv_macros.svh"
   `include "uvm_macros.svh"
   import uvm_pkg::*;
+  import common_ifs_pkg::*;
 `endif
 
   // Enables clock to be generated and driven by this interface.
@@ -37,6 +38,10 @@ interface clk_rst_if #(
 
   // The internal output reset value.
   logic o_rst_n;
+
+  // This event is used to start the initial block driving the clock after set_active sets
+  // the values of drive_clk and drive_rst_n.
+  event set_active_called;
 
   // Applies clock gating.
   bit clk_gate = 1'b0;
@@ -161,6 +166,7 @@ interface clk_rst_if #(
   function automatic void set_active(bit drive_clk_val = 1'b1, bit drive_rst_n_val = 1'b1);
     drive_clk = drive_clk_val;
     drive_rst_n = drive_rst_n_val;
+    -> set_active_called;
   endfunction
 
   // set the clk period in ps
@@ -249,86 +255,86 @@ interface clk_rst_if #(
   endtask
 
   // apply reset with specified scheme
-  // TODO make this enum?
-  // rst_n_scheme
-  // 0 - fully synchronous reset - it is asserted and deasserted on clock edges
-  // 1 - async assert, sync deassert (default)
-  // 2 - async assert, async deassert
-  // 3 - clk gated when reset asserted
   // Note: for power on reset, please ensure pre_reset_dly_clks is set to 0
-  // TODO #2338 issue workaround - $urandom call moved from default argument value to function body
   task automatic apply_reset(int pre_reset_dly_clks   = 0,
-                             integer reset_width_clks = 'x,
+                             int reset_width_clks = $urandom_range(50, 100),
                              int post_reset_dly_clks  = 0,
-                             int rst_n_scheme         = 1);
-    int dly_ps;
-    if ($isunknown(reset_width_clks)) reset_width_clks = $urandom_range(50, 100);
-    dly_ps = $urandom_range(0, clk_period_ps);
-    wait_clks(pre_reset_dly_clks);
-    case (rst_n_scheme)
-      0: begin : sync_assert_deassert
-        o_rst_n <= 1'b0;
-        wait_clks(reset_width_clks);
-        o_rst_n <= 1'b1;
-      end
-      1: begin : async_assert_sync_deassert
-        #(dly_ps * 1ps);
-        o_rst_n <= 1'b0;
-        wait_clks(reset_width_clks);
-        o_rst_n <= 1'b1;
-      end
-      2: begin : async_assert_async_deassert
-        #(dly_ps * 1ps);
-        o_rst_n <= 1'b0;
-        wait_clks(reset_width_clks);
-        dly_ps = $urandom_range(0, clk_period_ps);
-        #(dly_ps * 1ps);
-        o_rst_n <= 1'b1;
-      end
-      default: begin
-        `dv_fatal($sformatf("rst_n_scheme %0d not supported", rst_n_scheme), msg_id)
-      end
-    endcase
-    wait_clks(post_reset_dly_clks);
+                             rst_scheme_e rst_n_scheme  = RstAssertAsyncDeassertSync);
+    if (drive_rst_n) begin
+      int dly_ps;
+      dly_ps = $urandom_range(0, clk_period_ps);
+      wait_clks(pre_reset_dly_clks);
+      case (rst_n_scheme)
+        RstAssertSyncDeassertSync: begin
+          o_rst_n <= 1'b0;
+          wait_clks(reset_width_clks);
+          o_rst_n <= 1'b1;
+        end
+        RstAssertAsyncDeassertSync: begin
+          #(dly_ps * 1ps);
+          o_rst_n <= 1'b0;
+          wait_clks(reset_width_clks);
+          o_rst_n <= 1'b1;
+        end
+        RstAssertAsyncDeassertASync: begin
+          #(dly_ps * 1ps);
+          o_rst_n <= 1'b0;
+          wait_clks(reset_width_clks);
+          dly_ps = $urandom_range(0, clk_period_ps);
+          #(dly_ps * 1ps);
+          o_rst_n <= 1'b1;
+        end
+        default: begin
+          `dv_fatal($sformatf("rst_n_scheme %0d not supported", rst_n_scheme), msg_id)
+        end
+      endcase
+      wait_clks(post_reset_dly_clks);
+    end
   endtask
 
-  // clk gen
+  // clk gen when the clock is active, so this waits until the set_active function was called.
   initial begin
     // start driving clk only after the first por reset assertion. The fork/join means that we'll
     // wait a whole number of clock periods, which means it's possible for the clock to synchronise
     // with the "expected" timestamps.
     bit done;
-    fork
-      begin
-        wait_for_reset(.wait_posedge(1'b0));
+    @set_active_called;
+    if (drive_clk) begin
+      fork
+        begin
+          // Only wait for reset if driving it, otherwise it may never come.
+          if (drive_rst_n) begin
+            wait_for_reset(.wait_posedge(1'b0));
 
-        // Wait a short time after reset before starting to drive the clock.
-        #1ps;
+            // Wait a short time after reset before starting to drive the clock.
+            #1ps;
+          end
+          o_clk = 1'b0;
+
+          done = 1'b1;
+        end
+        while (!done) #(clk_period_ps * 1ps);
+      join
+
+      // If there might be multiple clocks in the system, wait another (randomised) short time to
+      // desynchronise.
+      if (!sole_clock) #($urandom_range(0, clk_period_ps) * 1ps);
+
+      forever begin
+        if (recompute) begin
+          clk_hi_ps = clk_period_ps * duty_cycle / 100;
+          clk_lo_ps = clk_period_ps - clk_hi_ps;
+          clk_hi_modified_ps = clk_hi_ps;
+          clk_lo_modified_ps = clk_lo_ps;
+          recompute = 1'b0;
+        end
+        if (clk_freq_scaling_pc && clk_freq_scaling_chance_pc) apply_freq_scaling();
+        if (jitter_chance_pc) apply_jitter();
+        #(clk_lo_modified_ps * 1ps);
+        if (!clk_gate) o_clk = 1'b1;
+        #(clk_hi_modified_ps * 1ps);
         o_clk = 1'b0;
-
-        done = 1'b1;
       end
-      while (!done) #(clk_period_ps * 1ps);
-    join
-
-    // If there might be multiple clocks in the system, wait another (randomised) short time to
-    // desynchronise.
-    if (!sole_clock) #($urandom_range(0, clk_period_ps) * 1ps);
-
-    forever begin
-      if (recompute) begin
-        clk_hi_ps = clk_period_ps * duty_cycle / 100;
-        clk_lo_ps = clk_period_ps - clk_hi_ps;
-        clk_hi_modified_ps = clk_hi_ps;
-        clk_lo_modified_ps = clk_lo_ps;
-        recompute = 1'b0;
-      end
-      if (clk_freq_scaling_pc && clk_freq_scaling_chance_pc) apply_freq_scaling();
-      if (jitter_chance_pc) apply_jitter();
-      #(clk_lo_modified_ps * 1ps);
-      if (!clk_gate) o_clk = 1'b1;
-      #(clk_hi_modified_ps * 1ps);
-      o_clk = 1'b0;
     end
   end
 

@@ -80,6 +80,7 @@ class SgeLauncher(Launcher):
             sgeJob.args.b = 'y'  # This is a binary file
             sgeJob.args.o = self.deploy.get_log_path() + '.sge'
             cmd = str(sgeJob.execute(mode='echo'))
+            print('INFO: SGE command line : "' + str(cmd) + '"')
             # ---------------
             self.process = subprocess.Popen(shlex.split(cmd),
                                             bufsize=4096,
@@ -114,7 +115,7 @@ class SgeLauncher(Launcher):
         # copy SGE jobb results to log file
         if os.path.exists(self.deploy.get_log_path() + '.sge'):
 
-            file1 = open(self.deploy.get_log_path() + '.sge', 'r')
+            file1 = open(self.deploy.get_log_path() + '.sge', 'r', errors='replace')
             Lines = file1.readlines()
             file1.close()
             f = open(self.deploy.get_log_path(),

@@ -11,17 +11,11 @@ localparam int unsigned FlashKeySize = flash_phy_pkg::KeySize;
 localparam int unsigned FlashNumRoundsHalf = crypto_dpi_prince_pkg::NumRoundsHalf;
 localparam int unsigned FlashAddrWidth = 16;
 
-localparam bit[FlashDataWidth-1:0] IPoly = FlashDataWidth'(1'b1) << 15 |
-                                           FlashDataWidth'(1'b1) << 9  |
-                                           FlashDataWidth'(1'b1) << 7  |
-                                           FlashDataWidth'(1'b1) << 4  |
-                                           FlashDataWidth'(1'b1) << 3  |
-                                           FlashDataWidth'(1'b1) << 0;
-
 function bit [FlashDataWidth-1:0] flash_gf_mult2(bit [FlashDataWidth-1:0] operand);
   bit [FlashDataWidth-1:0] mult_out;
 
-  mult_out = operand[FlashDataWidth-1] ? (operand << 1) ^ IPoly : (operand << 1);
+  mult_out = operand[FlashDataWidth-1] ? (operand << 1) ^
+    flash_phy_pkg::ScrambleIPoly : (operand << 1);
   return mult_out;
 endfunction
 
@@ -79,9 +73,7 @@ virtual function void flash_write_scrambled(
                                                .old_key_schedule(0), .ciphertext(scrambled_data));
   masked_data = scrambled_data[FlashNumRoundsHalf-1] ^ mask;
   // ecc functions used are hardcoded to a fixed sized.
-  err_detection_scheme = EccHamming_72_64;
-  ecc_72 = get_ecc_computed_data(data[63:0]);
-  err_detection_scheme = EccHamming_76_68;
-  ecc_76 = get_ecc_computed_data({ecc_72[67:64], masked_data[63:0]});
+  ecc_72 = prim_secded_pkg::prim_secded_hamming_72_64_enc(data[63:0]);
+  ecc_76 = prim_secded_pkg::prim_secded_hamming_76_68_enc({ecc_72[67:64], masked_data[63:0]});
   write(byte_addr, ecc_76);
 endfunction
