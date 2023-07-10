@@ -144,6 +144,7 @@ module ibex_if_stage import ibex_pkg::*; #(
   logic [31:0]       instr_decompressed;
   logic              illegal_c_insn;
   logic              instr_is_compressed;
+  logic              instr_gets_expanded;
 
   logic              if_instr_valid;
   logic       [31:0] if_instr_rdata;
@@ -405,9 +406,11 @@ module ibex_if_stage import ibex_pkg::*; #(
     .clk_i          (clk_i),
     .rst_ni         (rst_ni),
     .valid_i        (fetch_valid & ~fetch_err),
+    .id_in_ready_i  (id_in_ready_i),
     .instr_i        (if_instr_rdata),
     .instr_o        (instr_decompressed),
     .is_compressed_o(instr_is_compressed),
+    .gets_expanded_o(instr_gets_expanded),
     .illegal_instr_o(illegal_c_insn)
   );
 
@@ -544,7 +547,7 @@ module ibex_if_stage import ibex_pkg::*; #(
     // request, all of which will set branch_req. Also do not check after reset or for dummy
     // instructions.
     assign prev_instr_seq_d = (prev_instr_seq_q | instr_new_id_d) &
-        ~branch_req & ~if_instr_err & ~stall_dummy_instr;
+        ~branch_req & ~if_instr_err & ~stall_dummy_instr & ~instr_gets_expanded;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
@@ -606,7 +609,7 @@ module ibex_if_stage import ibex_pkg::*; #(
 
     assign instr_skid_en = predict_branch_taken & ~pc_set_i & ~id_in_ready_i & ~instr_skid_valid_q;
 
-    assign instr_skid_valid_d = (instr_skid_valid_q & ~id_in_ready_i & ~stall_dummy_instr) |
+    assign instr_skid_valid_d = (instr_skid_valid_q & ~id_in_ready_i & ~stall_dummy_instr & ~instr_gets_expanded) |
                                 instr_skid_en;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -665,7 +668,7 @@ module ibex_if_stage import ibex_pkg::*; #(
     assign if_instr_bus_err = ~instr_skid_valid_q & fetch_err;
     assign instr_bp_taken_d = instr_skid_valid_q ? instr_skid_bp_taken_q : predict_branch_taken;
 
-    assign fetch_ready = id_in_ready_i & ~stall_dummy_instr & ~instr_skid_valid_q;
+    assign fetch_ready = id_in_ready_i & ~stall_dummy_instr & ~instr_gets_expanded & ~instr_skid_valid_q;
 
     assign instr_bp_taken_o = instr_bp_taken_q;
 
@@ -680,7 +683,7 @@ module ibex_if_stage import ibex_pkg::*; #(
     assign if_instr_rdata = fetch_rdata;
     assign if_instr_addr  = fetch_addr;
     assign if_instr_bus_err = fetch_err;
-    assign fetch_ready = id_in_ready_i & ~stall_dummy_instr;
+    assign fetch_ready = id_in_ready_i & ~stall_dummy_instr & ~instr_gets_expanded;
   end
 
   //////////
