@@ -184,6 +184,7 @@ module ibex_core import ibex_pkg::*; #(
                                                // ease fan-out)
   logic [15:0] instr_rdata_c_id;               // Compressed instruction sampled inside IF stage
   logic        instr_is_compressed_id;
+  logic        instr_gets_expanded_id;
   logic        instr_perf_count_id;
   logic        instr_bp_taken_id;
   logic        instr_fetch_err;                // Bus error on instr fetch
@@ -470,6 +471,7 @@ module ibex_core import ibex_pkg::*; #(
     .instr_rdata_alu_id_o    (instr_rdata_alu_id),
     .instr_rdata_c_id_o      (instr_rdata_c_id),
     .instr_is_compressed_id_o(instr_is_compressed_id),
+    .instr_gets_expanded_id_o(instr_gets_expanded_id),
     .instr_bp_taken_o        (instr_bp_taken_id),
     .instr_fetch_err_o       (instr_fetch_err),
     .instr_fetch_err_plus2_o (instr_fetch_err_plus2),
@@ -1766,7 +1768,7 @@ module ibex_core import ibex_pkg::*; #(
   end
 
   always_comb begin
-    if (instr_is_compressed_id) begin
+    if (instr_is_compressed_id && !instr_gets_expanded_id) begin
       rvfi_insn_id = {16'b0, instr_rdata_c_id};
     end else begin
       rvfi_insn_id = instr_rdata_id;
