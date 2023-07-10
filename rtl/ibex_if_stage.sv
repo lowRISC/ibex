@@ -70,6 +70,7 @@ module ibex_if_stage import ibex_pkg::*; #(
                                                                 // instr_is_compressed_id_o = 1'b1
   output logic                        instr_is_compressed_id_o, // compressed decoder thinks this
                                                                 // is a compressed instr
+  output logic                        instr_gets_expanded_id_o,
   output logic                        instr_bp_taken_o,         // instruction was predicted to be
                                                                 // a taken branch
   output logic                        instr_fetch_err_o,        // bus error on fetch
@@ -162,6 +163,7 @@ module ibex_if_stage import ibex_pkg::*; #(
   logic              stall_dummy_instr;
   logic [31:0]       instr_out;
   logic              instr_is_compressed_out;
+  logic              instr_gets_expanded_out;
   logic              illegal_c_instr_out;
   logic              instr_err_out;
 
@@ -439,6 +441,7 @@ module ibex_if_stage import ibex_pkg::*; #(
     // Mux between actual instructions and dummy instructions
     assign instr_out               = insert_dummy_instr ? dummy_instr_data : instr_decompressed;
     assign instr_is_compressed_out = insert_dummy_instr ? 1'b0 : instr_is_compressed;
+    assign instr_gets_expanded_out = insert_dummy_instr ? 1'b0 : instr_gets_expanded;
     assign illegal_c_instr_out     = insert_dummy_instr ? 1'b0 : illegal_c_insn;
     assign instr_err_out           = insert_dummy_instr ? 1'b0 : if_instr_err;
 
@@ -468,6 +471,7 @@ module ibex_if_stage import ibex_pkg::*; #(
     assign unused_dummy_seed       = dummy_instr_seed_i;
     assign instr_out               = instr_decompressed;
     assign instr_is_compressed_out = instr_is_compressed;
+    assign instr_gets_expanded_out = instr_gets_expanded;
     assign illegal_c_instr_out     = illegal_c_insn;
     assign instr_err_out           = if_instr_err;
     assign stall_dummy_instr       = 1'b0;
@@ -517,6 +521,7 @@ module ibex_if_stage import ibex_pkg::*; #(
         instr_fetch_err_plus2_o  <= if_instr_err_plus2;
         instr_rdata_c_id_o       <= if_instr_rdata[15:0];
         instr_is_compressed_id_o <= instr_is_compressed_out;
+        instr_gets_expanded_id_o <= instr_gets_expanded_out;
         illegal_c_insn_id_o      <= illegal_c_instr_out;
         pc_id_o                  <= pc_if_o;
       end
@@ -531,6 +536,7 @@ module ibex_if_stage import ibex_pkg::*; #(
         instr_fetch_err_plus2_o  <= if_instr_err_plus2;
         instr_rdata_c_id_o       <= if_instr_rdata[15:0];
         instr_is_compressed_id_o <= instr_is_compressed_out;
+        instr_gets_expanded_id_o <= instr_gets_expanded_out;
         illegal_c_insn_id_o      <= illegal_c_instr_out;
         pc_id_o                  <= pc_if_o;
       end
