@@ -17,9 +17,11 @@ module ibex_compressed_decoder (
   input  logic        clk_i,
   input  logic        rst_ni,
   input  logic        valid_i,
+  input  logic        id_in_ready_i,
   input  logic [31:0] instr_i,
   output logic [31:0] instr_o,
   output logic        is_compressed_o,
+  output logic        gets_expanded_o,
   output logic        illegal_instr_o
 );
   import ibex_pkg::*;
@@ -29,14 +31,162 @@ module ibex_compressed_decoder (
   logic unused_valid;
   assign unused_valid = valid_i;
 
+  function automatic logic [6:0] cm_stack_adj_base(input logic [3:0] rlist);
+    unique case (rlist)
+      // Deliberately not written as `case .. inside` because that is not supported by all tools.
+      4'd4, 4'd5, 4'd6, 4'd7:   return 7'd16;
+      4'd8, 4'd9, 4'd10, 4'd11: return 7'd32;
+      4'd12, 4'd13, 4'd14:      return 7'd48;
+      4'd15:                    return 7'd64;
+      default:                  return 7'd0; // illegal
+    endcase
+  endfunction
+
+  function automatic logic [6:0] cm_stack_adj(input logic [3:0] rlist, input logic [1:0] spimm);
+    return cm_stack_adj_base(rlist) + spimm * 16;
+  endfunction
+
+  function automatic logic [4:0] cm_stack_adj_word(input logic [3:0] rlist,
+                                                   input logic [1:0] spimm);
+    logic [6:0] tmp;
+    logic [1:0] _unused;
+    tmp = cm_stack_adj(.rlist(rlist), .spimm(spimm));
+    _unused = tmp[1:0];
+    return tmp[6:2];
+  endfunction
+
+  function automatic logic [4:0] cm_rlist_top_reg(input logic [4:0] rlist);
+    unique case (rlist)
+      // Deliberately not written as `case .. inside` because that is not supported by all tools.
+      5'd16, // `rlist` can be 16 after instruction decoding, to handle `x26`+`x27`.
+      5'd15, 5'd14, 5'd13,
+      5'd12, 5'd11, 5'd10,
+      5'd9, 5'd8, 5'd7:     return 5'd11 + rlist;
+      5'd6, 5'd5:           return 5'd3 + rlist;
+      5'd4:                 return 5'd1;
+      default:              return 5'd0; // illegal
+    endcase
+  endfunction
+
+  function automatic logic [31:0] cm_push_store_reg(input logic [4:0] rlist,
+                                                    input logic [4:0] sp_offset);
+    logic [11:0] neg_offset;
+    logic [31:0] instr;
+    neg_offset = ~{5'b00000, sp_offset, 2'b00} + 12'd1;
+    instr[ 6: 0] /* opcode       */ = OPCODE_STORE;
+    instr[11: 7] /* offset[4:0]  */ = neg_offset[4:0];
+    instr[14:12] /* width        */ = 3'b010; // 32 bit
+    instr[19:15] /* base reg     */ = 5'd2; // x2 (sp / stack pointer)
+    instr[24:20] /* src reg      */ = cm_rlist_top_reg(rlist);
+    instr[31:25] /* offset[11:5] */ = neg_offset[11:5];
+    return instr;
+  endfunction
+
+  function automatic logic [31:0] cm_pop_load_reg(input logic [4:0] rlist,
+                                                  input logic [4:0] sp_offset);
+    logic [31:0] instr;
+    instr[ 6: 0] /* opcode       */ = OPCODE_LOAD;
+    instr[11: 7] /* dest reg     */ = cm_rlist_top_reg(rlist);
+    instr[14:12] /* width        */ = 3'b010; // 32 bit
+    instr[19:15] /* base reg     */ = 5'd2; // x2 (sp / stack pointer)
+    instr[31:20] /* offset[11:0] */ = {5'b00000, sp_offset, 2'b00};
+    return instr;
+  endfunction
+
+  function automatic logic [31:0] cm_sp_addi(input logic [3:0] rlist,
+                                             input logic [1:0] spimm,
+                                             input logic decr = 1'b0);
+    logic [11:0] imm;
+    logic [31:0] instr;
+    imm[11:7] = '0;
+    imm[ 6:0] = cm_stack_adj(.rlist(rlist), .spimm(spimm));
+    if (decr) imm = ~imm + 12'd1;
+    instr[ 6: 0] /* opcode    */ = OPCODE_OP_IMM;
+    instr[11: 7] /* dest reg  */ = 5'd2; // x2 (sp / stack pointer)
+    instr[14:12] /* funct3    */ = 3'b000; // addi
+    instr[19:15] /* src reg   */ = 5'd2; // x2
+    instr[31:20] /* imm[11:0] */ = imm;
+    return instr;
+  endfunction
+
+  function automatic logic [31:0] cm_mv_reg(input logic [4:0] src, input logic [4:0] dst);
+    logic [31:0] instr;
+    instr[ 6: 0] /* opcode    */ = OPCODE_OP_IMM;
+    instr[11: 7] /* dest reg  */ = dst;
+    instr[14:12] /* funct3    */ = 3'b000; // addi
+    instr[19:15] /* src reg   */ = src;
+    instr[31:20] /* imm[11:0] */ = 12'd0; // 0
+    return instr;
+  endfunction
+
+  function automatic logic [31:0] cm_zero_a0();
+    return cm_mv_reg(.src(5'd0 /* x0 */), .dst(5'd10 /* a0 */));
+  endfunction
+
+  function automatic logic [31:0] cm_ret_ra();
+    logic [31:0] instr;
+    instr[ 6: 0] /* opcode       */ = OPCODE_JALR;
+    instr[11: 7] /* dest reg     */ = 5'd0; // x0
+    instr[14:12] /* funct3       */ = 3'b000; // jalr
+    instr[19:15] /* base reg     */ = 5'd1; // x1 (ra)
+    instr[31:20] /* offset[11:0] */ = 12'd0; // 0
+    return instr;
+  endfunction
+
+  function automatic logic [31:0] cm_mvsa01(input logic a01, input logic [2:0] rs);
+    logic [4:0] src, dst;
+    src = 5'd10 + {4'd0, a01};
+    dst = {(rs[2:1] > 2'd0), (rs[2:1] == 2'd0), rs[2:0]};
+    return cm_mv_reg(.src(src), .dst(dst));
+  endfunction
+
+  function automatic logic [31:0] cm_mva01s(input logic [2:0] rs, input logic a01);
+    logic [4:0] src, dst;
+    src = {(rs[2:1] > 2'd0), (rs[2:1] == 2'd0), rs[2:0]};
+    dst = 5'd10 + {4'd0, a01};
+    return cm_mv_reg(.src(src), .dst(dst));
+  endfunction
+
+  function automatic logic [4:0] cm_rlist_init(input logic [3:0] instr_rlist);
+    logic [4:0] rlist;
+    rlist = {1'b0, instr_rlist};
+    if (rlist == 5'd15) begin
+      // An `rlist` value of 15 means that x26 and x27 have to be stored.
+      // Handle this by initializing `rlist` internally to 16.
+      rlist = 5'd16;
+    end
+    return rlist;
+  endfunction
+
+  typedef enum logic [3:0] {
+    CmIdle,
+    CmPushStoreReg,
+    CmPushDecrSp,
+    CmPopLoadReg,
+    CmPopIncrSp,
+    CmPopZeroA0,
+    CmPopRetRa,
+    CmMvSA1,
+    CmMvA1S
+  } cm_state_e;
+  logic [4:0] cm_rlist_d, cm_rlist_q;
+  logic [4:0] cm_sp_offset_d, cm_sp_offset_q;
+  cm_state_e  cm_state_d, cm_state_q;
+
   ////////////////////////
   // Compressed decoder //
   ////////////////////////
 
   always_comb begin
-    // By default, forward incoming instruction, mark it as legal.
+    // By default, forward incoming instruction, mark it as legal, and don't expand.
     instr_o         = instr_i;
     illegal_instr_o = 1'b0;
+    gets_expanded_o = 1'b0;
+
+    // Maintain state of CM FSM.
+    cm_rlist_d     = cm_rlist_q;
+    cm_sp_offset_d = cm_sp_offset_q;
+    cm_state_d     = cm_state_q;
 
     // Check if incoming instruction is compressed.
     unique case (instr_i[1:0])
@@ -351,6 +501,218 @@ module ibex_compressed_decoder (
             end
           end
 
+          3'b101: begin
+            unique casez (instr_i[12:8])
+              // cm.push
+              5'b11000: begin
+                // This compressed instruction gets expanded into multiple instructions.
+                gets_expanded_o = 1'b1;
+                unique case (cm_state_q)
+                  CmIdle: begin
+                    // No cm.push instruction is active yet; start a new one.
+                    // Initialize `rlist` to the value provided by the instruction.
+                    cm_rlist_d = cm_rlist_init(instr_i[7:4]);
+                    // Store the register at the top of `rlist`.
+                    instr_o = cm_push_store_reg(.rlist(cm_rlist_d), .sp_offset(5'd1));
+                    if (cm_rlist_d <= 5'd3) begin
+                      // Reserved --> illegal instruction.
+                      illegal_instr_o = 1'b1;
+                    end else if (cm_rlist_d == 5'd4) begin
+                      // Only `ra` has to be stored, which is done in this cycle.  Proceed by
+                      // decrementing SP.
+                      if (id_in_ready_i) begin
+                        cm_state_d = CmPushDecrSp;
+                      end
+                    end else begin
+                      // More registers have to be stored.
+                      // Remove the current register from `rlist`.
+                      cm_rlist_d -= 5'd1;
+                      // Initialize SP offset to 2.
+                      cm_sp_offset_d = 5'd2;
+                      // Proceed with storing registers.
+                      if (id_in_ready_i) begin
+                        cm_state_d = CmPushStoreReg;
+                      end
+                    end
+                  end
+                  CmPushStoreReg: begin
+                    // Store register at the top of current `rlist`.
+                    instr_o = cm_push_store_reg(.rlist(cm_rlist_q), .sp_offset(cm_sp_offset_q));
+                    if (id_in_ready_i) begin
+                      // Remove top register from `rlist`.
+                      cm_rlist_d = cm_rlist_q - 5'd1;
+                      // Increment the SP offset.
+                      cm_sp_offset_d = cm_sp_offset_q + 5'd1;
+                      if (cm_rlist_q == 5'd4) begin
+                        // The last register gets stored in this cycle.  Proceed by decrementing
+                        // SP.
+                        cm_state_d = CmPushDecrSp;
+                      end
+                    end
+                  end
+                  CmPushDecrSp: begin
+                    // Decrement stack pointer.
+                    instr_o = cm_sp_addi(.rlist(instr_i[7:4]),
+                                         .spimm(instr_i[3:2]),
+                                         .decr(1'b1));
+                    if (id_in_ready_i) begin
+                      // This is the final operation, so stop expanding and return to idle.
+                      gets_expanded_o = 1'b0;
+                      cm_state_d = CmIdle;
+                    end
+                  end
+                  default: cm_state_d = CmIdle;
+                endcase
+              end
+
+              // cm.pop, cm.popretz, cm.popret
+              5'b11010,
+              5'b11100,
+              5'b11110: begin
+                // This compressed instruction gets expanded into multiple instructions.
+                gets_expanded_o = 1'b1;
+                unique case (cm_state_q)
+                  CmIdle: begin
+                    // No cm.pop instruction is active yet; start a new one.
+                    // Initialize `rlist` to the value provided by the instruction.
+                    cm_rlist_d = cm_rlist_init(instr_i[7:4]);
+                    // Initialize SP offset.
+                    cm_sp_offset_d = cm_stack_adj_word(.rlist(instr_i[7:4]),
+                                                       .spimm(instr_i[3:2])) - 5'd1;
+                    // Load the register at the top of `rlist`.
+                    instr_o = cm_pop_load_reg(.rlist(cm_rlist_d), .sp_offset(cm_sp_offset_d));
+                    if (cm_rlist_d <= 5'd3) begin
+                      // Reserved --> illegal instruction.
+                      illegal_instr_o = 1'b1;
+                    end else if (cm_rlist_d == 5'd4) begin
+                      // Only `ra` has to be loaded, which is done in this cycle.  Proceed by
+                      // incrementing SP.
+                      if (id_in_ready_i) begin
+                        cm_state_d = CmPopIncrSp;
+                      end
+                    end else begin
+                      // More registers have to be loaded.
+                      // Remove the current register from `rlist` and decrement the SP offset.
+                      cm_rlist_d -= 5'd1;
+                      cm_sp_offset_d -= 5'd1;
+                      // Proceed with loading registers.
+                      if (id_in_ready_i) begin
+                        cm_state_d = CmPopLoadReg;
+                      end
+                    end
+                  end
+                  CmPopLoadReg: begin
+                    // Load register at the top of current `rlist`.
+                    instr_o = cm_pop_load_reg(.rlist(cm_rlist_q), .sp_offset(cm_sp_offset_q));
+                    if (id_in_ready_i) begin
+                      // Remove top register from `rlist`.
+                      cm_rlist_d = cm_rlist_q - 5'd1;
+                      // Decrement the SP offset.
+                      cm_sp_offset_d = cm_sp_offset_q - 5'd1;
+                      if (cm_rlist_q == 5'd4) begin
+                        // The last register gets stored in this cycle.  Proceed by incrementing
+                        // SP.
+                        cm_state_d = CmPopIncrSp;
+                      end
+                    end
+                  end
+                  CmPopIncrSp: begin
+                    // Increment stack pointer.
+                    instr_o = cm_sp_addi(.rlist(instr_i[7:4]),
+                                         .spimm(instr_i[3:2]),
+                                         .decr(1'b0));
+                    if (id_in_ready_i) begin
+                      unique case (instr_i[12:8])
+                        5'b11100: cm_state_d = CmPopZeroA0; // cm.popretz
+                        5'b11110: cm_state_d = CmPopRetRa;  // cm.popret
+                        default: begin // cm.pop
+                          // This is the final operation, so stop expanding and return to idle.
+                          gets_expanded_o = 1'b0;
+                          cm_state_d = CmIdle;
+                        end
+                      endcase
+                    end
+                  end
+                  CmPopZeroA0: begin
+                    instr_o = cm_zero_a0();
+                    if (id_in_ready_i) begin
+                      cm_state_d = CmPopRetRa;
+                    end
+                  end
+                  CmPopRetRa: begin
+                    instr_o = cm_ret_ra();
+                    if (id_in_ready_i) begin
+                      // This is the final operation, so stop expanding and return to idle.
+                      gets_expanded_o = 1'b0;
+                      cm_state_d = CmIdle;
+                    end
+                  end
+                  default: cm_state_d = CmIdle;
+                endcase
+              end
+
+              // cm.mvsa01, cm.mva01s
+              5'b011??: begin
+                unique case (instr_i[6:5])
+                  // cm.mvsa01
+                  2'b01: begin
+                    // This compressed instruction gets expanded into multiple instructions.
+                    gets_expanded_o = 1'b1;
+                    unique case (cm_state_q)
+                      CmIdle: begin
+                        // No cm.mvsa01 instruction is active yet; start a new one.
+                        // Move a0 to register indicated by r1s'.
+                        instr_o = cm_mvsa01(.a01(1'b0), .rs(instr_i[9:7]));
+                        if (id_in_ready_i) begin
+                          cm_state_d = CmMvSA1;
+                        end
+                      end
+                      CmMvSA1: begin
+                        // Move a1 to register indicated by r2s'.
+                        instr_o = cm_mvsa01(.a01(1'b1), .rs(instr_i[4:2]));
+                        if (id_in_ready_i) begin
+                          // This is the final operation, so stop expanding and return to idle.
+                          gets_expanded_o = 1'b0;
+                          cm_state_d = CmIdle;
+                        end
+                      end
+                      default: cm_state_d = CmIdle;
+                    endcase
+                  end
+
+                  // cm.mva01s
+                  2'b11: begin
+                    // This compressed instruction gets expanded into multiple instructions.
+                    gets_expanded_o = 1'b1;
+                    unique case (cm_state_q)
+                      CmIdle: begin
+                        // No cm.mva01s instruction is active yet; start a new one.
+                        // Move register indicated by r1s' into a0.
+                        instr_o = cm_mva01s(.rs(instr_i[9:7]), .a01(1'b0));
+                        if (id_in_ready_i) begin
+                          cm_state_d = CmMvA1S;
+                        end
+                      end
+                      CmMvA1S: begin
+                        // Move register indicated by r2s' into a1.
+                        instr_o = cm_mva01s(.rs(instr_i[4:2]), .a01(1'b1));
+                        if (id_in_ready_i) begin
+                          // This is the final operation, so stop expanding and return to idle.
+                          gets_expanded_o = 1'b0;
+                          cm_state_d = CmIdle;
+                        end
+                      end
+                      default: cm_state_d = CmIdle;
+                    endcase
+                  end
+                  default: illegal_instr_o = 1'b1;
+                endcase
+              end
+
+              default: illegal_instr_o = 1'b1;
+            endcase
+          end
+
           3'b110: begin
             // c.swsp -> sw rs2, imm(x2)
             instr_o = {4'b0, instr_i[8:7], instr_i[12], instr_i[6:2], 5'h02, 3'b010,
@@ -359,7 +721,6 @@ module ibex_compressed_decoder (
 
           3'b001,
           3'b011,
-          3'b101,
           3'b111: begin
             illegal_instr_o = 1'b1;
           end
@@ -380,6 +741,18 @@ module ibex_compressed_decoder (
   end
 
   assign is_compressed_o = (instr_i[1:0] != 2'b11);
+
+  always_ff @(posedge clk_i, negedge rst_ni) begin
+    if (!rst_ni) begin
+      cm_state_q <= CmIdle;
+      // The following regs don't need to be reset as they get assigned before first usage:
+      // cm_rlist_q, cm_sp_offset_q
+    end else begin
+      cm_rlist_q     <= cm_rlist_d;
+      cm_sp_offset_q <= cm_sp_offset_d;
+      cm_state_q     <= cm_state_d;
+    end
+  end
 
   ////////////////
   // Assertions //
