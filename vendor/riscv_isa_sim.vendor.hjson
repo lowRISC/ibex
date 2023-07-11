@@ -6,8 +6,8 @@
   target_dir: "riscv-isa-sim",
 
   upstream: {
-    url: "https://github.com/Saad525/riscv-isa-sim",
-    rev: "master",
+    url: "https://github.com/lowrisc/riscv-isa-sim",
+    rev: "mseccfg_tests",
   },
   mapping: [
     {from: "tests/mseccfg",    to: "tests/mseccfg"},
