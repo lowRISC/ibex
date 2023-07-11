@@ -9,6 +9,6 @@
   upstream:
   {
     url: https://github.com/lowrisc/riscv-isa-sim
-    rev: a7c5d5d830e4095aa86580579efc46335fbc2f80
+    rev: a4b823a1c7a260b532e1aa41b4d929e9634a7222
   }
 }
