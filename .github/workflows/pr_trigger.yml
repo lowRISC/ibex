@@ -4,7 +4,10 @@
 name: pr-trigger
 
 on:
-  pull_request:
+  # FIXME: Restore to all PRs
+  push:
+    branches:
+       - master
 
 jobs:
   upload:
