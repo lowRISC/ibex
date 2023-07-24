@@ -11,7 +11,7 @@ module ibex_alu #(
 ) (
   input  ibex_pkg::alu_op_e operator_i,
   input  logic [31:0]       operand_a_i,
-  input  logic [31:0]       operand_b_i,
+  input  logic [31:0]       operand_b_i,  
 
   input  logic              instr_first_cycle_i,
 
