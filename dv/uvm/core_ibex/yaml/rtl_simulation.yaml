@@ -51,7 +51,6 @@
     wave_opts: >-
       -debug_access+all
       -ucli
-      -do vcs.tcl
     cosim_opts: >-
       -f <core_ibex>/ibex_dv_cosim_dpi.f
       -LDFLAGS '<ISS_LDFLAGS>'
