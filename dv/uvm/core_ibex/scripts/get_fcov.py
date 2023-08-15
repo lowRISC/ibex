@@ -8,9 +8,8 @@
 import sys
 import argparse
 import pathlib3x as pathlib
-import shutil
 
-from metadata import RegressionMetadata, LockedMetadata
+from metadata import LockedMetadata
 from scripts_lib import run_one
 import riscvdv_interface
 
@@ -28,7 +27,9 @@ def _main():
         md.riscvdv_fcov_cmds = [riscvdv_interface.get_cov_cmd(md)]
         md.riscvdv_fcov_stdout = md.dir_fcov/'riscvdv_fcov_stdout.log'
 
-    retcode = run_one(md.verbose, md.riscvdv_fcov_cmds[0], md.riscvdv_fcov_stdout)
+    retcode = run_one(md.verbose,
+                      md.riscvdv_fcov_cmds[0],
+                      md.riscvdv_fcov_stdout)
 
     return retcode
 
