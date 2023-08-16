@@ -730,27 +730,30 @@ module ibex_tracer (
   end
 
   int file_handle = 0;
+  bit have_started_file = 1'b0;
 
   // log execution
+  always_ff @(negedge clk_i) begin
+    if (rvfi_valid && trace_log_enable && file_handle == 0) begin
+      string file_name, file_name_base = "trace_core";
+      void'($value$plusargs("ibex_tracer_file_base=%s", file_name_base));
+
+      $sformat(file_name, "%s_%h.log", file_name_base, hart_id_i);
+
+      $display("%m: Writing execution trace to %s", file_name);
+      file_handle <= $fopen(file_name, "w");
+    end
+  end
+
   always_ff @(posedge clk_i) begin
+    if (!have_started_file) begin
+      $fwrite(file_handle,
+              "Time\tCycle\tPC\tInsn\tDecoded instruction\tRegister and memory contents\n");
+      have_started_file <= 1'b1;
+    end
+
     if (rvfi_valid && trace_log_enable) begin
-      int fh = file_handle;
-
-      if (fh == 0) begin
-        string file_name, file_name_base = "trace_core";
-        void'($value$plusargs("ibex_tracer_file_base=%s", file_name_base));
-
-        $sformat(file_name, "%s_%h.log", file_name_base, hart_id_i);
-
-        $display("%m: Writing execution trace to %s", file_name);
-        fh = $fopen(file_name, "w");
-        file_handle <= fh;
-
-        $fwrite(fh,
-                "Time\tCycle\tPC\tInsn\tDecoded instruction\tRegister and memory contents\n");
-      end
-
-      printbuffer_dumpline(fh);
+      printbuffer_dumpline(file_handle);
     end
   end
 
