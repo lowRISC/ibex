@@ -95,4 +95,21 @@ void timer_disable(void);
  */
 uint64_t get_elapsed_time(void);
 
+/**
+ * Enables/disables the instruction cache. This has no effect on Ibex
+ * configurations that do not have an instruction cache and in particular is
+ * safe to execute on those configurations.
+ *
+ * @param enable if non-zero enables, otherwise disables
+ */
+static inline void icache_enable(int enable) {
+  if (enable) {
+    // Set icache enable bit in CPUCTRLSTS
+    asm volatile("csrs 0x7c0, 1");
+  } else {
+    // Clear icache enable bit in CPUCTRLSTS
+    asm volatile("csrc 0x7c0, 1");
+  }
+}
+
 #endif
