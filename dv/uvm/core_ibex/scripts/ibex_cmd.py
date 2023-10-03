@@ -157,9 +157,9 @@ def filter_tests_by_config(cfg: ibex_config.Config,
             param_dict = test['rtl_params']
             assert isinstance(param_dict, dict)
             for p, p_val in param_dict.items():
-                # Parameters are strings or lists of strings. Coerce to the
-                # latter to make the code below simpler.
-                if isinstance(p_val, str):
+                # Parameters are strings or ints, or lists of those two. Coerce
+                # to the latter to make the code below simpler.
+                if isinstance(p_val, str) or isinstance(p_val, int):
                     p_val = [p_val]
 
                 config_val = cfg.params.get(p, None)
