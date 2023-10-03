@@ -9,6 +9,6 @@
   upstream:
   {
     url: https://github.com/chipsalliance/riscv-dv
-    rev: 08b12066b34c9728f706e45098ba502a36d7ca59
+    rev: 71666ebacd69266b1abb7cdbad5e1897ce5884e6
   }
 }
