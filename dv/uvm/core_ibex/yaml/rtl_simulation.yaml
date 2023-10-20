@@ -99,7 +99,7 @@
           -mfcu -cuname design_cuname
           +define+UVM_REGEX_NO_DPI
           +define+UVM
-          -timescale \"1 ns / 1 ps \"
+          -timescale 1ns/1ps
           -writetoplevels <tb_dir>/top.list
           -l <tb_build_log>
           <cmp_opts>
