@@ -27,12 +27,19 @@ run stand-alone binaries. It contains:
 
 ## Building Simulation
 
-The Simple System simulator binary can be built via FuseSoC. From the Ibex
-repository root run:
+The Simple System simulator binary can be built via FuseSoC. This can be built
+with different configurations of Ibex, specified by parameters. To build the
+"small" configuration, run the following command from the Ibex repository root.
+
 
 ```
-fusesoc --cores-root=. run --target=sim --setup --build lowrisc:ibex:ibex_simple_system --RV32E=0 --RV32M=ibex_pkg::RV32MFast
+fusesoc --cores-root=. run --target=sim --setup --build \
+        lowrisc:ibex:ibex_simple_system $(util/ibex_config.py small fusesoc_opts)
 ```
+
+To see performance counters other than the total number of instructions
+executed, you will need to ask for a larger configuration. One possible example
+comes from replacing `small` in the command above with `opentitan`.
 
 ## Building Software
 
