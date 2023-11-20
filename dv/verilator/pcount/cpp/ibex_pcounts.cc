@@ -33,7 +33,7 @@ const std::vector<std::string> ibex_counter_names = {
     "Divide Wait"};
 
 std::string ibex_pcount_string(bool csv) {
-  char seperator = csv ? ',' : ':';
+  char separator = csv ? ',' : ':';
   std::string::size_type longest_name_length;
 
   if (!csv) {
@@ -42,14 +42,14 @@ std::string ibex_pcount_string(bool csv) {
       longest_name_length = std::max(longest_name_length, counter_name.length());
     }
 
-    // Add 1 to always get at least once space after the seperator
+    // Add 1 to always get at least once space after the separator
     longest_name_length++;
   }
 
   std::stringstream pcount_ss;
 
   for (int i = 0; i < ibex_counter_names.size(); ++i) {
-    pcount_ss << ibex_counter_names[i] << seperator;
+    pcount_ss << ibex_counter_names[i] << separator;
 
     if (!csv) {
       int padding = longest_name_length - ibex_counter_names[i].length();
