@@ -12,7 +12,6 @@ import json
 import logging as log
 import os
 import re
-import subprocess
 import sys
 from collections import OrderedDict
 from pathlib import Path
@@ -21,10 +20,11 @@ from typing import Optional
 from Deploy import CompileSim, CovAnalyze, CovMerge, CovReport, CovUnr, RunTest
 from FlowCfg import FlowCfg
 from Modes import BuildModes, Modes, Regressions, RunModes, Tests
+from results_server import ResultsServer
 from SimResults import SimResults
 from tabulate import tabulate
 from Testplan import Testplan
-from utils import TS_FORMAT, VERBOSE, rm_path
+from utils import TS_FORMAT, rm_path
 
 # This affects the bucketizer failure report.
 _MAX_UNIQUE_TESTS = 5
@@ -597,6 +597,9 @@ class SimCfg(FlowCfg):
         results['report_type'] = 'simulation'
         results['tool'] = self.tool.lower()
 
+        if self.build_seed and not self.run_only:
+            results['build_seed'] = str(self.build_seed)
+
         # Create dictionary to store results.
         results['results'] = {
             'testpoints': [],
@@ -683,7 +686,7 @@ class SimCfg(FlowCfg):
                     frs = []
                     for test, line, context in test_runs:
                         frs.append({
-                            'seed': test.seed,
+                            'seed': str(test.seed),
                             'failure_message': {
                                 'log_file_path': test.get_log_path(),
                                 'log_file_line_num': line,
@@ -790,12 +793,34 @@ class SimCfg(FlowCfg):
         # Add path to testplan, only if it has entries (i.e., its not dummy).
         if self.testplan.testpoints:
             if hasattr(self, "testplan_doc_path"):
-                testplan = "https://{}/{}".format(self.doc_server,
-                                                  self.testplan_doc_path)
+                # The key 'testplan_doc_path' can override the path to the testplan file
+                # if it's not in the default location relative to the sim_cfg.
+                relative_path_to_testplan = (Path(self.testplan_doc_path)
+                                             .relative_to(Path(self.proj_root)))
+                testplan = "https://{}/{}".format(
+                    self.book,
+                    str(relative_path_to_testplan).replace("hjson", "html")
+                )
             else:
-                testplan = "https://{}/{}".format(self.doc_server,
-                                                  self.rel_path)
-                testplan = testplan.replace("/dv", "/doc/dv/#testplan")
+                # Default filesystem layout for an ip block
+                # ├── data
+                # │   ├── gpio_testplan.hjson
+                # │   └── <...>
+                # ├── doc
+                # │   ├── checklist.md
+                # │   ├── programmers_guide.md
+                # │   ├── theory_of_operation.md
+                # │   └── <...>
+                # ├── dv
+                # │   ├── gpio_sim_cfg.hjson
+                # │   └── <...>
+
+                # self.rel_path gives us the path to the directory
+                # containing the sim_cfg file...
+                testplan = "https://{}/{}".format(
+                    self.book,
+                    Path(self.rel_path).parent / 'data' / f"{self.name}_testplan.html"
+                )
 
             results_str += f"### [Testplan]({testplan})\n"
 
@@ -898,24 +923,16 @@ class SimCfg(FlowCfg):
         print(self.results_summary_md)
         return self.results_summary_md
 
-    def _publish_results(self):
+    def _publish_results(self, results_server: ResultsServer):
         '''Publish coverage results to the opentitan web server.'''
-        super()._publish_results()
+        super()._publish_results(results_server)
 
         if self.cov_report_deploy is not None:
-            results_server_dir_url = self.results_server_dir.replace(
-                self.results_server_prefix, "https://")
+            log.info("Publishing coverage results to https://{}/{}/latest"
+                     .format(self.results_server,
+                             self.rel_path))
 
-            log.info("Publishing coverage results to %s",
-                     results_server_dir_url)
-            cmd = (self.results_server_cmd + " -m cp -R " +
-                   self.cov_report_dir + " " + self.results_server_dir)
-            try:
-                cmd_output = subprocess.run(args=cmd,
-                                            shell=True,
-                                            stdout=subprocess.PIPE,
-                                            stderr=subprocess.STDOUT)
-                log.log(VERBOSE, cmd_output.stdout.decode("utf-8"))
-            except Exception as e:
-                log.error("%s: Failed to publish results:\n\"%s\"", e,
-                          str(cmd))
+            latest_dir = '{}/latest'.format(self.rel_path)
+            results_server.upload(self.cov_report_dir,
+                                  latest_dir,
+                                  recursive=True)

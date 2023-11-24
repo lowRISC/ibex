@@ -9,7 +9,8 @@ module prim_subreg
 #(
   parameter int            DW       = 32,
   parameter sw_access_e    SwAccess = SwAccessRW,
-  parameter logic [DW-1:0] RESVAL   = '0    // reset value
+  parameter logic [DW-1:0] RESVAL   = '0 ,   // reset value
+  parameter bit            Mubi     = 1'b0
 ) (
   input clk_i,
   input rst_ni,
@@ -39,7 +40,8 @@ module prim_subreg
 
   prim_subreg_arb #(
     .DW       ( DW       ),
-    .SwAccess ( SwAccess )
+    .SwAccess ( SwAccess ),
+    .Mubi     ( Mubi     )
   ) wr_en_data_arb (
     .we,
     .wd,
@@ -61,6 +63,13 @@ module prim_subreg
   // feed back out for consolidation
   assign ds = wr_en ? wr_data : qs;
   assign qe = wr_en;
-  assign qs = q;
+
+  if (SwAccess == SwAccessRC) begin : gen_rc
+    // In case of a SW RC colliding with a HW write, SW gets the value written by HW
+    // but the register is cleared to 0. See #5416 for a discussion.
+    assign qs = de && we ? d : q;
+  end else begin : gen_no_rc
+    assign qs = q;
+  end
 
 endmodule
