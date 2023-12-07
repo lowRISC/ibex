@@ -21,6 +21,10 @@ if [ "$(id -u)" -ne 0 ]; then
   SUDO_CMD="sudo "
 fi
 
+if [ -z "$GITHUB_ACTIONS" ]; then
+  GITHUB_PATH=/dev/null
+fi
+
 case "$ID-$VERSION_ID" in
   ubuntu-16.04|ubuntu-18.04|ubuntu-20.04)
     # Curl must be available to get the repo key below.
@@ -57,12 +61,14 @@ case "$ID-$VERSION_ID" in
     $SUDO_CMD chmod 777 /tools/riscv-isa-sim
     $SUDO_CMD tar -C /tools/riscv-isa-sim -xvzf ibex-cosim-"$IBEX_COSIM_VERSION".tar.gz --strip-components=1
     echo "##vso[task.prependpath]/tools/riscv-isa-sim/bin"
+    echo "/tools/riscv-isa-sim/bin" >> $GITHUB_PATH
 
     wget https://storage.googleapis.com/verilator-builds/verilator-"$VERILATOR_VERSION".tar.gz
     $SUDO_CMD mkdir -p /tools/verilator
     $SUDO_CMD chmod 777 /tools/verilator
     $SUDO_CMD tar -C /tools/verilator -xvzf verilator-"$VERILATOR_VERSION".tar.gz
     echo "##vso[task.prependpath]/tools/verilator/$VERILATOR_VERSION/bin"
+    echo "/tools/verilator/$VERILATOR_VERSION/bin" >> $GITHUB_PATH
     # Python dependencies
     #
     # Updating pip and setuptools is required to have these tools properly
@@ -81,6 +87,7 @@ case "$ID-$VERSION_ID" in
     $SUDO_CMD mkdir -p /tools/verible && $SUDO_CMD chmod 777 /tools/verible
     tar -C /tools/verible -xf verible.tar.gz --strip-components=1
     echo "##vso[task.prependpath]/tools/verible/bin"
+    echo "/tools/verible/bin" >> $GITHUB_PATH
     ;;
 
   *)
@@ -96,3 +103,4 @@ curl -Ls -o build/toolchain/rv32-toolchain.tar.xz "$TOOLCHAIN_URL"
 $SUDO_CMD mkdir -p /tools/riscv && $SUDO_CMD chmod 777 /tools/riscv
 tar -C /tools/riscv -xf build/toolchain/rv32-toolchain.tar.xz --strip-components=1
 echo "##vso[task.prependpath]/tools/riscv/bin"
+echo "/tools/riscv/bin" >> $GITHUB_PATH
