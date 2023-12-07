@@ -27,12 +27,14 @@ echo "Running $TEST_NAME with co-simulation"
 build/lowrisc_ibex_ibex_simple_system_cosim_0/sim-verilator/Vibex_simple_system --meminit=ram,$TEST_ELF
 if [ $? != 0 ]; then
   echo "##vso[task.logissue type=error]Running % failed co-simulation testing"
+  echo "::error::Running % failed co-simulation testing"
   exit 1
 fi
 
 grep 'FAILURE' ibex_simple_system.log
 if [ $? != 1 ]; then
   echo "##vso[task.logissue type=error]Failure seen in $TEST_NAME log"
+  echo "::error::Failure seen in $TEST_NAME log"
   echo "Log contents:"
   cat ibex_simple_system.log
   exit 1
@@ -42,6 +44,7 @@ if [ $SKIP_PASS_CHECK != 1 ]; then
   grep 'PASS' ibex_simple_system.log
   if [ $? != 0 ]; then
     echo "##vso[task.logissue type=error]No pass seen in $TEST_NAME log"
+    echo "::error::No pass seen in $TEST_NAME log"
     echo "Log contents:"
     cat ibex_simple_system.log
     exit 1
