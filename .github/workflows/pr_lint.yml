@@ -10,7 +10,12 @@ name: pr-lint
 
 # Triggers when there is any activity on a pull request, e.g. opened, updated.
 on:
+  merge_group:
+    types:
+      - checks_requested
   pull_request:
+    branches:
+      - "*"
 
 jobs:
   verible-lint:
