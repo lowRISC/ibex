@@ -8,10 +8,11 @@ name: Ibex CI
 
 on:
   push:
-    branches:
-      - "*"
     tags:
       - "*"
+  merge_group:
+    types:
+      - checks_requested
   pull_request:
     branches:
       - "*"
