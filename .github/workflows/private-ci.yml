@@ -1,0 +1,45 @@
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Ibex Private CI
+
+on:
+  push:
+    tags:
+      - "*"
+  merge_group:
+    types:
+      - checks_requested
+  pull_request_target:
+    branches:
+      - "*"
+
+permissions:
+  statuses: write
+
+jobs:
+  trigger:
+    name: Trigger Private CI
+    runs-on: ubuntu-latest
+    steps:
+      # Create pending statuses to block merge group and give indication before jobs are picked up.
+      - name: Create pending statuses
+        run: |
+          gh api --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha || github.sha }} \
+            -f state='pending' \
+            -f context='Ibex Private CI' \
+            -f description='Queued'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Trigger Private CI
+        run: |
+          gh workflow run ibex-private-ci.yml --repo lowRISC/lowrisc-private-ci \
+            -f ref="${{ github.event.pull_request.head.sha || github.sha }}" \
+            -f sha="${{ github.event.pull_request.merge_commit_sha || github.sha }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.LOWRISC_PRIVATE_CI_PAT }}
