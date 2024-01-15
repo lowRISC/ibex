@@ -101,8 +101,7 @@
           +define+UVM
           -timescale \"1 ns / 1 ps \"
           -writetoplevels <tb_dir>/top.list
-          -l <tb_dir>/<rtl_log>
-          <cmp_opts>
+          -l <tb_build_log>
   sim:
     cmd:
       - >-
