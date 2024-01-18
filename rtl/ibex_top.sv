@@ -155,7 +155,6 @@ module ibex_top import ibex_pkg::*; #(
   localparam int unsigned TagSizeECC        = ICacheECC ? (IC_TAG_SIZE + 6) : IC_TAG_SIZE;
   // Scrambling Parameter
   localparam int unsigned NumAddrScrRounds  = ICacheScramble ? 2 : 0;
-  localparam int unsigned NumDiffRounds     = NumAddrScrRounds;
 
   // Clock signals
   logic                        clk;
@@ -565,9 +564,7 @@ module ibex_top import ibex_pkg::*; #(
           .Depth            (IC_NUM_LINES),
           .DataBitsPerMask  (TagSizeECC),
           .EnableParity     (0),
-          .DiffWidth        (TagSizeECC),
-          .NumAddrScrRounds (NumAddrScrRounds),
-          .NumDiffRounds    (NumDiffRounds)
+          .NumAddrScrRounds (NumAddrScrRounds)
         ) tag_bank (
           .clk_i,
           .rst_ni,
@@ -599,9 +596,7 @@ module ibex_top import ibex_pkg::*; #(
           .DataBitsPerMask    (LineSizeECC),
           .ReplicateKeyStream (1),
           .EnableParity       (0),
-          .DiffWidth          (LineSizeECC),
-          .NumAddrScrRounds   (NumAddrScrRounds),
-          .NumDiffRounds      (NumDiffRounds)
+          .NumAddrScrRounds   (NumAddrScrRounds)
         ) data_bank (
           .clk_i,
           .rst_ni,
