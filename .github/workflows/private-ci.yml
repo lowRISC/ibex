@@ -23,6 +23,35 @@ jobs:
     name: Trigger Private CI
     runs-on: ubuntu-latest
     steps:
+      # Find a merge commit. We cannot use merge_commit_sha from context directly because
+      # mergeability check is asynchronous to pull_request_target trigger..
+      - name: Find the merge commit
+        id: merge
+        if: github.event_name == 'pull_request_target'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            for (let i = 0; i <= 5; i++) {
+              const { data: pr } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+              });
+
+              if (i != 5 && pr.mergeable == null) {
+                console.log("Mergeability check in progress");
+                await new Promise(r => setTimeout(r, 2000));
+                continue;
+              }
+
+              if (pr.mergeable) {
+                core.setOutput('merge_sha', pr.merge_commit_sha);
+              } else {
+                core.setFailed('Pull request is not mergeable');
+              }
+              break;
+            }
+
       # Create pending statuses to block merge group and give indication before jobs are picked up.
       - name: Create pending statuses
         run: |
@@ -40,6 +69,6 @@ jobs:
         run: |
           gh workflow run ibex-private-ci.yml --repo lowRISC/lowrisc-private-ci \
             -f ref="${{ github.event.pull_request.head.sha || github.sha }}" \
-            -f sha="${{ github.event.pull_request.merge_commit_sha || github.sha }}"
+            -f sha="${{ steps.merge.outputs.merge_sha || github.sha }}"
         env:
           GITHUB_TOKEN: ${{ secrets.LOWRISC_PRIVATE_CI_PAT }}
