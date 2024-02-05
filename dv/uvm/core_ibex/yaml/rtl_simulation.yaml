@@ -80,7 +80,7 @@
       +enable_ibex_fcov=1
     wave_opts: >
       -ucli
-      -do <cwd>/vcs.tcl
+      -do <core_ibex>/vcs.tcl
 
 
 ############################################################
