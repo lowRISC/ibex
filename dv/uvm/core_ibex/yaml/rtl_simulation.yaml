@@ -71,6 +71,7 @@
             +bin=<binary>
             +ibex_tracer_file_base=<rtl_trace>
             +cosim_log_file=<iss_cosim_trace>
+            -l <rtl_sim_log>
             <sim_opts> <wave_opts> <cov_opts>
     cov_opts: >
       -cm line+tgl+assert+fsm+branch
