@@ -54,14 +54,20 @@ module bus #(
   localparam int unsigned NumBitsHostSel = NrHosts > 1 ? $clog2(NrHosts) : 1;
   localparam int unsigned NumBitsDeviceSel = NrDevices > 1 ? $clog2(NrDevices) : 1;
 
+  logic host_sel_valid;
+  logic device_sel_valid;
+  logic decode_err_resp;
+
   logic [NumBitsHostSel-1:0] host_sel_req, host_sel_resp;
   logic [NumBitsDeviceSel-1:0] device_sel_req, device_sel_resp;
 
   // Master select prio arbiter
   always_comb begin
+    host_sel_valid = 1'b0;
     host_sel_req = '0;
     for (integer host = NrHosts - 1; host >= 0; host = host - 1) begin
       if (host_req_i[host]) begin
+        host_sel_valid = 1'b1;
         host_sel_req = NumBitsHostSel'(host);
       end
     end
@@ -69,10 +75,12 @@ module bus #(
 
   // Device select
   always_comb begin
+    device_sel_valid = 1'b0;
     device_sel_req = '0;
     for (integer device = 0; device < NrDevices; device = device + 1) begin
       if ((host_addr_i[host_sel_req] & cfg_device_addr_mask[device])
           == cfg_device_addr_base[device]) begin
+        device_sel_valid = 1'b1;
         device_sel_req = NumBitsDeviceSel'(device);
       end
     end
@@ -82,16 +90,19 @@ module bus #(
      if (!rst_ni) begin
         host_sel_resp <= '0;
         device_sel_resp <= '0;
+        decode_err_resp <= 1'b0;
      end else begin
         // Responses are always expected 1 cycle after the request
         device_sel_resp <= device_sel_req;
         host_sel_resp <= host_sel_req;
+        // Decode failed; no device matched?
+        decode_err_resp <= host_sel_valid & !device_sel_valid;
      end
   end
 
   always_comb begin
     for (integer device = 0; device < NrDevices; device = device + 1) begin
-      if (NumBitsDeviceSel'(device) == device_sel_req) begin
+      if (device_sel_valid && NumBitsDeviceSel'(device) == device_sel_req) begin
         device_req_o[device]   = host_req_i[host_sel_req];
         device_we_o[device]    = host_we_i[host_sel_req];
         device_addr_o[device]  = host_addr_i[host_sel_req];
@@ -111,8 +122,8 @@ module bus #(
     for (integer host = 0; host < NrHosts; host = host + 1) begin
       host_gnt_o[host] = 1'b0;
       if (NumBitsHostSel'(host) == host_sel_resp) begin
-        host_rvalid_o[host] = device_rvalid_i[device_sel_resp];
-        host_err_o[host]    = device_err_i[device_sel_resp];
+        host_rvalid_o[host] = device_rvalid_i[device_sel_resp] | decode_err_resp;
+        host_err_o[host]    = device_err_i[device_sel_resp]    | decode_err_resp;
         host_rdata_o[host]  = device_rdata_i[device_sel_resp];
       end else begin
         host_rvalid_o[host] = 1'b0;
