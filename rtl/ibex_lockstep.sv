@@ -132,17 +132,18 @@ module ibex_lockstep import ibex_pkg::*; #(
     .Width      (LockstepOffsetW        ),
     .ResetValue (LockstepOffsetW'(1'b0) )
   ) u_rst_shadow_cnt (
-    .clk_i      (clk_i                  ),
-    .rst_ni     (rst_ni                 ),
-    .clr_i      (1'b0                   ),
-    .set_i      (1'b0                   ),
-    .set_cnt_i  ('0                     ),
-    .incr_en_i  (1'b1                   ),
-    .decr_en_i  (1'b0                   ),
-    .step_i     (LockstepOffsetW'(1'b1) ),
-    .cnt_o      (rst_shadow_cnt         ),
-    .cnt_next_o (                       ),
-    .err_o      (rst_shadow_cnt_err     )
+    .clk_i              (clk_i                  ),
+    .rst_ni             (rst_ni                 ),
+    .clr_i              (1'b0                   ),
+    .set_i              (1'b0                   ),
+    .set_cnt_i          ('0                     ),
+    .incr_en_i          (1'b1                   ),
+    .decr_en_i          (1'b0                   ),
+    .step_i             (LockstepOffsetW'(1'b1) ),
+    .commit_i           (1'b1                   ),
+    .cnt_o              (rst_shadow_cnt         ),
+    .cnt_after_commit_o (                       ),
+    .err_o              (rst_shadow_cnt_err     )
   );
 
   // When the LockstepOffset counter value is reached, activate the lockstep
