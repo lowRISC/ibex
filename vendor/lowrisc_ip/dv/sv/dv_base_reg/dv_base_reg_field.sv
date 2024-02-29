@@ -17,6 +17,11 @@ class dv_base_reg_field extends uvm_reg_field;
   // This is used for get_field_by_name
   string alias_name = "";
 
+  // If this field encodes a mubi, this field encodes special access modes such as W1C that cannot
+  // be captured with the regular access configuration, since UVM does not model such access modes
+  // correctly for mubis.
+  string mubi_access = "";
+
   // Default mubi_width = 0 indicates this register field is not a mubi type.
   protected int mubi_width;
 
@@ -58,6 +63,7 @@ class dv_base_reg_field extends uvm_reg_field;
                                   int unsigned   size,
                                   int unsigned   lsb_pos,
                                   string         access,
+                                  string         mubi_access,
                                   bit            volatile,
                                   uvm_reg_data_t reset,
                                   bit            has_reset,
@@ -73,7 +79,7 @@ class dv_base_reg_field extends uvm_reg_field;
                       .is_rand  (is_rand),
                       .individually_accessible(individually_accessible));
       value.rand_mode(is_rand);
-
+      this.mubi_access = mubi_access;
       is_intr_test_fld = !(uvm_re_match("intr_test*", get_parent().get_name()));
       shadowed_val = ~committed_val;
     endfunction
@@ -83,10 +89,53 @@ class dv_base_reg_field extends uvm_reg_field;
     `downcast(get_dv_base_reg_parent, csr)
   endfunction
 
+  // Local helper function to reduce code in do_predict further below.
+  function uvm_reg_data_t mubi_or_hi (uvm_reg_data_t a, uvm_reg_data_t b);
+    import prim_mubi_pkg::*;
+    uvm_reg_data_t out;
+    case (mubi_width)
+      4:  out = uvm_reg_data_t'(mubi4_or_hi(mubi4_t'(a), mubi4_t'(b)));
+      8:  out = uvm_reg_data_t'(mubi8_or_hi(mubi8_t'(a), mubi8_t'(b)));
+      12: out = uvm_reg_data_t'(mubi12_or_hi(mubi12_t'(a), mubi12_t'(b)));
+      16: out = uvm_reg_data_t'(mubi16_or_hi(mubi16_t'(a), mubi16_t'(b)));
+      default: $error("Unsupported mubi width %d.", mubi_width);
+    endcase
+    return out;
+  endfunction: mubi_or_hi
+
+  // Local helper function to reduce code in do_predict further below.
+  function uvm_reg_data_t mubi_and_hi (uvm_reg_data_t a, uvm_reg_data_t b);
+    import prim_mubi_pkg::*;
+    uvm_reg_data_t out;
+    case (mubi_width)
+      4:  out = uvm_reg_data_t'(mubi4_and_hi(mubi4_t'(a), mubi4_t'(b)));
+      8:  out = uvm_reg_data_t'(mubi8_and_hi(mubi8_t'(a), mubi8_t'(b)));
+      12: out = uvm_reg_data_t'(mubi12_and_hi(mubi12_t'(a), mubi12_t'(b)));
+      16: out = uvm_reg_data_t'(mubi16_and_hi(mubi16_t'(a), mubi16_t'(b)));
+      default: $error("Unsupported mubi width: %d.", mubi_width);
+    endcase
+    return out;
+  endfunction: mubi_and_hi
+
+  // Local helper function to reduce code in do_predict further below.
+  function uvm_reg_data_t mubi_false ();
+    import prim_mubi_pkg::*;
+    uvm_reg_data_t out;
+    case (mubi_width)
+      4:  out = uvm_reg_data_t'(MuBi4False);
+      8:  out = uvm_reg_data_t'(MuBi8False);
+      12: out = uvm_reg_data_t'(MuBi12False);
+      16: out = uvm_reg_data_t'(MuBi16False);
+      default: $error("Unsupported mubi width: %d.", mubi_width);
+    endcase
+    return out;
+  endfunction: mubi_false
+
   virtual function void do_predict (uvm_reg_item      rw,
                                     uvm_predict_e     kind = UVM_PREDICT_DIRECT,
                                     uvm_reg_byte_en_t be = -1);
     uvm_reg_data_t field_val = rw.value[0] & ((1 << get_n_bits())-1);
+    string access = get_access();
 
     // update intr_state mirrored value if this is an intr_test reg
     // if kind is UVM_PREDICT_DIRECT or UVM_PREDICT_READ, super.do_predict can handle
@@ -101,8 +150,27 @@ class dv_base_reg_field extends uvm_reg_field;
       end
       // use UVM_PREDICT_READ to avoid uvm_warning due to UVM_PREDICT_DIRECT
       void'(intr_state_fld.predict(predict_val, .kind(UVM_PREDICT_READ)));
-    end
 
+    end else if (kind == UVM_PREDICT_WRITE && mubi_access inside {"W1S", "W1C", "W0C"})
+    begin
+      // Some smoke checking of the byte enables. RTL does not latch anything if not all affected
+      // bytes of the field are enabled. Note that we still use UVM_PREDICT_WRITE further below
+      // since the underlying access is set to RW in the RAL model.
+      if (mubi_width <= 8 && be[0] || mubi_width > 8 && mubi_width <= 16 && &be[1:0]) begin
+        // In case this is a clearable MUBI field, we have to interpret the write value correctly.
+        // ICEBOX(#9273): Note that this just uses bitwise functions to update the value and does
+        // not rectify incorrect mubi values. At a later point, we should discuss if and how to
+        // tighten this up, as discussed on the linked issue.
+        case (mubi_access)
+          "W1S": rw.value[0] = this.mubi_or_hi(rw.value[0], `gmv(this));
+          "W1C": rw.value[0] = this.mubi_and_hi(~rw.value[0], `gmv(this));
+          "W0C": rw.value[0] = this.mubi_and_hi(rw.value[0], `gmv(this));
+          default: ; // unreachable
+        endcase
+      end
+    end else if (kind == UVM_PREDICT_READ && mubi_access == "RC") begin
+      rw.value[0] = this.mubi_false();
+    end
     super.do_predict(rw, kind, be);
   endfunction
 

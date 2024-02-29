@@ -340,7 +340,7 @@ package csr_utils_pkg;
                             input  uvm_reg_map        map = null,
                             input  uvm_reg_frontdoor  user_ftdr = default_user_frontdoor);
     if (backdoor) begin
-      csr_peek(ptr, value, check);
+      value = csr_peek(ptr, check);
       status = UVM_IS_OK;
       return;
     end
@@ -383,35 +383,40 @@ package csr_utils_pkg;
 
   // backdoor read csr
   // uvm_reg::peek() returns a 2-state value, directly get data from hdl path
-  task automatic csr_peek(input uvm_object      ptr,
-                          output uvm_reg_data_t value,
-                          input uvm_check_e     check = default_csr_check,
-                          input bkdr_reg_path_e kind = BkdrRegPathRtl);
-    string      msg_id = {csr_utils_pkg::msg_id, "::csr_peek"};
-    csr_field_t csr_or_fld = decode_csr_or_field(ptr);
-    uvm_reg     csr = csr_or_fld.csr;
+  function automatic uvm_reg_data_t csr_peek(uvm_object      ptr,
+                                             uvm_check_e     check = default_csr_check,
+                                             bkdr_reg_path_e kind = BkdrRegPathRtl);
+    string         msg_id = {csr_utils_pkg::msg_id, "::csr_peek"};
+    csr_field_t    csr_or_fld = decode_csr_or_field(ptr);
+    uvm_reg        csr = csr_or_fld.csr;
+    uvm_reg_data_t value = 0;
 
-    if (csr.has_hdl_path(kind.name)) begin
-      uvm_hdl_path_concat paths[$];
+    uvm_hdl_path_concat paths[$];
+    csr.get_full_hdl_path(paths, kind.name);
 
-      csr.get_full_hdl_path(paths, kind.name);
-      foreach (paths[0].slices[i]) begin
-        uvm_reg_data_t field_val;
-        if (uvm_hdl_read(paths[0].slices[i].path, field_val)) begin
-          if (check == UVM_CHECK) `DV_CHECK_EQ($isunknown(value), 0, "", error, msg_id)
-          value |= field_val << paths[0].slices[i].offset;
-        end else begin
-          `uvm_fatal(msg_id, $sformatf("uvm_hdl_read failed for %0s", csr.get_full_name()))
-        end
-      end
-    end else begin
-      `uvm_fatal(msg_id, $sformatf("No backdoor defined for %0s path's %0s",
-                                   csr.get_full_name(), kind.name))
+    `DV_CHECK_FATAL(paths.size() > 0,
+                    $sformatf("No backdoor defined for %0s path's %0s",
+                              csr.get_full_name(), kind.name),
+                    msg_id)
+
+    foreach (paths[0].slices[i]) begin
+      uvm_reg_data_t field_val;
+      `DV_CHECK_FATAL(uvm_hdl_read(paths[0].slices[i].path, field_val),
+                      $sformatf("Failed to read %s, slice %d, at path %s",
+                                csr.get_full_name(), i, paths[0].slices[i].path),
+                      msg_id)
+      if (check == UVM_CHECK) `DV_CHECK_EQ($isunknown(field_val), 0, "", error, msg_id)
+
+      value |= field_val << paths[0].slices[i].offset;
     end
 
-    // if it's field, only return field value
+    // We now have the contents of the field or register in value. If ptr was a sub-field of some
+    // register, it will be laid out in the same way as the field is laid out in the register.
+    // That's no problem: we can just extract the relevant field from the laid-out value here.
     if (csr_or_fld.field != null) value = get_field_val(csr_or_fld.field, value);
-  endtask
+
+    return value;
+  endfunction
 
   task automatic csr_rd_check(input  uvm_object         ptr,
                               input  uvm_check_e        check = default_csr_check,
