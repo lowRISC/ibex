@@ -49,6 +49,7 @@ def run_one(verbose: bool,
             needs_closing = True
         elif isinstance(redirect_stdstreams, IOBase):
             stdstream_dest = redirect_stdstreams
+            stdstream_dest.flush()
         else:
             raise RuntimeError(
                 f"redirect_stdstream called as {redirect_stdstreams} "
