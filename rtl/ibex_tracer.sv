@@ -1070,6 +1070,10 @@ module ibex_tracer (
         INSN_CRC32C_H:   decode_r1_insn("crc32c.h");
         INSN_CRC32C_W:   decode_r1_insn("crc32c.w");
 
+        //ZiCond
+        INSN_CZERO_EQZ:  decode_r_insn("czero.eqz");
+        INSN_CZERO_NEZ:  decode_r_insn("czero.nez");
+
         default:         decode_mnemonic("INVALID");
       endcase
     end
