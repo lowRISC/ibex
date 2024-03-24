@@ -67,7 +67,9 @@ def merge_cov_vcs(md: RegressionMetadata, cov_dirs: Set[pathlib.Path]) -> int:
         logger.info("Generating merged coverage directory")
         merge_ret = run_one(md.verbose, cmd, redirect_stdstreams=fd)
 
-        return merge_ret
+    if merge_ret:
+        logger.warning(f"WARNING: Saw non-zero retcode while merging coverage : logfile -> {trr.cov_merge_stdout}")
+    return merge_ret
 
 def merge_cov_xlm(md: RegressionMetadata, cov_dbs: Set[pathlib.Path]) -> int:
     """Merge xcelium-generated coverage using the OT scripts.
@@ -129,6 +131,7 @@ def merge_cov_xlm(md: RegressionMetadata, cov_dbs: Set[pathlib.Path]) -> int:
                             redirect_stdstreams=fd,
                             env=xlm_env)
     if merge_ret:
+        logger.warning(f"WARNING: Saw non-zero retcode while merging coverage : logfile -> {md.cov_merge_stdout}")
         return merge_ret
 
     # Then do the reporting
@@ -139,6 +142,8 @@ def merge_cov_xlm(md: RegressionMetadata, cov_dbs: Set[pathlib.Path]) -> int:
                              redirect_stdstreams=fd,
                              env=xlm_env)
 
+    if report_ret:
+        logger.warning(f"WARNING: Saw non-zero retcode while reporting coverage : logfile -> {trr.cov_report_stdout}")
     return report_ret
 
 

@@ -201,6 +201,7 @@ def _main() -> int:
         gen_retcode = run_one(md.verbose, trr.riscvdv_run_gen_cmds[0],
                               redirect_stdstreams=trr.riscvdv_run_gen_stdout)
         if gen_retcode:
+            logger.warning(f"WARNING: Saw non-zero retcode while generating riscv-dv commands : logfile -> {trr.riscvdv_run_gen_stdout}")
             return gen_retcode
 
         # Those commands assume the riscv-dv directory layout, where the build
@@ -223,7 +224,8 @@ def _main() -> int:
             ret = 0
             for cmd in trr.riscvdv_run_cmds:
                 ret = run_one(md.verbose, cmd, redirect_stdstreams=log_fd)
-                if ret != 0:
+                if ret:
+                    logger.warning(f"WARNING: Saw non-zero retcode while generating riscv-dv tests : logfile -> {trr.riscvdv_run_stdout}")
                     break
 
         test_file_copies = {

@@ -30,6 +30,8 @@ def _main():
 
     retcode = run_one(md.verbose, md.riscvdv_fcov_cmds[0], md.riscvdv_fcov_stdout)
 
+    if retcode:
+        logger.warning(f"WARNING: Saw non-zero retcode while generating riscv-dv fcov : logfile -> {md.riscvdv_fcov_stdout}")
     return retcode
 
 

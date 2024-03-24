@@ -140,6 +140,7 @@ def _main() -> int:
             compile_fd.write(f"Running compile_tb command :\n{' '.join(cmd)}\n".encode())
             retcode = run_one(md.verbose, cmd, redirect_stdstreams=compile_fd)
             if retcode:
+                logger.warning(f"WARNING: Saw non-zero retcode while compiling testbench : logfile -> {md.tb_build_stdout}")
                 return retcode
 
     return 0
