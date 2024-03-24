@@ -62,6 +62,7 @@ def _main() -> int:
         'seed': str(trr.seed),
         'binary': trr.binary,
         'test_dir': trr.dir_test,
+        'SIM_DIR': trr.dir_test, # Read by 'dv/uvm/core_ibex/vcs.tcl'
         'tb_dir': md.dir_tb,
         'dir_shared_cov': md.dir_shared_cov,
         'rtl_sim_log': trr.rtl_log,
