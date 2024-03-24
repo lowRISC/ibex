@@ -4,3 +4,6 @@
 *.elf
 *.vmem
 *.d
+
+benchmarks/coremark/*.map
+benchmarks/coremark/*.log
