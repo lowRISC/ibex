@@ -69,6 +69,7 @@ jobs:
         run: |
           gh workflow run ibex-private-ci.yml --repo lowRISC/lowrisc-private-ci \
             -f ref="${{ github.event.pull_request.head.sha || github.sha }}" \
-            -f sha="${{ steps.merge.outputs.merge_sha || github.sha }}"
+            -f sha="${{ steps.merge.outputs.merge_sha || github.sha }}" \
+            -f pull_request="${{ github.event.number }}"
         env:
           GITHUB_TOKEN: ${{ secrets.LOWRISC_PRIVATE_CI_PAT }}
