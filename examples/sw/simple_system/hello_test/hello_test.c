@@ -9,7 +9,7 @@ int main(int argc, char **argv) {
   pcount_reset();
   pcount_enable(1);
 
-  puts("Hello simple system\n");
+  puts("Hello world from simple system!\n");
   puthex(0xDEADBEEF);
   putchar('\n');
   puthex(0xBAADF00D);
