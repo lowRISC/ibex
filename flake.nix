@@ -5,6 +5,11 @@
     # The input 'lowrisc-nix' contains some common dependencies that can be used
     # by lowRISC projects. There is also an associated public binary cache.
     lowrisc-nix.url = "github:lowRISC/lowrisc-nix";
+    # The input 'lowrisc-nix-private' is access-controlled.
+    # Outputs which depend on this input are for internal use only, and will fail
+    # to evaluate without the appropriate credentials.
+    # All outputs which depend on this input are suffixed '_lowrisc'
+    lowrisc-nix-private.url = "git+ssh://git@github.com/lowRISC/lowrisc-nix-private.git";
 
     nixpkgs.follows = "lowrisc-nix/nixpkgs";
     flake-utils.follows = "lowrisc-nix/flake-utils";
@@ -27,6 +32,13 @@
         allowUnfree = true;
         allowBroken = true; # sv2v marked as broken.
       };
+    };
+
+    # This import creates internal-use only outputs, which build on
+    # input attributes that cannot be fetched without appropriate credentials.
+    lr = import ./nix/lowrisc.nix {
+      inherit inputs pkgs system;
+      extraDependencies = sim_shared_lib_deps;
     };
 
     ################
@@ -101,6 +113,16 @@
       '';
     };
 
+    # This shell uses mkShellNoCC as the stdenv CC can interfere with EDA tools.
+    eda_shell = pkgs.lib.makeOverridable pkgs.mkShellNoCC {
+      name = "ibex-devshell-eda";
+      buildInputs = ibex_runtime_deps;
+      nativeBuildInputs = ibex_project_deps;
+      shellHook = ''
+        ${ibex_profile_common}
+      '';
+    };
+
     syn_shell = shell.override (prev: {
       name = "ibex-devshell-synthesis";
       nativeBuildInputs = prev.nativeBuildInputs ++ ibex_syn.deps;
@@ -110,9 +132,9 @@
   in {
     devShells.${system} = {
       default = inputs.self.devShells.${system}.shell;
-
       inherit shell;
+      inherit eda_shell;
       inherit syn_shell;
-    };
+    } // lr.devShells;
   };
 }
