@@ -101,11 +101,18 @@
       '';
     };
 
+    syn_shell = shell.override (prev: {
+      name = "ibex-devshell-synthesis";
+      nativeBuildInputs = prev.nativeBuildInputs ++ ibex_syn.deps;
+      shellHook = prev.shellHook + ibex_syn.profile;
+    });
+
   in {
     devShells.${system} = {
       default = inputs.self.devShells.${system}.shell;
 
       inherit shell;
+      inherit syn_shell;
     };
   };
 }
