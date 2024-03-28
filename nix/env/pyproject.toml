@@ -1,0 +1,47 @@
+[tool.poetry]
+name = "opentitan"
+version = "0.1.0"
+description = "Open-source hardware root-of-trust"
+authors = []
+license = "Apache 2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+packaging = "23.1"
+anytree = "2.8.0"
+hjson = "3.1.0"
+mako = "1.1.6"
+pyyaml = "6.0"
+wheel = "0.41.2"
+edalize = { git = "https://github.com/lowRISC/edalize.git", tag = "v0.4.0"}
+fusesoc = { git = "https://github.com/lowRISC/fusesoc.git", tag = "ot-0.4" }
+
+# Update this when poetry2nix adds hash of later version
+rpds-py = "0.13.2"
+libcst = "^1.1.0"
+isort = "^5.13.2"
+junit-xml = "^1.9"
+pathlib3x = "^2.0.3"
+typing-utils = "^0.1.0"
+typeguard = "^4.1.5"
+portalocker = "^2.8.2"
+pydantic = "^2.5.3"
+svg-py = "^1.4.2"
+mistletoe = "^1.2.1"
+premailer = "^3.10.0"
+bitstring = "^4.1.4"
+sphinx = "^7.2.6"
+pallets-sphinx-themes = "^2.1.1"
+sphinxcontrib-log-cabinet = "^1.0.1"
+sphinx-issues = "^3.0.1"
+sphinx-rtd-theme = "^2.0.0"
+rst2pdf = "^0.101"
+flake8 = "^7.0.0"
+pyvsc = "^0.8.8.7162283399"
+tabulate = "^0.9.0"
+pandas = "^2.1.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

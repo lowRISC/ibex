@@ -17,8 +17,3 @@ fi
 
 export LR_SYNTH_TIMING_RUN=1
 export LR_SYNTH_FLATTEN=1
-
-# SETUP CELL LIBRARY PATH
-# Uncomment the lines below and set the path to an appropriate .lib file
-# export LR_SYNTH_CELL_LIBRARY_PATH=/path/to/NangateOpenCellLibrary_typical.lib
-# export LR_SYNTH_CELL_LIBRARY_NAME=nangate
