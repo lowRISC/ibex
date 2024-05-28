@@ -1,4 +1,4 @@
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -35,7 +35,11 @@ py_library(
 
 py_library(
     name = "modes",
-    srcs = ["Modes.py"],
+    srcs = [
+        "Regression.py",
+        "Test.py",
+        "modes.py",
+    ],
     deps = [
         ":utils",
     ],

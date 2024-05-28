@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -9,6 +9,6 @@
   upstream:
   {
     url: https://github.com/lowRISC/opentitan
-    rev: e0c40265019aa0c74e6903d3b3a144c48a3815ec
+    rev: d268f271f4f75aeb8f3bf9624a497ae5bfb9c47e
   }
 }

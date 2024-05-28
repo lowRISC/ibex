@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -21,9 +21,10 @@ class push_pull_monitor #(parameter int HostDataWidth = 32,
 
   task run_phase(uvm_phase phase);
     @(posedge cfg.vif.rst_n);
+    cfg.in_reset = 0;
     fork
       monitor_reset();
-      collect_trans(phase);
+      collect_trans();
       // Collect partial pull reqs for the reactive pull device agent.
       collect_pull_req();
       collect_cov();
@@ -49,7 +50,7 @@ class push_pull_monitor #(parameter int HostDataWidth = 32,
   // Collect fully-completed transactions.
   //
   // TODO : sample covergroups
-  virtual protected task collect_trans(uvm_phase phase);
+  virtual protected task collect_trans();
     if (cfg.agent_type == PushAgent) begin
       forever begin
         @(cfg.vif.mon_cb);

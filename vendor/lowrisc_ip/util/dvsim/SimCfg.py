@@ -1,4 +1,4 @@
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 r"""
@@ -19,10 +19,12 @@ from typing import Optional
 
 from Deploy import CompileSim, CovAnalyze, CovMerge, CovReport, CovUnr, RunTest
 from FlowCfg import FlowCfg
-from Modes import BuildModes, Modes, Regressions, RunModes, Tests
+from modes import BuildMode, Mode, RunMode, find_mode
+from Regression import Regression
 from results_server import ResultsServer
 from SimResults import SimResults
 from tabulate import tabulate
+from Test import Test
 from Testplan import Testplan
 from utils import TS_FORMAT, rm_path
 
@@ -242,12 +244,12 @@ class SimCfg(FlowCfg):
 
     def _create_objects(self):
         # Create build and run modes objects
-        self.build_modes = Modes.create_modes(BuildModes, self.build_modes)
-        self.run_modes = Modes.create_modes(RunModes, self.run_modes)
+        self.build_modes = Mode.create_modes(BuildMode, self.build_modes)
+        self.run_modes = Mode.create_modes(RunMode, self.run_modes)
 
         # Walk through build modes enabled on the CLI and append the opts
         for en_build_mode in self.en_build_modes:
-            build_mode_obj = Modes.find_mode(en_build_mode, self.build_modes)
+            build_mode_obj = find_mode(en_build_mode, self.build_modes)
             if build_mode_obj is not None:
                 self.pre_build_cmds.extend(build_mode_obj.pre_build_cmds)
                 self.post_build_cmds.extend(build_mode_obj.post_build_cmds)
@@ -265,7 +267,7 @@ class SimCfg(FlowCfg):
 
         # Walk through run modes enabled on the CLI and append the opts
         for en_run_mode in self.en_run_modes:
-            run_mode_obj = Modes.find_mode(en_run_mode, self.run_modes)
+            run_mode_obj = find_mode(en_run_mode, self.run_modes)
             if run_mode_obj is not None:
                 self.pre_run_cmds.extend(run_mode_obj.pre_run_cmds)
                 self.post_run_cmds.extend(run_mode_obj.post_run_cmds)
@@ -279,7 +281,7 @@ class SimCfg(FlowCfg):
                 sys.exit(1)
 
         # Create tests from given list of items
-        self.tests = Tests.create_tests(self.tests, self)
+        self.tests = Test.create_tests(self.tests, self)
 
         # Regressions
         # Parse testplan if provided.
@@ -293,18 +295,28 @@ class SimCfg(FlowCfg):
             self.testplan = Testplan(None, name=self.name)
 
         # Create regressions
-        self.regressions = Regressions.create_regressions(
+        self.regressions = Regression.create_regressions(
             self.regressions, self, self.tests)
 
     def _print_list(self):
         for list_item in self.list_items:
             log.info("---- List of %s in %s ----", list_item, self.variant_name)
-            if hasattr(self, list_item):
-                items = getattr(self, list_item)
-                for item in items:
-                    log.info(item)
-            else:
-                log.error("Item %s does not exist!", list_item)
+            items = getattr(self, list_item, None)
+            if items is None:
+                log.error("No %s defined for %s.", list_item, self.variant_name)
+
+            for item in items:
+                # Convert the item into something that can be printed in the
+                # list. Some modes are specified as strings themselves (so
+                # there's no conversion needed). Others should be subclasses of
+                # Mode, which has a name field that we can use.
+                if isinstance(item, str):
+                    mode_name = item
+                else:
+                    assert isinstance(item, Mode)
+                    mode_name = item.name
+
+                log.info(mode_name)
 
     def _create_build_and_run_list(self):
         '''Generates a list of deployable objects from the provided items.
@@ -359,11 +371,11 @@ class SimCfg(FlowCfg):
                         f"tests in {self.flow_cfg_file}.")
 
         # Merge the global build and run opts
-        Tests.merge_global_opts(self.run_list, self.pre_build_cmds,
-                                self.post_build_cmds, self.build_opts,
-                                self.pre_run_cmds, self.post_run_cmds,
-                                self.run_opts, self.sw_images,
-                                self.sw_build_opts)
+        Test.merge_global_opts(self.run_list, self.pre_build_cmds,
+                               self.post_build_cmds, self.build_opts,
+                               self.pre_run_cmds, self.post_run_cmds,
+                               self.run_opts, self.sw_images,
+                               self.sw_build_opts)
 
         # Process reseed override and create the build_list
         build_list_names = []
@@ -466,7 +478,7 @@ class SimCfg(FlowCfg):
         # Update all tests to use the updated (uniquified) build modes.
         for test in self.run_list:
             if test.build_mode.name != build_map[test.build_mode].name:
-                test.build_mode = Modes.find_mode(
+                test.build_mode = find_mode(
                     build_map[test.build_mode].name, self.build_modes)
 
         self.runs = ([]

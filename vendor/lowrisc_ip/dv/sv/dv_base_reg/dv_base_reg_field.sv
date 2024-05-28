@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -143,7 +143,7 @@ class dv_base_reg_field extends uvm_reg_field;
       uvm_reg_field intr_state_fld = get_intr_state_field();
       uvm_reg_data_t predict_val;
       if (intr_state_fld.get_access == "RO") begin // status interrupt
-        predict_val = field_val;
+        predict_val = field_val | intr_state_fld.get_reset();
       end else begin // regular W1C interrupt
         `DV_CHECK_STREQ(intr_state_fld.get_access, "W1C")
         predict_val = field_val | `gmv(intr_state_fld);
@@ -188,9 +188,17 @@ class dv_base_reg_field extends uvm_reg_field;
     return m_original_access;
   endfunction
 
+  // Return a mask of valid bits in the field.
   virtual function uvm_reg_data_t get_field_mask();
     get_field_mask = (1'b1 << this.get_n_bits()) - 1;
     get_field_mask = get_field_mask << this.get_lsb_pos();
+  endfunction
+
+  // Return a mask of read-only bits in the field.
+  virtual function uvm_reg_data_t get_ro_mask();
+    bit is_ro = (this.get_access() == "RO");
+    get_ro_mask = (is_ro << this.get_n_bits()) - is_ro;
+    get_ro_mask = get_ro_mask << this.get_lsb_pos();
   endfunction
 
   virtual function void set_original_access(string access);

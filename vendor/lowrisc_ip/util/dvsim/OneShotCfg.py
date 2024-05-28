@@ -1,4 +1,4 @@
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 r"""
@@ -11,7 +11,7 @@ from collections import OrderedDict
 
 from Deploy import CompileOneShot
 from FlowCfg import FlowCfg
-from Modes import BuildModes, Modes
+from modes import BuildMode, Mode
 from utils import rm_path
 
 
@@ -116,8 +116,8 @@ class OneShotCfg(FlowCfg):
 
     def _create_objects(self):
         # Create build and run modes objects
-        build_modes = Modes.create_modes(BuildModes,
-                                         getattr(self, "build_modes"))
+        build_modes = Mode.create_modes(BuildMode,
+                                        getattr(self, "build_modes"))
         setattr(self, "build_modes", build_modes)
 
         # All defined build modes are being built, h
@@ -146,11 +146,9 @@ class OneShotCfg(FlowCfg):
         '''Create deploy objects from build modes
         '''
         builds = []
-        build_map = {}
         for build in self.build_modes:
             item = CompileOneShot(build, self)
             builds.append(item)
-            build_map[build] = item
 
         self.builds = builds
         self.deploy = builds

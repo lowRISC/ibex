@@ -1,4 +1,4 @@
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -14,9 +14,6 @@ class LocalLauncher(Launcher):
     """
     Implementation of Launcher to launch jobs in the user's local workstation.
     """
-
-    # Misc common LocalLauncher settings.
-    max_odirs = 5
 
     def __init__(self, deploy):
         '''Initialize common class members.'''

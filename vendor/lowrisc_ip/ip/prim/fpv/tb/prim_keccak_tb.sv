@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -71,4 +71,3 @@ module prim_keccak_tb #(
   `ASSERT(DigestForData0TestSHA3_256_A, done_o |-> state_o[255:0] == digest_0)
 
 endmodule
-
