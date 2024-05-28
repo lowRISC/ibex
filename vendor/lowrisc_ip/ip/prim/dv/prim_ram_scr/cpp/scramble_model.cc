@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -21,7 +21,7 @@ uint8_t PRESENT_SBOX4_INV[] = {0x5, 0xe, 0xf, 0x8, 0xc, 0x1, 0x2, 0xd,
 
 static const uint32_t kNumAddrSubstPermRounds = 2;
 static const uint32_t kNumDataSubstPermRounds = 2;
-static const uint32_t kNumPrinceHalfRounds = 2;
+static const uint32_t kNumPrinceHalfRounds = 3;
 
 static std::vector<uint8_t> byte_reverse_vector(
     const std::vector<uint8_t> &vec_in) {

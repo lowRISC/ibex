@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -70,4 +70,3 @@ module prim_filter #(
   assign filter_o = enable_i ? stored_value_q : filter_synced;
 
 endmodule
-

@@ -1,5 +1,5 @@
 CAPI=2:
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,14 +30,24 @@ filesets:
       - rtl/prim_mubi16_sender.sv
       - rtl/prim_mubi16_sync.sv
       - rtl/prim_mubi16_dec.sv
+      - rtl/prim_mubi20_sender.sv
+      - rtl/prim_mubi20_sync.sv
+      - rtl/prim_mubi20_dec.sv
+      - rtl/prim_mubi24_sender.sv
+      - rtl/prim_mubi24_sync.sv
+      - rtl/prim_mubi24_dec.sv
+      - rtl/prim_mubi28_sender.sv
+      - rtl/prim_mubi28_sync.sv
+      - rtl/prim_mubi28_dec.sv
+      - rtl/prim_mubi32_sender.sv
+      - rtl/prim_mubi32_sync.sv
+      - rtl/prim_mubi32_dec.sv
     file_type: systemVerilogSource
 
   files_verilator_waiver:
     depend:
       # common waivers
       - lowrisc:lint:common
-    files:
-    file_type: vlt
 
   files_ascentlint_waiver:
     depend:

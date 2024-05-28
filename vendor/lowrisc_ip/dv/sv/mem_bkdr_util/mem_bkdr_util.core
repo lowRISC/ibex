@@ -1,5 +1,5 @@
 CAPI=2:
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 name: "lowrisc:dv:mem_bkdr_util"
@@ -15,7 +15,7 @@ filesets:
       - lowrisc:prim:cipher_pkg:0.1
       - lowrisc:prim:secded:0.1
       - lowrisc:ip:otp_ctrl_pkg:1.0
-      - lowrisc:ip:flash_ctrl_pkg
+      - lowrisc:ip_interfaces:flash_ctrl_pkg
       - lowrisc:dv:digestpp_dpi
       - lowrisc:ip:kmac_pkg
     files:

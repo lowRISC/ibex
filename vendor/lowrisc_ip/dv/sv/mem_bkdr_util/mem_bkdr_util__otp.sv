@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -136,7 +136,7 @@ virtual function void otp_write_hw_cfg0_partition(
     write32(i + ManufStateOffset, manuf_state[i*8+:32]);
   end
 
-  hw_cfg0_data = {<<32 {32'h0, manuf_state, device_id}};
+  hw_cfg0_data = {<<32 {manuf_state, device_id}};
   digest = cal_digest(HwCfg0Idx, hw_cfg0_data);
 
   write64(HwCfg0DigestOffset, digest);
@@ -144,14 +144,15 @@ endfunction
 
 virtual function void otp_write_hw_cfg1_partition(
     bit [EnCsrngSwAppReadSize*8-1:0] en_csrng_sw_app_read,
-    bit [EnSramIfetchSize*8-1:0] en_sram_ifetch);
+    bit [EnSramIfetchSize*8-1:0] en_sram_ifetch,
+    bit [EnSramIfetchSize*8-1:0] dis_rv_dm_late_debug);
   bit [HwCfg1DigestSize*8-1:0] digest;
 
   bit [bus_params_pkg::BUS_DW-1:0] hw_cfg1_data[$];
 
-  write32(EnSramIfetchOffset, {en_csrng_sw_app_read, en_sram_ifetch});
+  write32(EnSramIfetchOffset, {dis_rv_dm_late_debug, en_csrng_sw_app_read, en_sram_ifetch});
 
-  hw_cfg1_data = {<<32 {32'h0, en_csrng_sw_app_read, en_sram_ifetch}};
+  hw_cfg1_data = {<<32 {32'h0, dis_rv_dm_late_debug, en_csrng_sw_app_read, en_sram_ifetch}};
   digest = cal_digest(HwCfg1Idx, hw_cfg1_data);
 
   write64(HwCfg1DigestOffset, digest);

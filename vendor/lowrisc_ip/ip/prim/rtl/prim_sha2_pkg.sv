@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -26,12 +26,23 @@ package prim_sha2_pkg;
                                  // set to all-1 for word-aligned input
   } sha_fifo64_t;
 
-  typedef enum logic [1:0] {
-    None,
-    SHA2_256,
-    SHA2_384,
-    SHA2_512
+  // one-hot encoded
+  typedef enum logic [3:0] {
+    SHA2_256  = 4'b0001,
+    SHA2_384  = 4'b0010,
+    SHA2_512  = 4'b0100,
+    SHA2_None = 4'b1000
   } digest_mode_e;
+
+  // one-hot encoded
+  typedef enum logic [5:0] {
+    Key_128  = 6'b00_0001,
+    Key_256  = 6'b00_0010,
+    Key_384  = 6'b00_0100,
+    Key_512  = 6'b00_1000,
+    Key_1024 = 6'b01_0000,
+    Key_None = 6'b10_0000
+  } key_length_e;
 
   localparam sha_word32_t InitHash_256 [8]= '{
     32'h 6a09_e667, 32'h bb67_ae85, 32'h 3c6e_f372, 32'h a54f_f53a,
@@ -232,7 +243,8 @@ package prim_sha2_pkg;
     SwHashStartWhenShaDisabled = 32'h 0000_0002,
     SwUpdateSecretKeyInProcess = 32'h 0000_0003,
     SwHashStartWhenActive      = 32'h 0000_0004,
-    SwPushMsgWhenDisallowed    = 32'h 0000_0005
+    SwPushMsgWhenDisallowed    = 32'h 0000_0005,
+    SwInvalidConfig            = 32'h 0000_0006
   } err_code_e;
 
 endpackage : prim_sha2_pkg

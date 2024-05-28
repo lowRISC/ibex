@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -7,6 +7,9 @@
 // cycle of its respective clock domain. Consecutive pulses need to be spaced
 // appropriately apart from each other depending on the clock frequency ratio
 // of the two clock domains.
+//
+// Also note that a reset of either the source domain or the destination domain
+// in isolation may create a pulse at the destination.
 
 module prim_pulse_sync (
   // source clock domain

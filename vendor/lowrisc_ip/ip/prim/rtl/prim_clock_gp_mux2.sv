@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -28,7 +28,7 @@ assign stage_d = {sel_i & !stage_q[0], !sel_i & !stage_q[1]};
 
 generate
   genvar i;
-  for (i = 0; i < 2; i = i++) begin: gen_two_flops
+  for (i = 0; i < 2; i++) begin: gen_two_flops
     always_ff @(posedge clk_gp[i] or negedge rst_ni) begin: stage1
       if (!rst_ni) begin
         intq[i] <= 1'b0;

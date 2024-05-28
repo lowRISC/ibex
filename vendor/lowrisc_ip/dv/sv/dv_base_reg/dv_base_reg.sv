@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -99,6 +99,15 @@ class dv_base_reg extends uvm_reg;
     this.get_dv_base_reg_fields(flds);
     foreach (flds[i]) begin
       get_reg_mask |= flds[i].get_field_mask();
+    end
+  endfunction
+
+  // Return a mask of read-only bits in the register.
+  virtual function uvm_reg_data_t get_ro_mask();
+    dv_base_reg_field flds[$];
+    this.get_dv_base_reg_fields(flds);
+    foreach (flds[i]) begin
+      get_ro_mask |= flds[i].get_ro_mask();
     end
   endfunction
 

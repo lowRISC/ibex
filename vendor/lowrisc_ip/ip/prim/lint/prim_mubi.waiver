@@ -1,4 +1,4 @@
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -6,6 +6,3 @@
 
 waive -rules {SAME_NAME_TYPE} -location {prim_mubi*.sv} -regexp {'ResetValue' is used as an enumeration value here, and as a parameter at prim.*} \
       -comment "Parameter name reuse"
-
-
-

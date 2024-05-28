@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -54,7 +54,7 @@ module prim_generic_otp
   input                          valid_i,
   // #(Native words)-1, e.g. size == 0 for 1 native word.
   input [SizeWidth-1:0]          size_i,
-  // 000: read, 001: write, 010: read raw, 011: write raw, 111: init
+  // See prim_otp_pkg for the command encoding.
   input  cmd_e                   cmd_i,
   input [AddrWidth-1:0]          addr_i,
   input [IfWidth-1:0]            wdata_i,
@@ -382,7 +382,8 @@ module prim_generic_otp
     .rdata_o  ( rdata_ecc              ),
     .rvalid_o ( rvalid                 ),
     .rerror_o (                        ),
-    .cfg_i    ( '0                     )
+    .cfg_i    ( '0                     ),
+    .alert_o  (                        )
   );
 
   // Currently it is assumed that no wrap arounds can occur.
