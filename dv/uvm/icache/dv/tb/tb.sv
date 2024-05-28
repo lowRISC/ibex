@@ -160,7 +160,8 @@ module tb #(
       .rerror_o         (),
       .cfg_i            ('0),
       .wr_collision_o   (),
-      .write_pending_o  ()
+      .write_pending_o  (),
+      .alert_o          ()
     );
 
     // Data RAM instantiation
@@ -194,7 +195,8 @@ module tb #(
       .rerror_o         (),
       .cfg_i            ('0),
       .wr_collision_o   (),
-      .write_pending_o  ()
+      .write_pending_o  (),
+      .alert_o          ()
     );
   end
 
