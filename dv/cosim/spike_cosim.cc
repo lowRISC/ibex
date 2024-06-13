@@ -763,8 +763,13 @@ void SpikeCosim::fixup_csr(int csr_num, uint32_t csr_val) {
       break;
     }
     case CSR_MISA: {
-      // For Ibex, misa is hardwired
-      reg_t new_val = 0x40901104;
+      // For Ibex, misa is hardwired,
+      // so applying mask to bits other then variable
+      // bits in different Ibex configs
+
+      uint32_t misa_and_mask = 0x40901114;
+      uint32_t misa_or_mask = 0x100004;
+      reg_t new_val = (csr_val & misa_and_mask) | misa_or_mask;
 #ifdef OLD_SPIKE
       processor->set_csr(csr_num, new_val);
 #else
