@@ -85,7 +85,7 @@ When contributing SystemVerilog source code, please try to be consistent and adh
 coding style guide](https://github.com/lowRISC/style-guides/blob/master/VerilogCodingStyle.md).
 
 When contributing C or C++ source code, please try to adhere to [the OpenTitan C++ coding style
-guide](https://docs.opentitan.org/doc/rm/c_cpp_coding_style/).
+guide](https://opentitan.org/book/doc/contributing/style_guides/c_cpp_coding_style.html).
 All C and C++ code should be formatted with clang-format before committing.
 Either run `clang-format -i filename.cc` or `git clang-format` on added files.
 
