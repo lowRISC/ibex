@@ -66,7 +66,7 @@ class ibex_mem_intf_response_driver extends uvm_driver #(ibex_mem_intf_seq_item)
       begin
         forever begin
           ibex_mem_intf_seq_item req, req_c;
-          cfg.vif.wait_clks(1);
+          @(cfg.vif.response_driver_cb);
           seq_item_port.get_next_item(req);
           $cast(req_c, req.clone());
           if(~cfg.vif.response_driver_cb.reset) begin
@@ -112,14 +112,16 @@ class ibex_mem_intf_response_driver extends uvm_driver #(ibex_mem_intf_seq_item)
   virtual protected task send_read_data();
     ibex_mem_intf_seq_item tr;
     forever begin
-      cfg.vif.wait_clks(1);
+      @(cfg.vif.response_driver_cb);
       cfg.vif.response_driver_cb.rvalid <=  1'b0;
       cfg.vif.response_driver_cb.rdata  <= 'x;
       cfg.vif.response_driver_cb.rintg  <= 'x;
       cfg.vif.response_driver_cb.error  <= 'x;
       rdata_queue.get(tr);
       if(cfg.vif.response_driver_cb.reset) continue;
-      cfg.vif.wait_clks(tr.rvalid_delay);
+
+      repeat (tr.rvalid_delay) @(cfg.vif.response_driver_cb);
+
       if(~cfg.vif.response_driver_cb.reset) begin
         cfg.vif.response_driver_cb.rvalid <= 1'b1;
         cfg.vif.response_driver_cb.error  <= tr.error;
