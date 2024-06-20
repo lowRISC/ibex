@@ -54,7 +54,7 @@ class ibex_mem_intf_monitor extends uvm_monitor;
     ibex_mem_intf_seq_item trans_collected;
     forever begin
       trans_collected = ibex_mem_intf_seq_item::type_id::create("trans_collected");
-      while(!(vif.monitor_cb.request && vif.monitor_cb.grant)) vif.wait_clks(1);
+      while(!(vif.monitor_cb.request && vif.monitor_cb.grant)) @(vif.monitor_cb);
       trans_collected.addr              = vif.monitor_cb.addr;
       trans_collected.be                = vif.monitor_cb.be;
       trans_collected.misaligned_first  = vif.monitor_cb.misaligned_first;
@@ -71,7 +71,7 @@ class ibex_mem_intf_monitor extends uvm_monitor;
       addr_ph_port.write(trans_collected);
       `uvm_info(get_full_name(),"Send through addr_ph_port", UVM_HIGH)
       collect_response_queue.put(trans_collected);
-      vif.wait_clks(1);
+      @(vif.monitor_cb);
     end
   endtask : collect_address_phase
 
@@ -80,7 +80,7 @@ class ibex_mem_intf_monitor extends uvm_monitor;
     forever begin
       collect_response_queue.get(trans_collected);
       do
-        vif.wait_clks(1);
+        @(vif.monitor_cb);
       while(vif.monitor_cb.rvalid === 0);
 
       if (trans_collected.read_write == READ) begin
