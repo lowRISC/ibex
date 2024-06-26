@@ -6,6 +6,10 @@ University of Bologna under the name Zero-riscy. In December 2018, Ibex has
 been contributed to lowRISC who is maintaining and advancing the design since
 then.
 
+Similarly, the Ibex `dv/formal` work was originally developed by the University of
+Oxford in the summer of 2023. In the summer of 2024 this work was extended
+for and contributed to lowRISC who is now maintaining and advancing the design.
+
 Throughout the years, Ibex has seen contributions from many people and we at
 lowRISC are very thankful for all of them. This file lists the many people who
 contributed to what is called Ibex today. If you made a contribution to Ibex
@@ -38,6 +42,7 @@ please feel free to open a pull request to get your name added to this file.
 - Ivan Ribeiro
 - Karol Gugala
 - Leon Woestenberg
+- Louis-Emile Ploix
 - Luís Marques
 - Marek Pikuła
 - Markus Wegmann
