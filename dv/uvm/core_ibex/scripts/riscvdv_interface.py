@@ -68,7 +68,7 @@ def get_cov_cmd(md: RegressionMetadata) -> List[str]:
            '--dir', str(md.dir_run),
            '-o', str(md.dir_fcov),
            '--simulator', md.simulator,
-           '--opts', '--gen_timeout 1000',
+           '--opts', '--gen_timeout 1000 ',
            '--isa', md.isa_ibex,
            '--custom_target', str(md.ibex_riscvdv_customtarget)]
     if md.verbose:

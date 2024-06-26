@@ -38,7 +38,7 @@
           -debug_access+pp
           -xlrm uniq_prior_final
           -CFLAGS '--std=c99 -fno-extended-identifiers'
-          -lca -kdb
+          -lca
           -debug_access+f
           <cmp_opts> <wave_opts> <cov_opts> <cosim_opts>
     cov_opts: >-
@@ -62,17 +62,16 @@
   sim:
     cmd:
       - >-
-        env SIM_DIR=<test_dir>
-          <tb_dir>/vcs_simv
-            +vcs+lic+wait
-            +ntb_random_seed=<seed>
-            +UVM_TESTNAME=<rtl_test>
-            +UVM_VERBOSITY=UVM_LOW
-            +bin=<binary>
-            +ibex_tracer_file_base=<rtl_trace>
-            +cosim_log_file=<iss_cosim_trace>
-            -l <rtl_sim_log>
-            <sim_opts> <wave_opts> <cov_opts>
+        <tb_dir>/vcs_simv
+          +vcs+lic+wait
+          +ntb_random_seed=<seed>
+          +UVM_TESTNAME=<rtl_test>
+          +UVM_VERBOSITY=UVM_LOW
+          +bin=<binary>
+          +ibex_tracer_file_base=<rtl_trace>
+          +cosim_log_file=<iss_cosim_trace>
+          -l <rtl_sim_log>
+          <sim_opts> <wave_opts> <cov_opts>
     cov_opts: >
       -cm line+tgl+assert+fsm+branch
       -cm_dir <dir_shared_cov>/test.vdb

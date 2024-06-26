@@ -14,6 +14,7 @@ from metadata import RegressionMetadata, LockedMetadata
 from ibex_cmd import get_compile_opts
 from scripts_lib import run_one
 import riscvdv_interface
+import nix_lib
 
 import logging
 logger = logging.getLogger(__name__)
@@ -34,7 +35,8 @@ def _get_iss_pkgconfig_flags(specifiers, iss_pc, simulator):
         # tool, and its easy for the options to arrive malformed. Use
         # the following hack to get it through.
         if '-Wl' in _flags:  # This should be in LDFLAGS only
-            _flags = "'-Xlinker {}'".format(_flags.replace('-Wl,', ''))
+            _flags = "-Xlinker,{}".format(_flags.replace('-Wl,', ''))
+
     return _flags
 
 
@@ -108,7 +110,21 @@ def _main() -> int:
             compile_fd.write(f"Running compile_tb command :\n{' '.join(cmd)}\n".encode())
             retcode = run_one(md.verbose, cmd, redirect_stdstreams=compile_fd)
             if retcode:
+                logger.warning(f"WARNING: Saw non-zero retcode while compiling testbench : logfile -> {md.tb_build_stdout}")
                 return retcode
+
+
+    # If in a nix shell, patch the compiled simulation executable to use our chosen shared libraries
+    if os.getenv("IBEX_NIX_SHELL_LIB") is not None:
+        if md.simulator == "xlm":
+            so = md.dir_tb / "xcelium.d" / "run.d" / "librun.so"
+
+            # nix_lib.patch_rpath(so) # Doesn't work
+            nix_lib.patch_dtneeded(so)
+
+            # Finally, strip the rpath of unecessary entries
+            cmd = ["patchelf", str(so), "--shrink-rpath"]
+            subprocess.check_output(cmd)
 
     return 0
 
