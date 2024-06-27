@@ -66,7 +66,10 @@ void riscv_cosim_notify_dside_access(Cosim *cosim, svBit store,
                                      svBitVecVal *addr, svBitVecVal *data,
                                      svBitVecVal *be, svBit error,
                                      svBit misaligned_first,
-                                     svBit misaligned_second) {
+                                     svBit misaligned_second,
+                                     svBit misaligned_first_saw_error,
+                                     svBit m_mode_access) {
+
   assert(cosim);
 
   cosim->notify_dside_access(
@@ -76,7 +79,10 @@ void riscv_cosim_notify_dside_access(Cosim *cosim, svBit store,
                       .be = be[0],
                       .error = error != 0,
                       .misaligned_first = misaligned_first != 0,
-                      .misaligned_second = misaligned_second != 0});
+                      .misaligned_second = misaligned_second != 0,
+                      .misaligned_first_saw_error =
+                        misaligned_first_saw_error != 0,
+                      .m_mode_access = m_mode_access != 0});
 }
 
 void riscv_cosim_set_iside_error(Cosim *cosim, svBitVecVal *addr) {
