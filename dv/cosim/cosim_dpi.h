@@ -15,7 +15,7 @@ extern "C" {
 int riscv_cosim_step(Cosim *cosim, const svBitVecVal *write_reg,
                      const svBitVecVal *write_reg_data, const svBitVecVal *pc,
                      svBit sync_trap, svBit suppress_reg_write);
-void riscv_cosim_set_mip(Cosim *cosim, const svBitVecVal *mip);
+void riscv_cosim_set_mip(Cosim *cosim, const svBitVecVal *pre_mip, const svBitVecVal *post_mip);
 void riscv_cosim_set_nmi(Cosim *cosim, svBit nmi);
 void riscv_cosim_set_nmi_int(Cosim *cosim, svBit nmi_int);
 void riscv_cosim_set_debug_req(Cosim *cosim, svBit debug_req);

@@ -584,11 +584,12 @@ void SpikeCosim::initial_proc_setup(uint32_t start_pc, uint32_t start_mtvec,
   }
 }
 
-void SpikeCosim::set_mip(uint32_t mip) {
-  uint32_t new_mip = mip;
+void SpikeCosim::set_mip(uint32_t pre_mip, uint32_t post_mip) {
+  uint32_t new_mip = pre_mip;
   uint32_t old_mip = processor->get_state()->mip->read();
 
-  processor->get_state()->mip->write_with_mask(0xffffffff, mip);
+  processor->get_state()->mip->write_with_mask(0xffffffff, post_mip);
+  processor->get_state()->mip->write_pre_val(pre_mip);
 
   if (processor->get_state()->debug_mode ||
       (processor->halt_request == processor_t::HR_REGULAR) ||
