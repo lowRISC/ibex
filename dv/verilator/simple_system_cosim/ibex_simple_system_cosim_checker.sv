@@ -44,7 +44,7 @@ module ibex_simple_system_cosim_checker #(
     if (u_top.rvfi_valid) begin
       riscv_cosim_set_nmi(cosim_handle, u_top.rvfi_ext_nmi);
       riscv_cosim_set_nmi_int(cosim_handle, u_top.rvfi_ext_nmi_int);
-      riscv_cosim_set_mip(cosim_handle, u_top.rvfi_ext_mip);
+      riscv_cosim_set_mip(cosim_handle, u_top.rvfi_ext_pre_mip, u_top.rvfi_ext_post_mip);
       riscv_cosim_set_debug_req(cosim_handle, u_top.rvfi_ext_debug_req);
       riscv_cosim_set_mcycle(cosim_handle, u_top.rvfi_ext_mcycle);
       for (int i=0; i < 10; i++) begin

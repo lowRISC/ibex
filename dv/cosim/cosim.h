@@ -87,7 +87,7 @@ class Cosim {
   //
   // At the next call of `step`, the MIP value will take effect (i.e. if it's a
   // new interrupt that is enabled it will step straight to that handler).
-  virtual void set_mip(uint32_t mip) = 0;
+  virtual void set_mip(uint32_t pre_mip, uint32_t post_mip) = 0;
 
   // Set the state of the NMI (non-maskable interrupt) line.
   //
