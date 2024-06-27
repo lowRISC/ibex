@@ -27,7 +27,9 @@ void riscv_cosim_notify_dside_access(Cosim *cosim, svBit store,
                                      svBitVecVal *addr, svBitVecVal *data,
                                      svBitVecVal *be, svBit error,
                                      svBit misaligned_first,
-                                     svBit misaligned_second);
+                                     svBit misaligned_second,
+                                     svBit misaligned_first_saw_error,
+                                     svBit m_mode_access);
 void riscv_cosim_set_iside_error(Cosim *cosim, svBitVecVal *addr);
 int riscv_cosim_get_num_errors(Cosim *cosim);
 const char *riscv_cosim_get_error(Cosim *cosim, int index);

@@ -8,6 +8,7 @@
 #include "riscv/devices.h"
 #include "riscv/log_file.h"
 #include "riscv/processor.h"
+#include "riscv/mmu.h"
 #include "riscv/simif.h"
 
 #include <cassert>
@@ -411,6 +412,12 @@ bool SpikeCosim::check_sync_trap(uint32_t write_reg,
     return false;
   }
 
+  if ((processor->get_state()->mcause->read() == 0x5) ||
+      (processor->get_state()->mcause->read() == 0x7)) {
+    // We have a load or store access fault, apply fixup for misaligned accesses
+    misaligned_pmp_fixup();
+  }
+
   // If we see an internal NMI, that means we receive an extra memory intf item.
   // Deleting that is necessary since next Load/Store would fail otherwise.
   if (processor->get_state()->mcause->read() == 0xFFFFFFE0) {
@@ -616,6 +623,62 @@ void SpikeCosim::early_interrupt_handle() {
             << initial_spike_pc
             << " PC after: " << (processor->get_state()->pc & 0xffffffff);
     errors.emplace_back(err_str.str());
+  }
+}
+
+// Ibex splits misaligned accesses into two separate requests. They
+// independently undergo PMP access checks. It is possible for one to fail (so
+// no request produced for that half of the access) whilst the other successed
+// (producing a request for that half of the access).
+//
+// Spike splits misaligned accesses up into bytes and will apply PMP access
+// checks byte by byte in a linear order. As soon as a byte sees a PMP
+// permission failure the rest of the misaligned access is aborted.
+//
+// This results in mismatches as in some misaligned access cases Ibex will
+// produce a request and spike will not.
+//
+// This fixup detects this condition and removes the Ibex access from
+// pending_dside_accesses to avoid a mismatch. This removed access is checked
+// against PMP using the spike MMU to check spike agrees it passes PMP checks.
+//
+// There may be a better way to handle this (e.g. altering spike behaviour to match
+// Ibex) so for now a warning is generated in fixup cases so they can be easily
+// identified.
+void SpikeCosim::misaligned_pmp_fixup() {
+  if (pending_dside_accesses.size() != 0) {
+    auto &top_pending_access = pending_dside_accesses.front();
+    auto &top_pending_access_info = top_pending_access.dut_access_info;
+
+    // If top access is the second half of a misaligned access where the first
+    // half saw an error we have the PMP fixup case
+    if (top_pending_access_info.misaligned_second &&
+        top_pending_access_info.misaligned_first_saw_error) {
+      mmu_t* mmu = processor->get_mmu();
+
+      // Check if the second half of the access (which Ibex produces a request
+      // for and spike does not) passes PMP
+      if (!mmu->pmp_ok(top_pending_access_info.addr, 4,
+            top_pending_access_info.store ? STORE : LOAD,
+            top_pending_access_info.m_mode_access ? PRV_M : PRV_U)) {
+        // Raise an error if the second half shouldn't have passed PMP
+        std::stringstream err_str;
+        err_str << "Saw second half of a misaligned access which not have "
+                << "generated a memory request as it does not pass a PMP check,"
+                << " address: " << std::hex << top_pending_access_info.addr;
+        errors.emplace_back(err_str.str());
+      } else {
+        // Output warning on stdout so we're aware which tests this is happening
+        // in
+        std::cout << "WARNING: Cosim dropping second half of misaligned access "
+                  << "as first half saw an error and second half passed PMP "
+                  << "check, address: "
+                  << std::hex << top_pending_access_info.addr << std::endl;
+        std::cout << std::dec;
+
+        pending_dside_accesses.erase(pending_dside_accesses.begin());
+      }
+    }
   }
 }
 

@@ -286,6 +286,13 @@ module core_ibex_tb_top;
   assign data_mem_vif.misaligned_second =
     dut.u_ibex_top.u_ibex_core.load_store_unit_i.addr_incr_req_o;
 
+  assign data_mem_vif.misaligned_first_saw_error =
+    dut.u_ibex_top.u_ibex_core.load_store_unit_i.addr_incr_req_o &
+    dut.u_ibex_top.u_ibex_core.load_store_unit_i.lsu_err_d;
+
+  assign data_mem_vif.m_mode_access =
+    dut.u_ibex_top.u_ibex_core.priv_mode_lsu == ibex_pkg::PRIV_LVL_M;
+
   initial begin
     // Drive the clock and reset lines. Reset everything and start the clock at the beginning of
     // time

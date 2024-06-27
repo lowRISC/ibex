@@ -35,6 +35,10 @@ struct DSideAccessInfo {
   // `misaligned_first` set to true, there is no second half.
   bool misaligned_first;
   bool misaligned_second;
+
+  bool misaligned_first_saw_error;
+
+  bool m_mode_access;
 };
 
 class Cosim {

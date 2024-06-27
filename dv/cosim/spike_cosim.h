@@ -95,6 +95,8 @@ class SpikeCosim : public simif_t, public Cosim {
 
   void early_interrupt_handle();
 
+  void misaligned_pmp_fixup();
+
   unsigned int insn_cnt;
 
  public:
