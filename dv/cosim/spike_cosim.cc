@@ -84,8 +84,9 @@ bool SpikeCosim::mmio_load(reg_t addr, size_t len, uint8_t *bytes) {
   bool dut_error = false;
 
   // Incoming access may be an iside or dside access. Use PC to help determine
-  // which.
-  uint32_t pc = processor->get_state()->pc;
+  // which. PC is 64 bits in spike, we only care about the bottom 32-bit so mask
+  // off the top bits.
+  uint64_t pc = processor->get_state()->pc & 0xffffffff;
   uint32_t aligned_addr = addr & 0xfffffffc;
 
   if (pending_iside_error && (aligned_addr == pending_iside_err_addr)) {
@@ -93,17 +94,14 @@ bool SpikeCosim::mmio_load(reg_t addr, size_t len, uint8_t *bytes) {
     // assume it's an iside access and produce an error.
     pending_iside_error = false;
     dut_error = true;
-  } else if (addr < pc || addr >= (pc + 8)) {
+  } else {
     // Spike may attempt to access up to 8-bytes from the PC when fetching, so
-    // only check as a dside access when it falls outside that range.
+    // only check as a dside access when it falls outside that range
+    bool in_iside_range = (addr >= pc && addr < pc + 8);
 
-    // Otherwise check if the aligned PC matches with the aligned address or an
-    // incremented aligned PC (to capture the unaligned 4-byte instruction
-    // case). Assume a successful iside access if either of these checks are
-    // true, otherwise assume a dside access and check against DUT dside
-    // accesses.  If the RTL produced a bus error for the access, or the
-    // checking failed produce a memory fault in spike.
-    dut_error = (check_mem_access(false, addr, len, bytes) != kCheckMemOk);
+    if (!in_iside_range) {
+      dut_error = (check_mem_access(false, addr, len, bytes) != kCheckMemOk);
+    }
   }
 
   return !(bus_error || dut_error);
