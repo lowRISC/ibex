@@ -93,17 +93,27 @@ bool SpikeCosim::mmio_load(reg_t addr, size_t len, uint8_t *bytes) {
     // assume it's an iside access and produce an error.
     pending_iside_error = false;
     dut_error = true;
-  } else if (addr < pc || addr >= (pc + 8)) {
+  } else {
     // Spike may attempt to access up to 8-bytes from the PC when fetching, so
-    // only check as a dside access when it falls outside that range.
+    // only check as a dside access when it falls outside that range. Special
+    // handling is required for the overflow case (where pc + 0x8 overflows to
+    // the bottom of the 32 bit range).
 
-    // Otherwise check if the aligned PC matches with the aligned address or an
-    // incremented aligned PC (to capture the unaligned 4-byte instruction
-    // case). Assume a successful iside access if either of these checks are
-    // true, otherwise assume a dside access and check against DUT dside
-    // accesses.  If the RTL produced a bus error for the access, or the
-    // checking failed produce a memory fault in spike.
-    dut_error = (check_mem_access(false, addr, len, bytes) != kCheckMemOk);
+    bool check_dside_access = addr < pc;
+
+    if (pc >= 0xfffffff8) {
+      // Overflow case, top bound check uses < as the pc + 0x8 calculation
+      // overflows.
+      if (addr < (pc + 0x8)) {
+          check_dside_access = false;
+      }
+    } else {
+      check_dside_access |= addr >= (pc + 8);
+    }
+
+    if (check_dside_access) {
+      dut_error = (check_mem_access(false, addr, len, bytes) != kCheckMemOk);
+    }
   }
 
   return !(bus_error || dut_error);
