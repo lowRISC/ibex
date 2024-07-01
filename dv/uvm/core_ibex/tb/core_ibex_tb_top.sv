@@ -359,4 +359,32 @@ module core_ibex_tb_top;
     assign dut.u_ibex_top.gen_regfile_ff.register_file_i.gen_rdata_mux_check.
           u_prim_onehot_check_raddr_b.unused_assert_connected = 1;
   end
+
+  ibex_pkg::ctrl_fsm_e controller_state;
+  logic                controller_handle_irq;
+  ibex_pkg::irqs_t     ibex_irqs, last_ibex_irqs;
+
+  assign controller_state      = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ctrl_fsm_cs;
+  assign controller_handle_irq = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.handle_irq;
+  assign ibex_irqs             = dut.u_ibex_top.u_ibex_core.irqs;
+
+  always_ff @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      last_ibex_irqs <= '0;
+    end else begin
+      last_ibex_irqs <= ibex_irqs;
+    end
+  end
+
+  always_ff @(posedge clk) begin
+    if (controller_state == ibex_pkg::IRQ_TAKEN) begin
+      if (!controller_handle_irq) begin
+        $display("WARNING: Controller in IRQ_TAKEN but no IRQ to handle, returning to DECODE");
+        $display("IRQs last cycle: %x, IRQs this cycle: %x", last_ibex_irqs, ibex_irqs);
+      end else if (last_ibex_irqs != ibex_irqs) begin
+        $display("WARNING: Controller in IRQ_TAKEN and IRQs have just changed");
+        $display("IRQs last cycle: %x, IRQs this cycle: %x", last_ibex_irqs, ibex_irqs);
+      end
+    end
+  end
 endmodule
