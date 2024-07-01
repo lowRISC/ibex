@@ -157,10 +157,16 @@ module core_ibex_tb_top;
     .core_sleep_o           (dut_if.core_sleep          )
   );
 
+  `define IBEX_RF_PATH core_ibex_tb_top.dut.u_ibex_top.gen_regfile_ff.register_file_i
+
   // We should never see any alerts triggered in normal testing
   `ASSERT(NoAlertsTriggered,
     !dut_if.alert_minor && !dut_if.alert_major_internal && !dut_if.alert_major_bus, clk, !rst_n)
   `DV_ASSERT_CTRL("tb_no_alerts_triggered", core_ibex_tb_top.NoAlertsTriggered)
+  `DV_ASSERT_CTRL("tb_rf_rd_mux_a_onehot",
+    `IBEX_RF_PATH.gen_rdata_mux_check.u_rdata_a_mux.SelIsOnehot_A)
+  `DV_ASSERT_CTRL("tb_rf_rd_mux_b_onehot",
+    `IBEX_RF_PATH.gen_rdata_mux_check.u_rdata_b_mux.SelIsOnehot_A)
 
   assign dut.u_ibex_top.u_ibex_core.u_fcov_bind.rf_we_glitch_err =
     dut.u_ibex_top.rf_alert_major_internal;
