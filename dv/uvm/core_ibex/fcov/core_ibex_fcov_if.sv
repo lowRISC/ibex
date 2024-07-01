@@ -758,9 +758,12 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
          binsof(cp_stall_type_id) intersect {IdStallTypeLdHz});
 
       // Cannot have a memory stall when we see an LS exception unless it is a load or store
-      // instruction
+      // instruction or a fetch error (the raw instruction decode can still indicate a load or store
+      // which produces a stall, though won't cause any load or store to occur due to the fetch
+      // error).
       illegal_bins mem_stall_illegal =
-        (!binsof(cp_id_instr_category) intersect {InstrCategoryLoad, InstrCategoryStore} &&
+        (!binsof(cp_id_instr_category) intersect {InstrCategoryLoad, InstrCategoryStore,
+                                                  InstrCategoryFetchError} &&
          binsof(cp_stall_type_id) intersect {IdStallTypeMem}) with
         (cp_ls_pmp_exception == 1'b1 || cp_ls_error_exception == 1'b1);
 
