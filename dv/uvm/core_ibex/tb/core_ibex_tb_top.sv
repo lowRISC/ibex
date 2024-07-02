@@ -162,6 +162,14 @@ module core_ibex_tb_top;
     !dut_if.alert_minor && !dut_if.alert_major_internal && !dut_if.alert_major_bus, clk, !rst_n)
   `DV_ASSERT_CTRL("tb_no_alerts_triggered", core_ibex_tb_top.NoAlertsTriggered)
 
+  `DV_ASSERT_CTRL("tb_no_spurious_response", core_ibex_tb_top.dut.u_ibex_top.u_ibex_core.NoMemResponseWithoutPendingAccess)
+  `DV_ASSERT_CTRL("tb_no_spurious_response", core_ibex_tb_top.dut.u_ibex_top.MaxOutstandingDSideAccessesCorrect)
+  `DV_ASSERT_CTRL("tb_no_spurious_response", core_ibex_tb_top.dut.u_ibex_top.PendingAccessTrackingCorrect)
+
+  if (SecureIbex) begin : g_lockstep_assert_ctrl
+    `DV_ASSERT_CTRL("tb_no_spurious_response", core_ibex_tb_top.dut.u_ibex_top.gen_lockstep.u_ibex_lockstep.u_shadow_core.NoMemResponseWithoutPendingAccess)
+  end
+
   assign dut.u_ibex_top.u_ibex_core.u_fcov_bind.rf_we_glitch_err =
     dut.u_ibex_top.rf_alert_major_internal;
 

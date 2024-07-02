@@ -24,6 +24,7 @@ interface ibex_mem_intf#(
   wire                     error;
   wire                     misaligned_first;
   wire                     misaligned_second;
+  wire                     spurious_response;
 
   clocking request_driver_cb @(posedge clk);
     input   reset;
@@ -38,6 +39,7 @@ interface ibex_mem_intf#(
     input   rdata;
     input   rintg;
     input   error;
+    input   spurious_response;
   endclocking
 
   clocking response_driver_cb @(posedge clk);
@@ -53,23 +55,25 @@ interface ibex_mem_intf#(
     output  rdata;
     output  rintg;
     output  error;
+    output  spurious_response;
   endclocking
 
   clocking monitor_cb @(posedge clk);
-    input reset;
-    input request;
-    input grant;
-    input addr;
-    input we;
-    input be;
-    input rvalid;
-    input wdata;
-    input wintg;
-    input rdata;
-    input rintg;
-    input error;
-    input misaligned_first;
-    input misaligned_second;
+    input  reset;
+    input  request;
+    input  grant;
+    input  addr;
+    input  we;
+    input  be;
+    input  rvalid;
+    input  wdata;
+    input  wintg;
+    input  rdata;
+    input  rintg;
+    input  error;
+    input  misaligned_first;
+    input  misaligned_second;
+    input  spurious_response;
   endclocking
 
   task automatic wait_clks(input int num);
