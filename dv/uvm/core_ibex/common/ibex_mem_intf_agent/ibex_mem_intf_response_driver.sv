@@ -62,6 +62,7 @@ class ibex_mem_intf_response_driver extends uvm_driver #(ibex_mem_intf_seq_item)
 
   virtual protected task get_and_drive();
     wait (cfg.vif.response_driver_cb.reset === 1'b0);
+
     fork
       begin
         forever begin
@@ -113,18 +114,33 @@ class ibex_mem_intf_response_driver extends uvm_driver #(ibex_mem_intf_seq_item)
     ibex_mem_intf_seq_item tr;
     forever begin
       @(cfg.vif.response_driver_cb);
-      cfg.vif.response_driver_cb.rvalid <=  1'b0;
-      cfg.vif.response_driver_cb.rdata  <= 'x;
-      cfg.vif.response_driver_cb.rintg  <= 'x;
-      cfg.vif.response_driver_cb.error  <= 'x;
+      cfg.vif.response_driver_cb.rvalid            <= 1'b0;
+      cfg.vif.response_driver_cb.spurious_response <= 1'b0;
+      cfg.vif.response_driver_cb.rdata             <= 'x;
+      cfg.vif.response_driver_cb.rintg             <= 'x;
+      cfg.vif.response_driver_cb.error             <= 'x;
+
       rdata_queue.get(tr);
+
+      `uvm_info(`gfn, $sformatf("Got response for addr %x", tr.addr), UVM_HIGH)
+
       if(cfg.vif.response_driver_cb.reset) continue;
 
       repeat (tr.rvalid_delay) @(cfg.vif.response_driver_cb);
 
       if(~cfg.vif.response_driver_cb.reset) begin
+        if (tr.spurious_response) begin
+          `uvm_info(`gfn, $sformatf("Driving spurious response"), UVM_HIGH)
+        end else begin
+          `uvm_info(`gfn, $sformatf("Driving response for addr %x", tr.addr), UVM_HIGH)
+        end
+
         cfg.vif.response_driver_cb.rvalid <= 1'b1;
         cfg.vif.response_driver_cb.error  <= tr.error;
+        // A spurious response is not associated with any request. This is flagged in the vif
+        // signals so other components in the testbench can ignore them if needed.
+        cfg.vif.response_driver_cb.spurious_response <= tr.spurious_response;
+
         if (tr.read_write == READ) begin
           cfg.vif.response_driver_cb.rdata <= tr.data;
           cfg.vif.response_driver_cb.rintg <= tr.intg;
