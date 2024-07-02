@@ -78,40 +78,56 @@ SpikeCosim::SpikeCosim(const std::string &isa_string, uint32_t start_pc,
 char *SpikeCosim::addr_to_mem(reg_t addr) { return nullptr; }
 
 bool SpikeCosim::mmio_load(reg_t addr, size_t len, uint8_t *bytes) {
+  // Load from the ISS memory model, while checking if the access is
+  // consistent with the observed DUT memory acceses.
+  // Return false if any errors occur, or the checking fails.
+  // Within Spike (mmu_t::load_slow_path), this causes a load_access_fault.
+
+  // Spike does not differentiate between iside and dside memory accesses
+  // (as ibex does) so we make an educated guess which is which, and
+  // then after fetching the data, check against the recorded DUT access
+  // that should be queued as pending.
+  //
+  // Spike may attempt to access up to 8-bytes from the PC when fetching, so
+  // assume as a dside access when it falls outside that range.
+  // N.B. Heuristic
+  uint32_t pc = processor->get_state()->pc;
+  bool is_probably_dmem_access = (addr < pc || addr >= (pc + 8));
+  // Check we don't have a heuristic mismatch (this may be a false-positive but
+  // worth failing explicity if it is seen)
+  assert(!(is_probably_dmem_access && pending_iside_error));
+
+  // Attempt to make an identical load from the bus memory device.
+  // This can fail e.g. if accessing an unmapped address (see SpikeCosim::add_memory)
   bool bus_error = !bus.load(addr, len, bytes);
 
-  bool dut_error = false;
+  // If the DUT encountered a bus error for its access, or the checking failed,
+  // this is a dut_error.
+  bool dut_error = is_probably_dmem_access ? (check_mem_access(false, addr, len, bytes) != kCheckMemOk) : false;
 
-  // Incoming access may be an iside or dside access. Use PC to help determine
-  // which.
-  uint32_t pc = processor->get_state()->pc;
   uint32_t aligned_addr = addr & 0xfffffffc;
-
-  if (pending_iside_error && (aligned_addr == pending_iside_err_addr)) {
-    // Check if the incoming access is subject to an iside error, in which case
-    // assume it's an iside access and produce an error.
+  if ( pending_iside_error &&
+      (pending_iside_err_addr == aligned_addr)) {
+    // Check if the aligned PC matches with the aligned address or an
+    // incremented aligned PC (to capture the unaligned 4-byte instruction
+    // case).
+    // If the pending_iside_error has been set, produce a dut_error.
     pending_iside_error = false;
     dut_error = true;
-  } else if (addr < pc || addr >= (pc + 8)) {
-    // Spike may attempt to access up to 8-bytes from the PC when fetching, so
-    // only check as a dside access when it falls outside that range.
-
-    // Otherwise check if the aligned PC matches with the aligned address or an
-    // incremented aligned PC (to capture the unaligned 4-byte instruction
-    // case). Assume a successful iside access if either of these checks are
-    // true, otherwise assume a dside access and check against DUT dside
-    // accesses.  If the RTL produced a bus error for the access, or the
-    // checking failed produce a memory fault in spike.
-    dut_error = (check_mem_access(false, addr, len, bytes) != kCheckMemOk);
-  }
+  };
 
   return !(bus_error || dut_error);
 }
 
 bool SpikeCosim::mmio_store(reg_t addr, size_t len, const uint8_t *bytes) {
+  // Store to the ISS memory model, while checking if the access is
+  // consistent with the observed DUT memory acceses.
+  // Return false if any errors occur, or the checking fails.
+  // Within Spike (mmu_t::store_slow_path), this causes a store_access_fault.
+
   bool bus_error = !bus.store(addr, len, bytes);
-  // If the RTL produced a bus error for the access, or the checking failed
-  // produce a memory fault in spike.
+  // If the DUT encountered a bus error for its access, or the checking failed,
+  // this is a dut_error.
   bool dut_error = (check_mem_access(true, addr, len, bytes) != kCheckMemOk);
 
   return !(bus_error || dut_error);
@@ -777,12 +793,76 @@ void SpikeCosim::fixup_csr(int csr_num, uint32_t csr_val) {
 
 SpikeCosim::check_mem_result_e SpikeCosim::check_mem_access(
     bool store, uint32_t addr, size_t len, const uint8_t *bytes) {
+  // Because Spike is only fed instructions that have been made available
+  // on the RVFI by IBEX (retired and synchronously trapping), spike will
+  // always run slightly-behind the ibex, and hence we need to store memory
+  // accesses and errors when they are seen by the testbench, and then pop
+  // them from the queues when spike actually executes them.
+  // This delay may be a few cycles in general, but may never happen if
+  // the access was iside-speculative.
+  //
+  // Whenever a load/store is attempted by spike, we check the following
+  // conditions....
+  //
+  // 0) First, if an iside error has been detected and
+  // pending_iside_error=True, a dut_error is generated within mmio_load(), and
+  // this function is not called. This function is called if the heuristics
+  // believe the access is a dmem access. (dmem may be accessed with stores or
+  // loads, while imem is only loads.)
+  //
+  // As well as checking for correspondence between the spike access and the
+  // queued DUT dmem access, we also want to pass along the error if the dmem
+  // access response came back with an error from the DUT memory system bus. So,
+  // if all the below checks pass, the final step is to check for a marked error
+  // in the queued dmem access, and pass it along to Spike if so.
+  //
+  // The correspondence checks are as follows:
+  //
+  // 1) Check there is actually a dmem access in the queue at all.
+  // Pop the top dmem access from the queue, and then...
+  // 2) Check the addr of spike access matches that of the queued dmem access.
+  // 3) Check the type of spike access (load/store) matches that of the queued
+  // dmem access.
+  //
+  // If the dut dmem access was misaligned :
+  // (Because ibex dmem can make misaligned and byte-enabled accesses, and spike
+  // will not make accesses in this way, we need to check the final result of
+  // the two systems is the same. Spike will make multiple single-byte accesses
+  // for the same end-result). Therefore, this function (and mmio_load/store)
+  // may be called multiple times for a single dut dmem access.
+  // By checking the byte-enables of the memory accesses, we can check that..
+  // 4) The spike-accesses do not repeat accessing any bytes the dut accesses.
+  // 5) The spike-access does not touch any bytes not accessed by the dut.
+  //    ..and while doing this, record the bytes accessed so next time around we
+  //    can make the checks 4) and 5).
+  // When all of the bytes have been accessed matching the queued access,
+  // discard this recorded data in preparation for the next access.
+  //
+  // If the dut dmem access is aligned :
+  // 6) Check that the spike-accessed bytes match the dut dmem byte-enables in
+  // one go.
+  //
+  // Until this point, we have not even checked the data of the accesses.
+  // For accesses not tagged with a dut error:
+  // 7) Check the data of the spike access matches that of the ibex dmem access,
+  //    for all stores and for loads without errors.
+  //
+  // For dut dmem accesses with errors, we can't check the data, but one more
+  // possible sanity test is that for misaligned accesses...
+  // 8) Check the second access exists in the pending queue
+  // 9) Check the second (next) access has the correct address
+  // After 9), pop both dmem accesses from pending. Only return a single error if needed.
+  //
+  // Finally, pass along the error to spike if the dut access at the top of the
+  // queue was marked with one (DSideAccessInfo.error)
+
   assert(len >= 1 && len <= 4);
   // Expect that no spike memory accesses cross a 32-bit boundary
   assert(((addr + (len - 1)) & 0xfffffffc) == (addr & 0xfffffffc));
 
   std::string iss_action = store ? "store" : "load";
 
+  // 1)
   // Check if there are any pending DUT accesses to check against
   if (pending_dside_accesses.size() == 0) {
     std::stringstream err_str;
@@ -798,6 +878,7 @@ SpikeCosim::check_mem_result_e SpikeCosim::check_mem_access(
 
   std::string dut_action = top_pending_access_info.store ? "store" : "load";
 
+  // 2)
   // Check for an address match
   uint32_t aligned_addr = addr & 0xfffffffc;
   if (aligned_addr != top_pending_access_info.addr) {
@@ -810,6 +891,7 @@ SpikeCosim::check_mem_result_e SpikeCosim::check_mem_access(
     return kCheckMemCheckFailed;
   }
 
+  // 3)
   // Check access type match
   if (store != top_pending_access_info.store) {
     std::stringstream err_str;
@@ -833,6 +915,7 @@ SpikeCosim::check_mem_result_e SpikeCosim::check_mem_access(
     // accesses where the DUT will generate an access covering all bytes within
     // an aligned 32-bit word.
 
+    // 4)
     // Check bytes accessed this time haven't already been been seen for the DUT
     // access we are trying to match against
     if ((expected_be & top_pending_access.be_spike) != 0) {
@@ -848,6 +931,7 @@ SpikeCosim::check_mem_result_e SpikeCosim::check_mem_access(
       return kCheckMemCheckFailed;
     }
 
+    // 5)
     // Check expected access isn't trying to access bytes that the DUT access
     // didn't access.
     if ((expected_be & ~top_pending_access_info.be) != 0) {
@@ -868,6 +952,7 @@ SpikeCosim::check_mem_result_e SpikeCosim::check_mem_access(
       pending_access_done = true;
     }
   } else {
+    // 6)
     // For aligned accesses bytes from spike access must precisely match bytes
     // from DUT access in one go
     if (expected_be != top_pending_access_info.be) {
@@ -884,9 +969,10 @@ SpikeCosim::check_mem_result_e SpikeCosim::check_mem_access(
     pending_access_done = true;
   }
 
+  // 7)
   // Check data from expected access matches pending DUT access.
-  // Data is ignored on error responses to loads so don't check it. Always check
-  // store data.
+  // Always check store data.
+  // (Data is ignored on error responses to loads so don't check it.)
   if (store || !top_pending_access_info.error) {
     // Combine bytes into a single word
     uint32_t expected_data = 0;
@@ -905,10 +991,10 @@ SpikeCosim::check_mem_result_e SpikeCosim::check_mem_access(
 
     if (expected_data != masked_dut_data) {
       std::stringstream err_str;
-      err_str << "DUT generated " << iss_action << " at address " << std::hex
-              << top_pending_access_info.addr << " with data "
-              << masked_dut_data << " but data " << expected_data
-              << " was expected with byte mask " << expected_be;
+      err_str << "DUT generated " << iss_action << " dmem access at address "
+              << std::hex << top_pending_access_info.addr << " with data "
+              << masked_dut_data << " but ISS access(es) got data " << std::hex << expected_data
+              << " with equivalent byte mask of " << std::hex << expected_be;
 
       errors.emplace_back(err_str.str());
 
@@ -917,15 +1003,24 @@ SpikeCosim::check_mem_result_e SpikeCosim::check_mem_access(
   }
 
   bool pending_access_error = top_pending_access_info.error;
+  // If the pending dside access has an error, then we don't need to check to data
+  // of the accesses. However, we can still check if the correct number of accesses
+  // took place, and then immediately pop the erroneous dmem access(es) off the top
+  // of the queue.
 
   if (pending_access_error && misaligned) {
-    // When misaligned accesses see an error, if they have crossed a 32-bit
-    // boundary DUT will generate two accesses. If the top pending access from
-    // the DUT was the first half of a misaligned access which accesses the top
-    // byte, it must have crossed the 32-bit boundary and generated a second
-    // access
-    if (top_pending_access_info.misaligned_first &&
+    // If requested to make a misaligned access that crosses a 32-bit
+    // boundary (this could be a word or halfword access), the DUT
+    // LSU generates two word-aligned accesses with appropriate
+    // byte-enables set.
+    //
+    // If the top pending access from the DUT was the first half of a misaligned
+    // access which accesses the top byte, it must have crossed the 32-bit
+    // boundary and generated a second access
+    if (  top_pending_access_info.misaligned_first &&
         ((top_pending_access_info.be & 0x8) != 0)) {
+
+      // 8)
       // Check the second access DUT exists
       if ((pending_dside_accesses.size() < 2) ||
           !pending_dside_accesses[1].dut_access_info.misaligned_second) {
@@ -939,6 +1034,7 @@ SpikeCosim::check_mem_result_e SpikeCosim::check_mem_access(
         return kCheckMemCheckFailed;
       }
 
+      // 9)
       // Check the second access had the expected address
       if (pending_dside_accesses[1].dut_access_info.addr !=
           (top_pending_access_info.addr + 4)) {
@@ -970,6 +1066,10 @@ SpikeCosim::check_mem_result_e SpikeCosim::check_mem_access(
     pending_dside_accesses.erase(pending_dside_accesses.begin());
   }
 
+  // If we got this far, just check if the DUT access was marked as
+  // an error, and pass this on to Spike if so as a dut_error.
+  // (If we just erased the top dmem access from the pending queue, this
+  // returned error refers to that.)
   return pending_access_error ? kCheckMemBusError : kCheckMemOk;
 }
 
