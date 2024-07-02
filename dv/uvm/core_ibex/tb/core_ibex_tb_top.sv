@@ -168,6 +168,19 @@ module core_ibex_tb_top;
   `DV_ASSERT_CTRL("tb_rf_rd_mux_b_onehot",
     `IBEX_RF_PATH.gen_rdata_mux_check.u_rdata_b_mux.SelIsOnehot_A)
 
+  `DV_ASSERT_CTRL("tb_no_spurious_response",
+    core_ibex_tb_top.dut.u_ibex_top.u_ibex_core.NoMemResponseWithoutPendingAccess)
+  `DV_ASSERT_CTRL("tb_no_spurious_response",
+    core_ibex_tb_top.dut.u_ibex_top.MaxOutstandingDSideAccessesCorrect)
+  `DV_ASSERT_CTRL("tb_no_spurious_response",
+    core_ibex_tb_top.dut.u_ibex_top.PendingAccessTrackingCorrect)
+
+  if (SecureIbex) begin : g_lockstep_assert_ctrl
+    `define IBEX_LOCKSTEP_PATH core_ibex_tb_top.dut.u_ibex_top.gen_lockstep.u_ibex_lockstep
+    `DV_ASSERT_CTRL("tb_no_spurious_response",
+      `IBEX_LOCKSTEP_PATH.u_shadow_core.NoMemResponseWithoutPendingAccess)
+  end
+
   assign dut.u_ibex_top.u_ibex_core.u_fcov_bind.rf_we_glitch_err =
     dut.u_ibex_top.rf_alert_major_internal;
 
