@@ -522,7 +522,9 @@ module ibex_id_stage #(
     // - When modifying any PMP CSR, PMP check of the next instruction might get invalidated.
     //   Hence, a pipeline flush is needed to instantiate another PMP check with the updated CSRs.
     // - When modifying debug CSRs.
-    if (csr_op_en_o == 1'b1 && (csr_op_o == CSR_OP_WRITE || csr_op_o == CSR_OP_SET)) begin
+    if (csr_op_en_o == 1'b1 && (csr_op_o == CSR_OP_WRITE ||
+                                csr_op_o == CSR_OP_SET   ||
+                                csr_op_o == CSR_OP_CLEAR)) begin
       if (csr_num_e'(instr_rdata_i[31:20]) == CSR_MSTATUS ||
           csr_num_e'(instr_rdata_i[31:20]) == CSR_MIE     ||
           csr_num_e'(instr_rdata_i[31:20]) == CSR_MSECCFG ||
