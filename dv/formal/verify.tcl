@@ -238,3 +238,11 @@ proc prove_liveness {} {
 }
 
 source build/psgen.tcl
+
+if {$argc > 0} {puts "\$argv: $argv"}
+if {$argc >= 6} {
+    set argv5 [lindex $argv 5]
+    if {$argv5 == "prove_all"} {
+        prove_no_liveness
+    }
+}

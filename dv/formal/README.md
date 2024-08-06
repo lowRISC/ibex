@@ -1,8 +1,8 @@
 # End to End Formal Verification against the Sail
-
-Prerequisities (in your PATH):
-- [The lowRISC fork of the Sail compiler](https://github.com/lowRISC/sail/tree/lowrisc)
-- [psgen](https://github.com/mndstrmr/psgen)
+Prerequisites:
+- Nix (`https://zero-to-nix.com/start/install`)
+- JasperGold (available on your PATH)
+  - If JasperGold is not found, `nix develop` will refuse to enter the development shell.
 
 Build instructions:
 - Clone this repository
@@ -17,8 +17,31 @@ Building as above invokes the following steps, which can also be done manually d
 - `git submodule init`
 - `make psgen` to build the SV for the proofs given in `thm/`
 - `make sv` to build the SV translation of the Sail compiler. Will invoke `buildspec.py`, which can be configured to adjust which instructions are defined. By default all of them are, this is correct but slow.
-- Make the changes to Ibex described in the RTL changes.
-- `SAIL_DIR=<path to sail compiler source> jg verify.tcl`
+- `jg verify.tcl` invokes JasperGold interactively, sourcing the configuration & run script. Requires the above two steps to be executed first.
+
+## Development
+Identical to the above, but use `nix develop .#formal-dev`.
+
+Local versions of psgen or Sail can be used once the formal-dev shell is open by prepending to `PATH`:
+- psgen: (`https://github.com/mndstrmr/psgen`)
+  - Clone the repository to \<psgen-dir\> : `git clone https://github.com/mndstrmr/psgen`
+  - Make local changes...
+  - Build with `nix develop --command bash -c "go build"`
+  - In the formal-dev shell:
+    - Add to path with `export PATH=<psgen-dir>:$PATH`
+- lowRISC Sail: (`https://github.com/lowrisc/sail` on the `lowrisc` branch).
+  - Clone the repository to \<sail-dir\> `git clone --branch lowrisc https://github.com/lowrisc/sail`
+  - Make local changes...
+  - Build with `nix develop github:lowrisc/ibex-formal-embargoed#lowrisc_sail --command bash -c "dune build --release && dune install --prefix ."`
+  - In the formal-dev shell:
+    - Add to path with `export PATH=<sail-dir>/bin:$PATH`
+    - Update `LOWRISC_SAIL_SRC` to point to the source root with `export LOWRISC_SAIL_SRC=<sail-dir>`.
+- sail-riscv: (`https://github.com/lowrisc/sail-riscv`) Can be swapped out by changing `LOWRISC_SAIL_RISCV_SRC`.
+  - The current version is at `05bcf4cb5301c34a612abe893df25c0242a716b2`
+  - Clone the repository to \<sail-riscv-dir\> (`git clone https://github.com/lowrisc/sail-riscv`).
+  - Checkout local version / make local changes...
+  - In the formal-dev shell:
+    - Update `LOWRISC_SAIL_RISCV_SRC` to point to the source root with `export LOWRISC_SAIL_RISCV_SRC=<sail-riscv-dir>`.
 
 ## Conclusivity
 All properties are currently known to be conclusive, with the exception of M-Types. The later stages (Memory, Top, RegMatch and Wrap and some Liveness) generally take longer.
@@ -31,6 +54,7 @@ This means that (up to base case) Ibex is trace equivalent to the Sail (i.e. whe
 ## RTL Changes
 - `ResetAll = 1` is required for now (instead of `ResetAll = Lockstep`)
 - Fix for [#2913](https://github.com/lowRISC/ibex/issues/2193): Include `|| csr_op_o == CSR_OP_CLEAR` in the cases for `csr_pipeline_flushes` in `ibex_id_stage.sv`.
+These changes are made automatically by `make` and `make jg`.
 
 ## Code Tour
 ### Top Level Goals
