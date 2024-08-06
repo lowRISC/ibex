@@ -2,7 +2,7 @@ IBEX_ROOT=../..
 
 SAIL=sail
 
-SAIL_RISCV_MODEL_DIR=../sail-riscv/model
+SAIL_RISCV_MODEL_DIR=${LOWRISC_SAIL_RISCV_SRC}/model
 
 include Sources.mk
 
@@ -48,3 +48,20 @@ sv:
 psgen:
 	mkdir -p build
 	psgen $(addprefix -path ,$(PSGEN_SRCS)) $(PSGEN_FLAGS) -sv-out build/psgen.sv -tcl-out build/psgen.tcl
+
+.PHONY: jg
+jg: fusesoc psgen sv
+	jg verify.tcl -allow_unsupported_OS -acquire_proj
+
+# The following default target is intended for regressions / unattended runs.
+.PHONY: all
+all: fusesoc psgen sv
+	jg verify.tcl -allow_unsupported_OS -acquire_proj -no_gui --- "prove_no_liveness"
+
+################################################################################
+
+.PHONY: clean
+clean:
+	rm -rf build/
+	rm -rf jgproject/
+	rm -rf jgproofs/
