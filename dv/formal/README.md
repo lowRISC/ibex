@@ -1,16 +1,71 @@
-# End to End Formal Verification against the Sail
+# End-to-End Formal Verification of Ibex Trace Equivalence against the Sail Model
 
-Prerequisities (in your PATH):
-- [The lowRISC fork of the Sail compiler](https://github.com/lowRISC/sail/tree/lowrisc)
-- [psgen](https://github.com/mndstrmr/psgen)
+## Building & Running the flow
+
+Prerequisites:
+- Nix (`https://zero-to-nix.com/start/install`)
+- Cadence Jasper
+  If Jasper is not found on you PATH, `nix develop` will refuse to enter the development shell.
+
+Getting started:
+- Clone this repository
+- `cd dv/formal`
+
+### Reproducible Build
+
+This flow is intended for users who wish to run the formal flow as-is using the pinned external dependencies (psgen, sail, riscv-sail etc.)
 
 Build instructions:
-- `make fusesoc` fetches the necessary RTL using the Fusesoc tool, and makes a local copy inside `build/`. This also creates a filelist (`.scr`) that Jasper knows how to ingest.
-  - This step also patches the Ibex RTL with the changes described [in the section below](#rtl-changes).
+- `nix develop .#formal`
+- `make` invokes Jasper in batch-mode, and attempts to prove everything, which is meant for regressions.
+- `make jg` invokes Jasper interactively, halting after sourcing the contents of `verify.tcl`.
+
+After `make jg`, Jasper should start up and should execute the commands in the TCL file.
+You can see the different steps of the proof in the `Task Tree` tab.
+Then, you can prove each step in order by right clicking on them and clicking `Prove Task`.
+Some tasks may take longer than others and you can select specific properties in the `Property Table` and prove them individually by right clicking and selecting `Prove Property`.
+Some steps require a lot of RAM and CPU so we recommend closing any other resource-heavy programs running on your computer.
+A machine with 128 GiB of RAM and 32 cores was used to complete the proof.
+To avoid manually running each step you can also use the `prove_lemmas` command inside the TCL command interface located below your session window.
+
+### Development Builds
+
+Users who wish to do development on this flow should use the below steps.
+This will allow changes to both the local files and the external dependencies (psgen, sail, riscv-sail), and to run the intermediate build steps manually.
+
+Build instructions:
+- Identical to the Reproducible Build steps, but use `nix develop .#formal-dev`.
+
+Invoking `make jg` using the provided makefile would run the following steps, which can also be executed manually:
+- `make fusesoc` fetches the necessary RTL using the FuseSoC tool and makes a local copy inside `build/`.
+  This also creates a filelist (`.scr`) that Jasper knows how to ingest.
+  This step also patches the Ibex RTL with the changes described [in the section below](#rtl-changes).
 - `make psgen` to build the SV for the proofs given in `thm/`
-- `make sv` to build the SV translation of the Sail compiler. Will invoke `buildspec.py`, which can be configured to adjust which instructions are defined. By default all of them are, this is correct but slow.
-- Make the changes to Ibex described in the RTL changes.
-- `SAIL_DIR=<path to sail compiler source> jg verify.tcl`
+- `make sv` to build the SV translation of the Sail compiler.
+  Will invoke `buildspec.py`, which can be configured to adjust which instructions are defined.
+  By default all of them are, this is correct but slow.
+- `jg verify.tcl` invokes Jasper interactively, sourcing the configuration & run script.
+  Requires the above two steps to be executed first.
+
+Local versions of the external dependencies can be modified and linked into the build via Environment Variables as follows:
+- psgen: (`https://github.com/mndstrmr/psgen`)
+  - Clone the repository to a local directory \<psgen-dir\> : `git clone https://github.com/mndstrmr/psgen`
+  - Make local changes...
+  - Build in place with `nix develop --command bash -c "go build"`
+  - In the formal-dev shell:
+    - Add new psgen binary to head of path with `export PATH=<psgen-dir>:$PATH`
+- lowRISC Sail: (`https://github.com/lowrisc/sail` on the `lowrisc` branch).
+  - Clone the repository to a local directory \<sail-dir\> : `git clone --branch lowrisc https://github.com/lowrisc/sail`
+  - Make local changes...
+  - Build in place with `nix develop github:lowrisc/ibex#lowrisc_sail --command bash -c "dune build --release && dune install --prefix ."`
+  - In the formal-dev shell:
+    - Add new Sail binary to head of path with `export PATH=<sail-dir>/bin:$PATH`
+    - Update `LOWRISC_SAIL_SRC` to point to the source root with `export LOWRISC_SAIL_SRC=<sail-dir>`.
+- sail-riscv: (`https://github.com/lowrisc/sail-riscv`)
+  - Clone the repository to a local directory \<sail-riscv-dir\> (`git clone https://github.com/lowrisc/sail-riscv`).
+  - Make local changes...
+  - In the formal-dev shell:
+    - Update `LOWRISC_SAIL_RISCV_SRC` to point to the source root with `export LOWRISC_SAIL_RISCV_SRC=<sail-riscv-dir>`.
 
 ## Conclusivity
 All properties are currently known to be conclusive, with the exception of M-Types. The later stages (Memory, Top, RegMatch and Wrap and some Liveness) generally take longer.
