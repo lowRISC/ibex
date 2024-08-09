@@ -5,6 +5,8 @@ Prerequisities (in your PATH):
 - [psgen](https://github.com/mndstrmr/psgen)
 
 Build instructions:
+- `make fusesoc` fetches the necessary RTL using the Fusesoc tool, and makes a local copy inside `build/`. This also creates a filelist (`.scr`) that Jasper knows how to ingest.
+  - This step also patches the Ibex RTL with the changes described [in the section below](#rtl-changes).
 - `make psgen` to build the SV for the proofs given in `thm/`
 - `make sv` to build the SV translation of the Sail compiler. Will invoke `buildspec.py`, which can be configured to adjust which instructions are defined. By default all of them are, this is correct but slow.
 - Make the changes to Ibex described in the RTL changes.
