@@ -5,6 +5,15 @@ Prerequisities (in your PATH):
 - [psgen](https://github.com/mndstrmr/psgen)
 
 Build instructions:
+- Clone this repository
+- `cd dv/formal`
+- `nix develop .#formal`
+- `make` invokes JasperGold in batch-mode, and attempts to prove everything. (for regressions)
+- `make jg` invokes JasperGold interactively, halting after sourcing the contents of `verify.tcl`.
+
+Building as above invokes the following steps, which can also be done manually during development:
+- `make fusesoc` fetches the necessary RTL using the Fusesoc tool, and makes a local copy inside `build/`. This also creates a filelist (`.scr`) that Jasper knows how to ingest.
+  - This step also patches the Ibex RTL with the changes described [in the section below](#rtl-changes).
 - `git submodule init`
 - `make psgen` to build the SV for the proofs given in `thm/`
 - `make sv` to build the SV translation of the Sail compiler. Will invoke `buildspec.py`, which can be configured to adjust which instructions are defined. By default all of them are, this is correct but slow.
