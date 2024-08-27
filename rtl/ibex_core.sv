@@ -1678,7 +1678,7 @@ module ibex_core import ibex_pkg::*; #(
   end
 
 
-  // Memory adddress/write data available first cycle of ld/st instruction from register read
+  // Memory address/write data available first cycle of ld/st instruction from register read
   always_comb begin
     if (instr_first_cycle_id) begin
       rvfi_mem_addr_d  = alu_adder_result_ex;
