@@ -3,6 +3,45 @@
   <img src="https://ibex.reports.lowrisc.org/opentitan/latest/summary.svg">
 </a>
 
+# ISOLDE
+First time:   
+```sh
+. ./setup.sh 
+```
+otherwise:  
+```sh
+. ./eth.sh 
+```
+## Run hello-world
+```sh
+fusesoc --cores-root=. run --target=sim --setup --build  lowrisc:ibex:ibex_simple_system $(util/ibex_config.py small fusesoc_opts)
+make -C examples/sw/simple_system/hello_test
+./build/lowrisc_ibex_ibex_simple_system_0/sim-verilator/Vibex_simple_system -t --meminit=ram,./examples/sw/simple_system/hello_test/hello_test.elf
+```
+Result
+```
+Tracing enabled.
+Writing simulation traces to sim.fst
+TOP.ibex_simple_system.u_top.u_ibex_tracer.unnamedblk2.unnamedblk3: Writing execution trace to trace_core_00000000.log
+Terminating simulation by software request.
+- ../src/lowrisc_ibex_sim_shared_0/./rtl/sim/simulator_ctrl.sv:93: Verilog $finish
+Received $finish() from Verilog, shutting down simulation.
+
+Simulation statistics
+=====================
+Executed cycles:  13144
+Wallclock time:   0.048 s
+Simulation speed: 273833 cycles/s (273.833 kHz)
+Trace file size:  517730 B
+
+You can view the simulation traces by calling
+$ gtkwave sim.fst
+
+Performance Counters
+====================
+Cycles:               476
+Instructions Retired: 261
+```
 # Ibex RISC-V Core
 
 Ibex is a production-quality open source 32-bit RISC-V CPU core written in

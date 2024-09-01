@@ -1,0 +1,49 @@
+
+prj_path := $(shell git rev-parse --show-toplevel)
+num_cores := $(shell nproc)
+num_cores_half := $(shell echo "$$(($(num_cores) / 2))")
+CXX := g++-10
+
+
+INSTALL_PREFIX          ?= install
+INSTALL_DIR             ?= $(prj_path)/${INSTALL_PREFIX}
+GCC_INSTALL_DIR         ?= ${INSTALL_DIR}/riscv-gcc
+LLVM_INSTALL_DIR        ?= ${INSTALL_DIR}/riscv-llvm
+ISA_SIM_INSTALL_DIR     ?= ${INSTALL_DIR}/riscv-isa-sim
+ISA_SIM_MOD_INSTALL_DIR ?= ${INSTALL_DIR}/riscv-isa-sim-mod
+VERIL_SRC_ROOT           ?= $(prj_path)/vendor
+VERIL_INSTALL_DIR       ?= ${INSTALL_DIR}/verilator
+VERIL_VERSION           ?= v5.028
+
+all: verilator riscv32-elf-gcc
+# Verilator
+verilator: ${VERIL_INSTALL_DIR}/bin/verilator
+
+${VERIL_INSTALL_DIR}/bin/verilator:
+	rm -fr $(VERIL_SRC_ROOT)/verilator
+	cd $(VERIL_SRC_ROOT) && git clone https://github.com/verilator/verilator.git
+	# Checkout the right version
+	cd $(VERIL_SRC_ROOT)/verilator  && git reset --hard && git fetch && git checkout ${VERIL_VERSION}
+	# Compile verilator
+	cd $(VERIL_SRC_ROOT)/verilator  && git clean -xfdf && autoconf && \
+	./configure --prefix=$(VERIL_INSTALL_DIR) CXX=g++-10  && make -j$(num_cores_half)  && make install
+	touch ${VERIL_INSTALL_DIR}/bin/verilator
+
+
+
+.PHONY: cores
+
+cores:
+	@num_cores=$$(nproc); \
+	num_cores=$$((num_cores / 2)); \
+	echo "Number of cores available on this machine (divided by 2): $$num_cores"
+
+riscv32-elf-gcc: $(GCC_INSTALL_DIR)
+
+$(GCC_INSTALL_DIR): vendor/riscv32-elf-gcc.url
+	rm -fr $(GCC_INSTALL_DIR)
+	mkdir -p $(INSTALL_DIR)
+	cd vendor && \
+#	wget  `cat $(CURDIR)/$<` -O riscv.tar.gz && \
+	tar -xzvf riscv.tar.gz -C  $(INSTALL_DIR)/ riscv	
+	mv $(INSTALL_DIR)/riscv $(GCC_INSTALL_DIR)
