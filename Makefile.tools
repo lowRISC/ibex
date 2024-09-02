@@ -15,7 +15,7 @@ VERIL_SRC_ROOT           ?= $(prj_path)/vendor
 VERIL_INSTALL_DIR       ?= ${INSTALL_DIR}/verilator
 VERIL_VERSION           ?= v5.028
 
-all: verilator riscv32-elf-gcc
+all: verilator riscv32-elf-gcc dev-dep
 # Verilator
 verilator: ${VERIL_INSTALL_DIR}/bin/verilator
 
@@ -44,6 +44,11 @@ $(GCC_INSTALL_DIR): vendor/riscv32-elf-gcc.url
 	rm -fr $(GCC_INSTALL_DIR)
 	mkdir -p $(INSTALL_DIR)
 	cd vendor && \
-#	wget  `cat $(CURDIR)/$<` -O riscv.tar.gz && \
+	wget  `cat $(CURDIR)/$<` -O riscv.tar.gz && \
 	tar -xzvf riscv.tar.gz -C  $(INSTALL_DIR)/ riscv	
 	mv $(INSTALL_DIR)/riscv $(GCC_INSTALL_DIR)
+	touch  $(GCC_INSTALL_DIR)
+
+dev-dep:
+	sudo apt-get install libelf-dev
+	sudo apt-get install srecord
