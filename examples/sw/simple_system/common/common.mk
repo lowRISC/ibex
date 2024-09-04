@@ -44,6 +44,8 @@ all: $(OUTFILES)
 ifdef PROGRAM
 $(PROGRAM).elf: $(OBJS) $(LINKER_SCRIPT)
 	$(CC) $(CFLAGS) -T $(LINKER_SCRIPT) $(OBJS) -o $@ $(LIBS)
+	$(OBJDUMP) -dh  $@ >$@.headers
+	
 
 .PHONY: disassemble
 disassemble: $(PROGRAM).dis

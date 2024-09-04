@@ -8,7 +8,6 @@ description: "Verilator memory utilities"
 filesets:
   files_cpp:
     depend:
-      - lowrisc:dv_verilator:simutil_verilator
       - lowrisc:dv_verilator:memutil_dpi
     files:
       - cpp/verilator_memutil.cc

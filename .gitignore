@@ -25,3 +25,9 @@ vendor/riscv.tar.gz
 vendor/verilator/
 install/
 sim.fst
+
+isolde/sw/
+*.headers
+logs/
+*.log
+*.csv
