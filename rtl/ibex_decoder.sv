@@ -592,10 +592,11 @@ module ibex_decoder #(
         if (instr[14:12] == 3'b000) begin
           // non CSR related SYSTEM instructions
           unique case (instr[31:20])
-            12'h000:  // ECALL
+            12'h000:  begin // ECALL
               // environment (system) call
               ecall_insn_o = 1'b1;
-
+              $display("%s:%0d:  ecall decoded", `__FILE__, `__LINE__);
+            end
             12'h001:  // ebreak
               // debugger trap
               ebrk_insn_o = 1'b1;

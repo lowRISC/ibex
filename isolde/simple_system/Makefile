@@ -1,7 +1,7 @@
 ROOT_DIR            :=  $(shell git rev-parse --show-toplevel)
 IBEX_CONFIG         ?=  isolde
 FUSESOC_CONFIG_OPTS := $(shell cd $(ROOT_DIR) && $(ROOT_DIR)/util/ibex_config.py $(IBEX_CONFIG) fusesoc_opts)
-test-program        ?= $(ROOT_DIR)/examples/sw/simple_system/hello_test/hello_test.elf
+test-program        := $(ROOT_DIR)/isolde/sw/simple_system/hello_test/hello_test.elf
 BUILD_DIR           := build/$(IBEX_CONFIG)
 
 num_cores := $(shell nproc)
