@@ -1,13 +1,14 @@
 ROOT_DIR            :=  $(shell git rev-parse --show-toplevel)
-IBEX_CONFIG         ?=  small
+IBEX_CONFIG         ?=  isolde
 FUSESOC_CONFIG_OPTS := $(shell cd $(ROOT_DIR) && $(ROOT_DIR)/util/ibex_config.py $(IBEX_CONFIG) fusesoc_opts)
 test-program        ?= $(ROOT_DIR)/examples/sw/simple_system/hello_test/hello_test.elf
+BUILD_DIR           := build/$(IBEX_CONFIG)
 
 num_cores := $(shell nproc)
 num_cores_half := $(shell echo "$$(($(num_cores) / 2))")
 
 build-hw:
-	fusesoc --cores-root=$(ROOT_DIR) run --target=sim --setup --build  isolde:ibex:ibex_simple_system $(FUSESOC_CONFIG_OPTS)
+	fusesoc --cores-root=$(ROOT_DIR) run --target=sim --setup --build  --build-root=$(BUILD_DIR) isolde:ibex:ibex_simple_system $(FUSESOC_CONFIG_OPTS)
 
 
 
@@ -16,14 +17,14 @@ build-hw:
 $(test-program):
 	make -C $(dir $@)
 
-test-program: $(test-program)
+test-app: $(test-program)
 
 
 run-test:
-	./build/isolde_ibex_ibex_simple_system_0/sim-verilator/Vibex_simple_system -t --meminit=ram,$(test-program)
+	./$(BUILD_DIR)/sim-verilator/Vibex_simple_system -t --meminit=ram,$(test-program)
 
 clean:
 	rm -f $(test-program)
-	rm -fr build logs
+	rm -fr $(BUILD_DIR) logs
 	rm -f *.log *.csv
 	

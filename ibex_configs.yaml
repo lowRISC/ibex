@@ -192,3 +192,24 @@ experimental-branch-predictor:
   MHPMCounterNum           : 0
   MHPMCounterWidth         : 40
 
+# ===============================
+# * ISOLDE *
+# ===============================
+isolde:
+  RV32E                    : 0
+  RV32M                    : "ibex_pkg::RV32MSingleCycle"
+  RV32B                    : "ibex_pkg::RV32BNone"
+  RegFile                  : "ibex_pkg::RegFileFF"
+  BranchTargetALU          : 0
+  WritebackStage           : 0
+  ICache                   : 1
+  ICacheECC                : 0
+  ICacheScramble           : 1
+  BranchPredictor          : 0
+  DbgTriggerEn             : 0
+  SecureIbex               : 0
+  PMPEnable                : 0
+  PMPGranularity           : 0
+  PMPNumRegions            : 4
+  MHPMCounterNum           : 0
+  MHPMCounterWidth         : 40

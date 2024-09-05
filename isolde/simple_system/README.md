@@ -1,3 +1,27 @@
+# ISOLDE
+default value for **IBEX_CONFIG**=*isolde*.  
+For a list of possible configurations, see [ibex_configs.yaml](../../ibex_configs.yaml)
+## Build the simulator
+
+```sh
+make IBEX_CONFIG=small 
+```
+
+## Build the test application
+the same test app, regardless of IBEX_CONFIG, hence:  
+```sh
+make  test-program
+```
+## Run the simulation
+```sh
+make IBEX_CONFIG=small run-test
+```
+## Clean
+```sh
+make IBEX_CONFIG=small clean
+```
+---  
+---
 # Ibex Simple System
 
 Simple System gives you an Ibex based system simulated by Verilator that can
