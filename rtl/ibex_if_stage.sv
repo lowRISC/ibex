@@ -411,6 +411,19 @@ module ibex_if_stage import ibex_pkg::*; #(
     .illegal_instr_o(illegal_c_insn)
   );
 
+  logic [4:0][31:0] vlen_instr;    // in-order succession of maximum 5 instr_i
+   logic [2:0]  vlen_inst_words;     // instruction length in words
+   logic        vlen_instr_ready;
+
+isolde_fetch_vleninstr isolde_fetch_vleninstr_i(
+    .clk_i             (clk_i),
+    .rst_ni            (rst_ni),
+    .valid_i           (fetch_valid & ~fetch_err),
+    .instr_i           (if_instr_rdata),
+    .vlen_instr_o      (vlen_instr),    // in-order succession of maximum 5 instr_i
+    .vlen_inst_words_o (vlen_inst_words),     // instruction length in words
+   .vlen_instr_ready_o (vlen_instr_ready)
+);
   // Dummy instruction insertion
   if (DummyInstructions) begin : gen_dummy_instr
     // SEC_CM: CTRL_FLOW.UNPREDICTABLE

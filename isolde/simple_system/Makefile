@@ -22,6 +22,10 @@ test-app: $(test-program)
 
 run-test:
 	./$(BUILD_DIR)/sim-verilator/Vibex_simple_system -t --meminit=ram,$(test-program)
+	@echo
+	@echo ibex_simple_system.log
+	@echo ======================
+	@cat ibex_simple_system.log
 
 clean:
 	rm -f $(test-program)
