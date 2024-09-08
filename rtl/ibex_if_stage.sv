@@ -23,7 +23,7 @@ module ibex_if_stage import ibex_pkg::*; #(
   parameter int unsigned TagSizeECC        = IC_TAG_SIZE,
   parameter int unsigned LineSizeECC       = IC_LINE_SIZE,
   parameter bit          PCIncrCheck       = 1'b0,
-  parameter bit          ResetAll          = 1'b0,
+  parameter bit          ResetAll          = 1'b1,
   parameter lfsr_seed_t  RndCnstLfsrSeed   = RndCnstLfsrSeedDefault,
   parameter lfsr_perm_t  RndCnstLfsrPerm   = RndCnstLfsrPermDefault,
   parameter bit          BranchPredictor   = 1'b0,
@@ -135,7 +135,7 @@ module ibex_if_stage import ibex_pkg::*; #(
 
   logic              fetch_valid_raw;
   logic              fetch_valid;
-  logic              fetch_ready;
+  logic              fetch_ready,fetch_req;
   logic       [31:0] fetch_rdata;
   logic       [31:0] fetch_addr;
   logic              fetch_err;
@@ -260,7 +260,7 @@ module ibex_if_stage import ibex_pkg::*; #(
 
   // The fetch_valid signal that comes out of the icache or prefetch buffer should be squashed if we
   // had a misprediction.
-  assign fetch_valid = fetch_valid_raw & ~nt_branch_mispredict_i;
+  assign fetch_valid = vlen_instr_ready & ~nt_branch_mispredict_i;
 
   // We should never see a mispredict and an incoming branch on the same cycle. The mispredict also
   // cancels any predicted branch so overall branch_req must be low.
@@ -283,7 +283,7 @@ module ibex_if_stage import ibex_pkg::*; #(
         .branch_i            ( prefetch_branch            ),
         .addr_i              ( prefetch_addr              ),
 
-        .ready_i             ( fetch_ready                ),
+        .ready_i             ( fetch_req                  ),
         .valid_o             ( fetch_valid_raw            ),
         .rdata_o             ( fetch_rdata                ),
         .addr_o              ( fetch_addr                 ),
@@ -328,7 +328,7 @@ module ibex_if_stage import ibex_pkg::*; #(
         .branch_i            ( prefetch_branch            ),
         .addr_i              ( prefetch_addr              ),
 
-        .ready_i             ( fetch_ready                ),
+        .ready_i             ( fetch_req                  ),
         .valid_o             ( fetch_valid_raw            ),
         .rdata_o             ( fetch_rdata                ),
         .addr_o              ( fetch_addr                 ),
@@ -406,27 +406,34 @@ module ibex_if_stage import ibex_pkg::*; #(
   //
   // since it does not matter where we decompress instructions, we do it here
   // to ease timing closure
-  ibex_compressed_decoder compressed_decoder_i (
-    .clk_i          (clk_i),
-    .rst_ni         (rst_ni),
-    .valid_i        (fetch_valid & ~fetch_err),
-    .instr_i        (if_instr_rdata),
-    .instr_o        (instr_decompressed),
-    .is_compressed_o(instr_is_compressed),
-    .illegal_instr_o(illegal_c_insn)
-  );
+  // ibex_compressed_decoder compressed_decoder_i (
+  //   .clk_i          (clk_i),
+  //   .rst_ni         (rst_ni),
+  //   .valid_i        (fetch_valid & ~fetch_err),
+  //   .instr_i        (if_instr_rdata),
+  //   .instr_o        (instr_decompressed),
+  //   .is_compressed_o(instr_is_compressed),
+  //   .illegal_instr_o(illegal_c_insn)
+  // );
 
 
 
 isolde_fetch_vleninstr isolde_fetch_vleninstr_i(
-    .clk_i             (clk_i),
-    .rst_ni            (rst_ni),
-    .valid_i           (fetch_valid & ~fetch_err),
-    .zz_instr_i           (if_instr_rdata),
-    .vlen_instr_o       (vlen_instr),    // in-order succession of maximum 5 instr_i
-    .vlen_instr_words_o (vlen_instr_words),     // instruction length in words
-   .vlen_instr_ready_o  (vlen_instr_ready)
+    .clk_i               (clk_i),
+    .rst_ni              (rst_ni),
+    .vlen_instr_req_i    (fetch_ready),
+    .word_instr_ready_i  (fetch_valid_raw),
+    .word_instr_i        (if_instr_rdata),
+    .word_instr_req_o    (fetch_req),
+    .vlen_instr_o        (vlen_instr),    // in-order succession of maximum 5 instr_i
+    .vlen_instr_words_o  (vlen_instr_words),     // instruction length in words
+    .vlen_instr_ready_o  (vlen_instr_ready)
 );
+
+  assign instr_decompressed = vlen_instr[0];
+  assign instr_is_compressed =1'b0;
+  assign illegal_c_insn =1'b0;
+
   // Dummy instruction insertion
   if (DummyInstructions) begin : gen_dummy_instr
     // SEC_CM: CTRL_FLOW.UNPREDICTABLE

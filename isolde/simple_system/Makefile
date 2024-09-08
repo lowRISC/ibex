@@ -19,6 +19,8 @@ $(test-program):
 
 test-app: $(test-program)
 
+clean-test:
+	make -C $(dir $(test-program)) clean
 
 run-test:
 	./$(BUILD_DIR)/sim-verilator/Vibex_simple_system -t --meminit=ram,$(test-program)
@@ -34,3 +36,6 @@ clean:
 
 clean-hw:
 	rm -fr $(BUILD_DIR) logs
+
+view-log:
+	gtkwave  $(ROOT_DIR)/isolde/simple_system/logs/ibex.vcd --script=$(ROOT_DIR)/isolde/simple_system/load_waveform.tcl
