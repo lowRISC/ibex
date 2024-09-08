@@ -175,6 +175,11 @@ module ibex_if_stage import ibex_pkg::*; #(
   logic        [7:0] unused_csr_mtvec;
   logic              unused_exc_cause;
 
+  logic [4:0][31:0] vlen_instr;    // in-order succession of maximum 5 instr_i
+  logic [2:0]  vlen_instr_words;     // instruction length in words
+  logic        vlen_instr_ready;
+
+
   assign unused_boot_addr = boot_addr_i[7:0];
   assign unused_csr_mtvec = csr_mtvec_i[7:0];
 
@@ -411,18 +416,16 @@ module ibex_if_stage import ibex_pkg::*; #(
     .illegal_instr_o(illegal_c_insn)
   );
 
-  logic [4:0][31:0] vlen_instr;    // in-order succession of maximum 5 instr_i
-   logic [2:0]  vlen_inst_words;     // instruction length in words
-   logic        vlen_instr_ready;
+
 
 isolde_fetch_vleninstr isolde_fetch_vleninstr_i(
     .clk_i             (clk_i),
     .rst_ni            (rst_ni),
     .valid_i           (fetch_valid & ~fetch_err),
-    .instr_i           (if_instr_rdata),
-    .vlen_instr_o      (vlen_instr),    // in-order succession of maximum 5 instr_i
-    .vlen_inst_words_o (vlen_inst_words),     // instruction length in words
-   .vlen_instr_ready_o (vlen_instr_ready)
+    .zz_instr_i           (if_instr_rdata),
+    .vlen_instr_o       (vlen_instr),    // in-order succession of maximum 5 instr_i
+    .vlen_instr_words_o (vlen_instr_words),     // instruction length in words
+   .vlen_instr_ready_o  (vlen_instr_ready)
 );
   // Dummy instruction insertion
   if (DummyInstructions) begin : gen_dummy_instr

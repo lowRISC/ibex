@@ -121,15 +121,24 @@ unsigned int get_mtval() {
 }
 
 void simple_exc_handler(void) {
-  puts("EXCEPTION!!!\n");
-  puts("============\n");
-  puts("MEPC:   0x");
-  puthex(get_mepc());
-  puts("\nMCAUSE: 0x");
-  puthex(get_mcause());
-  puts("\nMTVAL:  0x");
-  puthex(get_mtval());
-  putchar('\n');
+    register int a7 asm("a7");
+  
+  // Check if A7 equals 93
+  //https://jborza.com/post/2021-05-11-riscv-linux-syscalls/
+  if (a7 == 93) {
+    puts("exit()\n");
+    puts("======\n");
+  }else{
+    puts("EXCEPTION!!!\n");
+    puts("============\n");
+    puts("MEPC:   0x");
+    puthex(get_mepc());
+    puts("\nMCAUSE: 0x");
+    puthex(get_mcause());
+    puts("\nMTVAL:  0x");
+    puthex(get_mtval());
+    putchar('\n');
+  }
   sim_halt();
 
   while(1);

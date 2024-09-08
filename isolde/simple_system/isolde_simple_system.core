@@ -171,6 +171,7 @@ targets:
           # Disabling tracing reduces compile times but doesn't have a
           # huge influence on runtime performance.
           - '--trace'
+          - '--no-timing'
           - '-Wno-fatal'
           - '-CFLAGS "-std=c++17 -Wall  -DTOPLEVEL_NAME=ibex_simple_system -g"'
           - '-LDFLAGS "-pthread -lutil -lelf"'

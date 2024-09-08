@@ -31,4 +31,6 @@ clean:
 	rm -f $(test-program)
 	rm -fr $(BUILD_DIR) logs
 	rm -f *.log *.csv
-	
+
+clean-hw:
+	rm -fr $(BUILD_DIR) logs
