@@ -30,7 +30,7 @@ module isolde_fetch_vleninstr (
     READY
   } state_t;
 
-  state_t state;
+  state_t ifvli_state;
 
   // Extract the opcode and nnn fields from the instruction
   logic [6:0] opCode;
@@ -57,7 +57,7 @@ module isolde_fetch_vleninstr (
   // FSM outputs and control logic
   always_ff @(posedge clk_i ) begin
     if (!rst_ni) begin
-      state <= IDLE;
+      ifvli_state <= IDLE;
       wr_ptr <= 0;
       word_instr_req_o   <= 0;
       vlen_instr_words_o <= 0;
@@ -65,13 +65,13 @@ module isolde_fetch_vleninstr (
       vlen_instr_o[0]<=0;
     end else begin
       
-      case (state)
+      case (ifvli_state)
         IDLE: begin
           word_instr_req_o <= vlen_instr_req_i;
           vlen_instr_words_o <= 0;
           vlen_instr_ready_o <= 0;
-          if(word_instr_req_o ) begin 
-          state <= FETCH_COMPUTE;
+          if(vlen_instr_req_i ) begin 
+            ifvli_state <= FETCH_COMPUTE;
           end
         end
         FETCH_COMPUTE: begin
@@ -91,13 +91,13 @@ module isolde_fetch_vleninstr (
                   // Assert if unknown nnn is encountered
                   $fatal("Unsupported custom instruction: nnn = %0d", nnn);
                 end
-                state <= FETCH_REST;
+                ifvli_state <= FETCH_REST;
                 word_instr_req_o <= 1;
               end
 
               RISCV_ENC_64: begin
                 vlen_instr_words_o <= 2;  // 2-word instruction (64 bits)
-                state <= FETCH_REST;
+                ifvli_state <= FETCH_REST;
                 word_instr_req_o <= 1;
               end
 
@@ -105,7 +105,7 @@ module isolde_fetch_vleninstr (
                 // Single-word instruction (32 bits)
                 vlen_instr_words_o <= 1;
                 word_instr_req_o <= 0;
-                state <= READY;
+                ifvli_state <= READY;
               end
             endcase
           end
@@ -119,7 +119,7 @@ module isolde_fetch_vleninstr (
               vlen_instr_o[wr_ptr] <= word_instr_i;
               if (wr_ptr == vlen_instr_words_o ) begin
                 word_instr_req_o <= 0;
-                state <= READY;
+                ifvli_state <= READY;
               end else begin
                 wr_ptr <= wr_ptr + 1;
               end
@@ -128,7 +128,7 @@ module isolde_fetch_vleninstr (
         end
         READY: begin
           vlen_instr_ready_o <= 1;  // Instruction is ready when all words are fetched
-          state <= IDLE;
+          ifvli_state <= IDLE;
         end
 
 

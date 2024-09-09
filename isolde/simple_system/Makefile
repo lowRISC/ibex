@@ -30,7 +30,8 @@ run-test:
 	@cat ibex_simple_system.log
 
 clean:
-	rm -f $(test-program)
+#	rm -f $(test-program)
+	make -C $(dir $(test-program)) clean
 	rm -fr $(BUILD_DIR) logs
 	rm -f *.log *.csv
 
