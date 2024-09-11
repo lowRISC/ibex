@@ -31,3 +31,4 @@ isolde/sw/
 logs/
 *.log
 *.csv
+*.old*

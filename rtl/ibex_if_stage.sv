@@ -62,27 +62,28 @@ module ibex_if_stage
     output logic                   ic_scr_key_req_o,
 
     // output of ID stage
-    output logic        instr_valid_id_o,          // instr in IF-ID is valid
-    output logic        instr_new_id_o,            // instr in IF-ID is new
-    output logic [31:0] instr_rdata_id_o,          // instr for ID stage
-    output logic [31:0] instr_rdata_alu_id_o,      // replicated instr for ID stage
-                                                   // to reduce fan-out
-    output logic [15:0] instr_rdata_c_id_o,        // compressed instr for ID stage
-                                                   // (mtval), meaningful only if
-                                                   // instr_is_compressed_id_o = 1'b1
-    output logic        instr_is_compressed_id_o,  // compressed decoder thinks this
-                                                   // is a compressed instr
-    output logic        instr_bp_taken_o,          // instruction was predicted to be
-                                                   // a taken branch
-    output logic        instr_fetch_err_o,         // bus error on fetch
-    output logic        instr_fetch_err_plus2_o,   // bus error misaligned
-    output logic        illegal_c_insn_id_o,       // compressed decoder thinks this
-                                                   // is an invalid instr
-    output logic        dummy_instr_id_o,          // Instruction is a dummy
-    output logic [31:0] pc_if_o,
-    output logic [31:0] pc_id_o,
-    input  logic        pmp_err_if_i,
-    input  logic        pmp_err_if_plus2_i,
+    output logic              instr_valid_id_o,          // instr in IF-ID is valid
+    output logic              instr_new_id_o,            // instr in IF-ID is new
+    output logic [31:0]       instr_rdata_id_o,          // instr for ID stage
+    output logic [ 4:0][31:0] instr_batch_rdata_id_o,    // instr for ID stage
+    output logic [31:0]       instr_rdata_alu_id_o,      // replicated instr for ID stage
+                                                         // to reduce fan-out
+    output logic [15:0]       instr_rdata_c_id_o,        // compressed instr for ID stage
+                                                         // (mtval), meaningful only if
+                                                         // instr_is_compressed_id_o = 1'b1
+    output logic              instr_is_compressed_id_o,  // compressed decoder thinks this
+                                                         // is a compressed instr
+    output logic              instr_bp_taken_o,          // instruction was predicted to be
+                                                         // a taken branch
+    output logic              instr_fetch_err_o,         // bus error on fetch
+    output logic              instr_fetch_err_plus2_o,   // bus error misaligned
+    output logic              illegal_c_insn_id_o,       // compressed decoder thinks this
+                                                         // is an invalid instr
+    output logic              dummy_instr_id_o,          // Instruction is a dummy
+    output logic [31:0]       pc_if_o,
+    output logic [31:0]       pc_id_o,
+    input  logic              pmp_err_if_i,
+    input  logic              pmp_err_if_plus2_i,
 
     // control signals
     input  logic               instr_valid_clear_i,     // clear instr valid bit in IF-ID
@@ -549,6 +550,7 @@ module ibex_if_stage
     always_ff @(posedge clk_i) begin
       if (if_id_pipe_reg_we) begin
         instr_rdata_id_o         <= instr_out;
+        instr_batch_rdata_id_o   <= vlen_instr;
         // To reduce fan-out and help timing from the instr_rdata_id flops they are replicated.
         instr_rdata_alu_id_o     <= instr_out;
         instr_fetch_err_o        <= instr_err_out;

@@ -29,6 +29,18 @@ vlen_instr_o[63:32]
 vlen_instr_o[31:0]
 fetch_rdata
 
+isolde_decoder_instr_batch_i[159:128]
+isolde_decoder_instr_batch_i[127:96]
+isolde_decoder_instr_batch_i[95:64]
+isolde_decoder_instr_batch_i[63:32]
+isolde_decoder_instr_batch_i[31:0]
+idvli_next
+idvli_state
+read_ptr
+vlen_instr_words
+isolde_decoder_enable_i
+isolde_decoder_busy_o
+isolde_decoder_illegal_instr_o
 }
 
 
