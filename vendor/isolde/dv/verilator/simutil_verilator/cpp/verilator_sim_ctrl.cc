@@ -141,7 +141,7 @@ void VerilatorSimCtrl::Run() {
             << "Simulation running, end by pressing CTRL-c." << std::endl;
 
   time_begin_ = std::chrono::steady_clock::now();
-  AssertReset();
+  DeassertReset();
   top_->CLK_I = 0;
   // Evaluate all initial blocks, including the DPI setup routines
   //top_->eval();

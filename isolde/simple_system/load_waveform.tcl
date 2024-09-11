@@ -16,11 +16,19 @@ gtkwave::addSignalsFromList {
      
 fetch_req
 fetch_valid_raw
+vlen_instr_o[31:0]
 fetch_rdata
 fetch_addr
 fetch_err
 fetch_err_plus2
-      
+
+vlen_instr_o[159:128]
+vlen_instr_o[127:96]
+vlen_instr_o[95:64]
+vlen_instr_o[63:32]
+vlen_instr_o[31:0]
+fetch_rdata
+
 }
 
 

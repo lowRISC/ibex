@@ -66,6 +66,9 @@ endif
 
 %.o: %.c
 	$(CC) $(CFLAGS) -MMD -c $(INCS) -o $@ $<
+# Rule to compile C to assembly
+%.s: %.c
+	$(CC) $(CFLAGS) -S  $(INCS) $< -o $@
 
 %.o: %.S
 	$(CC) $(CFLAGS) -MMD -c $(INCS) -o $@ $<
