@@ -138,7 +138,7 @@ void VerilatorSimCtrl::Run() {
 
 
   std::cout << std::endl
-            << "Simulation running, end by pressing CTRL-c." << std::endl;
+            << "Simulation running, end by pressing CTRL-z." << std::endl;
 
   time_begin_ = std::chrono::steady_clock::now();
   DeassertReset();

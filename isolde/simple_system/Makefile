@@ -23,6 +23,7 @@ clean-test:
 	make -C $(dir $(test-program)) clean
 
 run-test:
+	@rm -f ibex_simple_system.log
 	./$(BUILD_DIR)/sim-verilator/Vibex_simple_system -t --meminit=ram,$(test-program)
 	@echo
 	@echo ibex_simple_system.log

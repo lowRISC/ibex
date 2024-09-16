@@ -49,6 +49,29 @@ $(GCC_INSTALL_DIR): vendor/riscv32-elf-gcc.url
 	mv $(INSTALL_DIR)/riscv $(GCC_INSTALL_DIR)
 	touch  $(GCC_INSTALL_DIR)
 
+
+riscv32-llvm: $(LLVM_INSTALL_DIR)
+
+vendor/riscv32-llvm.tar.gz:
+	cd vendor && \
+	wget https://buildbot.embecosm.com/job/riscv32-clang-ubuntu2004-release/24/artifact/riscv32-embecosm-ubuntu2004-clang16.0.2.tar.gz -O riscv32-llvm.tar.gz
+	touch riscv32-llvm.tar.gz
+
+$(LLVM_INSTALL_DIR): vendor/riscv32-llvm.tar.gz
+	rm -fr $(LLVM_INSTALL_DIR)
+	mkdir -p $(INSTALL_DIR)
+	cd vendor && \
+	tar -xzvf riscv32-llvm.tar.gz -C  $(INSTALL_DIR)/ riscv32-embecosm-ubuntu2004-clang16.0.2
+	mv $(INSTALL_DIR)/riscv32-embecosm-ubuntu2004-clang16.0.2 $(LLVM_INSTALL_DIR)
+	touch  $(LLVM_INSTALL_DIR)
+
+riscv32-llvm-patch:
+	@cd $(prj_path)/util/isolde &&   \
+	tar -xzvf tools.tar.gz     &&   \
+	mv $(prj_path)/util/isolde/riscv32-unknown-elf-objcopy $(LLVM_INSTALL_DIR)/bin  && \
+	mv $(prj_path)/util/isolde/riscv32-unknown-elf-objdump  $(LLVM_INSTALL_DIR)/bin  && \
+	echo "REPLACED riscv32-unknown-elf- objcopy/objdump"
+
 dev-dep:
 	sudo apt-get install libelf-dev
 	sudo apt-get install srecord

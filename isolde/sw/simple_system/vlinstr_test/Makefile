@@ -11,4 +11,10 @@ PROGRAM_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 # extension for assembly files
 EXTRA_SRCS :=
 
-include ${PROGRAM_DIR}/../common/common.mk
+# Check the COMPILER variable passed via the command line
+ifeq ($(COMPILER), llvm)
+    include $(PROGRAM_DIR)/../common/common-llvm.mk
+else
+    include $(PROGRAM_DIR)/../common/common.mk
+endif
+
