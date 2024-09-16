@@ -24,6 +24,7 @@ clean-test:
 
 run-test:
 	@rm -f ibex_simple_system.log
+	@rm -f trace_core_00000000.log
 	./$(BUILD_DIR)/sim-verilator/Vibex_simple_system -t --meminit=ram,$(test-program)
 	@echo
 	@echo ibex_simple_system.log

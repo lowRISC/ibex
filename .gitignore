@@ -26,8 +26,7 @@ vendor/verilator/
 install/
 sim.fst
 
-isolde/sw/
-*.headers
+*.tar.gz
 logs/
 *.log
 *.csv

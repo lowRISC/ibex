@@ -35,7 +35,8 @@ C_SRCS = $(filter %.c, $(SRCS))
 ASM_SRCS = $(filter %.S, $(SRCS))
 
 CC := $(LLVM_TOOLCHAIN)/clang
-LD := $(LLVM_TOOLCHAIN)/ld.lld
+LD := $(LLVM_TOOLCHAIN)/riscv32-unknown-elf-ld
+#LD := $(LLVM_TOOLCHAIN)/ld.lld
 #LD := $(GCC_TOOLCHAIN)/riscv32-unknown-elf-gcc
 
 
@@ -63,7 +64,7 @@ all: $(OUTFILES)
 ifdef PROGRAM
 $(PROGRAM).elf: $(OBJS) $(LINKER_SCRIPT)
 #	$(LD) $(CFLAGS) -T $(LINKER_SCRIPT) $(OBJS) -o $@ $(LIBS)
-	$(LD) $(RISCV_LDFLAGS)  -Map $@.map  $(LINKER_SCRIPT) $(OBJS) -o $@ $(LIBS)
+	$(LD) $(RISCV_LDFLAGS)  -Map $@.map -T $(LINKER_SCRIPT) $(OBJS) -o $@ $(LIBS)
 	$(OBJDUMP) -dh  $@ >$@.headers
 	
 
