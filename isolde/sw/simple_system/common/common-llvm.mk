@@ -15,14 +15,14 @@ RISCV_ABI   := ilp32
 RISCV_WARNINGS += -Wunused-variable -Wall -Wextra -Wno-unused-command-line-argument # -Werror
 
 LLVM_FLAGS     ?= --target=$(TARGET) -march=$(ARCH)  -menable-experimental-extensions -mabi=$(RISCV_ABI) -mno-relax 
-RISCV_FLAGS    ?= $(LLVM_FLAGS) -mcmodel=medany  -Os -ffast-math  -g $(RISCV_WARNINGS)
+RISCV_FLAGS    ?= $(LLVM_FLAGS) -mcmodel=medany  -O3 -ffast-math  -g $(RISCV_WARNINGS)
 RISCV_CCFLAGS  ?= $(RISCV_FLAGS) -ffunction-sections -fdata-sections  -std=gnu99 -nostdlib -nostartfiles
 RISCV_CXXFLAGS ?= $(RISCV_FLAGS) -ffunction-sections -fdata-sections
 RISCV_LDFLAGS  ?= -static -nostdlib 
 
 LINKER_SCRIPT ?= $(COMMON_DIR)/link.ld
 
-CFLAGS ?= -march=$(ARCH) -mabi=ilp32 -static -mcmodel=medany -Wall -g -Os\
+CFLAGS ?= -march=$(ARCH) -mabi=ilp32 -static -mcmodel=medany -Wall -g -O3\
 	-fvisibility=hidden -nostdlib -nostartfiles -ffreestanding $(PROGRAM_CFLAGS)
 
 ifdef PROGRAM

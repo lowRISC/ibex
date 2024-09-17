@@ -52,22 +52,22 @@ module isolde_decoder #(
   always_ff @(posedge clk_i, negedge rst_ni) begin
     if (!rst_ni) begin
       idvli_state <= BOOT;
-      read_ptr <=0;
+      read_ptr <= 0;
       isolde_decoder_illegal_instr_o <= 0;
-      isolde_decoder_busy_o <= 0;
+      //isolde_decoder_busy_o <= 0;
     end else begin
       idvli_state <= idvli_next;
       case (idvli_next)
         BOOT: begin
-            read_ptr <= read_ptr + 1;
+          read_ptr <= read_ptr + 1;
         end
         IDLE: begin
           isolde_decoder_illegal_instr_o <= 0;
-          isolde_decoder_busy_o <= 0;
+          //isolde_decoder_busy_o <= 0;
         end
         FETCH_COMPUTE: begin
           read_ptr <= 1;
-          isolde_decoder_busy_o <= 1;
+          // isolde_decoder_busy_o <= 1;
           case (opCode)
             RISCV_ENC_GE80: begin
               if (nnn == RISCV_ENC_GE80_N5) begin
@@ -94,12 +94,25 @@ module isolde_decoder #(
   end
 
   always_comb begin
-   // idvli_next = IDLE;  //loop back
+    // idvli_next = IDLE;  //loop back
     case (idvli_state)
-      BOOT: if(read_ptr == 3'h6) idvli_next = IDLE;
-      IDLE: if (isolde_decoder_enable_i) idvli_next = FETCH_COMPUTE;
+      BOOT:
+      if (read_ptr == 3'h6) begin
+        idvli_next = IDLE;
+        isolde_decoder_busy_o = 0;
+      end
+      IDLE:
+      if (isolde_decoder_enable_i) begin
+        idvli_next = FETCH_COMPUTE;
+        isolde_decoder_busy_o = 1;
+      end
       FETCH_COMPUTE: idvli_next = FETCH_REST;
-      FETCH_REST: if (vlen_instr_words == read_ptr) idvli_next = IDLE;
+      FETCH_REST: begin
+        if (vlen_instr_words == read_ptr) begin
+          isolde_decoder_busy_o = 0;
+          idvli_next = IDLE;
+        end
+      end
     endcase
   end
 endmodule

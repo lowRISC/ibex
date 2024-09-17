@@ -196,9 +196,9 @@ module ibex_id_stage #(
 
   // Decoder/Controller, ID stage internal signals
   logic illegal_insn_dec;  //RV32+custom illegal operation
-  logic isolde_decoder_busy; 
+  logic isolde_decoder_busy;
   logic std_decoder_rst_n;
-  logic illegal_std_instr; //RV32 illegal operation
+  logic illegal_std_instr;  //RV32 illegal operation
   logic illegal_dret_insn;
   logic illegal_umode_insn;
   logic ebrk_insn;
@@ -255,11 +255,11 @@ module ibex_id_stage #(
   logic rf_ren_a_dec, rf_ren_b_dec;
 
   // while ISOLDE decoder is bussy, standard decoder( ibex_decoder) shall be disable(  reset asserted)
-  assign  std_decoder_rst_n = ~isolde_decoder_busy & rst_ni;
+  assign std_decoder_rst_n = ~isolde_decoder_busy & rst_ni;
 
   // Read enables should only be asserted for valid and legal instructions
-  assign rf_ren_a   = instr_valid_i & ~instr_fetch_err_i & ~illegal_insn_o & rf_ren_a_dec;
-  assign rf_ren_b   = instr_valid_i & ~instr_fetch_err_i & ~illegal_insn_o & rf_ren_b_dec;
+  assign rf_ren_a = instr_valid_i & ~instr_fetch_err_i & ~illegal_insn_o & rf_ren_a_dec;
+  assign rf_ren_b = instr_valid_i & ~instr_fetch_err_i & ~illegal_insn_o & rf_ren_b_dec;
 
   assign rf_ren_a_o = rf_ren_a;
   assign rf_ren_b_o = rf_ren_b;
@@ -436,6 +436,14 @@ module ibex_id_stage #(
     endcase
   end
 
+  logic [31:0] instr_rdata_std, instr_rdata_alu_std;
+  assign instr_rdata_alu_std = instr_rdata_std;
+
+  always_comb begin
+    if (~isolde_decoder_busy) begin
+      instr_rdata_std = instr_batch_rdata_i[0];
+    end
+  end
   /////////////
   // Decoder //
   /////////////
@@ -462,8 +470,8 @@ module ibex_id_stage #(
 
       // from IF-ID pipeline register
       .instr_first_cycle_i(instr_first_cycle),
-      .instr_rdata_i      (instr_rdata_i),
-      .instr_rdata_alu_i  (instr_rdata_alu_i),
+      .instr_rdata_i      (instr_rdata_std),
+      .instr_rdata_alu_i  (instr_rdata_alu_std),
       .illegal_c_insn_i   (illegal_c_insn_i),
 
       // immediates

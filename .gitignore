@@ -31,3 +31,5 @@ logs/
 *.log
 *.csv
 *.old*
+*.map
+

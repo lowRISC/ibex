@@ -966,7 +966,7 @@ module ibex_icache import ibex_pkg::*; #(
 
   assign output_ready = (ready_i | skid_ready) & ~skid_complete_instr;
 
-  assign output_compressed = (rdata_o[1:0] != 2'b11);
+  assign output_compressed = 1'b0;//(rdata_o[1:0] != 2'b11);
 
   assign skid_valid_d =
       // Branches invalidate the skid buffer

@@ -121,11 +121,19 @@ unsigned int get_mtval() {
 }
 
 void simple_exc_handler(void) {
-    register int a7 asm("a7");
+  #if 0
+    volatile register int a7 asm("a7");
   
   // Check if A7 equals 93
   //https://jborza.com/post/2021-05-11-riscv-linux-syscalls/
   if (a7 == 93) {
+#else
+  int result;
+  asm volatile ("mv %0, a7" : "=r"(result));
+  // Check if A7 equals 93
+  //https://jborza.com/post/2021-05-11-riscv-linux-syscalls/
+  if (result == 93) {
+#endif  
     puts("exit()\n");
     puts("======\n");
   }else{
