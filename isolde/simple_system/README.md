@@ -1,25 +1,58 @@
 # ISOLDE
+## Prerequisites
+in root folder execute
+```
+. ./eth.sh
+```
+## Building Simulation
 default value for **IBEX_CONFIG**=*isolde*.  
-For a list of possible configurations, see [ibex_configs.yaml](../../ibex_configs.yaml)
-## Build the simulator
-
+For a list of possible configurations, see [ibex_configs.yaml](../../ibex_configs.yaml)  
+in folder **isolde/simple_system**:  
+* get a clean slate:
+```
+make clean
+```
+## build the simulation
+```
+make
+``` 
+or
 ```sh
 make IBEX_CONFIG=small 
 ```
 
-## Build the test application
-the same test app, regardless of IBEX_CONFIG, hence:  
-```sh
-make  test-program
+## build test app
+* **gcc** toolchain
 ```
-## Run the simulation
+make clean-test test-app
+```
+* **llvm** toolchain
+```
+make clean-test test-app COMPILER=llvm
+```
+## execute test
+```
+make run-test
+```
+Output should be similar to this
+```
+Performance Counters
+====================
+Cycles:               375
+Instructions Retired: 223
+
+ibex_simple_system.log
+======================
+Hello test instr
+exit()
+======
+```
+alternatively to run with *small* simulation 
+
 ```sh
 make IBEX_CONFIG=small run-test
 ```
-## Clean
-```sh
-make IBEX_CONFIG=small clean
-```
+
 ---  
 ---
 # Ibex Simple System

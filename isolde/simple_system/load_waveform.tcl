@@ -38,6 +38,8 @@ idvli_next
 idvli_state
 read_ptr
 vlen_instr_words
+instr_rdata_std
+instr_rdata_alu_std
 isolde_decoder_enable_i
 isolde_decoder_busy_o
 isolde_decoder_illegal_instr_o

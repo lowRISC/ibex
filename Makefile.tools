@@ -15,7 +15,7 @@ VERIL_SRC_ROOT           ?= $(prj_path)/vendor
 VERIL_INSTALL_DIR       ?= ${INSTALL_DIR}/verilator
 VERIL_VERSION           ?= v5.028
 
-all: verilator riscv32-elf-gcc dev-dep
+all: verilator riscv32-gcc riscv32-llvm dev-dep
 # Verilator
 verilator: ${VERIL_INSTALL_DIR}/bin/verilator
 
@@ -38,9 +38,9 @@ cores:
 	num_cores=$$((num_cores / 2)); \
 	echo "Number of cores available on this machine (divided by 2): $$num_cores"
 
-riscv32-elf-gcc: $(GCC_INSTALL_DIR)
+riscv32-gcc: $(GCC_INSTALL_DIR)
 
-$(GCC_INSTALL_DIR): vendor/riscv32-elf-gcc.url
+$(GCC_INSTALL_DIR): vendor/riscv32-gcc.url
 	rm -fr $(GCC_INSTALL_DIR)
 	mkdir -p $(INSTALL_DIR)
 	cd vendor && \
@@ -54,15 +54,15 @@ riscv32-llvm: $(LLVM_INSTALL_DIR)
 
 vendor/riscv32-elf-llvm.tar.gz: vendor/riscv32-elf-llvm.url
 	cd vendor && \
-	wget `cat $(CURDIR)/$<` -O riscv32-elf-llvm.tar.gz
+	wget `cat $(CURDIR)/$<` -O riscv32-elf-llvm.tar.gz && \
 	touch riscv32-elf-llvm.tar.gz
 
-$(LLVM_INSTALL_DIR): vendor/riscv32-llvm.tar.gz
+$(LLVM_INSTALL_DIR): vendor/riscv32-elf-llvm.tar.gz
 	rm -fr $(LLVM_INSTALL_DIR)
 	mkdir -p $(INSTALL_DIR)
 	cd vendor && \
 	tar -xzvf riscv32-elf-llvm.tar.gz -C  $(INSTALL_DIR)/ riscv	
-	mv $(INSTALL_DIR)/riscv32-embecosm-ubuntu2004-clang16.0.2 $(LLVM_INSTALL_DIR)
+	mv $(INSTALL_DIR)/riscv $(LLVM_INSTALL_DIR)
 	touch  $(LLVM_INSTALL_DIR)
 
 riscv32-llvm-patch:

@@ -8,10 +8,16 @@ First time:
 ```sh
 . ./setup.sh 
 ```
+* install toolchain
+
+```sh
+make -f Makefile.tools
+```
 otherwise:  
 ```sh
 . ./eth.sh 
 ```
+see also [isolde/simple_system/README.md](isolde/simple_system/README.md)
 ## Run hello-world
 ```sh
 fusesoc --cores-root=. run --target=sim --setup --build  lowrisc:ibex:ibex_simple_system $(util/ibex_config.py small fusesoc_opts)
