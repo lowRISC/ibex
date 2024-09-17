@@ -291,6 +291,7 @@ module ibex_id_stage #(
   logic        data_req_allowed;
 
   // CSR control
+  logic        no_flush_csr_addr;
   logic        csr_pipe_flush;
 
   logic [31:0] alu_operand_a;
@@ -511,36 +512,20 @@ module ibex_id_stage #(
     .branch_in_dec_o(branch_in_dec)
   );
 
-  /////////////////////////////////
-  // CSR-related pipeline flushes //
-  /////////////////////////////////
-  always_comb begin : csr_pipeline_flushes
-    csr_pipe_flush = 1'b0;
+  // Flush pipe on most CSR modification. Some CSR modifications alter how instructions execute
+  // (e.g. the PMP CSRs) so this ensures all instructions always see the latest architectural state
+  // when entering the fetch stage. This causes some needless flushes but performance impact is
+  // limited. We have a single fetch stage to flush not many stages of a deep pipeline and CSR
+  // instructions are in general rare and not part of performance critical parts of the code.
+  //
+  // No flush is triggered for a small number of specific CSRs. These are ones that have been
+  // specifically identified to be a) likely to be modifed in exception handlers and b) safe to
+  // alter without a flush.
+  assign no_flush_csr_addr = csr_addr_o inside {CSR_MSCRATCH, CSR_MEPC};
 
-    // A pipeline flush is needed to let the controller react after modifying certain CSRs:
-    // - When enabling interrupts, pending IRQs become visible to the controller only during
-    //   the next cycle. If during that cycle the core disables interrupts again, it does not
-    //   see any pending IRQs and consequently does not start to handle interrupts.
-    // - When modifying any PMP CSR, PMP check of the next instruction might get invalidated.
-    //   Hence, a pipeline flush is needed to instantiate another PMP check with the updated CSRs.
-    // - When modifying debug CSRs.
-    if (csr_op_en_o == 1'b1 && (csr_op_o == CSR_OP_WRITE || csr_op_o == CSR_OP_SET)) begin
-      if (csr_num_e'(instr_rdata_i[31:20]) == CSR_MSTATUS ||
-          csr_num_e'(instr_rdata_i[31:20]) == CSR_MIE     ||
-          csr_num_e'(instr_rdata_i[31:20]) == CSR_MSECCFG ||
-          // To catch all PMPCFG/PMPADDR registers, get the shared top most 7 bits.
-          instr_rdata_i[31:25] == 7'h1D) begin
-        csr_pipe_flush = 1'b1;
-      end
-    end else if (csr_op_en_o == 1'b1 && csr_op_o != CSR_OP_READ) begin
-      if (csr_num_e'(instr_rdata_i[31:20]) == CSR_DCSR      ||
-          csr_num_e'(instr_rdata_i[31:20]) == CSR_DPC       ||
-          csr_num_e'(instr_rdata_i[31:20]) == CSR_DSCRATCH0 ||
-          csr_num_e'(instr_rdata_i[31:20]) == CSR_DSCRATCH1) begin
-        csr_pipe_flush = 1'b1;
-      end
-    end
-  end
+  assign csr_pipe_flush = (csr_op_en_o == 1)                                         &&
+                          (csr_op_o inside {CSR_OP_WRITE, CSR_OP_SET, CSR_OP_CLEAR}) &&
+                          !no_flush_csr_addr;
 
   ////////////////
   // Controller //
