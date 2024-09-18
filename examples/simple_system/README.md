@@ -11,7 +11,7 @@ run stand-alone binaries. It contains:
 
 ## Prerequisites
 
-* [Verilator](https://www.veripool.org/wiki/verilator)
+* [Verilator](https://www.veripool.org/verilator/)
   Note Linux package managers may have Verilator but often a very old version
   that is not suitable. It is recommended Verilator is built from source.
 * The Python dependencies of this repository.
