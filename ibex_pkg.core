@@ -9,6 +9,7 @@ filesets:
   files_rtl:
     files:
       - rtl/ibex_pkg.sv
+      - rtl/isolde_register_file_pkg.sv
     file_type: systemVerilogSource
 
 targets:
