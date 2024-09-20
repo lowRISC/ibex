@@ -11,7 +11,9 @@
 
 `include "prim_assert.sv"
 
-module isolde_decoder #(
+module isolde_decoder
+  import isolde_register_file_pkg::RegDataWidth, isolde_register_file_pkg::RegCount, isolde_register_file_pkg::RegSize, isolde_register_file_pkg::RegAddrWidth;
+#(
 
 ) (
     input logic clk_i,
@@ -21,9 +23,15 @@ module isolde_decoder #(
     input  logic [4:0][31:0] isolde_decoder_instr_batch_i,    // from IF-ID pipeline registers
     input  logic             isolde_decoder_enable_i,         // illegal instr encountered
     output logic             isolde_decoder_illegal_instr_o,  // illegal instr encountered
-    output logic             isolde_decoder_busy_o
+    output logic             isolde_decoder_busy_o,
 
-
+    //ISOLDE Register file interface
+    output logic [RegAddrWidth-1:0] isolde_decoder_rf_raddr_a_o,  //  Read port A address output
+    input logic [RegSize-1:0][RegDataWidth-1:0] isolde_decoder_rf_rdata_a_i,  //  Read port A data input
+    output logic [RegAddrWidth-1:0] isolde_decoder_rf_waddr_a_o,  // Write port W1 address output
+    output logic [RegSize-1:0][RegDataWidth-1:0] isolde_decoder_rf_wdata_a_o,  // Write port W1 data output
+    output logic isolde_decoder_rf_we_a_o,  // Write port W1 enable signal
+    input logic isolde_decoder_rf_err_i  // Combined error signal for invalid reads/writes
 );
 
   // FSM states
@@ -36,7 +44,10 @@ module isolde_decoder #(
 
   state_t idvli_state, idvli_next;
   logic [6:0] opCode;
-  logic [2:0] nnn;  // Encodes bits 14-12
+  logic [2:0] nnn;
+  logic [4:0] rd;
+  logic [6:0] func7;
+
   // Define constants for custom encodings
   localparam logic [6:0] RISCV_ENC_GE80 = 7'b1111111;  // Custom opcode for GE80 (160-bit or 96-bit instructions)
   localparam logic [6:0] RISCV_ENC_64   = 7'b0111111;  // Custom opcode for 64-bit instruction (2 words)
@@ -46,6 +57,7 @@ module isolde_decoder #(
   // Extract opcode and nnn
   assign opCode = isolde_decoder_instr_batch_i[0][6:0];     // Extracting opcode bits
   assign nnn    = isolde_decoder_instr_batch_i[0][14:12];   // Extracting bits [14:12] for nnn
+
   logic [2:0] vlen_instr_words;  // Instruction length in words
   logic [2:0] read_ptr;  // Instruction length in words
 
@@ -54,6 +66,7 @@ module isolde_decoder #(
       idvli_state <= BOOT;
       read_ptr <= 0;
       isolde_decoder_illegal_instr_o <= 0;
+      isolde_decoder_rf_we_a_o <= 1'b0;
       //isolde_decoder_busy_o <= 0;
     end else begin
       idvli_state <= idvli_next;
@@ -63,10 +76,12 @@ module isolde_decoder #(
         end
         IDLE: begin
           isolde_decoder_illegal_instr_o <= 0;
-          //isolde_decoder_busy_o <= 0;
+          isolde_decoder_rf_we_a_o <= 1'b0;
         end
         FETCH_COMPUTE: begin
           read_ptr <= 1;
+          rd       <= isolde_decoder_instr_batch_i[0][11:7];
+          func7    <= isolde_decoder_instr_batch_i[0][31:25];
           // isolde_decoder_busy_o <= 1;
           case (opCode)
             RISCV_ENC_GE80: begin
@@ -88,6 +103,14 @@ module isolde_decoder #(
         end
         FETCH_REST: begin
           read_ptr <= read_ptr + 1;
+          if (3'h4 == read_ptr) begin
+            isolde_decoder_rf_waddr_a_o <= rd;
+            isolde_decoder_rf_wdata_a_o[3] <= isolde_decoder_instr_batch_i[0];
+            isolde_decoder_rf_wdata_a_o[2] <= isolde_decoder_instr_batch_i[1];
+            isolde_decoder_rf_wdata_a_o[1] <= isolde_decoder_instr_batch_i[2];
+            isolde_decoder_rf_wdata_a_o[0] <= isolde_decoder_instr_batch_i[3];
+            isolde_decoder_rf_we_a_o <= 1'b1;
+          end
         end
       endcase
     end

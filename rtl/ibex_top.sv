@@ -368,6 +368,14 @@ module ibex_top
       .rf_rdata_a_ecc_i (rf_rdata_a_ecc_buf),
       .rf_rdata_b_ecc_i (rf_rdata_b_ecc_buf),
 
+
+      .isolde_rf_raddr_a_o(isolde_rf_raddr_a),
+      .isolde_rf_rdata_a_i(isolde_rf_rdata_a),
+      .isolde_rf_waddr_a_o(isolde_rf_waddr_a),
+      .isolde_rf_wdata_a_o(isolde_rf_wdata_a),
+      .isolde_rf_we_a_o(isolde_rf_we_a),
+      .isolde_rf_err_i(isolde_rf_err),
+
       .ic_tag_req_o      (ic_tag_req),
       .ic_tag_write_o    (ic_tag_write),
       .ic_tag_addr_o     (ic_tag_addr),
@@ -532,7 +540,7 @@ module ibex_top
       .clk_i(clk),
       .rst_ni(rst_ni),
       .isolde_rf_raddr_a_i(isolde_rf_raddr_a),
-      .isolde_rf_rdata_a_o(isolde_rf_rdata_a_o),
+      .isolde_rf_rdata_a_o(isolde_rf_rdata_a),
       .isolde_rf_waddr_a_i(isolde_rf_waddr_a),
       .isolde_rf_wdata_a_i(isolde_rf_wdata_a),
       .isolde_rf_we_a_i(isolde_rf_we_a),

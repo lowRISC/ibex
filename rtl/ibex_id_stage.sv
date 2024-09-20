@@ -17,7 +17,9 @@
 `include "prim_assert.sv"
 `include "dv_fcov_macros.svh"
 
-module ibex_id_stage #(
+module ibex_id_stage 
+  import isolde_register_file_pkg::RegDataWidth, isolde_register_file_pkg::RegCount, isolde_register_file_pkg::RegSize, isolde_register_file_pkg::RegAddrWidth;
+#(
     parameter bit               RV32E           = 0,
     parameter ibex_pkg::rv32m_e RV32M           = ibex_pkg::RV32MFast,
     parameter ibex_pkg::rv32b_e RV32B           = ibex_pkg::RV32BNone,
@@ -173,6 +175,14 @@ module ibex_id_stage #(
     input logic [ 4:0] rf_waddr_wb_i,
     input logic [31:0] rf_wdata_fwd_wb_i,
     input logic        rf_write_wb_i,
+
+    //ISOLDE Register file interface
+    output logic [RegAddrWidth-1:0] isolde_rf_raddr_a_o,  //  Read port A address output
+    input logic [RegSize-1:0][RegDataWidth-1:0] isolde_rf_rdata_a_i,  //  Read port A data input
+    output logic [RegAddrWidth-1:0] isolde_rf_waddr_a_o,  // Write port W1 address output
+    output logic [RegSize-1:0][RegDataWidth-1:0] isolde_rf_wdata_a_o,  // Write port W1 data output
+    output logic isolde_rf_we_a_o,  // Write port W1 enable signal
+    input logic isolde_rf_err_i,  // Combined error signal for invalid reads/writes
 
     output logic                     en_wb_o,
     output ibex_pkg::wb_instr_type_e instr_type_wb_o,
@@ -566,7 +576,15 @@ module ibex_id_stage #(
       .isolde_decoder_instr_batch_i(instr_batch_rdata_i),
       .isolde_decoder_enable_i(illegal_std_instr),
       .isolde_decoder_illegal_instr_o(illegal_insn_dec),
-      .isolde_decoder_busy_o(isolde_decoder_busy)
+      .isolde_decoder_busy_o(isolde_decoder_busy),
+      
+      //ISOLDE register file
+      .isolde_decoder_rf_raddr_a_o(isolde_rf_raddr_a_o),
+      .isolde_decoder_rf_rdata_a_i(isolde_rf_rdata_a_i),
+      .isolde_decoder_rf_waddr_a_o(isolde_rf_waddr_a_o),
+      .isolde_decoder_rf_wdata_a_o(isolde_rf_wdata_a_o),
+      .isolde_decoder_rf_we_a_o(isolde_rf_we_a_o),
+      .isolde_decoder_rf_err_i(isolde_rf_err_i)
   );
 
 

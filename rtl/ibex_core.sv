@@ -15,6 +15,7 @@
  */
 module ibex_core
   import ibex_pkg::*;
+  import isolde_register_file_pkg::RegDataWidth, isolde_register_file_pkg::RegCount, isolde_register_file_pkg::RegSize, isolde_register_file_pkg::RegAddrWidth;
 #(
     parameter bit          PMPEnable         = 1'b0,
     parameter int unsigned PMPGranularity    = 0,
@@ -86,6 +87,14 @@ module ibex_core
     output logic [RegFileDataWidth-1:0] rf_wdata_wb_ecc_o,
     input  logic [RegFileDataWidth-1:0] rf_rdata_a_ecc_i,
     input  logic [RegFileDataWidth-1:0] rf_rdata_b_ecc_i,
+
+    //ISOLDE Register file interface
+    output logic [RegAddrWidth-1:0] isolde_rf_raddr_a_o,  //  Read port A address output
+    input logic [RegSize-1:0][RegDataWidth-1:0] isolde_rf_rdata_a_i,  //  Read port A data input
+    output logic [RegAddrWidth-1:0] isolde_rf_waddr_a_o,  // Write port W1 address output
+    output logic [RegSize-1:0][RegDataWidth-1:0] isolde_rf_wdata_a_o,  // Write port W1 data output
+    output logic isolde_rf_we_a_o,  // Write port W1 enable signal
+    input logic isolde_rf_err_i,  // Combined error signal for invalid reads/writes
 
     // RAMs interface
     output logic [IC_NUM_WAYS-1:0] ic_tag_req_o,
@@ -694,6 +703,14 @@ module ibex_core
       .ready_wb_i            (ready_wb),
       .outstanding_load_wb_i (outstanding_load_wb),
       .outstanding_store_wb_i(outstanding_store_wb),
+
+      //ISOLDE register file
+      .isolde_rf_raddr_a_o(isolde_rf_raddr_a_o),
+      .isolde_rf_rdata_a_i(isolde_rf_rdata_a_i),
+      .isolde_rf_waddr_a_o(isolde_rf_waddr_a_o),
+      .isolde_rf_wdata_a_o(isolde_rf_wdata_a_o),
+      .isolde_rf_we_a_o(isolde_rf_we_a_o),
+      .isolde_rf_err_i(isolde_rf_err_i),
 
       // Performance Counters
       .perf_jump_o      (perf_jump),
