@@ -79,8 +79,10 @@ module isolde_decoder
           isolde_decoder_rf_we_a_o <= 1'b0;
         end
         FETCH_COMPUTE: begin
-          if (isolde_opcode_none == isolde_opcode_d) begin
+          if (isolde_opcode_invalid == isolde_opcode_d) begin
             isolde_decoder_illegal_instr_o <= 1;
+            idvli_state <= BOOT;
+            read_ptr <= 3'h0;
           end else begin
             read_ptr           <= 1;
             rd                 <= isolde_decoder_instr_batch_i[0][11:7];
@@ -105,7 +107,7 @@ module isolde_decoder
       if (read_ptr == 3'h6) begin
         idvli_next = IDLE;
         isolde_decoder_busy_o = 0;
-      end
+      end else idvli_next = BOOT;
       IDLE: idvli_next = isolde_decoder_enable_i ? FETCH_COMPUTE : IDLE;
 
       FETCH_COMPUTE: begin

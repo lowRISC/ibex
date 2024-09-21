@@ -29,7 +29,7 @@ isolde_decoder_instr_batch_i[31:0]
 idvli_next
 idvli_state
 read_ptr
-vlen_instr_words
+
 instr_rdata_std
 instr_rdata_alu_std
 isolde_decoder_enable_i
@@ -50,7 +50,12 @@ func7
 
 isolde_opcode_d
 isolde_opcode_q
+vlen_instr_words_d
+vlen_instr_words_q
 
+isolde_decoder_instr_batch_i[6:0]
+isolde_decoder_instr_batch_i[14:12]
+isolde_decoder_instr_batch_i[31:25]
 }
 
 
