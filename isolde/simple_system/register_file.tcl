@@ -48,6 +48,9 @@ read_ptr
 rd 
 func7
 
+isolde_opcode_d
+isolde_opcode_q
+
 }
 
 

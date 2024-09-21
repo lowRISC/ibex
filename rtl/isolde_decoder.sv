@@ -11,8 +11,11 @@
 
 `include "prim_assert.sv"
 
+
+
 module isolde_decoder
   import isolde_register_file_pkg::RegDataWidth, isolde_register_file_pkg::RegCount, isolde_register_file_pkg::RegSize, isolde_register_file_pkg::RegAddrWidth;
+  import isolde_decoder_pkg::*;
 #(
 
 ) (
@@ -43,23 +46,20 @@ module isolde_decoder
   } state_t;
 
   state_t idvli_state, idvli_next;
-  logic [6:0] opCode;
-  logic [2:0] nnn;
   logic [4:0] rd;
   logic [6:0] func7;
+  isolde_opcode_e isolde_opcode_d, isolde_opcode_q;
 
-  // Define constants for custom encodings
-  localparam logic [6:0] RISCV_ENC_GE80 = 7'b1111111;  // Custom opcode for GE80 (160-bit or 96-bit instructions)
-  localparam logic [6:0] RISCV_ENC_64   = 7'b0111111;  // Custom opcode for 64-bit instruction (2 words)
+  logic [2:0] vlen_instr_words_d, vlen_instr_words_q;  // Instruction length in words
+  logic [2:0] read_ptr;
 
-  localparam logic [2:0] RISCV_ENC_GE80_N5 = 3'h5;  // Custom encoding for N5 (5 words)
-  localparam logic [2:0] RISCV_ENC_GE80_N1 = 3'h1;  // Custom encoding for N1 (3 words)
-  // Extract opcode and nnn
-  assign opCode = isolde_decoder_instr_batch_i[0][6:0];     // Extracting opcode bits
-  assign nnn    = isolde_decoder_instr_batch_i[0][14:12];   // Extracting bits [14:12] for nnn
 
-  logic [2:0] vlen_instr_words;  // Instruction length in words
-  logic [2:0] read_ptr;  // Instruction length in words
+  always_comb begin
+    decode_isolde_opcode(isolde_decoder_instr_batch_i[0][6:0],  //opcode
+                         isolde_decoder_instr_batch_i[0][14:12],  //nnn
+                         isolde_decoder_instr_batch_i[0][31:25],  //func7
+                         isolde_opcode_d, vlen_instr_words_d);
+  end
 
   always_ff @(posedge clk_i, negedge rst_ni) begin
     if (!rst_ni) begin
@@ -79,38 +79,21 @@ module isolde_decoder
           isolde_decoder_rf_we_a_o <= 1'b0;
         end
         FETCH_COMPUTE: begin
-          read_ptr <= 1;
-          rd       <= isolde_decoder_instr_batch_i[0][11:7];
-          func7    <= isolde_decoder_instr_batch_i[0][31:25];
-          // isolde_decoder_busy_o <= 1;
-          case (opCode)
-            RISCV_ENC_GE80: begin
-              if (nnn == RISCV_ENC_GE80_N5) begin
-                vlen_instr_words <= 5;  // 5-word instruction (160 bits)
-              end else if (nnn == RISCV_ENC_GE80_N1) begin
-                vlen_instr_words <= 3;  // 3-word instruction (96 bits)
-              end else begin
-                // Assert if unknown nnn is encountered
-                $display("Unsupported custom instruction: nnn = %0d", nnn);
-                isolde_decoder_illegal_instr_o <= 1;
-              end
-            end
-            RISCV_ENC_64: begin
-              vlen_instr_words <= 2;  // 2-word instruction (64 bits)
-            end
-            default: isolde_decoder_illegal_instr_o <= 1;
-          endcase
+          if (isolde_opcode_none == isolde_opcode_d) begin
+            isolde_decoder_illegal_instr_o <= 1;
+          end else begin
+            read_ptr           <= 1;
+            rd                 <= isolde_decoder_instr_batch_i[0][11:7];
+            func7              <= isolde_decoder_instr_batch_i[0][31:25];
+            isolde_opcode_q    <= isolde_opcode_d;
+            vlen_instr_words_q <= vlen_instr_words_d;
+          end
         end
         FETCH_REST: begin
           read_ptr <= read_ptr + 1;
-          if (3'h4 == read_ptr) begin
-            isolde_decoder_rf_waddr_a_o <= rd;
-            isolde_decoder_rf_wdata_a_o[3] <= isolde_decoder_instr_batch_i[0];
-            isolde_decoder_rf_wdata_a_o[2] <= isolde_decoder_instr_batch_i[1];
-            isolde_decoder_rf_wdata_a_o[1] <= isolde_decoder_instr_batch_i[2];
-            isolde_decoder_rf_wdata_a_o[0] <= isolde_decoder_instr_batch_i[3];
-            isolde_decoder_rf_we_a_o <= 1'b1;
-          end
+          case (isolde_opcode_q)
+            isolde_opcode_vle32_4: load_quad_word();
+          endcase
         end
       endcase
     end
@@ -131,11 +114,24 @@ module isolde_decoder
       end
       FETCH_COMPUTE: idvli_next = FETCH_REST;
       FETCH_REST: begin
-        if (vlen_instr_words == read_ptr) begin
+        if (vlen_instr_words_q == read_ptr) begin
           isolde_decoder_busy_o = 0;
           idvli_next = IDLE;
         end
       end
     endcase
   end
+
+  task static load_quad_word;
+    begin
+      if (3'h4 == read_ptr) begin
+        isolde_decoder_rf_waddr_a_o <= rd;
+        isolde_decoder_rf_wdata_a_o[3] <= isolde_decoder_instr_batch_i[0];
+        isolde_decoder_rf_wdata_a_o[2] <= isolde_decoder_instr_batch_i[1];
+        isolde_decoder_rf_wdata_a_o[1] <= isolde_decoder_instr_batch_i[2];
+        isolde_decoder_rf_wdata_a_o[0] <= isolde_decoder_instr_batch_i[3];
+        isolde_decoder_rf_we_a_o <= 1'b1;
+      end
+    end
+  endtask
 endmodule
