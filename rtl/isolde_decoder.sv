@@ -100,23 +100,23 @@ module isolde_decoder
   end
 
   always_comb begin
-    // idvli_next = IDLE;  //loop back
     case (idvli_state)
       BOOT:
       if (read_ptr == 3'h6) begin
         idvli_next = IDLE;
         isolde_decoder_busy_o = 0;
       end
-      IDLE:
-      if (isolde_decoder_enable_i) begin
-        idvli_next = FETCH_COMPUTE;
+      IDLE: idvli_next = isolde_decoder_enable_i ? FETCH_COMPUTE : IDLE;
+
+      FETCH_COMPUTE: begin
         isolde_decoder_busy_o = 1;
+        idvli_next = FETCH_REST;
       end
-      FETCH_COMPUTE: idvli_next = FETCH_REST;
+
       FETCH_REST: begin
         if (vlen_instr_words_q == read_ptr) begin
           isolde_decoder_busy_o = 0;
-          idvli_next = IDLE;
+          idvli_next = isolde_decoder_enable_i ? FETCH_COMPUTE : IDLE;
         end
       end
     endcase
