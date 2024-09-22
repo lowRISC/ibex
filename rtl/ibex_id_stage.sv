@@ -17,7 +17,7 @@
 `include "prim_assert.sv"
 `include "dv_fcov_macros.svh"
 
-module ibex_id_stage 
+module ibex_id_stage
   import isolde_register_file_pkg::RegDataWidth, isolde_register_file_pkg::RegCount, isolde_register_file_pkg::RegSize, isolde_register_file_pkg::RegAddrWidth;
 #(
     parameter bit               RV32E           = 0,
@@ -570,6 +570,9 @@ module ibex_id_stage
   /////////////////////
   // ISOLDE decoder //
   ///////////////////
+
+  isolde_fetch2exec_if fetch_exec_conn (clk_i);
+
   isolde_decoder #() isolde_decoder_i (
       .clk_i(clk_i),
       .rst_ni(rst_ni),
@@ -577,14 +580,15 @@ module ibex_id_stage
       .isolde_decoder_enable_i(illegal_std_instr),
       .isolde_decoder_illegal_instr_o(illegal_insn_dec),
       .isolde_decoder_busy_o(isolde_decoder_busy),
-      
+
       //ISOLDE register file
       .isolde_decoder_rf_raddr_a_o(isolde_rf_raddr_a_o),
       .isolde_decoder_rf_rdata_a_i(isolde_rf_rdata_a_i),
       .isolde_decoder_rf_waddr_a_o(isolde_rf_waddr_a_o),
       .isolde_decoder_rf_wdata_a_o(isolde_rf_wdata_a_o),
       .isolde_decoder_rf_we_a_o(isolde_rf_we_a_o),
-      .isolde_decoder_rf_err_i(isolde_rf_err_i)
+      .isolde_decoder_rf_err_i(isolde_rf_err_i),
+      .isolde_decoder_to_exec(fetch_exec_conn)
   );
 
 

@@ -56,6 +56,8 @@ vlen_instr_words_q
 isolde_decoder_instr_batch_i[6:0]
 isolde_decoder_instr_batch_i[14:12]
 isolde_decoder_instr_batch_i[31:25]
+
+ fetch_exec_conn.rd
 }
 
 

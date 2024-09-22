@@ -34,7 +34,8 @@ module isolde_decoder
     output logic [RegAddrWidth-1:0] isolde_decoder_rf_waddr_a_o,  // Write port W1 address output
     output logic [RegSize-1:0][RegDataWidth-1:0] isolde_decoder_rf_wdata_a_o,  // Write port W1 data output
     output logic isolde_decoder_rf_we_a_o,  // Write port W1 enable signal
-    input logic isolde_decoder_rf_err_i  // Combined error signal for invalid reads/writes
+    input logic isolde_decoder_rf_err_i,  // Combined error signal for invalid reads/writes
+    isolde_fetch2exec_if isolde_decoder_to_exec
 );
 
   // FSM states
@@ -47,11 +48,16 @@ module isolde_decoder
 
   state_t idvli_state, idvli_next;
   logic [4:0] rd;
-  logic [6:0] func7;
+
   isolde_opcode_e isolde_opcode_d, isolde_opcode_q;
 
   logic [2:0] vlen_instr_words_d, vlen_instr_words_q;  // Instruction length in words
   logic [2:0] read_ptr;
+
+  //
+  assign isolde_decoder_to_exec.isolde_decoder_enable = isolde_decoder_enable_i;
+  assign isolde_decoder_to_exec.isolde_decoder_illegal_instr = isolde_decoder_illegal_instr_o;
+  //assign isolde_decoder_to_exec.isolde_decoder_ready = ~isolde_decoder_busy_o;
 
 
   always_comb begin
@@ -84,11 +90,16 @@ module isolde_decoder
             idvli_state <= BOOT;
             read_ptr <= 3'h0;
           end else begin
-            read_ptr           <= 1;
-            rd                 <= isolde_decoder_instr_batch_i[0][11:7];
-            func7              <= isolde_decoder_instr_batch_i[0][31:25];
-            isolde_opcode_q    <= isolde_opcode_d;
-            vlen_instr_words_q <= vlen_instr_words_d;
+            read_ptr                             <= 1;
+            rd                                   <= isolde_decoder_instr_batch_i[0][11:7];
+            isolde_opcode_q                      <= isolde_opcode_d;
+            vlen_instr_words_q                   <= vlen_instr_words_d;
+            //to exec
+            isolde_decoder_to_exec.isolde_opcode <= isolde_opcode_d;
+            isolde_decoder_to_exec.rs2           <= isolde_decoder_instr_batch_i[0][24:20];
+            isolde_decoder_to_exec.rs1           <= isolde_decoder_instr_batch_i[0][19:15];
+            isolde_decoder_to_exec.func3         <= isolde_decoder_instr_batch_i[0][14:12];
+            isolde_decoder_to_exec.rd            <= isolde_decoder_instr_batch_i[0][11:7];
           end
         end
         FETCH_REST: begin
@@ -103,14 +114,20 @@ module isolde_decoder
 
   always_comb begin
     case (idvli_state)
-      BOOT:
-      if (read_ptr == 3'h6) begin
-        idvli_next = IDLE;
-        isolde_decoder_busy_o = 0;
-      end else idvli_next = BOOT;
-      IDLE: idvli_next = isolde_decoder_enable_i ? FETCH_COMPUTE : IDLE;
+      BOOT: begin
+        isolde_decoder_to_exec.isolde_decoder_ready = 0;
+        if (read_ptr == 3'h6) begin
+          idvli_next = IDLE;
+          isolde_decoder_busy_o = 0;
+        end else idvli_next = BOOT;
+      end
+      IDLE: begin
+        isolde_decoder_to_exec.isolde_decoder_ready = 0;
+        idvli_next = isolde_decoder_enable_i ? FETCH_COMPUTE : IDLE;
+      end
 
       FETCH_COMPUTE: begin
+        isolde_decoder_to_exec.isolde_decoder_ready = 0;
         isolde_decoder_busy_o = 1;
         idvli_next = FETCH_REST;
       end
@@ -118,6 +135,7 @@ module isolde_decoder
       FETCH_REST: begin
         if (vlen_instr_words_q == read_ptr) begin
           isolde_decoder_busy_o = 0;
+          isolde_decoder_to_exec.isolde_decoder_ready = 1;
           idvli_next = isolde_decoder_enable_i ? FETCH_COMPUTE : IDLE;
         end
       end
