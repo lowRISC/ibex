@@ -88,7 +88,7 @@ module isolde_fetch_vleninstr (
 
       // case (ifvli_state)
       //   FETCH_COMPUTE: begin
-      if (word_instr_ready_i) begin
+      if (word_instr_ready_i & vlen_instr_req_i) begin
         des_instr[3] <= des_instr[2];
         des_instr[2] <= des_instr[1];
         des_instr[1] <= des_instr[0];

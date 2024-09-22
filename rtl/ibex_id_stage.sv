@@ -264,8 +264,13 @@ module ibex_id_stage
   logic rf_ren_a, rf_ren_b;
   logic rf_ren_a_dec, rf_ren_b_dec;
 
+  //ISOLDE signals
+  logic                isolde_exec_busy;
+  logic                controller_stall_fetch;
+
   // while ISOLDE decoder is bussy, standard decoder( ibex_decoder) shall be disable(  reset asserted)
   assign std_decoder_rst_n = ~isolde_decoder_busy & rst_ni;
+  assign id_in_ready_o = controller_stall_fetch & ~isolde_exec_busy;
 
   // Read enables should only be asserted for valid and legal instructions
   assign rf_ren_a = instr_valid_i & ~instr_fetch_err_i & ~illegal_insn_o & rf_ren_a_dec;
@@ -571,9 +576,12 @@ module ibex_id_stage
   // ISOLDE decoder //
   ///////////////////
 
-  isolde_fetch2exec_if fetch_exec_conn (clk_i);
+  isolde_fetch2exec_if fetch_exec_conn (
+      clk_i,
+      rst_ni
+  );
 
-  isolde_decoder #() isolde_decoder_i (
+  isolde_decoder  isolde_decoder_i (
       .clk_i(clk_i),
       .rst_ni(rst_ni),
       .isolde_decoder_instr_batch_i(instr_batch_rdata_i),
@@ -588,9 +596,18 @@ module ibex_id_stage
       .isolde_decoder_rf_wdata_a_o(isolde_rf_wdata_a_o),
       .isolde_decoder_rf_we_a_o(isolde_rf_we_a_o),
       .isolde_decoder_rf_err_i(isolde_rf_err_i),
-      .isolde_decoder_to_exec(fetch_exec_conn)
+      .isolde_decoder_exec_bus(fetch_exec_conn)
   );
 
+  ///////////////////////////
+  // ISOLDE  execute block //
+  ///////////////////////////
+ 
+
+isolde_exec_block  isolde_exec_block_i(
+.isolde_exec_from_decoder(fetch_exec_conn),
+.isolde_exec_busy_o(isolde_exec_busy)
+);
 
 
   ////////////////
@@ -640,7 +657,7 @@ module ibex_id_stage
 
       // to IF-ID pipeline
       .instr_valid_clear_o(instr_valid_clear_o),
-      .id_in_ready_o      (id_in_ready_o),
+      .id_in_ready_o      (controller_stall_fetch),
       .controller_run_o   (controller_run),
       .instr_exec_i       (instr_exec_i),
 
