@@ -103,6 +103,8 @@ module isolde_decoder
           read_ptr <= read_ptr + 1;
           case (isolde_opcode_q)
             isolde_opcode_vle32_4: load_quad_word();
+            isolde_opcode_gemm: decode_64b_gemm();
+
           endcase
         end
       endcase
@@ -153,6 +155,40 @@ module isolde_decoder
         isolde_rf_bus.wdata_0[1] <= isolde_decoder_instr_batch_i[2];
         isolde_rf_bus.wdata_0[0] <= isolde_decoder_instr_batch_i[3];
         isolde_rf_bus.we_0 <= 1'b1;
+      end
+    end
+  endtask
+
+
+
+  task static decode_64b_gemm;
+    /**
+                            (v4i32 QPR:$rd2),  ( IntOp   (  iPTR  GPR:$rd1)
+                                                  ,(  iPTR     GPR:$rs1)
+                                                  ,(  v4i32    QPR:$rs4)
+                                                  ,(  iPTR     GPR:$rs2)
+                                                  ,(  v4i32    QPR:$rs5)
+                                                  ,(  iPTR     GPR:$rs3)
+                                                  ,(  i32       imm:$transA)
+                                                  ,(  i32       imm:$transB)                          
+                          )
+  **/
+    begin
+      if (3'h1 == read_ptr) begin
+        //first 32 bits
+        // isolde_rf_bus.wdata_0[3] <= isolde_decoder_instr_batch_i[1][24:20]; //rs2
+        // isolde_rf_bus.wdata_0[3] <= isolde_decoder_instr_batch_i[1][19:15]; //rs1
+        // isolde_rf_bus.wdata_0[3] <= isolde_decoder_instr_batch_i[1][14:12]; //funct3
+        // isolde_rf_bus.wdata_0[3] <= isolde_decoder_instr_batch_i[1][11:7]; //rd1             
+        // // extension 32 bits
+        // isolde_rf_bus.wdata_0[1] <= isolde_decoder_instr_batch_i[0][61:57]; //rs6
+        isolde_rf_bus.raddr_1 <= isolde_decoder_instr_batch_i[0][56:52];  //rs5
+        isolde_rf_bus.raddr_0 <= isolde_decoder_instr_batch_i[0][51:47];  //rs4
+        // isolde_rf_bus.wdata_0[1] <= isolde_decoder_instr_batch_i[0][46:44]; //_ext_funct3
+        // isolde_rf_bus.wdata_0[1] <= isolde_decoder_instr_batch_i[0][43:39]; //rd2  
+        isolde_decoder_exec_bus.funct2 <= isolde_decoder_instr_batch_i[0][38:37];  //_ext_funct2 
+        // isolde_rf_bus.wdata_0[1] <= isolde_decoder_instr_batch_i[0][36:32]; //rs3
+
       end
     end
   endtask

@@ -126,9 +126,17 @@ module isolde_exec_block
 `ifndef SYNTHESIS
     $fwrite(log_fh, " ---   %s\n", "isolde_exec_block::start_gemm");
     $fwrite(log_fh, "  func3=%b\n", isolde_exec_from_decoder.func3);
-    $fwrite(log_fh, "     rd=%d\n", isolde_exec_from_decoder.rd);
+    $fwrite(log_fh, "    rd1=%d\n", isolde_exec_from_decoder.rd);
     $fwrite(log_fh, "    rs1=%d\n", isolde_exec_from_decoder.rs1);
     $fwrite(log_fh, "    rs2=%d\n", isolde_exec_from_decoder.rs2);
+    $fwrite(log_fh, "    rs4=%d\n", isolde_rf_bus.raddr_0 );
+    $fwrite(log_fh, "     Q[%d] = [ %d, %d, %d, %d ]\n", isolde_rf_bus.raddr_0, isolde_rf_bus.rdata_0[0], isolde_rf_bus.rdata_0[1],  
+                                                                                isolde_rf_bus.rdata_0[2], isolde_rf_bus.rdata_0[3]);
+    $fwrite(log_fh, "    rs5=%d\n", isolde_rf_bus.raddr_1 );
+    $fwrite(log_fh, "     Q[%d] = [ %d, %d, %d, %d ]\n", isolde_rf_bus.raddr_1, isolde_rf_bus.rdata_1[0], isolde_rf_bus.rdata_1[1],  
+                                                                                isolde_rf_bus.rdata_1[2], isolde_rf_bus.rdata_1[3]);
+    $fwrite(log_fh, "  funct2=%b\n", isolde_exec_from_decoder.funct2 );                                                                                
+
 `endif
     begin
       cnt_max <= 4;  // wait cycles time for completion
