@@ -27,12 +27,7 @@ module isolde_decoder
     output logic             isolde_decoder_busy_o,
 
     //ISOLDE Register file interface
-    output logic [RegAddrWidth-1:0] isolde_decoder_rf_raddr_a_o,  //  Read port A address output
-    input logic [RegSize-1:0][RegDataWidth-1:0] isolde_decoder_rf_rdata_a_i,  //  Read port A data input
-    output logic [RegAddrWidth-1:0] isolde_decoder_rf_waddr_a_o,  // Write port W1 address output
-    output logic [RegSize-1:0][RegDataWidth-1:0] isolde_decoder_rf_wdata_a_o,  // Write port W1 data output
-    output logic isolde_decoder_rf_we_a_o,  // Write port W1 enable signal
-    input logic isolde_decoder_rf_err_i,  // Combined error signal for invalid reads/writes
+    isolde_register_file_if isolde_rf_bus,
     isolde_fetch2exec_if isolde_decoder_exec_bus
 );
 
@@ -72,7 +67,7 @@ module isolde_decoder
       idvli_state <= BOOT;
       read_ptr <= 0;
       isolde_decoder_illegal_instr_o <= 0;
-      isolde_decoder_rf_we_a_o <= 1'b0;
+      isolde_rf_bus.we_0 <= 1'b0;
       //isolde_decoder_busy_o <= 0;
     end else begin
       idvli_state <= idvli_next;
@@ -82,7 +77,7 @@ module isolde_decoder
         end
         IDLE: begin
           isolde_decoder_illegal_instr_o <= 0;
-          isolde_decoder_rf_we_a_o <= 1'b0;
+          isolde_rf_bus.we_0 <= 1'b0;
         end
         FETCH_COMPUTE: begin
           if (isolde_opcode_invalid == isolde_opcode_d) begin
@@ -152,12 +147,12 @@ module isolde_decoder
   task static load_quad_word;
     begin
       if (3'h4 == read_ptr) begin
-        isolde_decoder_rf_waddr_a_o <= rd;
-        isolde_decoder_rf_wdata_a_o[3] <= isolde_decoder_instr_batch_i[0];
-        isolde_decoder_rf_wdata_a_o[2] <= isolde_decoder_instr_batch_i[1];
-        isolde_decoder_rf_wdata_a_o[1] <= isolde_decoder_instr_batch_i[2];
-        isolde_decoder_rf_wdata_a_o[0] <= isolde_decoder_instr_batch_i[3];
-        isolde_decoder_rf_we_a_o <= 1'b1;
+        isolde_rf_bus.waddr_0 <= rd;
+        isolde_rf_bus.wdata_0[3] <= isolde_decoder_instr_batch_i[0];
+        isolde_rf_bus.wdata_0[2] <= isolde_decoder_instr_batch_i[1];
+        isolde_rf_bus.wdata_0[1] <= isolde_decoder_instr_batch_i[2];
+        isolde_rf_bus.wdata_0[0] <= isolde_decoder_instr_batch_i[3];
+        isolde_rf_bus.we_0 <= 1'b1;
       end
     end
   endtask

@@ -89,12 +89,7 @@ module ibex_core
     input  logic [RegFileDataWidth-1:0] rf_rdata_b_ecc_i,
 
     //ISOLDE Register file interface
-    output logic [RegAddrWidth-1:0] isolde_rf_raddr_a_o,  //  Read port A address output
-    input logic [RegSize-1:0][RegDataWidth-1:0] isolde_rf_rdata_a_i,  //  Read port A data input
-    output logic [RegAddrWidth-1:0] isolde_rf_waddr_a_o,  // Write port W1 address output
-    output logic [RegSize-1:0][RegDataWidth-1:0] isolde_rf_wdata_a_o,  // Write port W1 data output
-    output logic isolde_rf_we_a_o,  // Write port W1 enable signal
-    input logic isolde_rf_err_i,  // Combined error signal for invalid reads/writes
+    isolde_register_file_if isolde_rf_bus,
 
     // RAMs interface
     output logic [IC_NUM_WAYS-1:0] ic_tag_req_o,
@@ -705,12 +700,7 @@ module ibex_core
       .outstanding_store_wb_i(outstanding_store_wb),
 
       //ISOLDE register file
-      .isolde_rf_raddr_a_o(isolde_rf_raddr_a_o),
-      .isolde_rf_rdata_a_i(isolde_rf_rdata_a_i),
-      .isolde_rf_waddr_a_o(isolde_rf_waddr_a_o),
-      .isolde_rf_wdata_a_o(isolde_rf_wdata_a_o),
-      .isolde_rf_we_a_o(isolde_rf_we_a_o),
-      .isolde_rf_err_i(isolde_rf_err_i),
+      .isolde_rf_bus(isolde_rf_bus),
 
       // Performance Counters
       .perf_jump_o      (perf_jump),

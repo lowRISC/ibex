@@ -30,6 +30,8 @@ run-test:
 	@echo ibex_simple_system.log
 	@echo ======================
 	@cat ibex_simple_system.log
+	@echo ======================
+	@echo isolde_exec_block.log
 
 clean:
 #	rm -f $(test-program)

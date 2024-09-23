@@ -177,12 +177,7 @@ module ibex_id_stage
     input logic        rf_write_wb_i,
 
     //ISOLDE Register file interface
-    output logic [RegAddrWidth-1:0] isolde_rf_raddr_a_o,  //  Read port A address output
-    input logic [RegSize-1:0][RegDataWidth-1:0] isolde_rf_rdata_a_i,  //  Read port A data input
-    output logic [RegAddrWidth-1:0] isolde_rf_waddr_a_o,  // Write port W1 address output
-    output logic [RegSize-1:0][RegDataWidth-1:0] isolde_rf_wdata_a_o,  // Write port W1 data output
-    output logic isolde_rf_we_a_o,  // Write port W1 enable signal
-    input logic isolde_rf_err_i,  // Combined error signal for invalid reads/writes
+    isolde_register_file_if isolde_rf_bus,
 
     output logic                     en_wb_o,
     output ibex_pkg::wb_instr_type_e instr_type_wb_o,
@@ -265,8 +260,8 @@ module ibex_id_stage
   logic rf_ren_a_dec, rf_ren_b_dec;
 
   //ISOLDE signals
-  logic                isolde_exec_busy;
-  logic                controller_stall_fetch;
+  logic isolde_exec_busy;
+  logic controller_stall_fetch;
 
   // while ISOLDE decoder is bussy, standard decoder( ibex_decoder) shall be disable(  reset asserted)
   assign std_decoder_rst_n = ~isolde_decoder_busy & rst_ni;
@@ -581,7 +576,7 @@ module ibex_id_stage
       rst_ni
   );
 
-  isolde_decoder  isolde_decoder_i (
+  isolde_decoder isolde_decoder_i (
       .clk_i(clk_i),
       .rst_ni(rst_ni),
       .isolde_decoder_instr_batch_i(instr_batch_rdata_i),
@@ -590,24 +585,20 @@ module ibex_id_stage
       .isolde_decoder_busy_o(isolde_decoder_busy),
 
       //ISOLDE register file
-      .isolde_decoder_rf_raddr_a_o(isolde_rf_raddr_a_o),
-      .isolde_decoder_rf_rdata_a_i(isolde_rf_rdata_a_i),
-      .isolde_decoder_rf_waddr_a_o(isolde_rf_waddr_a_o),
-      .isolde_decoder_rf_wdata_a_o(isolde_rf_wdata_a_o),
-      .isolde_decoder_rf_we_a_o(isolde_rf_we_a_o),
-      .isolde_decoder_rf_err_i(isolde_rf_err_i),
+      .isolde_rf_bus(isolde_rf_bus),
       .isolde_decoder_exec_bus(fetch_exec_conn)
   );
 
   ///////////////////////////
   // ISOLDE  execute block //
   ///////////////////////////
- 
 
-isolde_exec_block  isolde_exec_block_i(
-.isolde_exec_from_decoder(fetch_exec_conn),
-.isolde_exec_busy_o(isolde_exec_busy)
-);
+
+  isolde_exec_block isolde_exec_block_i (
+      .isolde_rf_bus(isolde_rf_bus),
+      .isolde_exec_from_decoder(fetch_exec_conn),
+      .isolde_exec_busy_o(isolde_exec_busy)
+  );
 
 
   ////////////////

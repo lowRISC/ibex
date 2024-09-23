@@ -57,7 +57,19 @@ isolde_decoder_instr_batch_i[6:0]
 isolde_decoder_instr_batch_i[14:12]
 isolde_decoder_instr_batch_i[31:25]
 
- fetch_exec_conn.rd
+fetch_exec_conn.rd
+
+fetch_exec_conn.exec_rst_ni
+fetch_exec_conn.isolde_decoder_enable
+fetch_exec_conn.isolde_decoder_illegal_instr
+fetch_exec_conn.isolde_decoder_ready
+fetch_exec_conn.stall_isolde_decoder
+  
+fetch_exec_conn.isolde_opcode
+fetch_exec_conn.func3
+fetch_exec_conn.rd
+fetch_exec_conn.rs1
+fetch_exec_conn.rs2
 }
 
 

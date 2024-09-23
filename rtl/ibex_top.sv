@@ -161,11 +161,6 @@ module ibex_top
   localparam int unsigned TagSizeECC = ICacheECC ? (IC_TAG_SIZE + 6) : IC_TAG_SIZE;
   // Scrambling Parameter
   localparam int unsigned NumAddrScrRounds = ICacheScramble ? 2 : 0;
-  // ISOLDE register file
-  localparam int IsoldeRFDataWidth = isolde_register_file_pkg::RegDataWidth;  //  word size of elements in the register file
-  localparam int IsoldeRegCount = isolde_register_file_pkg::RegCount;  // Number of registers
-  localparam int IsoldeRegSize = isolde_register_file_pkg::RegSize;  // Number of data words per register (4 words per register)
-  localparam int IsoldeRFAddrWidth = isolde_register_file_pkg::RegAddrWidth;  // Register address width
 
   // Clock signals
   logic clk;
@@ -183,15 +178,8 @@ module ibex_top
   logic [RegFileDataWidth-1:0] rf_rdata_a_ecc, rf_rdata_a_ecc_buf;
   logic [RegFileDataWidth-1:0] rf_rdata_b_ecc, rf_rdata_b_ecc_buf;
   // Core <-> ISOLDE register file bus
-  // Read port A
-  logic [IsoldeRFAddrWidth-1:0] isolde_rf_raddr_a;  // Read address input
-  logic [IsoldeRegSize-1:0][IsoldeRFDataWidth-1:0] isolde_rf_rdata_a;  // Read data output
-  // Write port W1
-  logic [IsoldeRFAddrWidth-1:0] isolde_rf_waddr_a;  // Write address input
-  logic [IsoldeRegSize-1:0][IsoldeRFDataWidth-1:0] isolde_rf_wdata_a;  // Write data input
-  logic isolde_rf_we_a;  // Write enable signal
-  // Error detection
-  logic isolde_rf_err;  // Error signal for spurious writes or invalid reads
+  isolde_register_file_if isolde_rf_bus ();
+
 
   // Combined data and integrity for data and instruction busses
   logic [MemDataWidth-1:0] data_wdata_core;
@@ -367,14 +355,8 @@ module ibex_top
       .rf_wdata_wb_ecc_o(rf_wdata_wb_ecc),
       .rf_rdata_a_ecc_i (rf_rdata_a_ecc_buf),
       .rf_rdata_b_ecc_i (rf_rdata_b_ecc_buf),
-
-
-      .isolde_rf_raddr_a_o(isolde_rf_raddr_a),
-      .isolde_rf_rdata_a_i(isolde_rf_rdata_a),
-      .isolde_rf_waddr_a_o(isolde_rf_waddr_a),
-      .isolde_rf_wdata_a_o(isolde_rf_wdata_a),
-      .isolde_rf_we_a_o(isolde_rf_we_a),
-      .isolde_rf_err_i(isolde_rf_err),
+      //ISOLDE RF
+      .isolde_rf_bus    (isolde_rf_bus),
 
       .ic_tag_req_o      (ic_tag_req),
       .ic_tag_write_o    (ic_tag_write),
@@ -539,12 +521,7 @@ module ibex_top
 
       .clk_i(clk),
       .rst_ni(rst_ni),
-      .isolde_rf_raddr_a_i(isolde_rf_raddr_a),
-      .isolde_rf_rdata_a_o(isolde_rf_rdata_a),
-      .isolde_rf_waddr_a_i(isolde_rf_waddr_a),
-      .isolde_rf_wdata_a_i(isolde_rf_wdata_a),
-      .isolde_rf_we_a_i(isolde_rf_we_a),
-      .isolde_rf_err_o(isolde_rf_err)
+      .isolde_rf_bus(isolde_rf_bus)
 
   );
 
