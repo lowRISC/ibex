@@ -43,4 +43,4 @@ clean-hw:
 	rm -fr $(BUILD_DIR) logs
 
 view-log:
-	gtkwave  $(ROOT_DIR)/isolde/simple_system/logs/ibex.vcd --script=$(ROOT_DIR)/isolde/simple_system/load_waveform.tcl
+	/home/dan/ext/gtkwave-src/install/bin/gtkwave  $(ROOT_DIR)/isolde/simple_system/logs/ibex.vcd --script=$(ROOT_DIR)/isolde/simple_system/load_waveform.tcl

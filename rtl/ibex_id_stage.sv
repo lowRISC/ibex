@@ -177,7 +177,8 @@ module ibex_id_stage
     input logic        rf_write_wb_i,
 
     //ISOLDE Register file interface
-    isolde_register_file_if isolde_rf_bus,
+    isolde_register_file_if   isolde_rf_bus,
+    isolde_x_register_file_if x_rf_bus,
 
     output logic                     en_wb_o,
     output ibex_pkg::wb_instr_type_e instr_type_wb_o,
@@ -585,7 +586,8 @@ module ibex_id_stage
       .isolde_decoder_busy_o(isolde_decoder_busy),
 
       //ISOLDE register file
-      .isolde_rf_bus(isolde_rf_bus),
+      .isolde_rf_bus          (isolde_rf_bus),
+      .x_rf_bus               (x_rf_bus),
       .isolde_decoder_exec_bus(fetch_exec_conn)
   );
 
@@ -595,9 +597,10 @@ module ibex_id_stage
 
 
   isolde_exec_block isolde_exec_block_i (
-      .isolde_rf_bus(isolde_rf_bus),
+      .isolde_rf_bus           (isolde_rf_bus),
+      .x_rf_bus                (x_rf_bus),
       .isolde_exec_from_decoder(fetch_exec_conn),
-      .isolde_exec_busy_o(isolde_exec_busy)
+      .isolde_exec_busy_o      (isolde_exec_busy)
   );
 
 

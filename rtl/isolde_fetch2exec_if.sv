@@ -13,9 +13,5 @@ interface isolde_fetch2exec_if (
   //
   isolde_decoder_pkg::isolde_opcode_e isolde_opcode;  //decoded instruction
   logic [2:0] func3;  //instr[14-12]
-  logic [4:0] rd;  //register destination
-  logic [4:0] rs1;  //register source  
-  logic [4:0] rs2;  //register source 
-//
   logic [1:0] funct2;  
 endinterface

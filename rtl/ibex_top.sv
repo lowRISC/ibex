@@ -179,6 +179,7 @@ module ibex_top
   logic [RegFileDataWidth-1:0] rf_rdata_b_ecc, rf_rdata_b_ecc_buf;
   // Core <-> ISOLDE register file bus
   isolde_register_file_if isolde_rf_bus ();
+  isolde_x_register_file_if x_rf_bus ();
 
 
   // Combined data and integrity for data and instruction busses
@@ -357,6 +358,7 @@ module ibex_top
       .rf_rdata_b_ecc_i (rf_rdata_b_ecc_buf),
       //ISOLDE RF
       .isolde_rf_bus    (isolde_rf_bus),
+      .x_rf_bus         (x_rf_bus),
 
       .ic_tag_req_o      (ic_tag_req),
       .ic_tag_write_o    (ic_tag_write),
@@ -449,14 +451,15 @@ module ibex_top
         .dummy_instr_id_i(dummy_instr_id),
         .dummy_instr_wb_i(dummy_instr_wb),
 
-        .raddr_a_i(rf_raddr_a),
-        .rdata_a_o(rf_rdata_a_ecc),
-        .raddr_b_i(rf_raddr_b),
-        .rdata_b_o(rf_rdata_b_ecc),
-        .waddr_a_i(rf_waddr_wb),
-        .wdata_a_i(rf_wdata_wb_ecc),
-        .we_a_i   (rf_we_wb),
-        .err_o    (rf_alert_major_internal)
+        .raddr_a_i     (rf_raddr_a),
+        .rdata_a_o     (rf_rdata_a_ecc),
+        .raddr_b_i     (rf_raddr_b),
+        .rdata_b_o     (rf_rdata_b_ecc),
+        .waddr_a_i     (rf_waddr_wb),
+        .wdata_a_i     (rf_wdata_wb_ecc),
+        .we_a_i        (rf_we_wb),
+        .err_o         (rf_alert_major_internal),
+        .extended_ports(x_rf_bus)
     );
   end else if (RegFile == RegFileFPGA) begin : gen_regfile_fpga
     ibex_register_file_fpga #(

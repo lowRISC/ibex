@@ -36,12 +36,10 @@ filesets:
       - rtl/ibex_wb_stage.sv
       - rtl/ibex_dummy_instr.sv
       - rtl/ibex_core.sv
-      - rtl/isolde_register_file_if.sv
       - rtl/isolde_fetch2exec_if.sv
       - rtl/isolde_fetch_vleninstr.sv
       - rtl/isolde_decoder.sv
       - rtl/isolde_exec_block.sv
-      - rtl/isolde_register_file_ff.sv
       - rtl/ibex_pmp_reset_default.svh: {is_include_file: true}
     file_type: systemVerilogSource
 

@@ -89,7 +89,8 @@ module ibex_core
     input  logic [RegFileDataWidth-1:0] rf_rdata_b_ecc_i,
 
     //ISOLDE Register file interface
-    isolde_register_file_if isolde_rf_bus,
+    isolde_register_file_if   isolde_rf_bus,
+    isolde_x_register_file_if x_rf_bus,
 
     // RAMs interface
     output logic [IC_NUM_WAYS-1:0] ic_tag_req_o,
@@ -700,8 +701,8 @@ module ibex_core
       .outstanding_store_wb_i(outstanding_store_wb),
 
       //ISOLDE register file
-      .isolde_rf_bus(isolde_rf_bus),
-
+      .isolde_rf_bus    (isolde_rf_bus),
+      .x_rf_bus         (x_rf_bus),
       // Performance Counters
       .perf_jump_o      (perf_jump),
       .perf_branch_o    (perf_branch),

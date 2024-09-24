@@ -92,7 +92,11 @@ asm volatile (
   ".word 0x00000008\n"
 
   );
-
+asm volatile (
+  "li a0, 0xBADCAFE\n"
+  "li s2, 0xBADBEE\n"
+  "li s1, 0xDADA\n"
+);
  //     gemm.f32        a0, Q0, s2, Q0, s1, Q0, zero, 0, 0 # encoding: [0x3f,0x05,0x99,0x0e,0x00,0x00,0x00,0x00]
 asm volatile (
   ".word 0x0e99053f\n"
