@@ -32,4 +32,6 @@ logs*/
 *.csv
 *.old*
 *.map
+*.vc
+
 

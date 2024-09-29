@@ -3,6 +3,7 @@ IBEX_CONFIG         ?=  isolde
 FUSESOC_CONFIG_OPTS := $(shell cd $(ROOT_DIR) && $(ROOT_DIR)/util/ibex_config.py $(IBEX_CONFIG) fusesoc_opts)
 test-program        := $(ROOT_DIR)/isolde/sw/simple_system/vlinstr_test/hello_test.elf
 BUILD_DIR           := build/$(IBEX_CONFIG)
+TMP_DIR             := tmp/$(IBEX_CONFIG)
 
 num_cores := $(shell nproc)
 num_cores_half := $(shell echo "$$(($(num_cores) / 2))")
@@ -10,6 +11,14 @@ num_cores_half := $(shell echo "$$(($(num_cores) / 2))")
 build-hw:
 	fusesoc --cores-root=$(ROOT_DIR) run --target=sim --setup --build  --build-root=$(BUILD_DIR) isolde:ibex:ibex_simple_system $(FUSESOC_CONFIG_OPTS)
 
+flist: ibex_manifest.flist
+	mv $(TMP_DIR)/sim-verilator/isolde_ibex_ibex_simple_system_0.vc . 
+	rm -fr $(TMP_DIR)
+	@echo $(CURDIR)/isolde_ibex_ibex_simple_system_0.vc done
+
+ibex_manifest.flist:
+#	fusesoc --cores-root=$(ROOT_DIR) run --target=lint  --no-export  --build-root=./flist isolde:ibex:ibex_simple_system $(FUSESOC_CONFIG_OPTS) 
+	fusesoc --cores-root=$(ROOT_DIR) run --target=sim --setup --no-export --build-root=$(TMP_DIR) isolde:ibex:ibex_simple_system $(FUSESOC_CONFIG_OPTS)
 
 
 .PHONY: test-program $(test-program) clean
