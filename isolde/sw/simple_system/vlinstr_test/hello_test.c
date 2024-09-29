@@ -14,12 +14,13 @@
 
 
 #include "simple_system_common.h"
+#include "tinyprintf.h"
 
 
 
 int main(int argc, char **argv) {
 
-  puts("Hello test instr\n");
+  printf("Hello test instr\n");
 
     unsigned int enc_instr64 = 0xBEAD0000;  // Example value
    unsigned int dummy = 0xBADCAFE;

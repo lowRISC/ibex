@@ -13,8 +13,8 @@ EXTRA_SRCS :=
 
 # Check the COMPILER variable passed via the command line
 ifeq ($(COMPILER), llvm)
-    include $(PROGRAM_DIR)/../common/common-llvm.mk
+    include $(PROGRAM_DIR)/../bsp/common-llvm.mk
 else
-    include $(PROGRAM_DIR)/../common/common.mk
+    include $(PROGRAM_DIR)/../bsp/common.mk
 endif
 
