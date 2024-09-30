@@ -70,15 +70,6 @@ main_entry:
 //  addi x10, x0, 0
 //  addi x11, x0, 0
   jal x1, startup
-  /* Halt simulation */
-    li  a1, 0
-    li  a2, 0
-    li  a3, 0
-    li  a4, 0
-    li  a5, 0
-    li  a7, 93
-    ecall
-
   /* If execution ends up here just put the core to sleep */
 sleep_loop:
   wfi

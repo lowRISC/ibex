@@ -1,7 +1,7 @@
 ROOT_DIR            :=  $(shell git rev-parse --show-toplevel)
 IBEX_CONFIG         ?=  isolde
 FUSESOC_CONFIG_OPTS := $(shell cd $(ROOT_DIR) && $(ROOT_DIR)/util/ibex_config.py $(IBEX_CONFIG) fusesoc_opts)
-test-program        := $(ROOT_DIR)/isolde/sw/simple_system/vlinstr_test/hello_test.elf
+test-program        ?= $(ROOT_DIR)/isolde/sw/simple_system/vlinstr_test/hello_test.elf
 BUILD_DIR           := build/$(IBEX_CONFIG)
 SYNTH_DIR           := synth/$(IBEX_CONFIG)
 TMP_DIR             := tmp/$(IBEX_CONFIG)
@@ -66,3 +66,31 @@ clean-hw:
 
 view-log:
 	/home/dan/ext/gtkwave-src/install/bin/gtkwave  $(ROOT_DIR)/isolde/simple_system/logs/ibex.vcd --script=$(ROOT_DIR)/isolde/simple_system/load_waveform.tcl
+
+TST_NAME ?= dhrystone
+dhrystone: test-program := $(ROOT_DIR)/isolde/sw/simple_system/$(TST_NAME)/$(TST_NAME).elf
+
+dhrystone: 
+	make -C $(dir $(test-program)) clean
+	make -C $(dir $(test-program)) 	
+	@rm -f ibex_simple_system.log
+	@rm -f trace_core_00000000.log
+	./$(BUILD_DIR)/sim-verilator/Vibex_simple_system -t --meminit=ram,$(test-program)
+	@echo
+	@echo ibex_simple_system.log
+	@echo ======================
+	@cat ibex_simple_system.log
+	@echo ======================
+	@echo isolde_exec_block.log
+
+clean-test-programs: 
+	find $(ROOT_DIR)/isolde/sw/simple_system -name "*.o"       -delete
+	find $(ROOT_DIR)/isolde/sw/simple_system -name "*.hex"     -delete
+	find $(ROOT_DIR)/isolde/sw/simple_system -name "*.elf"     -delete
+	find $(ROOT_DIR)/isolde/sw/simple_system -name "*.map"     -delete
+	find $(ROOT_DIR)/isolde/sw/simple_system -name "*.readelf" -delete
+	find $(ROOT_DIR)/isolde/sw/simple_system -name "*.objdump" -delete
+	find $(ROOT_DIR)/isolde/sw/simple_system -name "*.headers" -delete
+	find $(ROOT_DIR)/isolde/sw/simple_system -name "corev_*.S" -delete
+	find $(ROOT_DIR)/isolde/sw/simple_system -name "*.itb" -delete
+	find $(ROOT_DIR)/isolde/sw/simple_system -name "*.d" -delete

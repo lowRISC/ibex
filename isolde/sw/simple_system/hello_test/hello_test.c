@@ -4,12 +4,15 @@
 
 #include "simple_system_common.h"
 
+//#include "tinyprintf.h"
+#define  printf puts
+
 int main(int argc, char **argv) {
   pcount_enable(0);
   pcount_reset();
   pcount_enable(1);
 
-  puts("Hello simple system\n");
+  printf("Hello simple system\n");
   puthex(0xDEADBEEF);
   putchar('\n');
   puthex(0xBAADF00D);
@@ -29,9 +32,9 @@ int main(int argc, char **argv) {
       last_elapsed_time = cur_time;
 
       if (last_elapsed_time & 1) {
-        puts("Tick!\n");
+        printf("Tick!\n");
       } else {
-        puts("Tock!\n");
+        printf("Tock!\n");
       }
     }
     asm volatile("wfi");

@@ -1,4 +1,9 @@
 /*
+
+REPO   = https://github.com/openhwgroup/cv32e40p
+BRANCH = master
+HASH   = 2ee3012
+
 File: tinyprintf.h
 
 Copyright (C) 2004  Kustaa Nyholm

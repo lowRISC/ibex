@@ -6,6 +6,32 @@
 #include "tinyprintf.h"
 
 
+
+// see tb/core/mm_ram.sv
+void _Exit(int exit_code){
+
+  asm volatile  (
+        "li	a1, 0;"
+        "li	a2, 0;"
+        "li	a3, 0;"
+        "li	a4, 0;"
+        "li	a5, 0;"
+        "li	a7, 93;"
+        "ecall;"	
+        :  /* output: none %0 */
+        : /* input: none */
+        : /* clobbers: none */); 
+}
+
+ void _putcf (void *, char c) {
+  DEV_WRITE(MMADDR_PRINT, (uint32_t)c); 
+}
+
+
+int putchar(char c){
+  _putcf (0,  c);
+  return 1;
+}
 void puthex(uint32_t h) {
   int cur_digit;
   // Iterate through h taking top 4 bits each time and outputting ASCII of hex
@@ -22,7 +48,7 @@ void puthex(uint32_t h) {
   }
 }
 
-#define MMADDR_EXIT SIM_CTRL_BASE + SIM_CTRL_CTRL
+
 void sim_halt() { DEV_WRITE(MMADDR_EXIT, 1); }
 
 void pcount_reset() {

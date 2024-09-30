@@ -20,22 +20,22 @@
  */
 
 module simulator_ctrl #(
-  // passed to simulator via log_name of output_char DPI call
-  parameter string LogName = "ibex_out.log",
-  // If set flush on every char (useful for monitoring output whilst
-  // simulation is running).
-  parameter bit    FlushOnChar = 1
+    // passed to simulator via log_name of output_char DPI call
+    parameter string LogName = "ibex_out.log",
+    // If set flush on every char (useful for monitoring output whilst
+    // simulation is running).
+    parameter bit    FlushOnChar = 1
 ) (
-  input               clk_i,
-  input               rst_ni,
+    input clk_i,
+    input rst_ni,
 
-  input               req_i,
-  input               we_i,
-  input        [ 3:0] be_i,
-  input        [31:0] addr_i,
-  input        [31:0] wdata_i,
-  output logic        rvalid_o,
-  output logic [31:0] rdata_o
+    input               req_i,
+    input               we_i,
+    input        [ 3:0] be_i,
+    input        [31:0] addr_i,
+    input        [31:0] wdata_i,
+    output logic        rvalid_o,
+    output logic [31:0] rdata_o
 );
 
   localparam logic [7:0] CHAR_OUT_ADDR = 8'h0;
@@ -43,6 +43,7 @@ module simulator_ctrl #(
 
   logic [7:0] ctrl_addr;
   logic [2:0] sim_finish;
+  logic [31:0] cycle_counter;
 
   integer log_fd;
 
@@ -60,7 +61,9 @@ module simulator_ctrl #(
     if (~rst_ni) begin
       rvalid_o <= 0;
       sim_finish <= 'b0;
+      cycle_counter <= 0;
     end else begin
+      cycle_counter <= cycle_counter +1;
       // Immeditely respond to any request
       rvalid_o <= req_i;
 
@@ -70,7 +73,7 @@ module simulator_ctrl #(
             if (be_i[0]) begin
               $fwrite(log_fd, "%c", wdata_i[7:0]);
 
-              if(FlushOnChar) begin
+              if (FlushOnChar) begin
                 $fflush(log_fd);
               end
             end
@@ -94,5 +97,5 @@ module simulator_ctrl #(
     end
   end
 
-  assign rdata_o = '0;
+  assign rdata_o = cycle_counter;
 endmodule
