@@ -185,7 +185,7 @@ targets:
     default_tool: vivado
     filesets_append:
       - files_simple_system
-    toplevel: ibex_simple_system
+    toplevel: ibex_top
     tools:
       vivado:
         part: "xczu7ev-ffvc1156-2-e"  # Default to ZCU102    
