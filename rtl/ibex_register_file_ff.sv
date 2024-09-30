@@ -13,7 +13,7 @@
 
 `define GEN_EXT_PORT_READ_BLOCK(CHANNEL) \
   always_comb begin \
-    if (isolde_rf_bus.raddr_``CHANNEL < 32) begin \
+    if (extended_ports.raddr_``CHANNEL < 32) begin \
       extended_ports.rdata_``CHANNEL  = rf_reg[extended_ports.raddr_``CHANNEL];  \
       extended_ports_err_read = 1'b0; \
     end else begin \

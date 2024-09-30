@@ -33,5 +33,4 @@ logs*/
 *.old*
 *.map
 *.vc
-
-
+synth/

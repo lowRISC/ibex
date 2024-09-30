@@ -3,6 +3,7 @@ IBEX_CONFIG         ?=  isolde
 FUSESOC_CONFIG_OPTS := $(shell cd $(ROOT_DIR) && $(ROOT_DIR)/util/ibex_config.py $(IBEX_CONFIG) fusesoc_opts)
 test-program        := $(ROOT_DIR)/isolde/sw/simple_system/vlinstr_test/hello_test.elf
 BUILD_DIR           := build/$(IBEX_CONFIG)
+SYNTH_DIR           := synth/$(IBEX_CONFIG)
 TMP_DIR             := tmp/$(IBEX_CONFIG)
 
 num_cores := $(shell nproc)
@@ -20,6 +21,18 @@ ibex_manifest.flist:
 #	fusesoc --cores-root=$(ROOT_DIR) run --target=lint  --no-export  --build-root=./flist isolde:ibex:ibex_simple_system $(FUSESOC_CONFIG_OPTS) 
 	fusesoc --cores-root=$(ROOT_DIR) run --target=sim --setup --no-export --build-root=$(TMP_DIR) isolde:ibex:ibex_simple_system $(FUSESOC_CONFIG_OPTS)
 
+synth-setup:
+	mkdir -p $(SYNTH_DIR)
+	fusesoc --cores-root=$(ROOT_DIR) run --target=synth --setup  --no-export --build-root=$(SYNTH_DIR) isolde:ibex:ibex_simple_system $(FUSESOC_CONFIG_OPTS)
+
+.PHONY: synth
+synth: synth-setup
+	cd ./synth/isolde/synth-vivado && \
+	echo "launch_runs synth_1 " >launch_runs.tcl && \
+	echo "wait_on_runs synth_1" >>launch_runs.tcl && \
+	vivado -mode batch -source ./isolde_ibex_ibex_simple_system_0.tcl ./launch_runs.tcl | tee vivado.log
+
+	
 
 .PHONY: test-program $(test-program) clean
 # Rule for test-program

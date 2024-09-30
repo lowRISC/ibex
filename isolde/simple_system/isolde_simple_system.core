@@ -179,4 +179,13 @@ targets:
           - "-Wwarn-IMPERFECTSCH"
           # RAM primitives wider than 64bit (required for ECC) fail to build in
           # Verilator without increasing the unroll count (see Verilator#1266)
-          - "--unroll-count 72"
+          - "--unroll-count 72"  
+  synth:
+    <<: *default_target
+    default_tool: vivado
+    filesets_append:
+      - files_simple_system
+    toplevel: ibex_simple_system
+    tools:
+      vivado:
+        part: "xczu7ev-ffvc1156-2-e"  # Default to ZCU102    
