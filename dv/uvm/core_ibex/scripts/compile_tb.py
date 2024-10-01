@@ -85,6 +85,31 @@ def _main() -> int:
         md.dir_tb.mkdir(exist_ok=True, parents=True)
         md.tb_build_log = md.dir_tb/'compile_tb.log'
 
+        # Locate the spike .pc files to allow us to link against it when
+        # building, riscv-fesvr isn't strictly required but the DV flow has been
+        # observed to see build failures where it isn't present with CentOS 7.
+        spike_iss_pc = ['riscv-riscv', 'riscv-disasm', 'riscv-fdt',
+            'riscv-fesvr']
+        try:
+            subprocess.check_output(['pkg-config', '--exists'] + spike_iss_pc)
+        except subprocess.CalledProcessError as err:
+            raise RuntimeError(
+                f'Failed to find {spike_iss_pc} pkg-config packages. '
+                f'Did you set the PKG_CONFIG_PATH correctly?') from err
+
+        # Now call out to pkg-config to return the appropriate flags for compilation
+        # (The keys here are the substitution placeholders in rtl_simulation.yaml)
+        iss_pkgconfig_dict = {
+            'ISS_CFLAGS'  : ['--cflags'],
+            'ISS_LDFLAGS' : ['--libs-only-other'],
+            'ISS_LIBS'    : ['--libs-only-l', '--libs-only-L'],
+        }
+        iss_cc_subst_vars_dict = \
+            {k: _get_iss_pkgconfig_flags(v, spike_iss_pc, md.simulator)
+             for k, v in iss_pkgconfig_dict.items()}
+
+        # Populate the entire set of variables to substitute in the templated
+        # compilation command, including the compiler flags for the ISS.
         subst_vars_dict = {
             'core_ibex': md.ibex_dv_root,
             'tb_dir': md.dir_tb,
@@ -95,30 +120,7 @@ def _main() -> int:
             'xlm_cov_cfg_file': f"{md.ot_xcelium_cov_scripts}/cover.ccf",
             'dut_cov_rtl_path': md.dut_cov_rtl_path
         }
-
-        # Locate the spike .pc files to allow us to link against it when
-        # building, riscv-fesvr isn't strictly required but the DV flow has been
-        # observed to see build failures where it isn't present with CentOS 7.
-        spike_iss_pc = ['riscv-riscv', 'riscv-disasm', 'riscv-fdt',
-            'riscv-fesvr']
-
-        iss_pkgconfig_dict = {
-            'ISS_CFLAGS'  : ['--cflags'],
-            'ISS_LDFLAGS' : ['--libs-only-other'],
-            'ISS_LIBS'    : ['--libs-only-l', '--libs-only-L'],
-        }
-        md.envvar_PKG_CONFIG_PATH = dict(os.environ).get('PKG_CONFIG_PATH')
-        try:
-            subprocess.check_output(['pkg-config', '--exists'] + spike_iss_pc)
-        except subprocess.CalledProcessError as err:
-            raise RuntimeError(
-                f'Failed to find {spike_iss_pc} pkg-config packages. '
-                f'Did you set the PKG_CONFIG_PATH correctly?') from err
-        subst_vars_dict.update(
-            {k: _get_iss_pkgconfig_flags(v,
-                                         spike_iss_pc,
-                                         md.simulator)
-             for k, v in iss_pkgconfig_dict.items()})
+        subst_vars_dict.update(iss_cc_subst_vars_dict)
 
         md.tb_build_stdout = md.dir_tb/'compile_tb_stdstreams.log'
         md.tb_build_cmds = riscvdv_interface.get_tool_cmds(
