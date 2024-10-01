@@ -21,6 +21,8 @@ void _Exit(int exit_code){
         :  /* output: none %0 */
         : /* input: none */
         : /* clobbers: none */); 
+  while(1); //ureachable code
+
 }
 
  void _putcf (void *, char c) {

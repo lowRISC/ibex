@@ -16,7 +16,9 @@
 #include "simple_system_common.h"
 #include "tinyprintf.h"
 
-
+// Define START_TIMING and END_TIMING macros
+#define START_TIMING(initval)  initval = getTicks()
+#define END_TIMING(initval, value)  printf("Timing for %s: %u cycles\n", value, getTicks() - initval)
 
 int main(int argc, char **argv) {
 
@@ -35,8 +37,19 @@ int main(int argc, char **argv) {
 
 
 
+unsigned int startTicks;
 
-
+START_TIMING(startTicks);
+asm volatile (
+  "li t3, 0xBADCAFE\n"   // Load 1 into t3
+  "li t4, 0xBADCAFE\n"   // Load 2 into t4
+  "li t5, 0xBADCAFE\n"   // Load 3 into t5
+  "li t6, 0xBADCAFE\n"   // Load 4 into t6
+  :                // No output operands
+  :                // No input operands
+  : "t3", "t4", "t5", "t6"  // Clobber list (indicates the registers modified)
+);
+END_TIMING(startTicks, "loading t3-t6 with immediate values ");
 
 #ifdef vlen64
     // Inline assembly to output the values
@@ -47,15 +60,16 @@ int main(int argc, char **argv) {
   );
  #else
 //      vle32.q Q0, 1, 2, 3, 4                  # encoding: [0x7f,0x50,0x00,0x06,0x01,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x00,0x00,0x00]
+START_TIMING(startTicks);
  asm volatile (
   ".word 0x0600507f\n"
-  ".word 0x00000001\n"
-  ".word 0x00000002\n"
-  ".word 0x00000003\n"
-  ".word 0x00000004\n"
+  ".word 0xBADCAFE\n"
+  ".word 0xBADCAFE\n"
+  ".word 0xBADCAFE\n"
+  ".word 0xBADCAFE\n"
 
   );
-
+END_TIMING(startTicks, "vle32.q Q0, 1, 2, 3, 4 ");
 //       vle32.q Q1, 10, 20, 30, 40                  # encoding: [0xff,0x50,0x00,0x06,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00]
  asm volatile (
   ".word 0x060050ff\n"

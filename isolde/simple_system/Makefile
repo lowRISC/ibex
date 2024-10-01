@@ -1,7 +1,8 @@
 ROOT_DIR            :=  $(shell git rev-parse --show-toplevel)
 IBEX_CONFIG         ?=  isolde
 FUSESOC_CONFIG_OPTS := $(shell cd $(ROOT_DIR) && $(ROOT_DIR)/util/ibex_config.py $(IBEX_CONFIG) fusesoc_opts)
-test-program        ?= $(ROOT_DIR)/isolde/sw/simple_system/vlinstr_test/hello_test.elf
+TEST                ?= vlinstr_test
+test-program        ?= $(ROOT_DIR)/isolde/sw/simple_system/$(TEST)/$(TEST).elf
 BUILD_DIR           := build/$(IBEX_CONFIG)
 SYNTH_DIR           := synth/$(IBEX_CONFIG)
 TMP_DIR             := tmp/$(IBEX_CONFIG)
@@ -67,10 +68,8 @@ clean-hw:
 view-log:
 	/home/dan/ext/gtkwave-src/install/bin/gtkwave  $(ROOT_DIR)/isolde/simple_system/logs/ibex.vcd --script=$(ROOT_DIR)/isolde/simple_system/load_waveform.tcl
 
-TST_NAME ?= dhrystone
-dhrystone: test-program := $(ROOT_DIR)/isolde/sw/simple_system/$(TST_NAME)/$(TST_NAME).elf
 
-dhrystone: 
+veri-test: 
 	make -C $(dir $(test-program)) clean
 	make -C $(dir $(test-program)) 	
 	@rm -f ibex_simple_system.log
