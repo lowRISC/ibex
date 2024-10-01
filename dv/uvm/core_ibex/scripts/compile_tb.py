@@ -5,7 +5,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import argparse
+from typing import List
 import os
+import shlex
 import sys
 import subprocess
 import pathlib3x as pathlib
@@ -19,23 +21,51 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def _get_iss_pkgconfig_flags(specifiers, iss_pc, simulator):
+def _get_iss_pkgconfig_flags(specifiers: List[str], iss_pc: List[str], simulator: str) -> str:
+    all_tokens = []
+
     # Seperate pkg-config calls for each specifier as combining them has been
     # observed misbehaving on CentOS 7
-    _flags = ' '.join([subprocess.check_output(
-                        args=(['pkg-config', s] + iss_pc),
-                        universal_newlines=True,).strip()
-                       for s in specifiers])
+    # Generate a list of tokens for each call, and append it to the all_tokens variable
+    for s in specifiers:
+        cmd = ['pkg-config', s] + iss_pc
+        stdout = subprocess.check_output(cmd, universal_newlines=True).strip()
+        tokens = shlex.split(stdout)
+        logger.debug(f"pkgconfig_tokens = {tokens}")
 
-    if simulator == 'xlm':
-        # See xcelium documentation for the -Wld syntax for passing
-        # flags to the linker. Passing -rpath,<path> options is tricky
-        # because commas are parsed strangely between xrun and the xmsc
-        # tool, and its easy for the options to arrive malformed. Use
-        # the following hack to get it through.
-        if '-Wl' in _flags:  # This should be in LDFLAGS only
-            _flags = "'-Xlinker {}'".format(_flags.replace('-Wl,', ''))
-    return _flags
+        rpath_prefix = '-Wl,-rpath,'
+        def fixup_xcelium_rpath_token(t: str) -> str:
+            """Re-format rpath flags to ensure reliable passing to Xcelium.
+
+            When passing rpath flags to xcelium through the xrun tool, we need to re-format the string
+            output from pkg-config to ensure reliability.
+            This routine detects rpath flags and reformats them according to the Cadence support site
+            article.
+            """
+            if simulator == 'xlm' and t.startswith(rpath_prefix):
+                logger.debug(f"rpath token => {t}")
+                # https://support.cadence.com/apex/ArticleAttachmentPortal?id=a1Od0000000sdF8EAI
+                # See xcelium documentation for the -Wld syntax for passing
+                # user specified arguments to the C++ linker.
+                # Passing -rpath,<path> options is tricky, so use the following workaround as
+                # suggested in the support article.
+                # INPUT:  '-Wl,-rpath,/opt/spike/lib'
+                # OUTPUT: '-Wld,-Xlinker,-rpath,-Xlinker,/opt/spike/lib',
+                rpaths = (t[len(rpath_prefix):]).split(',')
+                xlinker_rpaths_str = ','.join((f"-Xlinker,{p}" for p in rpaths))
+                rpath_token = f"-Wld,-Xlinker,-rpath,{xlinker_rpaths_str}"
+                logger.debug(f"new rpath token => {rpath_token}")
+                return rpath_token
+            else:
+                return t
+
+        tokens = map(fixup_xcelium_rpath_token, tokens)
+
+        all_tokens += tokens
+
+    flags_str = shlex.join(all_tokens)
+    logger.debug(f"flags = {flags_str}")
+    return flags_str
 
 
 def _main() -> int:
