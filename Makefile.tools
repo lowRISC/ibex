@@ -1,4 +1,3 @@
-
 prj_path := $(shell git rev-parse --show-toplevel)
 num_cores := $(shell nproc)
 num_cores_half := $(shell echo "$$(($(num_cores) / 2))")
@@ -29,10 +28,6 @@ ${VERIL_INSTALL_DIR}/bin/verilator:
 	./configure --prefix=$(VERIL_INSTALL_DIR) CXX=g++-10  && make -j$(num_cores_half)  && make install
 	touch ${VERIL_INSTALL_DIR}/bin/verilator
 
-
-
-.PHONY: cores
-
 cores:
 	@num_cores=$$(nproc); \
 	num_cores=$$((num_cores / 2)); \
@@ -40,16 +35,19 @@ cores:
 
 riscv32-gcc: $(GCC_INSTALL_DIR)
 
-$(GCC_INSTALL_DIR): vendor/riscv32-gcc.url
+vendor/riscv32-elf-gcc.tar.gz: vendor/riscv32-elf-gcc.url
+	cd vendor && \
+	wget `cat $(CURDIR)/$<` -O riscv32-elf-gcc.tar.gz && \
+	touch riscv32-elf-gcc.tar.gz
+
+$(GCC_INSTALL_DIR): vendor/riscv32-elf-gcc.tar.gz
 	rm -fr $(GCC_INSTALL_DIR)
 	mkdir -p $(INSTALL_DIR)
 	cd vendor && \
-	wget  `cat $(CURDIR)/$<` -O riscv.tar.gz && \
-	tar -xzvf riscv.tar.gz -C  $(INSTALL_DIR)/ riscv	
+	tar -xzvf riscv32-elf-gcc.tar.gz -C  $(INSTALL_DIR)/ riscv	
 	mv $(INSTALL_DIR)/riscv $(GCC_INSTALL_DIR)
 	touch  $(GCC_INSTALL_DIR)
-
-
+	
 riscv32-llvm: $(LLVM_INSTALL_DIR)
 
 vendor/riscv32-elf-llvm.tar.gz: vendor/riscv32-elf-llvm.url
@@ -65,13 +63,7 @@ $(LLVM_INSTALL_DIR): vendor/riscv32-elf-llvm.tar.gz
 	mv $(INSTALL_DIR)/riscv $(LLVM_INSTALL_DIR)
 	touch  $(LLVM_INSTALL_DIR)
 
-riscv32-llvm-patch:
-	@cd $(prj_path)/util/isolde &&   \
-	tar -xzvf tools.tar.gz     &&   \
-	mv $(prj_path)/util/isolde/riscv32-unknown-elf-objcopy $(LLVM_INSTALL_DIR)/bin  && \
-	mv $(prj_path)/util/isolde/riscv32-unknown-elf-objdump  $(LLVM_INSTALL_DIR)/bin  && \
-	echo "REPLACED riscv32-unknown-elf- objcopy/objdump"
-
 dev-dep:
-	sudo apt-get install libelf-dev
-	sudo apt-get install srecord
+	sudo apt-get install libelf-dev -y
+	sudo apt-get install srecord -y
+
