@@ -1,0 +1,8 @@
+.bender/
+Bender.lock
+*.flist
+bin/
+vsim/
+*.vcd
+tmp/
+.bender/

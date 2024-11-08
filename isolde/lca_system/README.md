@@ -1,4 +1,6 @@
-# ISOLDE
+# ISOLDE Loosely-coupled accelerator (LCA) model. 
+## [REDMULE](https://github.com/ISOLDE-Project/redmule) hardware accelerator
+Details about the accelerator are [here](https://github.com/ISOLDE-Project/redmule?tab=readme-ov-file#redmule)
 ## Prerequisites
 in root folder execute
 ```
@@ -8,63 +10,63 @@ in root folder execute
 default value for **IBEX_CONFIG**=*isolde*.  
 For a list of possible configurations, see [ibex_configs.yaml](../../ibex_configs.yaml)  
 in folder **isolde/simple_system**:  
-```sh
-make test-app verilate veri-run
-```
-
 * get a clean slate:
-```sh
-make clean
 ```
-## build the simulation
-```sh
-make verilate
-``` 
+make veri-clean clean-test
+```
 or
-```sh
-make IBEX_CONFIG=small verilate
+```
+make veri-clean clean-test-programs
 ```
 
-## build test app
-test applications are located in ../sw/simple_system
-to execute a fibonacci test:  
-```sh
-cd isolde/simple_system
-make TEST=fibonacci test-app veri-run
+## build the simulation and run the a test application
 ```
+make TEST=fibonacci veri-clean clean-test  verilate  test-app veri-run
+``` 
+Output should be similar to this:  
+```
+TOP.tb_lca_system.u_top.u_ibex_tracer.unnamedblk2.unnamedblk3: Writing execution trace to trace_core_00000000.log
+starting fib(15)...
+fib(0) = 0
+fib(1) = 1
+fib(2) = 1
+fib(3) = 2
+fib(4) = 3
+fib(5) = 5
+fib(6) = 8
+fib(7) = 13
+fib(8) = 21
+fib(9) = 34
+fib(10) = 55
+fib(11) = 89
+```
+you can replace *fibonacci* with any test from isolde/sw/simple_system, e.g. make TEST=**dhrystone** veri-clean clean-test  verilate  test-app veri-run.  
+Default test is **vlinstr_test**.  
+## build test app
 * **gcc** toolchain
 ```
-make clean-test test-app
+make golden
+make sim-inputs
 ```
 * **llvm** toolchain
-```
-make clean-test test-app COMPILER=llvm
-```
+*Not implemented*
 ## execute test
 ```
-make veri-run
+make run-test
 ```
 Output should be similar to this
 ```
-
-Performance Counters
-====================
-Cycles:               3826
-Instructions Retired: 2181
-
-ibex_simple_system.log
-======================
-Hello test instr
-Timing for loading t3-t6 with immediate values : 10 cycles
-Timing for vle32.q Q0, 1, 2, 3, 4 : 7 cycles
-exit()
-======
-======================
-```
-alternatively to run with *small* simulation 
-
+[TESTBENCH] @ t=0: loading firmware /ubuntu_20.04/home/ext/tristan-project/ibex/isolde/lca_system/vsim/redmule-m.hex
+Timing for REDMULE: 233 cycles
+Resumed!
+Terminated test with 0 errors. See you!
+[TB] - errors=00000000
+[TB] - Success!
+```  
+# REDMULE testing
 ```sh
-make IBEX_CONFIG=small run-test
+make sim-inputs
+make TEST=redmule veri-run
 ```
 
 ---  

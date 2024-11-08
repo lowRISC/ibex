@@ -6,3 +6,11 @@
 *.d
 *.map
 *.headers
+*.elf
+*.hex
+*.itb
+*.objdump
+*.yaml
+*.readelf
+bsp.old/
+bsp.cv/

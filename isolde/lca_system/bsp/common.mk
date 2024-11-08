@@ -28,8 +28,8 @@ OBJDUMP ?= $(CROSS_COMPILE)objdump
 LINKER_SCRIPT ?= $(COMMON_DIR)/link.ld
 CRT ?= $(COMMON_DIR)/crt0.S
 
-TINY_PRINTF_FLAGS += -DTINYPRINTF_DEFINE_TFP_PRINTF=1
-TINY_PRINTF_FLAGS += -DTINYPRINTF_DEFINE_TFP_SPRINTF=0
+TINY_PRINTF_FLAGS += -DTINYPRINTF_DEFINE_TFP_PRINTF
+TINY_PRINTF_FLAGS += -DTINYPRINTF_DEFINE_TFP_SPRINTF
 CFLAGS ?= -march=$(ARCH) -mabi=ilp32 -static -mcmodel=medany -Wall -g -O3\
 	-fvisibility=hidden -nostdlib -nostartfiles -ffreestanding $(TINY_PRINTF_FLAGS) $(PROGRAM_CFLAGS)
 
@@ -46,7 +46,6 @@ all: $(OUTFILES)
 
 ifdef PROGRAM
 $(PROGRAM).elf: $(OBJS) $(LINKER_SCRIPT)
-	@echo "*** linking $(PROGRAM).elf: " $(OBJS) $(LINKER_SCRIPT)
 	$(CC) $(CFLAGS) -T $(LINKER_SCRIPT) $(OBJS) -o $@ $(LIBS)
 	$(OBJDUMP) -dh  $@ >$@.headers
 	
@@ -79,7 +78,7 @@ endif
 
 clean:
 	$(RM) -f $(OBJS) $(DEPS)
-	rm -f *.bin *.vmem *.elf *.headers *.d *.o
- 
+	rm -f *.bin *.vmem *.elf *.headers
+
 distclean: clean
 	$(RM) -f $(OUTFILES)

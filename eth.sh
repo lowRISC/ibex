@@ -21,6 +21,12 @@ export GCC_TOOLCHAIN=$ROOT_DIR/install/riscv-gcc/bin
 export LLVM_TOOLCHAIN=$ROOT_DIR/install/riscv-llvm/bin
 export CC=gcc-10
 export CXX=g++-10
+#
+export CV_SIMULATOR=verilator
+export CV_SW_TOOLCHAIN=$ROOT_DIR/install/riscv-gcc
+export CV_SW_PREFIX=riscv32-unknown-elf-
+export CV_SW_MARCH=rv32im_zicsr
+export CV_SW_CC=gcc
 
 
 source $MINICONDA

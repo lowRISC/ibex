@@ -1,0 +1,9 @@
+*.elf
+*.hex
+*.itb
+*.objdump
+*.yaml
+*.readelf
+*.headers
+bsp.old/
+bsp.cv/

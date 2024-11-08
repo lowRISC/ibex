@@ -115,3 +115,9 @@ test-cfg:
 .PHONY: python-lint
 python-lint:
 	$(MAKE) -C util lint
+
+.PHONY: clean-redmule
+clean-redmule:
+	cd vendor/redmule && \
+	git reset --hard  && \
+	git clean -xfdxf

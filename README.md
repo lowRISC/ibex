@@ -4,6 +4,7 @@
 </a>
 
 # ISOLDE
+
 First time:   
 ```sh
 . ./setup.sh 
@@ -18,36 +19,40 @@ otherwise:
 . ./eth.sh 
 ```
 see also [isolde/simple_system/README.md](isolde/simple_system/README.md)
-## Run hello-world
-```sh
-fusesoc --cores-root=. run --target=sim --setup --build  lowrisc:ibex:ibex_simple_system $(util/ibex_config.py small fusesoc_opts)
-make -C examples/sw/simple_system/hello_test
-./build/lowrisc_ibex_ibex_simple_system_0/sim-verilator/Vibex_simple_system -t --meminit=ram,./examples/sw/simple_system/hello_test/hello_test.elf
+# Directory structure
 ```
-Result
+├── ci
+├── doc
+├── dv
+├── examples
+├── formal
+├── install
+├── isolde          <-- ISOLDE systems
+├── lint
+├── rtl
+├── shared
+├── syn
+├── util
+└── vendor           <-- external IPs
 ```
-Tracing enabled.
-Writing simulation traces to sim.fst
-TOP.ibex_simple_system.u_top.u_ibex_tracer.unnamedblk2.unnamedblk3: Writing execution trace to trace_core_00000000.log
-Terminating simulation by software request.
-- ../src/lowrisc_ibex_sim_shared_0/./rtl/sim/simulator_ctrl.sv:93: Verilog $finish
-Received $finish() from Verilog, shutting down simulation.
+## External IPs
+external IPs are hosted in vendor folder as git submodules
 
-Simulation statistics
-=====================
-Executed cycles:  13144
-Wallclock time:   0.048 s
-Simulation speed: 273833 cycles/s (273.833 kHz)
-Trace file size:  517730 B
-
-You can view the simulation traces by calling
-$ gtkwave sim.fst
-
-Performance Counters
-====================
-Cycles:               476
-Instructions Retired: 261
+Steps to add a new IP   
 ```
+git submodule add <ip_url> vendor/<ip>
+```
+Optional,
+```
+cd vendor/<ip>
+git checkout <branch>
+```
+Finally:  
+```
+git commit -m"NEW git submodule: vendor/<ip>"
+git push
+```
+
 # Ibex RISC-V Core
 
 Ibex is a production-quality open source 32-bit RISC-V CPU core written in

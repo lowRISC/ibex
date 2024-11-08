@@ -1,0 +1,9 @@
+# Copyright 2023 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Yvan Tortorella <yvan.tortorella@unibo.it>
+#
+
+overrides:
+  fpnew: { git: "https://github.com/pulp-platform/cvfpu.git", rev: "pulp-v0.1.3" }

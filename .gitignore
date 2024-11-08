@@ -34,3 +34,8 @@ logs*/
 *.map
 *.vc
 synth/
+bin/
+tmp/
+*.flist
+
+
