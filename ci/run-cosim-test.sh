@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # Run an elf against simple system co-simulation and check the UART output for
-# reported pass/fail reporting as appropriate for use in Azure pipelines
+# reported pass/fail reporting as appropriate for use in GitHub Actions
 
 SKIP_PASS_CHECK=0
 
