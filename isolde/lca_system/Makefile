@@ -85,3 +85,7 @@ clean: veri-clean clean-test-programs
 clean-hw:
 	rm -fr $(BUILD_DIR) logs
 
+clean-bender:
+	rm -fr .bender
+	rm -f Bender.lock
+	
