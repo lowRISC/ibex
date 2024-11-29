@@ -9,7 +9,7 @@ in root folder execute
 ## Building Simulation
 default value for **IBEX_CONFIG**=*isolde*.  
 For a list of possible configurations, see [ibex_configs.yaml](../../ibex_configs.yaml)  
-in folder **isolde/simple_system**:  
+in folder **isolde/lca_system**:  
 * get a clean slate:
 ```
 make veri-clean clean-test
@@ -53,7 +53,11 @@ make sim-inputs
 *Not implemented*
 ## execute test
 ```
+<<<<<<< HEAD
  make TEST=redmule clean-test sim-inputs veri-clean verilate veri-run
+=======
+make TEST=redmule veri-run
+>>>>>>> bc9a715d9a858cb0e0276ba01506da1d2d22dd77
 ```
 Output should be similar to this
 ```
