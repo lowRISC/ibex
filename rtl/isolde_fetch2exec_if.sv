@@ -13,5 +13,6 @@ interface isolde_fetch2exec_if (
   //
   isolde_decoder_pkg::isolde_opcode_e isolde_opcode;  //decoded instruction
   logic [2:0] func3;  //instr[14-12]
-  logic [1:0] funct2;  
+  logic [1:0] funct2;
+  logic [31:0] isolde_decoder_instr;  // Offloaded instruction
 endinterface

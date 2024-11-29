@@ -302,62 +302,7 @@ module tb_lca_system (
       .core_sleep_o          ()
   );
 
-  // cv32e40p_core #(
-  //     .PULP_XPULP(PULP_XPULP),
-  //     .FPU       (FPU),
-  //     .PULP_ZFINX(PULP_ZFINX)
-  // ) i_cv32e40p_core (
-  //     // Clock and Reset
-  //     .clk_i(clk_i),
-  //     .rst_ni(rst_ni),
-  //     .pulp_clock_en_i(1'b1),  // PULP clock enable (only used if PULP_CLUSTER = 1)
-  //     .scan_cg_en_i(1'b0),  // Enable all clock gates for testing
-  //     // Core ID, Cluster ID, debug mode halt address and boot address are considered more or less static
-  //     .boot_addr_i(core_boot_addr),
-  //     .mtvec_addr_i('0),
-  //     .dm_halt_addr_i('0),
-  //     .hart_id_i('0),
-  //     .dm_exception_addr_i('0),
-  //     // Instruction memory interface
-  //     .instr_req_o(instr_req),
-  //     .instr_gnt_i(instr_gnt),
-  //     .instr_rvalid_i(instr_rvalid),
-  //     .instr_addr_o(instr_addr),
-  //     .instr_rdata_i(instr_rdata),
-  //     // Data memory interface
-  //     .data_req_o(data_req),
-  //     .data_gnt_i(data_gnt),
-  //     .data_rvalid_i(data_rvalid),
-  //     .data_we_o(data_we),
-  //     .data_be_o(data_be),
-  //     .data_addr_o(data_addr),
-  //     .data_wdata_o(data_wdata),
-  //     .data_rdata_i(data_rdata),
-  //     // apu-interconnect
-  //     // handshake signals
-  //     .apu_req_o(),
-  //     .apu_gnt_i('0),
-  //     // request channel
-  //     .apu_operands_o(),
-  //     .apu_op_o(),
-  //     .apu_flags_o(),
-  //     // response channel
-  //     .apu_rvalid_i('0),
-  //     .apu_result_i('0),
-  //     .apu_flags_i('0),
-  //     // Interrupt inputs
-  //     .irq_i({28'd0, evt[0][0], 3'd0}),  // CLINT interrupts + CLINT extension interrupts
-  //     .irq_ack_o(),
-  //     .irq_id_o(),
-  //     // Debug Interface
-  //     .debug_req_i('0),
-  //     .debug_havereset_o(),
-  //     .debug_running_o(),
-  //     .debug_halted_o(),
-  //     // CPU Control Signals
-  //     .fetch_enable_i(fetch_enable_i),
-  //     .core_sleep_o(core_sleep)
-  // );
+
 
 
   initial begin : load_prog
@@ -374,18 +319,27 @@ module tb_lca_system (
       $display("No firmware specified");
       $finish;
     end
-
+       test_mode = 1'b0;
     core_boot_addr = BOOT_ADDR;
   end
 
-
+task endSimulation(input int errors);
+    if (errors != 0) begin
+        $display("[TB LCA] @ t=%0t - Fail!", $time);
+        $error("[TB LCA] @ t=%0t - errors=%08x", $time, errors);
+    end else begin
+        $display("[TB LCA] @ t=%0t - Success!", $time);
+        $display("[TB LCA] @ t=%0t - errors=%08x", $time, errors);
+    end
+    $finish;
+endtask
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (~rst_ni) cycle_counter <= '0;
     else cycle_counter <= cycle_counter + 1;
 
     if ((data_addr == MMADDR_EXIT) && data_req) begin
-      if (data_we) errors <= data_wdata;
+      if (data_we)  endSimulation(data_wdata); 
       else mmio_rdata <= cycle_counter;
     end
     if ((data_addr == MMADDR_PRINT) && (data_we & data_req)) begin
@@ -393,20 +347,6 @@ module tb_lca_system (
     end
   end
 
-  int errors = -1;
-  initial begin
-    test_mode = 1'b0;
-
-    do @(posedge clk_i); while (~core_sleep || errors == -1);
-
-    $display("[TB] - errors=%08x", errors);
-    if (errors != 0) begin
-      $error("[TB] - Fail!");
-    end else begin
-      $display("[TB] - Success!");
-    end
-    $finish;
-
-  end
+  
 
 endmodule  // tb_lca_system

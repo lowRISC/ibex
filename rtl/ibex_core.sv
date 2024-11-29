@@ -164,11 +164,18 @@ module ibex_core
 
     // CPU Control Signals
     // SEC_CM: FETCH.CTRL.LC_GATED
-    input  ibex_mubi_t fetch_enable_i,
-    output logic       alert_minor_o,
-    output logic       alert_major_internal_o,
-    output logic       alert_major_bus_o,
-    output ibex_mubi_t core_busy_o
+    input  ibex_mubi_t                   fetch_enable_i,
+    output logic                         alert_minor_o,
+    output logic                         alert_major_internal_o,
+    output logic                         alert_major_bus_o,
+    output ibex_mubi_t                   core_busy_o,
+    // eXtension interface
+           isolde_cv_x_if.cpu_compressed xif_compressed_if,
+           isolde_cv_x_if.cpu_issue      xif_issue_if,
+           isolde_cv_x_if.cpu_commit     xif_commit_if,
+           isolde_cv_x_if.cpu_mem        xif_mem_if,
+           isolde_cv_x_if.cpu_mem_result xif_mem_result_if,
+           isolde_cv_x_if.cpu_result     xif_result_if
 );
 
   localparam int unsigned PMPNumChan = 3;
@@ -710,7 +717,14 @@ module ibex_core
       .perf_dside_wait_o(perf_dside_wait),
       .perf_mul_wait_o  (perf_mul_wait),
       .perf_div_wait_o  (perf_div_wait),
-      .instr_id_done_o  (instr_id_done)
+      .instr_id_done_o  (instr_id_done),
+      // eXtension interface
+      .xif_compressed_if(core_xif.cpu_compressed),
+      .xif_issue_if     (core_xif.cpu_issue),
+      .xif_commit_if    (core_xif.cpu_commit),
+      .xif_mem_if       (core_xif.cpu_mem),
+      .xif_mem_result_if(core_xif.cpu_mem_result),
+      .xif_result_if    (core_xif.cpu_result)
   );
 
   // for RVFI only

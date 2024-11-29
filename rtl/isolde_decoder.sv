@@ -21,6 +21,7 @@ module isolde_decoder
     input logic rst_ni,
 
     // to/from controller
+    input  logic             isolde_decoder_instr_exec_i,
     input  logic [4:0][31:0] isolde_decoder_instr_batch_i,    // from IF-ID pipeline registers
     input  logic             isolde_decoder_enable_i,         // illegal instr encountered
     output logic             isolde_decoder_illegal_instr_o,  // illegal instr encountered
@@ -71,59 +72,81 @@ module isolde_decoder
       isolde_rf_bus.we_0 <= 1'b0;
       //isolde_decoder_busy_o <= 0;
     end else begin
-      idvli_state <= idvli_next;
-      case (idvli_next)
-        BOOT: begin
-          read_ptr <= read_ptr + 1;
-        end
-        IDLE: begin
-          isolde_decoder_illegal_instr_o <= 0;
-          isolde_rf_bus.we_0 <= 1'b0;
-        end
-        FETCH_COMPUTE: begin
-          if (isolde_opcode_invalid == isolde_opcode_d) begin
-            isolde_decoder_illegal_instr_o <= 1;
-            idvli_state <= BOOT;
-            read_ptr <= 3'h0;
-          end else if (isolde_decoder_exec_bus.stall_isolde_decoder) idvli_state <= STALL;
-          else begin
-            read_ptr                              <= 1;
-            rd                                    <= isolde_decoder_instr_batch_i[0][11:7];
-            isolde_opcode_q                       <= isolde_opcode_d;
-            vlen_instr_words_q                    <= vlen_instr_words_d;
-            //to exec
-            isolde_decoder_exec_bus.isolde_opcode <= isolde_opcode_d;
-            //isolde_decoder_exec_bus.rs2           <= isolde_decoder_instr_batch_i[0][24:20];
-            //isolde_decoder_exec_bus.rs1           <= isolde_decoder_instr_batch_i[0][19:15];
-            isolde_decoder_exec_bus.func3         <= isolde_decoder_instr_batch_i[0][14:12];
-            //isolde_decoder_exec_bus.rd            <= isolde_decoder_instr_batch_i[0][11:7];
 
+      if (~isolde_decoder_instr_exec_i) begin
+        read_ptr <= 0;
+        idvli_state <= BOOT;
+      end else begin
+        idvli_state <= idvli_next;
+        case (idvli_next)
+          BOOT: begin
+            read_ptr <= read_ptr + 1;
           end
-        end
-        FETCH_REST: begin
-          read_ptr <= read_ptr + 1;
-          case (isolde_opcode_q)
-            isolde_opcode_vle32_4: load_quad_word();
-            isolde_opcode_gemm: decode_64b_gemm();
+          IDLE: begin
+            isolde_decoder_illegal_instr_o <= 0;
+            isolde_rf_bus.we_0 <= 1'b0;
+          end
+          FETCH_COMPUTE: begin
+            if (isolde_opcode_invalid == isolde_opcode_d) begin
+              isolde_decoder_illegal_instr_o <= 1;
+              idvli_state <= BOOT;
+              read_ptr <= 3'h0;
+            end else if (isolde_decoder_exec_bus.stall_isolde_decoder) idvli_state <= STALL;
+            else begin
+              read_ptr                              <= 1;
+              rd                                    <= isolde_decoder_instr_batch_i[0][11:7];
+              isolde_opcode_q                       <= isolde_opcode_d;
+              vlen_instr_words_q                    <= vlen_instr_words_d;
+              //to exec
+              isolde_decoder_exec_bus.isolde_opcode <= isolde_opcode_d;
+              //isolde_decoder_exec_bus.rs2           <= isolde_decoder_instr_batch_i[0][24:20];
+              //isolde_decoder_exec_bus.rs1           <= isolde_decoder_instr_batch_i[0][19:15];
+              isolde_decoder_exec_bus.func3         <= isolde_decoder_instr_batch_i[0][14:12];
+              //isolde_decoder_exec_bus.rd            <= isolde_decoder_instr_batch_i[0][11:7];
+              if (1 == vlen_instr_words_d) begin
+                idvli_state <= FETCH_REST;
+                isolde_decoder_exec_bus.isolde_decoder_instr <= isolde_decoder_instr_batch_i[0];
+                if (isolde_opcode_d == isolde_opcode_R_type) begin
+                  x_rf_bus.raddr_2 <= isolde_decoder_instr_batch_i[0][24:20];  //rs2
+                  x_rf_bus.raddr_1 <= isolde_decoder_instr_batch_i[0][19:15];  //rs1
+                  x_rf_bus.raddr_0 <= isolde_decoder_instr_batch_i[0][11:7];  //rd    
+                end else if(isolde_opcode_d == isolde_opcode_redmule) begin
+                  x_rf_bus.raddr_2 <= isolde_decoder_instr_batch_i[0][31:27];  //rs3
+                  x_rf_bus.raddr_1 <= isolde_decoder_instr_batch_i[0][24:20];  //rs2
+                  x_rf_bus.raddr_0 <= isolde_decoder_instr_batch_i[0][19:15];  //rs1  
 
-          endcase
-        end
-      endcase
+                end
+              end
+
+            end
+          end
+          FETCH_REST: begin
+            read_ptr <= read_ptr + 1;
+            case (isolde_opcode_q)
+              isolde_opcode_vle32_4: load_quad_word();
+              isolde_opcode_gemm: decode_64b_gemm();
+
+            endcase
+          end
+        endcase
+      end
     end
   end
 
   always_comb begin
+
     case (idvli_state)
       BOOT: begin
         isolde_decoder_exec_bus.isolde_decoder_ready = 0;
         if (read_ptr == 3'h6) begin
-          idvli_next = IDLE;
+          idvli_next = isolde_decoder_instr_exec_i ? IDLE : BOOT;
           isolde_decoder_busy_o = 0;
         end else idvli_next = BOOT;
       end
       IDLE: begin
         isolde_decoder_exec_bus.isolde_decoder_ready = 0;
         idvli_next = isolde_decoder_enable_i ? FETCH_COMPUTE : IDLE;
+        isolde_decoder_busy_o = (idvli_next == FETCH_COMPUTE) ? 1 : 0;
       end
 
       FETCH_COMPUTE: begin
@@ -143,6 +166,7 @@ module isolde_decoder
       STALL: begin
         isolde_decoder_exec_bus.isolde_decoder_ready = 0;
         idvli_next = isolde_decoder_exec_bus.stall_isolde_decoder ? STALL : FETCH_COMPUTE;
+        isolde_decoder_busy_o = (idvli_next == FETCH_COMPUTE) ? 1 : 0;
       end
     endcase
   end

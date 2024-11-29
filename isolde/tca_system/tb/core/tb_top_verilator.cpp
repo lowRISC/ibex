@@ -66,7 +66,7 @@ void dut_set_fetch_en(dut_ptr&dut, const vluint64_t sim_time, bool value) {
 
 int main(int argc, char **argv, char **env){
 
-
+    uint32_t timeOut{207374};
     Verilated::commandArgs(argc, argv);
     dut_ptr dut = std::make_unique<VTopModule>();
 
@@ -76,7 +76,7 @@ int main(int argc, char **argv, char **env){
     tfp->open("verilator_tb.vcd");
 //https://github.com/verilator/verilator/blob/v5.028/include/verilated.h
   VerilatedContext* contextp = dut->contextp();
-  while (!Verilated::gotFinish() /* && (contextp->time()< timeOut) */) {
+  while (!Verilated::gotFinish()  && (contextp->time()< timeOut) ) {
         // Start clock toggling
     dut->clk_i ^= 1;
 

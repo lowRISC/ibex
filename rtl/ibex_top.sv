@@ -136,14 +136,20 @@ module ibex_top
 `endif
 
     // CPU Control Signals
-    input  ibex_mubi_t fetch_enable_i,
-    output logic       alert_minor_o,
-    output logic       alert_major_internal_o,
-    output logic       alert_major_bus_o,
-    output logic       core_sleep_o,
-
+    input  ibex_mubi_t                   fetch_enable_i,
+    output logic                         alert_minor_o,
+    output logic                         alert_major_internal_o,
+    output logic                         alert_major_bus_o,
+    output logic                         core_sleep_o,
+    // eXtension interface
+           isolde_cv_x_if.cpu_compressed xif_compressed_if,
+           isolde_cv_x_if.cpu_issue      xif_issue_if,
+           isolde_cv_x_if.cpu_commit     xif_commit_if,
+           isolde_cv_x_if.cpu_mem        xif_mem_if,
+           isolde_cv_x_if.cpu_mem_result xif_mem_result_if,
+           isolde_cv_x_if.cpu_result     xif_result_if,
     // DFT bypass controls
-    input logic scan_rst_ni
+    input  logic                         scan_rst_ni
 );
 
   localparam bit Lockstep = SecureIbex;
@@ -426,7 +432,14 @@ module ibex_top
       .alert_minor_o         (core_alert_minor),
       .alert_major_internal_o(core_alert_major_internal),
       .alert_major_bus_o     (core_alert_major_bus),
-      .core_busy_o           (core_busy_d)
+      .core_busy_o           (core_busy_d),
+      // eXtension interface
+      .xif_compressed_if     (core_xif.cpu_compressed),
+      .xif_issue_if          (core_xif.cpu_issue),
+      .xif_commit_if         (core_xif.cpu_commit),
+      .xif_mem_if            (core_xif.cpu_mem),
+      .xif_mem_result_if     (core_xif.cpu_mem_result),
+      .xif_result_if         (core_xif.cpu_result)
   );
 
   /////////////////////////////////

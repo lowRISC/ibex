@@ -34,3 +34,5 @@ conda activate $MINICONDA_ENV
 
 export PATH=~/eth/bin:~/verible/bin:$ROOT_DIR/install/verilator/bin:$GCC_TOOLCHAIN:$PATH
 source ~/vivado.sh
+
+echo  `verilator --version`

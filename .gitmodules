@@ -1,3 +1,6 @@
 [submodule "vendor/redmule"]
 	path = vendor/redmule
 	url = https://github.com/ISOLDE-Project/redmule.git
+[submodule "vendor/core-v-xif"]
+	path = vendor/core-v-xif
+	url = https://github.com/ISOLDE-Project/core-v-xif.git

@@ -117,8 +117,31 @@ asm volatile (
   ".word 0x0e99053f\n"
   ".word 0x00000000\n"
   );
+printf("custom-0 instr begin\n");    
 
+  asm volatile(".word (0x0       << 25) | \
+              (0b11101   << 20) | \
+              (0b11100   << 15) | \
+              (0x00      <<  7) | \
+              (0b0001011 <<  0)   \n");
+     volatile int errors = 0;
 
+    asm volatile(".word (0x0       << 25) | \
+              (0b11101   << 20) | \
+              (0b11100   << 15) | \
+              (0x00      <<  7) | \
+              (0b0001011 <<  0)   \n");            
+//errors=1;
+  asm volatile(".word (0b00111   << 27) | \
+              (0b00      << 25) | \
+              (0b00110   << 20) | \
+              (0b00101   << 15) | \
+              (0b0       << 14) | \
+              (0b0       << 13) | \
+              (0b001     << 10) | \
+              (0b001     <<  7) | \
+              (0b0101011 <<  0)   \n");
+           printf("custom-0 instr end\n");      
 #endif
 
   return 0;

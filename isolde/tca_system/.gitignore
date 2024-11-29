@@ -1,0 +1,11 @@
+.bender/
+Bender.lock
+*.flist
+bin/
+vsim/
+*.vcd
+tmp/
+.bender/
+*old*
+*.patch
+*.txt

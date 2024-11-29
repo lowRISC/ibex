@@ -2,7 +2,8 @@
 prj_path := $(shell git rev-parse --show-toplevel)
 num_cores := $(shell nproc)
 num_cores_half := $(shell echo "$$(($(num_cores) / 2))")
-CXX := g++-10
+VLT_CXX := /usr/bin/clang++
+VLT_CC  := /usr/bin/clang
 
 
 INSTALL_PREFIX          ?= install
@@ -13,7 +14,7 @@ ISA_SIM_INSTALL_DIR     ?= ${INSTALL_DIR}/riscv-isa-sim
 ISA_SIM_MOD_INSTALL_DIR ?= ${INSTALL_DIR}/riscv-isa-sim-mod
 VERIL_SRC_ROOT           ?= $(prj_path)/vendor
 VERIL_INSTALL_DIR       ?= ${INSTALL_DIR}/verilator
-VERIL_VERSION           ?= v5.028
+VERIL_VERSION           ?= v5.030
 
 all: verilator riscv32-gcc riscv32-llvm dev-dep
 # Verilator
@@ -26,7 +27,7 @@ ${VERIL_INSTALL_DIR}/bin/verilator:
 	cd $(VERIL_SRC_ROOT)/verilator  && git reset --hard && git fetch && git checkout ${VERIL_VERSION}
 	# Compile verilator
 	cd $(VERIL_SRC_ROOT)/verilator  && git clean -xfdf && autoconf && \
-	./configure --prefix=$(VERIL_INSTALL_DIR) CXX=g++-10  && make -j$(num_cores_half)  && make install
+	./configure --prefix=$(VERIL_INSTALL_DIR) CXX=$(VLT_CXX) CC=$(VLT_CC) && make -j$(num_cores_half)  && make install
 	touch ${VERIL_INSTALL_DIR}/bin/verilator
 
 

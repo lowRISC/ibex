@@ -1,0 +1,17 @@
+CAPI=2:
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+name: "isolde:ibex:tca_system_core"
+description: "Generic simple system for running binaries on ibex using verilator"
+filesets:
+  files_sim:
+    depend:
+      - lowrisc:ibex:ibex_top_tracing
+
+
+targets:
+  default:
+    filesets:
+      - files_sim
+

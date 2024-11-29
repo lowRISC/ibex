@@ -188,14 +188,21 @@ module ibex_id_stage
     input  logic                     outstanding_store_wb_i,
 
     // Performance Counters
-    output logic perf_jump_o,        // executing a jump instr
-    output logic perf_branch_o,      // executing a branch instr
-    output logic perf_tbranch_o,     // executing a taken branch instr
+    output logic perf_jump_o,  // executing a jump instr
+    output logic perf_branch_o,  // executing a branch instr
+    output logic perf_tbranch_o,  // executing a taken branch instr
     output logic perf_dside_wait_o,  // instruction in ID/EX is awaiting memory
                                      // access to finish before proceeding
     output logic perf_mul_wait_o,
     output logic perf_div_wait_o,
-    output logic instr_id_done_o
+    output logic instr_id_done_o,
+    // eXtension interface
+    isolde_cv_x_if.cpu_compressed xif_compressed_if,
+    isolde_cv_x_if.cpu_issue xif_issue_if,
+    isolde_cv_x_if.cpu_commit xif_commit_if,
+    isolde_cv_x_if.cpu_mem xif_mem_if,
+    isolde_cv_x_if.cpu_mem_result xif_mem_result_if,
+    isolde_cv_x_if.cpu_result xif_result_if
 );
 
   import ibex_pkg::*;
@@ -580,6 +587,7 @@ module ibex_id_stage
   isolde_decoder isolde_decoder_i (
       .clk_i(clk_i),
       .rst_ni(rst_ni),
+      .isolde_decoder_instr_exec_i(instr_exec_i),
       .isolde_decoder_instr_batch_i(instr_batch_rdata_i),
       .isolde_decoder_enable_i(illegal_std_instr),
       .isolde_decoder_illegal_instr_o(illegal_insn_dec),
@@ -600,7 +608,14 @@ module ibex_id_stage
       .isolde_rf_bus           (isolde_rf_bus),
       .x_rf_bus                (x_rf_bus),
       .isolde_exec_from_decoder(fetch_exec_conn),
-      .isolde_exec_busy_o      (isolde_exec_busy)
+      .isolde_exec_busy_o      (isolde_exec_busy),
+      // eXtension interface
+      .xif_compressed_if       (core_xif.cpu_compressed),
+      .xif_issue_if            (core_xif.cpu_issue),
+      .xif_commit_if           (core_xif.cpu_commit),
+      .xif_mem_if              (core_xif.cpu_mem),
+      .xif_mem_result_if       (core_xif.cpu_mem_result),
+      .xif_result_if           (core_xif.cpu_result)
   );
 
 
