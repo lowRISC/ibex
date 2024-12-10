@@ -181,7 +181,12 @@ package ibex_pkg;
     ALU_CRC32_H,
     ALU_CRC32C_H,
     ALU_CRC32_W,
-    ALU_CRC32C_W
+    ALU_CRC32C_W,
+
+    //zicond(Conditional move)
+    ALU_CZERO_EQZ,
+    ALU_CZERO_NEZ
+
   } alu_op_e;
 
   typedef enum logic [1:0] {
