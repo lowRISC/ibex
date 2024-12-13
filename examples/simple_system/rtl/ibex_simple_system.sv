@@ -204,6 +204,8 @@ module ibex_simple_system (
       .WritebackStage  ( WritebackStage   ),
       .BranchPredictor ( BranchPredictor  ),
       .DbgTriggerEn    ( DbgTriggerEn     ),
+      .DmBaseAddr      ( 32'h00100000     ),
+      .DmAddrMask      ( 32'h00000003     ),
       .DmHaltAddr      ( 32'h00100000     ),
       .DmExceptionAddr ( 32'h00100000     )
     ) u_top (
