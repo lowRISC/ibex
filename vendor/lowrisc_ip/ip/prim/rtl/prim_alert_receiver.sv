@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -286,9 +286,13 @@ module prim_alert_receiver
   `ASSERT(InitReq_A, mubi4_test_true_strict(init_trig_i) &&
           !(state_q inside {InitReq, InitAckWait}) |=> send_init)
 
-  // ping request at input -> need to see encoded ping request
-  `ASSERT(PingRequest0_A, ##1 $rose(ping_req_i) && !state_q inside {InitReq, InitAckWait}
-      |=> $changed(alert_rx_o.ping_p))
+  // If there is a ping request on the input then we should see an encoded ping request. This is
+  // squashed if we are in state InitReq or InitAckWait (because we are still initialising), or if
+  // we see the init_trig_i signal go high (because it will start an initialisation).
+  `ASSERT(PingRequest0_A,
+          $rose(ping_req_i) |=> $changed(alert_rx_o.ping_p),
+          clk_i, !rst_ni || init_trig_i || state_q inside {InitReq, InitAckWait})
+
   // ping response implies it has been requested
   `ASSERT(PingResponse0_A, ping_ok_o |-> ping_pending_q)
   // correctly latch ping request
@@ -301,15 +305,13 @@ module prim_alert_receiver
         !(state_q inside {InitReq, InitAckWait}) &&
         mubi4_test_false_loose(init_trig_i)
         |->
-        integ_fail_o)
-    // TODO: need to add skewed cases as well, the assertions below assume no skew at the moment
-    // ping response
+        ##[0:1] integ_fail_o)
     `ASSERT(PingResponse1_A,
         ##1 $rose(alert_tx_i.alert_p) &&
         (alert_tx_i.alert_p ^ alert_tx_i.alert_n) ##2
         state_q == Idle && ping_pending_q
         |->
-        ping_ok_o,
+        ##[0:1] ping_ok_o,
         clk_i, !rst_ni || integ_fail_o || mubi4_test_true_strict(init_trig_i))
     // alert
     `ASSERT(Alert_A,
@@ -318,7 +320,7 @@ module prim_alert_receiver
         state_q == Idle &&
         !ping_pending_q
         |->
-        alert_o,
+        ##[0:1] alert_o,
         clk_i, !rst_ni || integ_fail_o || mubi4_test_true_strict(init_trig_i))
   end else begin : gen_sync_assert
     // signal integrity check propagation

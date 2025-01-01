@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 {
@@ -29,20 +29,18 @@
                "{fusesoc_core}"]
 
   // Determines which message severities to print into report summaries.
-  report_severities: ["warning", "error"]
+  report_severities: ["info", "warning", "error"]
   // Determines which message severities lead to a pass/fail.
   fail_severities: ["warning", "error"]
   // Define message bucket categories and severities.
   message_buckets: [
+    {category: "flow", severity: "info",     label: ""},
     {category: "flow", severity: "warning",  label: ""},
     {category: "flow", severity: "error",    label: ""},
     {category: "lint", severity: "info",     label: ""},
     {category: "lint", severity: "warning",  label: ""},
     {category: "lint", severity: "error",    label: ""}
   ]
-
-  // TODO(#9079): Need to align with new parser mechanism.
-  build_fail_patterns: []
 
   // These are not needed currently.
   sv_flist_gen_cmd:   ""

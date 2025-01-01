@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 {
@@ -81,6 +81,19 @@
             '''
       stage: V2S
       tests: ["{name}_shadow_reg_errors_with_csr_rw"]
+    }
+  ]
+
+  covergroups: [
+    {
+      name: shadow_field_errs_cg
+      desc: '''Cover all shadow register errors for each register field.
+
+            For all register fields within the shadowed register, this coverpoint covers the
+            following errors:
+            - Update error
+            - Storage error
+            '''
     }
   ]
 }

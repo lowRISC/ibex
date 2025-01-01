@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 {
@@ -47,6 +47,10 @@
                "-nowarn SPDUSD",
                // Needed for including "secded_enc.h".
                "-I{build_dir}/src/lowrisc_dv_secded_enc_0",
+               // This warning is thrown when a scalar enum variable is assigned to an enum array.
+               // Other tools (e.g., FPV) treat such assignments as an error, hence we bump it to
+               // an error in simulation so that this can be caught early in CI.
+               "-xmerror ENUMERR"
                ]
 
   // We want to allow the possibility of passing no test or no test sequence. Unfortunately,
@@ -64,7 +68,7 @@
                "-64bit -xmlibdirname {build_db_dir}",
                // Use the same snapshot name set during the build step.
                "-r {tb}",
-               "+SVSEED={seed}",
+               "+SVSEED={svseed}",
                "{uvm_testname_plusarg}",
                "{uvm_testseq_plusarg}",
                // Ignore "IEEE 1800-2009 SystemVerilog simulation semantics" warning
@@ -125,7 +129,7 @@
 
   // Individual test specific coverage data - this will be deleted if the test fails
   // so that coverage from failiing tests is not included in the final report.
-  cov_db_test_dir_name: "{run_dir_name}.{seed}"
+  cov_db_test_dir_name: "{run_dir_name}.{svseed}"
   cov_db_test_dir:      "{cov_db_dir}/{cov_db_test_dir_name}"
 
   // Merging coverage.

@@ -1,12 +1,12 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
 // This module implements different LFSR types:
 //
 // 0) Galois XOR type LFSR ([1], internal XOR gates, very fast).
-//    Parameterizable width from 4 to 64 bits.
-//    Coefficients obtained from [2].
+//    Parameterizable width from 3 to 168 bits.
+//    Coefficients obtained from [3].
 //
 // 1) Fibonacci XNOR type LFSR, parameterizable from 3 to 168 bits.
 //    Coefficients obtained from [3].
@@ -73,73 +73,8 @@ module prim_lfsr #(
 );
 
   // automatically generated with util/design/get-lfsr-coeffs.py script
-  localparam int unsigned GAL_XOR_LUT_OFF = 4;
-  localparam logic [63:0] GAL_XOR_COEFFS [61] =
-    '{ 64'h9,
-       64'h12,
-       64'h21,
-       64'h41,
-       64'h8E,
-       64'h108,
-       64'h204,
-       64'h402,
-       64'h829,
-       64'h100D,
-       64'h2015,
-       64'h4001,
-       64'h8016,
-       64'h10004,
-       64'h20013,
-       64'h40013,
-       64'h80004,
-       64'h100002,
-       64'h200001,
-       64'h400010,
-       64'h80000D,
-       64'h1000004,
-       64'h2000023,
-       64'h4000013,
-       64'h8000004,
-       64'h10000002,
-       64'h20000029,
-       64'h40000004,
-       64'h80000057,
-       64'h100000029,
-       64'h200000073,
-       64'h400000002,
-       64'h80000003B,
-       64'h100000001F,
-       64'h2000000031,
-       64'h4000000008,
-       64'h800000001C,
-       64'h10000000004,
-       64'h2000000001F,
-       64'h4000000002C,
-       64'h80000000032,
-       64'h10000000000D,
-       64'h200000000097,
-       64'h400000000010,
-       64'h80000000005B,
-       64'h1000000000038,
-       64'h200000000000E,
-       64'h4000000000025,
-       64'h8000000000004,
-       64'h10000000000023,
-       64'h2000000000003E,
-       64'h40000000000023,
-       64'h8000000000004A,
-       64'h100000000000016,
-       64'h200000000000031,
-       64'h40000000000003D,
-       64'h800000000000001,
-       64'h1000000000000013,
-       64'h2000000000000034,
-       64'h4000000000000001,
-       64'h800000000000000D };
-
-  // automatically generated with get-lfsr-coeffs.py script
-  localparam int unsigned FIB_XNOR_LUT_OFF = 3;
-  localparam logic [167:0] FIB_XNOR_COEFFS [166] =
+  localparam int unsigned LUT_OFF = 3;
+  localparam logic [167:0] LFSR_COEFFS [166] =
     '{ 168'h6,
        168'hC,
        168'h14,
@@ -311,6 +246,36 @@ module prim_lfsr #(
   logic [LfsrDw-1:0] lfsr_d, lfsr_q;
   logic [LfsrDw-1:0] next_lfsr_state, coeffs;
 
+  // Enable the randomization of DefaultSeed using DefaultSeedLocal in DV simulations.
+  `ifdef SIMULATION
+  `ifdef VERILATOR
+      localparam logic [LfsrDw-1:0] DefaultSeedLocal = DefaultSeed;
+
+  `else
+    logic [LfsrDw-1:0] DefaultSeedLocal;
+    logic prim_lfsr_use_default_seed;
+
+    initial begin : p_randomize_default_seed
+      if (!$value$plusargs("prim_lfsr_use_default_seed=%0d", prim_lfsr_use_default_seed)) begin
+        // 30% of the time, use the DefaultSeed parameter; 70% of the time, randomize it.
+        `ASSERT_I(UseDefaultSeedRandomizeCheck_A, std::randomize(prim_lfsr_use_default_seed) with {
+                                                  prim_lfsr_use_default_seed dist {0:/7, 1:/3};})
+      end
+      if (prim_lfsr_use_default_seed) begin
+        DefaultSeedLocal = DefaultSeed;
+      end else begin
+        // Randomize the DefaultSeedLocal ensuring its not all 0s or all 1s.
+        `ASSERT_I(DefaultSeedLocalRandomizeCheck_A, std::randomize(DefaultSeedLocal) with {
+                                                    !(DefaultSeedLocal inside {'0, '1});})
+      end
+      $display("%m: DefaultSeed = 0x%0h, DefaultSeedLocal = 0x%0h", DefaultSeed, DefaultSeedLocal);
+    end
+  `endif  // ifdef VERILATOR
+
+  `else
+    localparam logic [LfsrDw-1:0] DefaultSeedLocal = DefaultSeed;
+
+  `endif  // ifdef SIMULATION
 
   ////////////////
   // Galois XOR //
@@ -321,10 +286,10 @@ module prim_lfsr #(
     if (CustomCoeffs > 0) begin : gen_custom
       assign coeffs = CustomCoeffs[LfsrDw-1:0];
     end else begin : gen_lut
-      assign coeffs = GAL_XOR_COEFFS[LfsrDw-GAL_XOR_LUT_OFF][LfsrDw-1:0];
+      assign coeffs = LFSR_COEFFS[LfsrDw-LUT_OFF][LfsrDw-1:0];
       // check that the most significant bit of polynomial is 1
-      `ASSERT_INIT(MinLfsrWidth_A, LfsrDw >= $low(GAL_XOR_COEFFS)+GAL_XOR_LUT_OFF)
-      `ASSERT_INIT(MaxLfsrWidth_A, LfsrDw <= $high(GAL_XOR_COEFFS)+GAL_XOR_LUT_OFF)
+      `ASSERT_INIT(MinLfsrWidth_A, LfsrDw >= $low(LFSR_COEFFS)+LUT_OFF)
+      `ASSERT_INIT(MaxLfsrWidth_A, LfsrDw <= $high(LFSR_COEFFS)+LUT_OFF)
     end
 
     // calculate next state using internal XOR feedback and entropy input
@@ -334,7 +299,7 @@ module prim_lfsr #(
     assign lockup = ~(|lfsr_q);
 
     // check that seed is not all-zero
-    `ASSERT_INIT(DefaultSeedNzCheck_A, |DefaultSeed)
+    `ASSERT_INIT(DefaultSeedNzCheck_A, |DefaultSeedLocal)
 
 
   ////////////////////
@@ -346,10 +311,10 @@ module prim_lfsr #(
     if (CustomCoeffs > 0) begin : gen_custom
       assign coeffs = CustomCoeffs[LfsrDw-1:0];
     end else begin : gen_lut
-      assign coeffs = FIB_XNOR_COEFFS[LfsrDw-FIB_XNOR_LUT_OFF][LfsrDw-1:0];
+      assign coeffs = LFSR_COEFFS[LfsrDw-LUT_OFF][LfsrDw-1:0];
       // check that the most significant bit of polynomial is 1
-      `ASSERT_INIT(MinLfsrWidth_A, LfsrDw >= $low(FIB_XNOR_COEFFS)+FIB_XNOR_LUT_OFF)
-      `ASSERT_INIT(MaxLfsrWidth_A, LfsrDw <= $high(FIB_XNOR_COEFFS)+FIB_XNOR_LUT_OFF)
+      `ASSERT_INIT(MinLfsrWidth_A, LfsrDw >= $low(LFSR_COEFFS)+LUT_OFF)
+      `ASSERT_INIT(MaxLfsrWidth_A, LfsrDw <= $high(LFSR_COEFFS)+LUT_OFF)
     end
 
     // calculate next state using external XNOR feedback and entropy input
@@ -359,7 +324,7 @@ module prim_lfsr #(
     assign lockup = &lfsr_q;
 
     // check that seed is not all-ones
-    `ASSERT_INIT(DefaultSeedNzCheck_A, !(&DefaultSeed))
+    `ASSERT_INIT(DefaultSeedNzCheck_A, !(&DefaultSeedLocal))
 
 
   /////////////
@@ -378,7 +343,7 @@ module prim_lfsr #(
   //////////////////
 
   assign lfsr_d = (seed_en_i)           ? seed_i          :
-                  (lfsr_en_i && lockup) ? DefaultSeed     :
+                  (lfsr_en_i && lockup) ? DefaultSeedLocal     :
                   (lfsr_en_i)           ? next_lfsr_state :
                                           lfsr_q;
 
@@ -520,7 +485,7 @@ module prim_lfsr #(
 
   always_ff @(posedge clk_i or negedge rst_ni) begin : p_reg
     if (!rst_ni) begin
-      lfsr_q <= DefaultSeed;
+      lfsr_q <= DefaultSeedLocal;
     end else begin
       lfsr_q <= lfsr_d;
     end
@@ -547,7 +512,7 @@ module prim_lfsr #(
     // Galois XOR
     if (64'(LfsrType) == 64'("GAL_XOR")) begin
       if (next_state == 0) begin
-        next_state = DefaultSeed;
+        next_state = DefaultSeedLocal;
       end else begin
         state0 = next_state[0];
         next_state = next_state >> 1;
@@ -557,7 +522,7 @@ module prim_lfsr #(
     // Fibonacci XNOR
     end else if (64'(LfsrType) == "FIB_XNOR") begin
       if (&next_state) begin
-        next_state = DefaultSeed;
+        next_state = DefaultSeedLocal;
       end else begin
         state0 = ~(^(next_state & lfsrcoeffs));
         next_state = next_state << 1;
@@ -659,9 +624,9 @@ module prim_lfsr #(
       end
     end
 
-    `ASSERT(MaximalLengthCheck0_A, cnt_q == 0 |-> lfsr_q == DefaultSeed,
+    `ASSERT(MaximalLengthCheck0_A, cnt_q == 0 |-> lfsr_q == DefaultSeedLocal,
         clk_i, !rst_ni || perturbed_q)
-    `ASSERT(MaximalLengthCheck1_A, cnt_q != 0 |-> lfsr_q != DefaultSeed,
+    `ASSERT(MaximalLengthCheck1_A, cnt_q != 0 |-> lfsr_q != DefaultSeedLocal,
         clk_i, !rst_ni || perturbed_q)
 `endif
   end

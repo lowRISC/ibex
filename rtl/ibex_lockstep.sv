@@ -9,36 +9,41 @@
 
 // SEC_CM: LOGIC.SHADOW
 module ibex_lockstep import ibex_pkg::*; #(
-  parameter int unsigned LockstepOffset    = 2,
-  parameter bit          PMPEnable         = 1'b0,
-  parameter int unsigned PMPGranularity    = 0,
-  parameter int unsigned PMPNumRegions     = 4,
-  parameter int unsigned MHPMCounterNum    = 0,
-  parameter int unsigned MHPMCounterWidth  = 40,
-  parameter bit          RV32E             = 1'b0,
-  parameter rv32m_e      RV32M             = RV32MFast,
-  parameter rv32b_e      RV32B             = RV32BNone,
-  parameter bit          BranchTargetALU   = 1'b0,
-  parameter bit          WritebackStage    = 1'b0,
-  parameter bit          ICache            = 1'b0,
-  parameter bit          ICacheECC         = 1'b0,
-  parameter int unsigned BusSizeECC        = BUS_SIZE,
-  parameter int unsigned TagSizeECC        = IC_TAG_SIZE,
-  parameter int unsigned LineSizeECC       = IC_LINE_SIZE,
-  parameter bit          BranchPredictor   = 1'b0,
-  parameter bit          DbgTriggerEn      = 1'b0,
-  parameter int unsigned DbgHwBreakNum     = 1,
-  parameter bit          ResetAll          = 1'b0,
-  parameter lfsr_seed_t  RndCnstLfsrSeed   = RndCnstLfsrSeedDefault,
-  parameter lfsr_perm_t  RndCnstLfsrPerm   = RndCnstLfsrPermDefault,
-  parameter bit          SecureIbex        = 1'b0,
-  parameter bit          DummyInstructions = 1'b0,
-  parameter bit          RegFileECC        = 1'b0,
-  parameter int unsigned RegFileDataWidth  = 32,
-  parameter bit          MemECC            = 1'b0,
-  parameter int unsigned MemDataWidth      = MemECC ? 32 + 7 : 32,
-  parameter int unsigned DmHaltAddr        = 32'h1A110800,
-  parameter int unsigned DmExceptionAddr   = 32'h1A110808
+  parameter int unsigned            LockstepOffset    = 2,
+  parameter bit                     PMPEnable         = 1'b0,
+  parameter int unsigned            PMPGranularity    = 0,
+  parameter int unsigned            PMPNumRegions     = 4,
+  parameter ibex_pkg::pmp_cfg_t     PMPRstCfg[16]     = ibex_pkg::PmpCfgRst,
+  parameter logic [33:0]            PMPRstAddr[16]    = ibex_pkg::PmpAddrRst,
+  parameter ibex_pkg::pmp_mseccfg_t PMPRstMsecCfg     = ibex_pkg::PmpMseccfgRst,
+  parameter int unsigned            MHPMCounterNum    = 0,
+  parameter int unsigned            MHPMCounterWidth  = 40,
+  parameter bit                     RV32E             = 1'b0,
+  parameter rv32m_e                 RV32M             = RV32MFast,
+  parameter rv32b_e                 RV32B             = RV32BNone,
+  parameter bit                     BranchTargetALU   = 1'b0,
+  parameter bit                     WritebackStage    = 1'b0,
+  parameter bit                     ICache            = 1'b0,
+  parameter bit                     ICacheECC         = 1'b0,
+  parameter int unsigned            BusSizeECC        = BUS_SIZE,
+  parameter int unsigned            TagSizeECC        = IC_TAG_SIZE,
+  parameter int unsigned            LineSizeECC       = IC_LINE_SIZE,
+  parameter bit                     BranchPredictor   = 1'b0,
+  parameter bit                     DbgTriggerEn      = 1'b0,
+  parameter int unsigned            DbgHwBreakNum     = 1,
+  parameter bit                     ResetAll          = 1'b0,
+  parameter lfsr_seed_t             RndCnstLfsrSeed   = RndCnstLfsrSeedDefault,
+  parameter lfsr_perm_t             RndCnstLfsrPerm   = RndCnstLfsrPermDefault,
+  parameter bit                     SecureIbex        = 1'b0,
+  parameter bit                     DummyInstructions = 1'b0,
+  parameter bit                     RegFileECC        = 1'b0,
+  parameter int unsigned            RegFileDataWidth  = 32,
+  parameter bit                     MemECC            = 1'b0,
+  parameter int unsigned            MemDataWidth      = MemECC ? 32 + 7 : 32,
+  parameter int unsigned            DmBaseAddr        = 32'h1A110000,
+  parameter int unsigned            DmAddrMask        = 32'h00000FFF,
+  parameter int unsigned            DmHaltAddr        = 32'h1A110800,
+  parameter int unsigned            DmExceptionAddr   = 32'h1A110808
 ) (
   input  logic                         clk_i,
   input  logic                         rst_ni,
@@ -64,6 +69,7 @@ module ibex_lockstep import ibex_pkg::*; #(
   input  logic                         data_err_i,
 
   input  logic                         dummy_instr_id_i,
+  input  logic                         dummy_instr_wb_i,
   input  logic [4:0]                   rf_raddr_a_i,
   input  logic [4:0]                   rf_raddr_b_i,
   input  logic [4:0]                   rf_waddr_wb_i,
@@ -96,11 +102,11 @@ module ibex_lockstep import ibex_pkg::*; #(
   input  crash_dump_t                  crash_dump_i,
   input  logic                         double_fault_seen_i,
 
-  input  fetch_enable_t                fetch_enable_i,
+  input  ibex_mubi_t                   fetch_enable_i,
   output logic                         alert_minor_o,
   output logic                         alert_major_internal_o,
   output logic                         alert_major_bus_o,
-  input  logic                         core_busy_i,
+  input  ibex_mubi_t                   core_busy_i,
   input  logic                         test_en_i,
   input  logic                         scan_rst_ni
 );
@@ -119,33 +125,51 @@ module ibex_lockstep import ibex_pkg::*; #(
   // - The reset of the shadow core is synchronously released.
   // The comparison is started in the following clock cycle.
 
-  logic [LockstepOffsetW-1:0] rst_shadow_cnt_d, rst_shadow_cnt_q, rst_shadow_cnt_incr;
-  // Internally generated resets cause IMPERFECTSCH warnings
-  /* verilator lint_off IMPERFECTSCH */
-  logic                       rst_shadow_set_d, rst_shadow_set_q;
-  logic                       rst_shadow_n, enable_cmp_q;
-  /* verilator lint_on IMPERFECTSCH */
+  logic [LockstepOffsetW-1:0] rst_shadow_cnt;
+  logic                       rst_shadow_cnt_err;
+  ibex_mubi_t                 rst_shadow_set_d, rst_shadow_set_q;
+  logic                       rst_shadow_n, rst_shadow_set_single_bit;
+  ibex_mubi_t                 enable_cmp_d, enable_cmp_q;
 
-  assign rst_shadow_cnt_incr = rst_shadow_cnt_q + 1'b1;
+  // This counter primitive starts counting to LockstepOffset after a system
+  // reset. The counter value saturates at LockstepOffset.
+  prim_count #(
+    .Width      (LockstepOffsetW        ),
+    .ResetValue (LockstepOffsetW'(1'b0) )
+  ) u_rst_shadow_cnt (
+    .clk_i              (clk_i                  ),
+    .rst_ni             (rst_ni                 ),
+    .clr_i              (1'b0                   ),
+    .set_i              (1'b0                   ),
+    .set_cnt_i          ('0                     ),
+    .incr_en_i          (1'b1                   ),
+    .decr_en_i          (1'b0                   ),
+    .step_i             (LockstepOffsetW'(1'b1) ),
+    .commit_i           (1'b1                   ),
+    .cnt_o              (rst_shadow_cnt         ),
+    .cnt_after_commit_o (                       ),
+    .err_o              (rst_shadow_cnt_err     )
+  );
 
-  assign rst_shadow_set_d = (rst_shadow_cnt_q == LockstepOffsetW'(LockstepOffset - 1));
-  assign rst_shadow_cnt_d = rst_shadow_set_d ? rst_shadow_cnt_q : rst_shadow_cnt_incr;
+  // When the LockstepOffset counter value is reached, activate the lockstep
+  // comparison. We do not explicitly check whether rst_shadow_set_q forms a valid
+  // multibit signal as this value is implicitly checked by the enable_cmp
+  // comparison below.
+  assign rst_shadow_set_d =
+    (rst_shadow_cnt >= LockstepOffsetW'(LockstepOffset - 1)) ? IbexMuBiOn : IbexMuBiOff;
 
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) begin
-      rst_shadow_cnt_q <= '0;
-      enable_cmp_q     <= '0;
-    end else begin
-      rst_shadow_cnt_q <= rst_shadow_cnt_d;
-      enable_cmp_q     <= rst_shadow_set_q;
-    end
-  end
+  // Enable lockstep comparison.
+  assign enable_cmp_d = rst_shadow_set_q;
+
+  // This assignment is needed in order to avoid "Warning-IMPERFECTSCH" messages.
+  // TODO: Remove when updating Verilator #2134.
+  assign rst_shadow_set_single_bit = rst_shadow_set_q[0];
 
   // The primitives below are used to place size-only constraints in order to prevent
   // synthesis optimizations and preserve anchor points for constraining backend tools.
   prim_flop #(
-    .Width(1),
-    .ResetValue(1'b0)
+    .Width(IbexMuBiWidth),
+    .ResetValue(IbexMuBiOff)
   ) u_prim_rst_shadow_set_flop (
     .clk_i (clk_i),
     .rst_ni(rst_ni),
@@ -153,10 +177,20 @@ module ibex_lockstep import ibex_pkg::*; #(
     .q_o   (rst_shadow_set_q)
   );
 
+  prim_flop #(
+    .Width(IbexMuBiWidth),
+    .ResetValue(IbexMuBiOff)
+  ) u_prim_enable_cmp_flop (
+    .clk_i (clk_i),
+    .rst_ni(rst_ni),
+    .d_i   (enable_cmp_d),
+    .q_o   (enable_cmp_q)
+  );
+
   prim_clock_mux2 #(
     .NoFpgaBufG(1'b1)
   ) u_prim_rst_shadow_n_mux2 (
-    .clk0_i(rst_shadow_set_q),
+    .clk0_i(rst_shadow_set_single_bit),
     .clk1_i(scan_rst_ni),
     .sel_i (test_en_i),
     .clk_o (rst_shadow_n)
@@ -183,7 +217,7 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic [14:0]                 irq_fast;
     logic                        irq_nm;
     logic                        debug_req;
-    fetch_enable_t               fetch_enable;
+    ibex_mubi_t                  fetch_enable;
     logic                        ic_scr_key_valid;
   } delayed_inputs_t;
 
@@ -246,6 +280,7 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic [31:0]                 data_addr;
     logic [MemDataWidth-1:0]     data_wdata;
     logic                        dummy_instr_id;
+    logic                        dummy_instr_wb;
     logic [4:0]                  rf_raddr_a;
     logic [4:0]                  rf_raddr_b;
     logic [4:0]                  rf_waddr_wb;
@@ -263,7 +298,7 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic                        irq_pending;
     crash_dump_t                 crash_dump;
     logic                        double_fault_seen;
-    logic                        core_busy;
+    ibex_mubi_t                  core_busy;
   } delayed_outputs_t;
 
   delayed_outputs_t [OutputsOffset-1:0]  core_outputs_q;
@@ -279,6 +314,7 @@ module ibex_lockstep import ibex_pkg::*; #(
   assign core_outputs_in.data_addr           = data_addr_i;
   assign core_outputs_in.data_wdata          = data_wdata_i;
   assign core_outputs_in.dummy_instr_id      = dummy_instr_id_i;
+  assign core_outputs_in.dummy_instr_wb      = dummy_instr_wb_i;
   assign core_outputs_in.rf_raddr_a          = rf_raddr_a_i;
   assign core_outputs_in.rf_raddr_b          = rf_raddr_b_i;
   assign core_outputs_in.rf_waddr_wb         = rf_waddr_wb_i;
@@ -316,6 +352,9 @@ module ibex_lockstep import ibex_pkg::*; #(
     .PMPEnable         ( PMPEnable         ),
     .PMPGranularity    ( PMPGranularity    ),
     .PMPNumRegions     ( PMPNumRegions     ),
+    .PMPRstCfg         ( PMPRstCfg         ),
+    .PMPRstAddr        ( PMPRstAddr        ),
+    .PMPRstMsecCfg     ( PMPRstMsecCfg     ),
     .MHPMCounterNum    ( MHPMCounterNum    ),
     .MHPMCounterWidth  ( MHPMCounterWidth  ),
     .RV32E             ( RV32E             ),
@@ -340,6 +379,8 @@ module ibex_lockstep import ibex_pkg::*; #(
     .RegFileDataWidth  ( RegFileDataWidth  ),
     .MemECC            ( MemECC            ),
     .MemDataWidth      ( MemDataWidth      ),
+    .DmBaseAddr        ( DmBaseAddr        ),
+    .DmAddrMask        ( DmAddrMask        ),
     .DmHaltAddr        ( DmHaltAddr        ),
     .DmExceptionAddr   ( DmExceptionAddr   )
   ) u_shadow_core (
@@ -367,6 +408,7 @@ module ibex_lockstep import ibex_pkg::*; #(
     .data_err_i          (shadow_inputs_q[0].data_err),
 
     .dummy_instr_id_o    (shadow_outputs_d.dummy_instr_id),
+    .dummy_instr_wb_o    (shadow_outputs_d.dummy_instr_wb),
     .rf_raddr_a_o        (shadow_outputs_d.rf_raddr_a),
     .rf_raddr_b_o        (shadow_outputs_d.rf_raddr_b),
     .rf_waddr_wb_o       (shadow_outputs_d.rf_waddr_wb),
@@ -423,13 +465,18 @@ module ibex_lockstep import ibex_pkg::*; #(
     .rvfi_mem_wmask            (),
     .rvfi_mem_rdata            (),
     .rvfi_mem_wdata            (),
-    .rvfi_ext_mip              (),
+    .rvfi_ext_pre_mip          (),
+    .rvfi_ext_post_mip         (),
     .rvfi_ext_nmi              (),
+    .rvfi_ext_nmi_int          (),
     .rvfi_ext_debug_req        (),
+    .rvfi_ext_debug_mode       (),
+    .rvfi_ext_rf_wr_suppress   (),
     .rvfi_ext_mcycle           (),
     .rvfi_ext_mhpmcounters     (),
     .rvfi_ext_mhpmcountersh    (),
     .rvfi_ext_ic_scr_key_valid (),
+    .rvfi_ext_irq_valid        (),
 `endif
 
     .fetch_enable_i         (shadow_inputs_q[0].fetch_enable),
@@ -450,8 +497,10 @@ module ibex_lockstep import ibex_pkg::*; #(
 
   logic outputs_mismatch;
 
-  assign outputs_mismatch       = enable_cmp_q & (shadow_outputs_q != core_outputs_q[0]);
-  assign alert_major_internal_o = outputs_mismatch | shadow_alert_major_internal;
+  assign outputs_mismatch =
+    (enable_cmp_q != IbexMuBiOff) & (shadow_outputs_q != core_outputs_q[0]);
+  assign alert_major_internal_o
+    = outputs_mismatch | shadow_alert_major_internal | rst_shadow_cnt_err;
   assign alert_major_bus_o      = shadow_alert_major_bus;
   assign alert_minor_o          = shadow_alert_minor;
 

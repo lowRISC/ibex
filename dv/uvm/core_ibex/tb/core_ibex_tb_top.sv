@@ -84,6 +84,8 @@ module core_ibex_tb_top;
   assign {scramble_key, scramble_nonce} = scrambling_key_if.d_data;
 
   ibex_top_tracing #(
+    .DmBaseAddr       (32'h`BOOT_ADDR       ),
+    .DmAddrMask       (32'h0000_0007        ),
     .DmHaltAddr       (32'h`BOOT_ADDR + 'h0 ),
     .DmExceptionAddr  (32'h`BOOT_ADDR + 'h4 ),
     .PMPEnable        (PMPEnable        ),
@@ -148,7 +150,7 @@ module core_ibex_tb_top;
 
     .debug_req_i            (dut_if.debug_req           ),
     .crash_dump_o           (                           ),
-    .double_fault_seen_o    (                           ),
+    .double_fault_seen_o    (dut_if.double_fault_seen   ),
 
     .fetch_enable_i         (dut_if.fetch_enable        ),
     .alert_minor_o          (dut_if.alert_minor         ),
@@ -157,9 +159,35 @@ module core_ibex_tb_top;
     .core_sleep_o           (dut_if.core_sleep          )
   );
 
+  `define IBEX_RF_PATH core_ibex_tb_top.dut.u_ibex_top.gen_regfile_ff.register_file_i
+
   // We should never see any alerts triggered in normal testing
   `ASSERT(NoAlertsTriggered,
     !dut_if.alert_minor && !dut_if.alert_major_internal && !dut_if.alert_major_bus, clk, !rst_n)
+  `DV_ASSERT_CTRL("tb_no_alerts_triggered", core_ibex_tb_top.NoAlertsTriggered)
+  `DV_ASSERT_CTRL("tb_rf_rd_mux_a_onehot",
+    `IBEX_RF_PATH.gen_rdata_mux_check.u_rdata_a_mux.SelIsOnehot_A)
+  `DV_ASSERT_CTRL("tb_rf_rd_mux_b_onehot",
+    `IBEX_RF_PATH.gen_rdata_mux_check.u_rdata_b_mux.SelIsOnehot_A)
+
+  `DV_ASSERT_CTRL("tb_no_spurious_response",
+    core_ibex_tb_top.dut.u_ibex_top.u_ibex_core.NoMemResponseWithoutPendingAccess)
+  `DV_ASSERT_CTRL("tb_no_spurious_response",
+    core_ibex_tb_top.dut.u_ibex_top.MaxOutstandingDSideAccessesCorrect)
+  `DV_ASSERT_CTRL("tb_no_spurious_response",
+    core_ibex_tb_top.dut.u_ibex_top.PendingAccessTrackingCorrect)
+
+  if (SecureIbex) begin : g_lockstep_assert_ctrl
+    `define IBEX_LOCKSTEP_PATH core_ibex_tb_top.dut.u_ibex_top.gen_lockstep.u_ibex_lockstep
+    `DV_ASSERT_CTRL("tb_no_spurious_response",
+      `IBEX_LOCKSTEP_PATH.u_shadow_core.NoMemResponseWithoutPendingAccess)
+  end
+
+  assign dut.u_ibex_top.u_ibex_core.u_fcov_bind.rf_we_glitch_err =
+    dut.u_ibex_top.rf_alert_major_internal;
+
+  assign dut.u_ibex_top.u_ibex_core.u_fcov_bind.lockstep_glitch_err =
+    dut.u_ibex_top.lockstep_alert_major_internal;
 
   // Data load/store vif connection
   assign data_mem_vif.reset = ~rst_n;
@@ -184,31 +212,51 @@ module core_ibex_tb_top;
   assign rvfi_if.rd_addr              = dut.rvfi_rd_addr;
   assign rvfi_if.rd_wdata             = dut.rvfi_rd_wdata;
   assign rvfi_if.pc_rdata             = dut.rvfi_pc_rdata;
-  assign rvfi_if_pc_wdata             = dut.rvfi_pc_wdata;
+  assign rvfi_if.pc_wdata             = dut.rvfi_pc_wdata;
   assign rvfi_if.mem_addr             = dut.rvfi_mem_addr;
   assign rvfi_if.mem_rmask            = dut.rvfi_mem_rmask;
   assign rvfi_if.mem_rdata            = dut.rvfi_mem_rdata;
   assign rvfi_if.mem_wdata            = dut.rvfi_mem_wdata;
-  assign rvfi_if.ext_mip              = dut.rvfi_ext_mip;
+  assign rvfi_if.ext_pre_mip          = dut.rvfi_ext_pre_mip;
+  assign rvfi_if.ext_post_mip         = dut.rvfi_ext_post_mip;
   assign rvfi_if.ext_nmi              = dut.rvfi_ext_nmi;
+  assign rvfi_if.ext_nmi_int          = dut.rvfi_ext_nmi_int;
   assign rvfi_if.ext_debug_req        = dut.rvfi_ext_debug_req;
+  assign rvfi_if.ext_rf_wr_suppress   = dut.rvfi_ext_rf_wr_suppress;
   assign rvfi_if.ext_mcycle           = dut.rvfi_ext_mcycle;
   assign rvfi_if.ext_mhpmcounters     = dut.rvfi_ext_mhpmcounters;
   assign rvfi_if.ext_mhpmcountersh    = dut.rvfi_ext_mhpmcountersh;
   assign rvfi_if.ext_ic_scr_key_valid = dut.rvfi_ext_ic_scr_key_valid;
+  assign rvfi_if.ext_irq_valid        = dut.rvfi_ext_irq_valid;
   // Irq interface connections
   assign irq_vif.reset = ~rst_n;
   // Dut_if interface connections
-  assign dut_if.ecall         = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ecall_insn;
-  assign dut_if.wfi           = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.wfi_insn;
-  assign dut_if.ebreak        = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ebrk_insn;
-  assign dut_if.illegal_instr = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.illegal_insn_d;
-  assign dut_if.dret          = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.dret_insn;
-  assign dut_if.mret          = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.mret_insn;
-  assign dut_if.reset         = ~rst_n;
-  assign dut_if.priv_mode     = dut.u_ibex_top.u_ibex_core.priv_mode_id;
-  assign dut_if.ctrl_fsm_cs   = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ctrl_fsm_cs;
-  assign dut_if.debug_mode    = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.debug_mode_q;
+  assign dut_if.ecall            = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ecall_insn;
+  assign dut_if.wfi              = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.wfi_insn;
+  assign dut_if.ebreak           = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ebrk_insn;
+  assign dut_if.illegal_instr
+      = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.illegal_insn_d;
+  assign dut_if.dret             = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.dret_insn;
+  assign dut_if.mret             = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.mret_insn;
+  assign dut_if.reset            = ~rst_n;
+  assign dut_if.ic_tag_req       = dut.u_ibex_top.ic_tag_req;
+  assign dut_if.ic_tag_write     = dut.u_ibex_top.ic_tag_write;
+  assign dut_if.ic_tag_addr      = dut.u_ibex_top.ic_tag_addr;
+  assign dut_if.ic_data_req      = dut.u_ibex_top.ic_data_req;
+  assign dut_if.ic_data_write    = dut.u_ibex_top.ic_data_write;
+  assign dut_if.ic_data_addr     = dut.u_ibex_top.ic_data_addr;
+  assign dut_if.priv_mode        = dut.u_ibex_top.u_ibex_core.priv_mode_id;
+  assign dut_if.ctrl_fsm_cs      = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ctrl_fsm_cs;
+  assign dut_if.debug_mode       = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.debug_mode_q;
+  assign dut_if.rf_ren_a         = dut.u_ibex_top.u_ibex_core.rf_ren_a;
+  assign dut_if.rf_ren_b         = dut.u_ibex_top.u_ibex_core.rf_ren_b;
+  assign dut_if.rf_rd_a_wb_match = dut.u_ibex_top.u_ibex_core.rf_rd_a_wb_match;
+  assign dut_if.rf_rd_b_wb_match = dut.u_ibex_top.u_ibex_core.rf_rd_b_wb_match;
+  assign dut_if.rf_write_wb      = dut.u_ibex_top.u_ibex_core.rf_write_wb;
+  assign dut_if.sync_exc_seen    = dut.u_ibex_top.u_ibex_core.cs_registers_i.cpuctrlsts_part_q.sync_exc_seen;
+  assign dut_if.csr_save_cause   = dut.u_ibex_top.u_ibex_core.csr_save_cause;
+  assign dut_if.exc_cause        = dut.u_ibex_top.u_ibex_core.exc_cause;
+  assign dut_if.wb_exception     = dut.u_ibex_top.u_ibex_core.id_stage_i.wb_exception;
   // Instruction monitor connections
   assign instr_monitor_if.reset        = ~rst_n;
   assign instr_monitor_if.valid_id     = dut.u_ibex_top.u_ibex_core.id_stage_i.instr_valid_i;
@@ -261,6 +309,13 @@ module core_ibex_tb_top;
   assign data_mem_vif.misaligned_second =
     dut.u_ibex_top.u_ibex_core.load_store_unit_i.addr_incr_req_o;
 
+  assign data_mem_vif.misaligned_first_saw_error =
+    dut.u_ibex_top.u_ibex_core.load_store_unit_i.addr_incr_req_o &
+    dut.u_ibex_top.u_ibex_core.load_store_unit_i.lsu_err_d;
+
+  assign data_mem_vif.m_mode_access =
+    dut.u_ibex_top.u_ibex_core.priv_mode_lsu == ibex_pkg::PRIV_LVL_M;
+
   initial begin
     // Drive the clock and reset lines. Reset everything and start the clock at the beginning of
     // time
@@ -306,9 +361,52 @@ module core_ibex_tb_top;
     run_test();
   end
 
+  // Manually set unused_assert_connected = 1 to disable the AssertConnected_A assertion for
+  // prim_count in case lockstep (set by SecureIbex) is enabled. If not disabled, DV fails.
+  if (SecureIbex) begin : gen_disable_count_check
+    assign dut.u_ibex_top.gen_lockstep.u_ibex_lockstep.u_rst_shadow_cnt.
+          unused_assert_connected = 1;
+  end
+
   // Disable the assertion for onhot check in case WrenCheck (set by SecureIbex) is enabled.
   if (SecureIbex) begin : gen_disable_onehot_check
     assign dut.u_ibex_top.gen_regfile_ff.register_file_i.gen_wren_check.u_prim_onehot_check.
           unused_assert_connected = 1;
+  end
+
+  // Disable the assertion for onhot check in case RdataMuxCheck (set by SecureIbex) is enabled.
+  if (SecureIbex) begin : gen_disable_rdata_mux_check
+    assign dut.u_ibex_top.gen_regfile_ff.register_file_i.gen_rdata_mux_check.
+          u_prim_onehot_check_raddr_a.unused_assert_connected = 1;
+    assign dut.u_ibex_top.gen_regfile_ff.register_file_i.gen_rdata_mux_check.
+          u_prim_onehot_check_raddr_b.unused_assert_connected = 1;
+  end
+
+  ibex_pkg::ctrl_fsm_e controller_state;
+  logic                controller_handle_irq;
+  ibex_pkg::irqs_t     ibex_irqs, last_ibex_irqs;
+
+  assign controller_state      = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ctrl_fsm_cs;
+  assign controller_handle_irq = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.handle_irq;
+  assign ibex_irqs             = dut.u_ibex_top.u_ibex_core.irqs;
+
+  always_ff @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      last_ibex_irqs <= '0;
+    end else begin
+      last_ibex_irqs <= ibex_irqs;
+    end
+  end
+
+  always_ff @(posedge clk) begin
+    if (controller_state == ibex_pkg::IRQ_TAKEN) begin
+      if (!controller_handle_irq) begin
+        $display("WARNING: Controller in IRQ_TAKEN but no IRQ to handle, returning to DECODE");
+        $display("IRQs last cycle: %x, IRQs this cycle: %x", last_ibex_irqs, ibex_irqs);
+      end else if (last_ibex_irqs != ibex_irqs) begin
+        $display("WARNING: Controller in IRQ_TAKEN and IRQs have just changed");
+        $display("IRQs last cycle: %x, IRQs this cycle: %x", last_ibex_irqs, ibex_irqs);
+      end
+    end
   end
 endmodule

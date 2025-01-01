@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -7,6 +7,9 @@
 // cycle of its respective clock domain. Consecutive pulses need to be spaced
 // appropriately apart from each other depending on the clock frequency ratio
 // of the two clock domains.
+//
+// Also note that a reset of either the source domain or the destination domain
+// in isolation may create a pulse at the destination.
 
 module prim_pulse_sync (
   // source clock domain
@@ -36,22 +39,30 @@ module prim_pulse_sync (
   // source active must come far enough such that the destination domain has time
   // to create a valid pulse.
 `ifdef INC_ASSERT
-  logic src_active_flag;
+  //VCS coverage off
+  // pragma coverage off
 
   // source active flag tracks whether there is an ongoing "toggle" event.
   // Until this toggle event is accepted by the destination domain (negative edge of
   // of the pulse output), the source side cannot toggle again.
-  always_ff @(posedge clk_src_i or negedge dst_pulse_o or negedge rst_src_ni) begin
-    if (!rst_src_ni) begin
-      src_active_flag <= '0;
-    end else if (!dst_pulse_o && src_active_flag) begin
-      src_active_flag <= '0;
-    end else if (src_pulse_i) begin
-      src_active_flag <= 1'b1;
+  logic effective_rst_n;
+  assign effective_rst_n = rst_src_ni && dst_pulse_o;
+
+  logic src_active_flag_d, src_active_flag_q;
+  assign src_active_flag_d = src_pulse_i || src_active_flag_q;
+
+  always_ff @(posedge clk_src_i or negedge effective_rst_n) begin
+    if (!effective_rst_n) begin
+      src_active_flag_q <= '0;
+    end else begin
+      src_active_flag_q <= src_active_flag_d;
     end
   end
 
- `ASSERT(SrcPulseCheck_M, src_pulse_i |-> !src_active_flag, clk_src_i, !rst_src_ni)
+  //VCS coverage on
+  // pragma coverage on
+
+  `ASSERT(SrcPulseCheck_M, src_pulse_i |-> !src_active_flag_q, clk_src_i, !rst_src_ni)
 `endif
 
   //////////////////////////////////////////////////////////

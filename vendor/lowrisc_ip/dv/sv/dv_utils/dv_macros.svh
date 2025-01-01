@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -85,7 +85,7 @@
 `ifndef DV_CHECK
   `define DV_CHECK(T_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!(T_)) begin \
+      if (T_) ; else begin \
         `dv_``SEV_($sformatf("Check failed (%s) %s ", `"T_`", MSG_), ID_) \
       end \
     end
@@ -94,7 +94,7 @@
 `ifndef DV_CHECK_EQ
   `define DV_CHECK_EQ(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!((ACT_) == (EXP_))) begin \
+      if ((ACT_) == (EXP_)) ; else begin \
         `dv_``SEV_($sformatf("Check failed %s == %s (%0d [0x%0h] vs %0d [0x%0h]) %s", \
                              `"ACT_`", `"EXP_`", ACT_, ACT_, EXP_, EXP_, MSG_), ID_) \
       end \
@@ -104,7 +104,7 @@
 `ifndef DV_CHECK_NE
   `define DV_CHECK_NE(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!((ACT_) != (EXP_))) begin \
+      if ((ACT_) != (EXP_)) ; else begin \
         `dv_``SEV_($sformatf("Check failed %s != %s (%0d [0x%0h] vs %0d [0x%0h]) %s", \
                              `"ACT_`", `"EXP_`", ACT_, ACT_, EXP_, EXP_, MSG_), ID_) \
       end \
@@ -114,7 +114,7 @@
 `ifndef DV_CHECK_CASE_EQ
   `define DV_CHECK_CASE_EQ(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!((ACT_) === (EXP_))) begin \
+      if ((ACT_) === (EXP_)) ; else begin \
         `dv_``SEV_($sformatf("Check failed %s === %s (0x%0h [%0b] vs 0x%0h [%0b]) %s", \
                              `"ACT_`", `"EXP_`", ACT_, ACT_, EXP_, EXP_, MSG_), ID_) \
       end \
@@ -124,7 +124,7 @@
 `ifndef DV_CHECK_CASE_NE
   `define DV_CHECK_CASE_NE(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!((ACT_) !== (EXP_))) begin \
+      if ((ACT_) !== (EXP_)) ; else begin \
         `dv_``SEV_($sformatf("Check failed %s !== %s (%0d [0x%0h] vs %0d [0x%0h]) %s", \
                              `"ACT_`", `"EXP_`", ACT_, ACT_, EXP_, EXP_, MSG_), ID_) \
       end \
@@ -134,7 +134,7 @@
 `ifndef DV_CHECK_LT
   `define DV_CHECK_LT(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!((ACT_) < (EXP_))) begin \
+      if ((ACT_) < (EXP_)) ; else begin \
         `dv_``SEV_($sformatf("Check failed %s < %s (%0d [0x%0h] vs %0d [0x%0h]) %s", \
                              `"ACT_`", `"EXP_`", ACT_, ACT_, EXP_, EXP_, MSG_), ID_) \
       end \
@@ -144,7 +144,7 @@
 `ifndef DV_CHECK_GT
   `define DV_CHECK_GT(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!((ACT_) > (EXP_))) begin \
+      if ((ACT_) > (EXP_)) ; else begin \
         `dv_``SEV_($sformatf("Check failed %s > %s (%0d [0x%0h] vs %0d [0x%0h]) %s", \
                              `"ACT_`", `"EXP_`", ACT_, ACT_, EXP_, EXP_, MSG_), ID_) \
       end \
@@ -154,7 +154,7 @@
 `ifndef DV_CHECK_LE
   `define DV_CHECK_LE(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!((ACT_) <= (EXP_))) begin \
+      if ((ACT_) <= (EXP_)) ; else begin \
         `dv_``SEV_($sformatf("Check failed %s <= %s (%0d [0x%0h] vs %0d [0x%0h]) %s", \
                              `"ACT_`", `"EXP_`", ACT_, ACT_, EXP_, EXP_, MSG_), ID_) \
       end \
@@ -164,7 +164,7 @@
 `ifndef DV_CHECK_GE
   `define DV_CHECK_GE(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
     begin \
-      if (!((ACT_) >= (EXP_))) begin \
+      if ((ACT_) >= (EXP_)) ; else begin \
         `dv_``SEV_($sformatf("Check failed %s >= %s (%0d [0x%0h] vs %0d [0x%0h]) %s", \
                              `"ACT_`", `"EXP_`", ACT_, ACT_, EXP_, EXP_, MSG_), ID_) \
       end \
@@ -173,15 +173,29 @@
 
 `ifndef DV_CHECK_STREQ
   `define DV_CHECK_STREQ(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
-    if (!((ACT_) == (EXP_))) begin \
-      `dv_``SEV_($sformatf("Check failed \"%s\" == \"%s\" %s", ACT_, EXP_, MSG_), ID_) \
+    begin \
+      if ((ACT_) == (EXP_)) ; else begin \
+        `dv_``SEV_($sformatf("Check failed \"%s\" == \"%s\" %s", ACT_, EXP_, MSG_), ID_) \
+      end \
     end
 `endif
 
 `ifndef DV_CHECK_STRNE
   `define DV_CHECK_STRNE(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
-    if (!((ACT_) != (EXP_))) begin \
-      `dv_``SEV_($sformatf("Check failed \"%s\" != \"%s\" %s", ACT_, EXP_, MSG_), ID_) \
+    begin \
+      if ((ACT_) != (EXP_)) ; else begin \
+        `dv_``SEV_($sformatf("Check failed \"%s\" != \"%s\" %s", ACT_, EXP_, MSG_), ID_) \
+      end \
+    end
+`endif
+
+`ifndef DV_CHECK_Q_EQ
+  `define DV_CHECK_Q_EQ(ACT_, EXP_, MSG_="", SEV_=error, ID_=`gfn) \
+    begin \
+      `DV_CHECK_EQ(ACT_.size(), EXP_.size(), MSG_, SEV_, ID_) \
+      foreach (ACT_[i]) begin \
+        `DV_CHECK_EQ(ACT_[i], EXP_[i], $sformatf("for i = %0d %s", i, MSG_), SEV_, ID_) \
+      end \
     end
 `endif
 
@@ -346,14 +360,13 @@
   `define GET_PARITY(val, odd=0) (^val ^ odd)
 `endif
 
-// Wait a task or statement with exit condition
-// Kill the thread when either the wait statement is completed or exit condition occurs
-// input WAIT_ need to be a statement. Here are some examples
-// `DV_SPINWAIT(wait(...);, "Wait for ...")
-// `DV_SPINWAIT(
-//              while (1) begin
-//                ...
-//              end)
+// Wait for a statement but stop early if the EXIT statement completes.
+//
+// Example usage:
+//
+//    `DV_SPINWAIT_EXIT(do_something_time_consuming();,
+//                      wait(stop_now_flag);,
+//                      "The stop flag was set when we were working")
 `ifndef DV_SPINWAIT_EXIT
 `define DV_SPINWAIT_EXIT(WAIT_, EXIT_, MSG_ = "exit condition occurred!", ID_ =`gfn) \
   begin \
@@ -374,10 +387,20 @@
   end
 `endif
 
-// wait a task or statement with timer watchdog
+// macro that waits for a given delay and then reports an error
+`ifndef DV_WAIT_TIMEOUT
+`define DV_WAIT_TIMEOUT(TIMEOUT_NS_, ID_  = `gfn, ERROR_MSG_ = "timeout occurred!", REPORT_FATAL_ = 1) \
+  begin \
+    #(TIMEOUT_NS_ * 1ns); \
+    if (REPORT_FATAL_) `dv_fatal(ERROR_MSG_, ID_) \
+    else               `dv_error(ERROR_MSG_, ID_) \
+  end
+`endif
+
+// Wait for a statement, but exit early after a timeout
 `ifndef DV_SPINWAIT
 `define DV_SPINWAIT(WAIT_, MSG_ = "timeout occurred!", TIMEOUT_NS_ = default_spinwait_timeout_ns, ID_ =`gfn) \
-  `DV_SPINWAIT_EXIT(WAIT_, wait_timeout(TIMEOUT_NS_, ID_, MSG_);, "", ID_)
+  `DV_SPINWAIT_EXIT(WAIT_, `DV_WAIT_TIMEOUT(TIMEOUT_NS_, ID_, MSG_);, "", ID_)
 `endif
 
 // a shorthand of `DV_SPINWAIT(wait(...))
@@ -414,6 +437,7 @@
       end else begin \
         `uvm_info(ID_, $sformatf("Disabling assertions: %0s", `DV_STRINGIFY(HIER_)), UVM_LOW) \
         $assertoff(LEVELS_, HIER_); \
+        $assertkill(LEVELS_, HIER_); \
       end \
     end \
   end
@@ -432,12 +456,33 @@
 `define DV_GET_ENUM_PLUSARG(ENUM_, VAR_, PLUSARG_, CHECK_EXISTS_ = 0, ID_ = `gfn) \
   begin \
     string str; \
-    if ($value$plusargs("``PLUSARG_``=%0s", str)) begin \
+    if ($value$plusargs(`"``PLUSARG_``=%0s`", str)) begin \
       if (!uvm_enum_wrapper#(ENUM_)::from_name(str, VAR_)) begin \
-        `uvm_fatal(ID_, $sformatf("Cannot find %s from enum ``ENUM_``", VAR_.name())) \
+        `uvm_fatal(ID_, $sformatf(`"Cannot find %s from enum ``ENUM_```", VAR_.name())) \
       end \
     end else if (CHECK_EXISTS_) begin \
-      `uvm_fatal(ID_, "Please pass the plusarg +``PLUSARG_``=<``ENUM_``-literal>") \
+      `uvm_fatal(ID_, `"Please pass the plusarg +``PLUSARG_``=<``ENUM_``-literal>`") \
+    end \
+  end
+`endif
+
+// Retrieves a queue of plusarg value from a string.
+//
+// The plusarg is parsed as a string, which needs to be converted into a queue of string which given delimiter.
+// This functionality is provided by the UVM helper function below.
+//
+// QUEUE_: The queue of string to which the plusarg value will be set (must be declared already).
+// PLUSARG_: the name of the plusarg (as raw text). This is typically the same as the enum variable.
+// DELIMITER_: the delimiter that separate each item in the plusarg string value.
+// CHECK_EXISTS_: Throws a fatal error if the plusarg is not set.
+`ifndef DV_GET_QUEUE_PLUSARG
+`define DV_GET_QUEUE_PLUSARG(QUEUE_, PLUSARG_, DELIMITER_ = ",", CHECK_EXISTS_ = 0, ID_ = `gfn) \
+  begin \
+    string str; \
+    if ($value$plusargs(`"``PLUSARG_``=%0s`", str)) begin \
+      str_split(str, QUEUE_, DELIMITER_); \
+    end else if (CHECK_EXISTS_) begin \
+      `uvm_fatal(ID_, `"Please pass the plusarg +``PLUSARG_``=<``ENUM_``-literal>`") \
     end \
   end
 `endif
@@ -445,7 +490,7 @@
 // Enable / disable assertions at a module hierarchy identified by LABEL_.
 //
 // This goes in conjunction with `DV_ASSERT_CTRL() macro above, but is invoked in the entity that is
-// sending the req to turn on / off the assertions. Note that that piece of code invoking this macro
+// sending the req to turn on / off the assertions. Note that piece of code invoking this macro
 // does not have the information on the actual hierarchical path to the module or the levels - this
 // is 'wrapped' into the LABEL_ instead. DV user needs to uniquify the label sufficienly enough to
 // reflect it.
@@ -521,16 +566,20 @@
 `ifndef dv_fatal
   // verilog_lint: waive macro-name-style
   `define dv_fatal(MSG_, ID_ = $sformatf("%m")) \
-    $fatal("%0t: (%0s:%0d) [%0s] %0s", $time, `__FILE__, `__LINE__, ID_, MSG_);
+    $fatal(1, "%0t: (%0s:%0d) [%0s] %0s", $time, `__FILE__, `__LINE__, ID_, MSG_);
 `endif
 
 `endif // UVM
 
 // Macros for constrain clk with common frequencies
-// constrain clock to run at 24Mhz - 100Mhz and use higher weights on 24, 25, 48, 50, 100
+//
+// Nominal clock frequency range is 24Mhz - 100Mhz and use higher weights on 24, 25, 48, 50, 100,
+// To mimic manufacturing conditions (when clocks are uncalibrated), we need to be able to go as
+// low as 5MHz.
 `ifndef DV_COMMON_CLK_CONSTRAINT
 `define DV_COMMON_CLK_CONSTRAINT(FREQ_) \
   FREQ_ dist { \
+    [5:23]  :/ 2, \
     [24:25] :/ 2, \
     [26:47] :/ 1, \
     [48:50] :/ 2, \
@@ -554,4 +603,44 @@
 // it can consume different data types directly without the need for casting.
 `ifndef DV_MAX2
   `define DV_MAX2(a, b) ((a) > (b) ? (a) : (b))
+`endif
+
+// Creates a signal probe function to sample / force / release an internal signal.
+//
+// If there is a need to sample / force an internal signal, then it must be done in the testbench,
+// or in an interface bound to the DUT. This macro creates a standardized signal probe function
+// meant to be invoked an interface. The generated function can then be invoked in test sequences
+// or other UVM classes. The macro takes 2 arguments - name of the function and the hierarchical
+// path to the signal. If invoked in an interface which is bound to the DUT, the signal can be a
+// partial hierarchical path within the DUT. The generated function accepts 2 arguments - the first
+// indicates the probe action (sample, force or release) of type dv_utils_pkg::signal_probe_e. The
+// second argument is the value to be forced. If sample action is chosen, then it returns the
+// sampled value (for other actions as well).
+//
+// The suggested naming convention for the function is:
+//   signal_probe_<DUT_or_IP_block_name>_<signal_name>
+//
+// This macro must be invoked in an interface or module.
+`ifndef DV_CREATE_SIGNAL_PROBE_FUNCTION
+`define DV_CREATE_SIGNAL_PROBE_FUNCTION(FUNC_NAME_, SIGNAL_PATH_, SIGNAL_WIDTH_ = uvm_pkg::UVM_HDL_MAX_WIDTH) \
+  function static logic [SIGNAL_WIDTH_-1:0] FUNC_NAME_(dv_utils_pkg::signal_probe_e kind,     \
+                                                       logic [SIGNAL_WIDTH_-1:0] value = '0); \
+    case (kind)                                                                               \
+      dv_utils_pkg::SignalProbeSample: ;                                                      \
+      dv_utils_pkg::SignalProbeForce: force SIGNAL_PATH_ = value;                             \
+      dv_utils_pkg::SignalProbeRelease: release SIGNAL_PATH_;                                 \
+      default: `uvm_fatal(`"FUNC_NAME_`", $sformatf("Bad value: %0d", kind))                  \
+    endcase                                                                                   \
+    return SIGNAL_PATH_;                                                                      \
+  endfunction
+`endif
+
+// Usage:`OTDBG(( string ))
+// This macro has unque keyword 'OTDBG'and timestemp only.
+// Use for the temporary print to distinguish from `uvm_info.
+// Do not leave this macro in other source files in the remote repo.
+`ifndef OTDBG
+  `define OTDBG(x) \
+  $write($sformatf("%t:OTDBG:%s:%d:",$time,`__FILE__, `__LINE__));\
+  $display($sformatf x);
 `endif

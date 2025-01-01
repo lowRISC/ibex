@@ -3,14 +3,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 class ibex_rvfi_seq_item extends uvm_sequence_item;
+  bit        irq_only;
   bit        trap;
   bit [31:0] pc;
   bit [4:0]  rd_addr;
   bit [31:0] rd_wdata;
   bit [63:0] order;
-  bit [31:0] mip;
+  bit [31:0] pre_mip;
+  bit [31:0] post_mip;
   bit        nmi;
+  bit        nmi_int;
   bit        debug_req;
+  bit        rf_wr_suppress;
   bit [63:0] mcycle;
 
   bit [31:0] mhpmcounters  [10];
@@ -23,9 +27,12 @@ class ibex_rvfi_seq_item extends uvm_sequence_item;
     `uvm_field_int (rd_addr, UVM_DEFAULT)
     `uvm_field_int (rd_wdata, UVM_DEFAULT)
     `uvm_field_int (order, UVM_DEFAULT)
-    `uvm_field_int (mip, UVM_DEFAULT)
+    `uvm_field_int (pre_mip, UVM_DEFAULT)
+    `uvm_field_int (post_mip, UVM_DEFAULT)
     `uvm_field_int (nmi, UVM_DEFAULT)
+    `uvm_field_int (nmi_int, UVM_DEFAULT)
     `uvm_field_int (debug_req, UVM_DEFAULT)
+    `uvm_field_int (rf_wr_suppress, UVM_DEFAULT)
     `uvm_field_int (mcycle, UVM_DEFAULT)
     `uvm_field_sarray_int (mhpmcounters, UVM_DEFAULT)
     `uvm_field_sarray_int (mhpmcountersh, UVM_DEFAULT)

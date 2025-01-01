@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -68,9 +68,9 @@ package dv_base_reg_pkg;
     string        msg_id = {dv_base_reg_pkg::msg_id, "::decode_csr_or_field"};
 
     if ($cast(csr, ptr)) begin
-      // return csr object with null field; set the mask to all 1s and shift to 0
+      // return csr object with null field; set the mask to the width's all 1s and shift to 0
       result.csr = csr;
-      result.mask = '1;
+      result.mask = (1 << csr.get_n_bits()) - 1;
       result.shift = 0;
     end
     else if ($cast(fld, ptr)) begin
@@ -112,8 +112,30 @@ package dv_base_reg_pkg;
     get_field_val = (value >> shift) & mask;
   endfunction : get_field_val
 
+  // Returns a mask value from the provided fields. All fields must belong to the same CSR.
+  function automatic uvm_reg_data_t get_mask_from_fields(uvm_reg_field fields[$]);
+    uvm_reg_data_t mask = '0;
+    uvm_reg csr;
+    if (fields.size() == 0) return '1;
+    foreach (fields[i]) begin
+      uvm_reg_data_t fmask;
+      uint           fshift;
+      if (csr == null) csr = fields[i].get_parent();
+      else if (csr != fields[i].get_parent()) begin
+        `uvm_fatal(msg_id, $sformatf({"The provided fields belong to at least two different CSRs: ",
+                                      "%s, %s. All fields must belong to the same CSR"},
+                                     fields[i-1].`gfn, fields[i].`gfn))
+      end
+      fmask = (1 << fields[i].get_n_bits()) - 1;
+      fshift = fields[i].get_lsb_pos();
+      mask |= fmask << fshift;
+    end
+    return mask;
+  endfunction
+
   `include "csr_excl_item.sv"
   `include "dv_base_lockable_field_cov.sv"
+  `include "dv_base_shadowed_field_cov.sv"
   `include "dv_base_mubi_cov.sv"
   `include "dv_base_reg_field.sv"
   `include "dv_base_reg.sv"

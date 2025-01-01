@@ -27,6 +27,8 @@ module ibex_top_tracing import ibex_pkg::*; #(
   parameter bit          ICacheScramble   = 1'b0,
   parameter lfsr_seed_t  RndCnstLfsrSeed  = RndCnstLfsrSeedDefault,
   parameter lfsr_perm_t  RndCnstLfsrPerm  = RndCnstLfsrPermDefault,
+  parameter int unsigned DmBaseAddr       = 32'h1A110000,
+  parameter int unsigned DmAddrMask       = 32'h00000FFF,
   parameter int unsigned DmHaltAddr       = 32'h1A110800,
   parameter int unsigned DmExceptionAddr  = 32'h1A110808
 ) (
@@ -83,7 +85,7 @@ module ibex_top_tracing import ibex_pkg::*; #(
   output logic                         double_fault_seen_o,
 
   // CPU Control Signals
-  input  fetch_enable_t                fetch_enable_i,
+  input  ibex_mubi_t                   fetch_enable_i,
   output logic                         alert_minor_o,
   output logic                         alert_major_internal_o,
   output logic                         alert_major_bus_o,
@@ -119,34 +121,49 @@ module ibex_top_tracing import ibex_pkg::*; #(
   logic [ 3:0] rvfi_mem_wmask;
   logic [31:0] rvfi_mem_rdata;
   logic [31:0] rvfi_mem_wdata;
-  logic [31:0] rvfi_ext_mip;
+  logic [31:0] rvfi_ext_pre_mip;
+  logic [31:0] rvfi_ext_post_mip;
   logic        rvfi_ext_nmi;
+  logic        rvfi_ext_nmi_int;
   logic        rvfi_ext_debug_req;
+  logic        rvfi_ext_debug_mode;
+  logic        rvfi_ext_rf_wr_suppress;
   logic [63:0] rvfi_ext_mcycle;
 
   logic [31:0] rvfi_ext_mhpmcounters [10];
   logic [31:0] rvfi_ext_mhpmcountersh [10];
   logic        rvfi_ext_ic_scr_key_valid;
+  logic        rvfi_ext_irq_valid;
 
   logic [31:0] unused_perf_regs [10];
   logic [31:0] unused_perf_regsh [10];
 
 
-  logic [31:0] unused_rvfi_ext_mip;
+  logic [31:0] unused_rvfi_ext_pre_mip;
+  logic [31:0] unused_rvfi_ext_post_mip;
   logic        unused_rvfi_ext_nmi;
+  logic        unused_rvfi_ext_nmi_int;
   logic        unused_rvfi_ext_debug_req;
+  logic        unused_rvfi_ext_debug_mode;
+  logic        unused_rvfi_ext_rf_wr_suppress;
   logic [63:0] unused_rvfi_ext_mcycle;
   logic        unused_rvfi_ext_ic_scr_key_valid;
+  logic        unused_rvfi_ext_irq_valid;
 
   // Tracer doesn't use these signals, though other modules may probe down into tracer to observe
   // them.
-  assign unused_rvfi_ext_mip = rvfi_ext_mip;
+  assign unused_rvfi_ext_pre_mip = rvfi_ext_pre_mip;
+  assign unused_rvfi_ext_post_mip = rvfi_ext_post_mip;
   assign unused_rvfi_ext_nmi = rvfi_ext_nmi;
+  assign unused_rvfi_ext_nmi_int = rvfi_ext_nmi_int;
   assign unused_rvfi_ext_debug_req = rvfi_ext_debug_req;
+  assign unused_rvfi_ext_debug_mode = rvfi_ext_debug_mode;
+  assign unused_rvfi_ext_rf_wr_suppress = rvfi_ext_rf_wr_suppress;
   assign unused_rvfi_ext_mcycle = rvfi_ext_mcycle;
   assign unused_perf_regs = rvfi_ext_mhpmcounters;
   assign unused_perf_regsh = rvfi_ext_mhpmcountersh;
   assign unused_rvfi_ext_ic_scr_key_valid = rvfi_ext_ic_scr_key_valid;
+  assign unused_rvfi_ext_irq_valid = rvfi_ext_irq_valid;
 
   ibex_top #(
     .PMPEnable        ( PMPEnable        ),
@@ -169,6 +186,8 @@ module ibex_top_tracing import ibex_pkg::*; #(
     .ICacheScramble   ( ICacheScramble   ),
     .RndCnstLfsrSeed  ( RndCnstLfsrSeed  ),
     .RndCnstLfsrPerm  ( RndCnstLfsrPerm  ),
+    .DmBaseAddr       ( DmBaseAddr       ),
+    .DmAddrMask       ( DmAddrMask       ),
     .DmHaltAddr       ( DmHaltAddr       ),
     .DmExceptionAddr  ( DmExceptionAddr  )
   ) u_ibex_top (
@@ -240,13 +259,18 @@ module ibex_top_tracing import ibex_pkg::*; #(
     .rvfi_mem_wmask,
     .rvfi_mem_rdata,
     .rvfi_mem_wdata,
-    .rvfi_ext_mip,
+    .rvfi_ext_pre_mip,
+    .rvfi_ext_post_mip,
     .rvfi_ext_nmi,
+    .rvfi_ext_nmi_int,
     .rvfi_ext_debug_req,
+    .rvfi_ext_debug_mode,
+    .rvfi_ext_rf_wr_suppress,
     .rvfi_ext_mcycle,
     .rvfi_ext_mhpmcounters,
     .rvfi_ext_mhpmcountersh,
     .rvfi_ext_ic_scr_key_valid,
+    .rvfi_ext_irq_valid,
 
     .fetch_enable_i,
     .alert_minor_o,

@@ -1,0 +1,38 @@
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+# GitHub Action to run Verible linting on pull requests and add review comments.
+#
+# See https://github.com/chipsalliance/verible-linter-action.
+
+name: pr-lint
+
+# Triggers when there is any activity on a pull request, e.g. opened, updated.
+on:
+  merge_group:
+    types:
+      - checks_requested
+  pull_request:
+    branches:
+      - "*"
+
+jobs:
+  verible-lint:
+    runs-on: ubuntu-latest
+    env:
+      verible_config: "vendor/lowrisc_ip/lint/tools/veriblelint/lowrisc-styleguide.rules.verible_lint"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Display Verible config
+        run: |
+          echo "::group::Verible config"
+          cat "$verible_config"
+          echo "::endgroup::"
+      - name: Run Verible linter action
+        uses: chipsalliance/verible-linter-action@main
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reviewdog_reporter: github-pr-check
+          suggest_fixes: "false"
+          config_file: ${{ env.verible_config }}

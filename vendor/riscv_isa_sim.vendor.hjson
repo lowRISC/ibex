@@ -1,0 +1,17 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{
+  name: "riscv-isa-sim",
+  target_dir: "riscv-isa-sim",
+
+  upstream: {
+    url: "https://github.com/lowrisc/riscv-isa-sim",
+    rev: "mseccfg_tests",
+  },
+  mapping: [
+    {from: "tests/mseccfg",    to: "tests/mseccfg"},
+    {from: "arch_test_target", to: "arch_test_target"}
+    {from: "LICENSE",          to: "LICENSE"}
+  ]
+}

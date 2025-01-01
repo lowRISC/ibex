@@ -1208,7 +1208,7 @@ package riscv_instr_pkg;
     WAW_HAZARD
   } hazard_e;
 
-  bit [11:0] default_include_csr_write[$] = {MSCRATCH};
+  riscv_csr_t default_include_csr_write[$] = {MSCRATCH};
 
   `include "riscv_core_setting.sv"
 
@@ -1244,6 +1244,8 @@ package riscv_instr_pkg;
     // The offset from the address of <main> - automatically populated by the
     // PMP generation routine.
     bit [XLEN - 1 : 0]    offset;
+    // The size of the region in case of NAPOT and overlap in case of TOR.
+    integer addr_mode;
 `else
   typedef struct{
     rand bit                   l;
@@ -1258,6 +1260,8 @@ package riscv_instr_pkg;
     // The offset from the address of <main> - automatically populated by the
     // PMP generation routine.
     rand bit [XLEN - 1 : 0]    offset;
+    // The size of the region in case of NAPOT and allows for top less than bottom in TOR when 0.
+    rand integer addr_mode;
 `endif
   } pmp_cfg_reg_t;
 
@@ -1375,18 +1379,18 @@ package riscv_instr_pkg;
                                                    ref string instr[$]);
     string store_instr = (XLEN == 32) ? "sw" : "sd";
     if (scratch inside {implemented_csr}) begin
-      // Use kernal stack for handling exceptions
-      // Save the user mode stack pointer to the scratch register
-      instr.push_back($sformatf("csrrw x%0d, 0x%0x, x%0d", sp, scratch, sp));
-      // Move TP to SP
+      // Push USP from gpr.SP onto the kernel stack
+      instr.push_back($sformatf("addi x%0d, x%0d, -4", tp, tp));
+      instr.push_back($sformatf("%0s  x%0d, (x%0d)", store_instr, sp, tp));
+      // Move KSP to gpr.SP
       instr.push_back($sformatf("add x%0d, x%0d, zero", sp, tp));
     end
     // If MPRV is set and MPP is S/U mode, it means the address translation and memory protection
     // for load/store instruction is the same as the mode indicated by MPP. In this case, we
     // need to use the virtual address to access the kernel stack.
     if((status == MSTATUS) && (SATP_MODE != BARE)) begin
-      // We temporarily use tp to check mstatus to avoid changing other GPR. The value of sp has
-      // been saved to xScratch and can be restored later.
+      // We temporarily use tp to check mstatus to avoid changing other GPR.
+      // (The value of sp has been pushed to the kernel stack, so can be recovered later)
       if(mprv) begin
         instr.push_back($sformatf("csrr x%0d, 0x%0x // MSTATUS", tp, status));
         instr.push_back($sformatf("srli x%0d, x%0d, 11", tp, tp));  // Move MPP to bit 0
@@ -1397,14 +1401,18 @@ package riscv_instr_pkg;
         // Use virtual address for stack pointer
         instr.push_back($sformatf("slli x%0d, x%0d, %0d", sp, sp, XLEN - MAX_USED_VADDR_BITS));
         instr.push_back($sformatf("srli x%0d, x%0d, %0d", sp, sp, XLEN - MAX_USED_VADDR_BITS));
+        instr.push_back("1: nop");
       end
     end
-    // Reserve space from kernel stack to save all 32 GPR except for x0
-    instr.push_back($sformatf("1: addi x%0d, x%0d, -%0d", sp, sp, 31 * (XLEN/8)));
-    // Push all GPRs to kernel stack
+    // Push all GPRs (except for x0) to kernel stack
+    // (gpr.SP currently holds the KSP)
+    instr.push_back($sformatf("addi x%0d, x%0d, -%0d", sp, sp, 32 * (XLEN/8)));
     for(int i = 1; i < 32; i++) begin
       instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, i, i * (XLEN/8), sp));
     end
+    // Move KSP back to gpr.TP
+    // (this is needed if we again take a interrupt (nested) before restoring our USP)
+    instr.push_back($sformatf("add x%0d, x%0d, zero", tp, sp));
   endfunction
 
   // Pop general purpose register from stack, this is needed before returning to user program
@@ -1415,17 +1423,19 @@ package riscv_instr_pkg;
                                                     riscv_reg_t tp,
                                                     ref string instr[$]);
     string load_instr = (XLEN == 32) ? "lw" : "ld";
-    // Pop user mode GPRs from kernel stack
+    // Move KSP to gpr.SP
+    instr.push_back($sformatf("add x%0d, x%0d, zero", sp, tp));
+    // Pop GPRs from kernel stack
     for(int i = 1; i < 32; i++) begin
       instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, i, i * (XLEN/8), sp));
     end
-    // Restore kernel stack pointer
-    instr.push_back($sformatf("addi x%0d, x%0d, %0d", sp, sp, 31 * (XLEN/8)));
+    instr.push_back($sformatf("addi x%0d, x%0d, %0d", sp, sp, 32 * (XLEN/8)));
     if (scratch inside {implemented_csr}) begin
-      // Move SP to TP
+      // Move KSP back to gpr.TP
       instr.push_back($sformatf("add x%0d, x%0d, zero", tp, sp));
-      // Restore user mode stack pointer
-      instr.push_back($sformatf("csrrw x%0d, 0x%0x, x%0d", sp, scratch, sp));
+      // Pop USP from the kernel stack, move back to gpr.SP
+      instr.push_back($sformatf("%0s  x%0d, (x%0d)", load_instr, sp, tp));
+      instr.push_back($sformatf("addi x%0d, x%0d, 4", tp, tp));
     end
   endfunction
 

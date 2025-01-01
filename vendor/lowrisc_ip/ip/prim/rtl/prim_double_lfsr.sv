@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -83,6 +83,20 @@ module prim_double_lfsr #(
       .out_o(lfsr_state[k])
     );
   end
+
+`ifdef SIMULATION
+`ifndef VERILATOR
+  // Ensure both LFSRs start off with the same default seed. if randomized in simulations.
+  initial begin : p_sync_lfsr_default_seed
+    wait (!$isunknown(gen_double_lfsr[0].u_prim_lfsr.DefaultSeedLocal));
+    wait (!$isunknown(gen_double_lfsr[1].u_prim_lfsr.DefaultSeedLocal));
+    gen_double_lfsr[1].u_prim_lfsr.DefaultSeedLocal =
+        gen_double_lfsr[0].u_prim_lfsr.DefaultSeedLocal;
+    $display("%m: Updated gen_double_lfsr[1].u_prim_lfsr.DefaultSeedLocal = 0x%0h",
+        gen_double_lfsr[1].u_prim_lfsr.DefaultSeedLocal);
+  end
+`endif
+`endif
 
   // Output the state from the first LFSR
   assign state_o = lfsr_state[0][StateOutDw-1:0];

@@ -1,0 +1,151 @@
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+# GitHub Actions CI build configuration
+
+name: Ibex CI
+
+on:
+  push:
+    tags:
+      - "*"
+  merge_group:
+    types:
+      - checks_requested
+  pull_request:
+    branches:
+      - "*"
+
+# Note: All tests run as part of one job to avoid copying intermediate build
+# artifacts around (e.g. Verilator and toolchain builds). Once more builds/tests
+# are added, we need to re-evaluate this decision to parallelize jobs and
+# improve end-to-end CI times.
+
+jobs:
+  lint_dv:
+    name: Run quality checks (Lint and DV)
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Fetch all history so that we can run git diff on the base branch
+          fetch-depth: 0
+
+      - name: Setup environment variables
+        run: |
+          # Filter out empty lines or comments
+          grep -v '^\(#\|$\)' ci/vars.env >> $GITHUB_ENV
+
+      - name: Install build dependencies
+        run: |
+          ci/install-build-deps.sh
+
+      - name: Display environment
+        run: |
+          echo $PATH
+          python3 --version
+          echo -n "fusesoc "
+          fusesoc --version
+          verilator --version
+          riscv32-unknown-elf-gcc --version
+          verible-verilog-lint --version
+
+      # Verible format is experimental so only run on default config for now,
+      # will eventually become part of the per-config CI
+      - name: Format all source code with Verible format (experimental)
+        run: |
+          set +e
+          fusesoc --cores-root . run --no-export --target=format --tool=veribleformat lowrisc:ibex:ibex_top_tracing
+          if [ $? != 0 ]; then
+            echo -n "::error::"
+            echo "Verilog format with Verible failed. Run 'fusesoc --cores-root . run --no-export --target=format --tool=veribleformat lowrisc:ibex:ibex_top_tracing' to check and fix all errors."
+            echo "This flow is currently experimental and failures can be ignored."
+          fi
+          # Show diff of what verilog_format would have changed, and then revert.
+          git diff --no-pager
+          git reset --hard HEAD
+        continue-on-error: true
+
+      - name: Use clang-format to check C/C++ coding style
+        # This check is not idempotent, but checks changes to a base branch.
+        # Run it only on pull requests.
+        if: github.event_name == 'pull_request'
+        run: |
+          set +e
+          fork_origin=${{ github.event.pull_request.base.sha }}
+          changed_files=$(git diff --name-only $fork_origin | grep -v '^vendor' | grep -E '\.(cpp|cc|c|h)$')
+          test -z "$changed_files" || git diff -U0 $fork_origin $changed_files | clang-format-diff -p1 | tee clang-format-output
+          if [ -s clang-format-output ]; then
+            echo -n "::error::"
+            echo "C/C++ lint failed. Use 'git clang-format' with appropriate options to reformat the changed code."
+            exit 1
+          fi
+
+      - name: Build and run CSR testbench with Verilator
+        run: |
+          # Build and run CSR testbench, chosen Ibex configuration does not effect
+          # this so doesn't need to be part of per-config CI
+          fusesoc --cores-root=. run --target=sim --tool=verilator lowrisc:ibex:tb_cs_registers
+
+      - name: Get RISC-V Compliance test suite
+        run: |
+          cd build
+          git clone https://github.com/riscv/riscv-compliance.git
+          cd riscv-compliance
+          git checkout "$RISCV_COMPLIANCE_GIT_VERSION"
+
+      - name: Build tests for verilator co-simulation
+        run: |
+          # Build CoreMark without performance counter dump for co-simulation testing
+          make -C ./examples/sw/benchmarks/coremark SUPPRESS_PCOUNT_DUMP=1
+          make -C ./examples/sw/simple_system/pmp_smoke_test
+          make -C ./examples/sw/simple_system/dit_test
+          make -C ./examples/sw/simple_system/dummy_instr_test
+
+      # Run Ibex RTL CI per supported configuration
+      - name: Run Ibex RTL CI for small configuration
+        uses: ./.github/actions/ibex-rtl-ci-steps
+        with:
+          ibex_config: small
+      - name: Run Ibex RTL CI for opentitan configuration
+        uses: ./.github/actions/ibex-rtl-ci-steps
+        with:
+          ibex_config: opentitan
+      - name: Run Ibex RTL CI for maxperf configuration
+        uses: ./.github/actions/ibex-rtl-ci-steps
+        with:
+          ibex_config: maxperf
+      - name: Run Ibex RTL CI for maxperf-pmp-bmbalanced configuration
+        uses: ./.github/actions/ibex-rtl-ci-steps
+        with:
+          ibex_config: maxperf-pmp-bmbalanced
+      - name: Run Ibex RTL CI for maxperf-pmp-bmfull configuration
+        uses: ./.github/actions/ibex-rtl-ci-steps
+        with:
+          ibex_config: maxperf-pmp-bmfull
+      - name: Run Ibex RTL CI for experimental-branch-predictor configuration
+        uses: ./.github/actions/ibex-rtl-ci-steps
+        with:
+          ibex_config: experimental-branch-predictor
+
+      # Run lint on simple system
+      - name: Run Verilator lint on simple system
+        run: |
+          set +e
+          fusesoc --cores-root . run --target=lint --tool=verilator lowrisc:ibex:ibex_simple_system
+          if [ $? != 0 ]; then
+            echo -n "::error::"
+            echo "Verilog lint with Verilator failed. Run 'fusesoc --cores-root . run --target=lint --tool=verilator lowrisc:ibex:ibex_simple_system' to check and fix all errors."
+            exit 1
+          fi
+
+      - name: Run Verible lint on simple system
+        run: |
+          set +e
+          fusesoc --cores-root . run --target=lint --tool=veriblelint lowrisc:ibex:ibex_simple_system
+          if [ $? != 0 ]; then
+            echo -n "::error::"
+            echo "Verilog lint with Verible failed. Run 'fusesoc --cores-root . run --target=lint --tool=veriblelint lowrisc:ibex:ibex_simple_system' to check and fix all errors."
+            exit 1
+          fi

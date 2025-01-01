@@ -11,7 +11,7 @@ run stand-alone binaries. It contains:
 
 ## Prerequisites
 
-* [Verilator](https://www.veripool.org/wiki/verilator)
+* [Verilator](https://www.veripool.org/verilator/)
   Note Linux package managers may have Verilator but often a very old version
   that is not suitable. It is recommended Verilator is built from source.
 * The Python dependencies of this repository.
@@ -27,12 +27,19 @@ run stand-alone binaries. It contains:
 
 ## Building Simulation
 
-The Simple System simulator binary can be built via FuseSoC. From the Ibex
-repository root run:
+The Simple System simulator binary can be built via FuseSoC. This can be built
+with different configurations of Ibex, specified by parameters. To build the
+"small" configuration, run the following command from the Ibex repository root.
+
 
 ```
-fusesoc --cores-root=. run --target=sim --setup --build lowrisc:ibex:ibex_simple_system --RV32E=0 --RV32M=ibex_pkg::RV32MFast
+fusesoc --cores-root=. run --target=sim --setup --build \
+        lowrisc:ibex:ibex_simple_system $(util/ibex_config.py small fusesoc_opts)
 ```
+
+To see performance counters other than the total number of instructions
+executed, you will need to ask for a larger configuration. One possible example
+comes from replacing `small` in the command above with `opentitan`.
 
 ## Building Software
 
@@ -68,10 +75,17 @@ built as described above. Use
 `./examples/sw/simple_system/hello_test/hello_test.elf` to run the `hello_test`
 binary.
 
-Pass `-t` to get an FST trace of execution that can be viewed with
-[GTKWave](http://gtkwave.sourceforge.net/). If using the `hello_test`
-binary the simulator will halt itself, outputting some simulation
-statistics:
+Pass `-t` to get an FST/VCD trace of execution that can be viewed with
+[GTKWave](http://gtkwave.sourceforge.net/).
+
+By default a FST file is created in your current directory.
+
+To produce a VCD file, remove the Verilator flags `--trace-fst` and
+`-DVM_TRACE_FMT_FST` in ibex_simple_system.core before building the simulator
+binary.
+
+If using the `hello_test` binary the simulator will halt itself, outputting some
+simulation statistics:
 
 ```
 Simulation statistics

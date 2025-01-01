@@ -1,0 +1,282 @@
+= RISC-V Architectural Testing Framework =
+RISC-V Foundation Architecture Test SIG
+Issue 1.16 Draft
+:toc:
+:icons: font
+:numbered:
+:source-highlighter: rouge
+
+////
+SPDX-License-Identifier: CC-BY-4.0
+
+Document conventions:
+- one line per paragraph (don't fill lines - this makes changes clearer)
+- Wikipedia heading conventions (First word only capitalized)
+- US spelling throughout.
+- Run "make spell" before committing changes.
+- Build the HTML and commit it with any changed source.
+- Do not commit the PDF!
+////
+
+== Introduction
+=== About
+
+This document describes the RISC-V Architectural Testing framework which is used to test if a RISC-V device's has understood and implemented the specifications correctly
+
+* It explains the framework around the tests, the running of individual tests, and the suites of tests.
+
+* It explains how to set up targets to run the tests.
+
+This document is made freely available under a <<app_cc_by_4.0>>.
+
+=== Intent of the architectural test suite
+
+The RISC-V Architectural Tests are an evolving set of tests that are created to help ensure that software written for a given RISC-V Profile/Specification will run on all implementations that comply with that profile.
+
+These tests also help ensure that the implementer has both understood and implemented the specification correctly.
+
+The RISC-V Architectural Test suite is a minimal filter. Passing the tests and having the results approved by RISC-V International is a prerequisite to licensing the RISC-V trademarks in connection with the design. Passing the RISC-V Architectural Tests does not mean that the design complies with the RISC-V Architecture. These are only a basic set of tests checking important aspects of the specification without focusing on details.
+
+The RISC-V Architectural Tests are not a substitute for rigorous design verification.
+
+The result that the architecture tests provide to the user is an assurance that the specification has been interpreted correctly and the implementation under test (DUT) can be declared as RISC-V Architecture Test compliant.
+
+=== Intended audience
+
+This document is intended for design and verification engineers who wish to check if their RISC-V implementation (simulation models, HDL models, etc.) is compliant to the RISC-V specification. 
+
+For those who wish to develop new architectural tests and/or to write or adapt their own test framework are suggested to read the link:../spec/TestFormatSpec.adoc[`Test Format Spec`].
+
+
+=== Contribute
+
+You are encouraged to contribute to this repository (including changes to this document) by submitting pull requests and by commenting on pull requests submitted by other people as described in the link:../README.md[`README.md`] file in the top level directory.
+
+While submitting a pull request note that some directories use `ChangeLog` files to track changes in the code and documentation.  Please honor these, keeping them up to date and including the ChangeLog entry in the _git_ commit message.
+
+Make sure to also include a comment with the SPDX license identifier in all source files, for example:
+```
+// SPDX-License-Identifier: BSD-3-Clause
+```
+
+NOTE: Don't forget to add your own name to the list of contributors in the document.
+
+== Licensing
+
+In general:
+
+* code is licensed under the BSD 3-clause license (SPDX license identifier `BSD-3-Clause`);
+* documentation is licensed under the Creative Commons Attribution 4.0 International license (SPDX license identifier `CC-BY-4.0`).
+
+The files link:../COPYING.BSD[`COPYING.BSD`] and link:../COPYING.CC[`COPYING.CC`] in the top level directory contain the complete text of these licenses.
+
+NOTE: The riscv-ovpsim simulator is licensed under an Imperas license. There is no dependency on this and it is included as a convenience to users.
+
+
+==== AsciiDoc
+
+This is a structured text format used by this document.  Simple usage should be fairly self evident.
+
+* Comprehensive information on the format is on the http://www.methods.co.nz/asciidoc/[AsciiDoc website].
+
+* Comprehensive information on the tooling on the https://asciidoctor.org/[AsciiDoctor website].
+
+* You may find this https://asciidoctor.org/docs/asciidoc-syntax-quick-reference/[cheat sheet] helpful.
+
+==== Installing tools
+
+To generate the documentation as HTML you need _asciidoctor_ and to generate as
+PDF you need _asciidoctor-pdf_.
+
+* These are the https://asciidoctor.org/docs/install-toolchain/[installation instructions for asciidoctor].
+
+* These are the https://asciidoctor.org/docs/asciidoctor-pdf/#install-the-published-gem[installation instructions for asciidoctor-pdf].
+
+To spell check you need _aspell_ installed.
+
+==== Building the documentation
+
+To build HTML:
+[source,make]
+----
+make html
+----
+
+To build PDF:
+[source,make]
+----
+make pdf
+----
+
+To build both:
+[source,make]
+----
+make
+----
+
+To check the spelling (excludes any listing or code phrases):
+[source,make]
+----
+make spell
+----
+
+Any custom words for spell checking should be added to link:./custom.wordlist[`custom.wordlist`].
+
+=== Contributors
+
+This document has been created by the following people (in alphabetical order of surname).
+
+* Jeremy Bennett
+* Mary Bennett
+* Simon Davidmann
+* Neel Gala
+* Radek Hajek
+* Lee Moore
+* Milan Nostersky
+* Marcela Zachariasova
+
+=== Document history
+[cols="<1,<2,<3,<4",options="header,pagewidth",]
+|================================================================================
+| _Revision_ | _Date_            | _Author_ | _Modification_
+| 1.16 Draft | 23 September 2020 | Neel Gala| Changed Compliance to Architecture/Architectural. Refined the steps to port a new target. Removed simulator and target specific docs. Added vocabulary from the Test Format Specification
+| 1.15 Draft | 14 March 2019     |
+Prashanth Mundkur |
+
+Added support and instructions for using the C and OCaml simulators from the Sail RISC-V formal model as targets.
+| 1.14 Draft  | 21 February 2019      |
+Deborah Soung |
+
+Documented how to use SiFive's RISC-V ISA Formal Specification model as a target.
+| 1.13 Draft  | 29 January 2019      |
+Deborah Soung |
+
+Added documentation on how to use Rocket Chip generated cores as targets.
+| 1.12 Draft  | 22 November 2018      |
+Simon Davidmann |
+
+Updated notes on Test Suites.
+| 1.11 Draft  | 21 November 2018      |
+Neel Gala |
+
+Added new signature format specs .
+| 1.10 Draft  | 20 June 2018      |
+
+Simon Davidmann, Lee Moore |
+
+Cleaned up description of updated framework and inclusion of riscvOVPsim.
+
+| 1.9 Draft  | 12 June 2018      |
+
+Jeremy Bennett |
+
+Update Future work section to take account of Codasip changes. Remove diagrammatic directory structure.
+
+| 1.8 Draft  | 12 June 2018      |
+
+Jeremy Bennett |
+
+Add Future work section.
+
+| 1.7 Draft  | 12 June 2018      |
+
+Jeremy Bennett |
+
+Add CC license as an appendix.
+
+| 1.6 Draft  | 10 June 2018      |
+
+Jeremy Bennett |
+
+Tidy up areas that are flawed in HTML version.
+
+| 1.5 Draft  |  8 June 2018      |
+
+Jeremy Bennett |
+
+General tidy up.
+
+| 1.4 Draft  |  8 June 2018      |
+
+Jeremy Bennett |
+
+Added license preamble.
+
+| 1.3 Draft  |  5 June 2018      |
+
+Simon Davidmann |
+
+Updated to reflect directory structure and trace macros.
+
+| 1.2 Draft  |  3 June 2018      |
+
+Jeremy Bennett |
+
+Converted to AsciiDoc, cleaned up and restructured.
+
+| 1.1 Draft  |  1 June 2018      |
+
+Simon Davidmann
+Lee Moore |
+
+Revised format and expand to describe framework, usage of many tests groups,
+and different Targets
+
+|1.0         | 24 December 2017  |
+
+Radek Hajek
+Milan Nostersky
+Marcela Zachariasova |
+
+First version of the document.
+
+|================================================================================
+
+== Repository structure
+
+The top level directory contains :
+
+ - a `README.md` file providing high-level details about the RISC-V Architecture Testing Framework. 
+ - `CHANGELOG.md` for logging changes with respect to code.
+ -  complete license files for the Creative Commons and BSD licenses used by the task group.  
+
+There are then five top level directories.
+
+`doc`:: All the documentation for the project, written using _AsciiDoc_.
+
+`coverage`:: This directory contains multiple coverpoint YAMLs which capture all the coverpoints of 
+interest which are covered by all the tests in the `riscv-test-suite` directory.
+
+`riscv-test-suite`:: This contains a further `env` subdirectory which contains the `arch_test.h` and the `encoding.h` file which includes common assembly macros and routines which is used across the tests in the suite. Further directories are present which contain the actual architectural tests. The names and structure of these directories is based on the link:../test-pool structure guideline highlighted above. 
+
+== Vocabulary
+=== The architectural test
+
+At the heart of the testing infrastructure is the detailed <<The architectural tests, _architectural test_>> available as `.S` assembly files. The specification and format of the tests is defined in the link:../spec/TestFormatSpec.adoc[`Test Format Spec`].
+
+=== The architectural test pool
+
+The <<The architectural test, _architectural tests_>> are grouped into different functional test suites targeting the different subsets of the RISC-V specification. For more details on the test-pool structure, hierarchy and conventions please refer to the link:../spec/TestFormatSpec.adoc[`Test Format Spec`].
+
+For information on the currently supported different test suites, look here: link:../riscv-test-suite/README.md[../riscv-test-suite/README.md]
+
+=== The test signature
+
+Each test in the <<The architectural test pool, _architectural test pool_>> generates a <<The test signature, _test signature_>>, which represents the data written into specific memory locations during the execution of the test. The signature typically will record values (or sanitised values) of the operations carried out in the test. More details on the format and nature of the signatures is available in the link:../spec/TestFormatSpec.adoc[`Test Format Spec`]
+
+=== The reference signature
+
+In order to claim that a device/implementation has passed the RISC-V Architecture Tests, the <<The test signature, _test signatures_>> obtained from the execution of the tests on the implementation need to be compared against a set of _golden_ <<The reference signatures, _reference signature_>>. These reference signatures are currently generated by the link:https://github.com/rems-project/sail-riscv[`RISC-V SAIL`] formal model and statically hosted in the repository for each test.
+
+=== The test target
+The <<The test target,_test target_>> can be either a RISC-V Instruction Set Simulator (ISS), a RISC-V emulator, a RISC-V RTL model running on an HDL simulator, a RISC-V FPGA implementation or a physical chip. Each of the target types offers specific features and represents specific interface challenges. It is a role of the  <<The target shell, _target shell_>> to handle different targets while using the same <<The architectural test pool,_architectural test pool_>> as a test source.
+
+=== The target shell
+The <<The target shell, _target shell_>> is the software and hardware environment around the <<The test target,_test target_>> that enables it to communicate with the framework, including assembling and linking tests, loading tests into memory, executing tests, and extracting the signature. The input to the <<The target shell, _target shell_>> is a .S <<The architectural test,_architectural test_>> file, and the output is a <<The test signature,_test signature_>>.
+
+
+== Porting a new target
+
+Please refer to the RISCOF's guide on [Running
+RISCV-ARCH-TESTS](https://riscof.readthedocs.io/en/stable/arch-tests.html) to run the architectural
+test-suite on your DUT.

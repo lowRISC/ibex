@@ -1,0 +1,250 @@
+# For Licence details look at https://gitlab.com/incoresemi/riscv-compliance/riscv_ctg/-/blob/master/LICENSE.incore
+
+mul:
+    config: 
+      - check ISA:=regex(.*I.*M.*)
+    opcode: 
+      mul: 0
+    rs1: 
+      <<: *all_regs
+    rs2: 
+      <<: *all_regs
+    rd: 
+      <<: *all_regs
+    op_comb: 
+      <<: *rfmt_op_comb
+    val_comb:
+      <<: [*base_rs1val_sgn , *base_rs2val_sgn , *rfmt_val_comb_sgn]
+      abstract_comb:
+        'sp_dataset(xlen)': 0
+        <<: [*rs1val_walking, *rs2val_walking]
+
+mulh:
+    config: 
+      - check ISA:=regex(.*I.*M.*)
+    opcode: 
+      mulh: 0
+    rs1: 
+      <<: *all_regs
+    rs2: 
+      <<: *all_regs
+    rd: 
+      <<: *all_regs
+    op_comb: 
+      <<: *rfmt_op_comb
+    val_comb:
+      <<: [*base_rs1val_sgn , *base_rs2val_sgn , *rfmt_val_comb_sgn]
+      abstract_comb:
+        'sp_dataset(xlen)': 0
+        <<: [*rs1val_walking, *rs2val_walking]
+
+mulhu:
+    config: 
+      - check ISA:=regex(.*I.*M.*)
+    opcode: 
+      mulhu: 0
+    rs1: 
+      <<: *all_regs
+    rs2: 
+      <<: *all_regs
+    rd: 
+      <<: *all_regs
+    op_comb: 
+      <<: *rfmt_op_comb
+    val_comb:
+      <<: [*base_rs1val_unsgn , *base_rs2val_unsgn , *rfmt_val_comb_unsgn]
+      abstract_comb:
+        'sp_dataset(xlen,signed=False)': 0
+        <<: [*rs1val_walking_unsgn, *rs2val_walking_unsgn]
+
+mulhsu:
+    config: 
+      - check ISA:=regex(.*I.*M.*)
+    opcode: 
+      mulhsu: 0
+    rs1: 
+      <<: *all_regs
+    rs2: 
+      <<: *all_regs
+    rd: 
+      <<: *all_regs
+    op_comb: 
+      <<: *rfmt_op_comb
+    val_comb:
+      <<: [*base_rs1val_sgn , *base_rs2val_unsgn, *rfmt_val_comb_unsgn]
+      'rs1_val < 0 and rs2_val > 0': 0
+      abstract_comb:
+        'sp_dataset(xlen,[("rs1_val",xlen),("rs2_val",xlen,False)])': 0
+        <<: [*rs1val_walking, *rs2val_walking_unsgn]
+
+div:
+    config: 
+      - check ISA:=regex(.*I.*M.*)
+    opcode: 
+      div: 0
+    rs1: 
+      <<: *all_regs
+    rs2: 
+      <<: *all_regs
+    rd: 
+      <<: *all_regs
+    op_comb: 
+      <<: *rfmt_op_comb
+    val_comb:
+      <<: [*base_rs1val_sgn , *base_rs2val_sgn , *rfmt_val_comb_sgn]
+      abstract_comb:
+        'sp_dataset(xlen)': 0
+        <<: [*rs1val_walking, *rs2val_walking]
+
+divu:
+    config: 
+      - check ISA:=regex(.*I.*M.*)
+    opcode: 
+      divu: 0
+    rs1: 
+      <<: *all_regs
+    rs2: 
+      <<: *all_regs
+    rd: 
+      <<: *all_regs
+    op_comb: 
+      <<: *rfmt_op_comb
+    val_comb:
+      <<: [*base_rs1val_unsgn , *base_rs2val_unsgn , *rfmt_val_comb_unsgn]
+      abstract_comb:
+        'sp_dataset(xlen,signed=False)': 0
+        <<: [*rs1val_walking_unsgn, *rs2val_walking_unsgn]
+
+rem:
+    config: 
+      - check ISA:=regex(.*I.*M.*)
+    opcode: 
+      rem: 0
+    rs1: 
+      <<: *all_regs
+    rs2: 
+      <<: *all_regs
+    rd: 
+      <<: *all_regs
+    op_comb: 
+      <<: *rfmt_op_comb
+    val_comb:
+      <<: [*base_rs1val_sgn , *base_rs2val_sgn , *rfmt_val_comb_sgn]
+      abstract_comb:
+        'sp_dataset(xlen)': 0
+        <<: [*rs1val_walking, *rs2val_walking]
+
+remu:
+    config: 
+      - check ISA:=regex(.*I.*M.*)
+    opcode: 
+      remu: 0
+    rs1: 
+      <<: *all_regs
+    rs2: 
+      <<: *all_regs
+    rd: 
+      <<: *all_regs
+    op_comb: 
+      <<: *rfmt_op_comb
+    val_comb:
+      <<: [*base_rs1val_unsgn , *base_rs2val_unsgn , *rfmt_val_comb_unsgn]
+      abstract_comb:
+        'sp_dataset(xlen,signed=False)': 0
+        <<: [*rs1val_walking_unsgn, *rs2val_walking_unsgn]
+
+mulw:
+    config: 
+      - check ISA:=regex(.*RV64.*I.*M.*)
+    opcode: 
+      mulw: 0
+    rs1: 
+      <<: *all_regs
+    rs2: 
+      <<: *all_regs
+    rd: 
+      <<: *all_regs
+    op_comb: 
+      <<: *rfmt_op_comb
+    val_comb:
+      <<: [*base_rs1val_sgn , *base_rs2val_sgn , *rfmt_val_comb_sgn]
+      abstract_comb:
+        'sp_dataset(xlen)': 0
+        <<: [*rs1val_walking, *rs2val_walking]
+
+divw:
+    config: 
+      - check ISA:=regex(.*RV64.*I.*M.*)
+    opcode: 
+      divw: 0
+    rs1: 
+      <<: *all_regs
+    rs2: 
+      <<: *all_regs
+    rd: 
+      <<: *all_regs
+    op_comb: 
+      <<: *rfmt_op_comb
+    val_comb:
+      <<: [*base_rs1val_sgn , *base_rs2val_sgn , *rfmt_val_comb_sgn]
+      abstract_comb:
+        'sp_dataset(xlen)': 0
+        <<: [*rs1val_walking, *rs2val_walking]
+
+divuw:
+    config: 
+      - check ISA:=regex(.*RV64.*I.*M.*)
+    opcode: 
+      divuw: 0
+    rs1: 
+      <<: *all_regs
+    rs2: 
+      <<: *all_regs
+    rd: 
+      <<: *all_regs
+    op_comb: 
+      <<: *rfmt_op_comb
+    val_comb:
+      <<: [*base_rs1val_unsgn , *base_rs2val_unsgn , *rfmt_val_comb_unsgn]
+      abstract_comb:
+        'sp_dataset(xlen,signed=False)': 0
+        <<: [*rs1val_walking_unsgn, *rs2val_walking_unsgn]
+
+remw:
+    config: 
+      - check ISA:=regex(.*RV64.*I.*M.*)
+    opcode: 
+      remw: 0
+    rs1: 
+      <<: *all_regs
+    rs2: 
+      <<: *all_regs
+    rd: 
+      <<: *all_regs
+    op_comb: 
+      <<: *rfmt_op_comb
+    val_comb:
+      <<: [*base_rs1val_sgn , *base_rs2val_sgn , *rfmt_val_comb_sgn]
+      abstract_comb:
+        'sp_dataset(xlen)': 0
+        <<: [*rs1val_walking, *rs2val_walking]
+
+remuw:
+    config: 
+      - check ISA:=regex(.*RV64.*I.*M.*)
+    opcode: 
+      remuw: 0
+    rs1: 
+      <<: *all_regs
+    rs2: 
+      <<: *all_regs
+    rd: 
+      <<: *all_regs
+    op_comb: 
+      <<: *rfmt_op_comb
+    val_comb:
+      <<: [*base_rs1val_unsgn , *base_rs2val_unsgn , *rfmt_val_comb_unsgn]
+      abstract_comb:
+        'sp_dataset(xlen,signed=False)': 0
+        <<: [*rs1val_walking_unsgn, *rs2val_walking_unsgn]
+

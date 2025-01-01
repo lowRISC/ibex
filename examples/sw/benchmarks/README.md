@@ -11,8 +11,12 @@ All of these benchmarks run on Simple System. A verilator simulation suitable
 for running them can be built with:
 
 ```
-fusesoc --cores-root=. run --target=sim --setup --build lowrisc:ibex:ibex_simple_system --RV32E=0 --RV32M=ibex_pkg::RV32MFast
+fusesoc --cores-root=. run --target=sim --setup --build lowrisc:ibex:ibex_simple_system `./util/ibex_config.py maxperf fusesoc_opts`
 ```
+
+This will build a simulation of Ibex in the 'maxperf' configuration.
+It is one of several pre-defined ibex configurations, others can be used.
+These are specified in the `ibex_configs.yaml` file.
 
 See examples/simple_system/README.md for full details.
 

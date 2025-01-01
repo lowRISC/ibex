@@ -1,0 +1,22 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{
+  name: "riscv-arch-tests",
+  target_dir: "riscv-arch-tests",
+
+  upstream: {
+    url: "https://github.com/riscv-non-isa/riscv-arch-test",
+    rev: "main",
+  },
+
+  exclude_from_upstream: [
+    "riscv-test-suite/rv32i_m/D",
+    "riscv-test-suite/rv32i_m/F",
+    "riscv-test-suite/rv64i_m",
+    "riscv-test-suite/rv32i_m/B/src/sext.b-01.S",
+    "riscv-test-suite/rv32i_m/B/src/sext.h-01.S",
+    "riscv-test-suite/rv32i_m/B/src/zext.h_32-01.S"
+  ]
+  patch_dir: "patches/riscv_arch_tests"
+}

@@ -1,0 +1,16 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{
+  name: "riscv-tests",
+  target_dir: "riscv-tests",
+
+  upstream: {
+    url: "https://github.com/riscv-software-src/riscv-tests",
+    rev: "master",
+  },
+  exclude_from_upstream: [
+    "env/",
+    "debug/programs/encoding.h"
+  ]
+}

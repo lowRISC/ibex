@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -182,8 +182,16 @@ module prim_diff_decode #(
     // one reg for edge detection
     assign diff_pd = diff_pi;
 
-    // incorrect encoding -> signal integrity issue
-    assign sigint_o = ~(diff_pi ^ diff_ni);
+    // Raise a signal integrity error when the differential signals have equal values.  This is
+    // implemented with a `prim_xnor2` instead of behavioral code to prevent the synthesis tool from
+    // optimizing away combinational logic on the complementary differential signals.
+    prim_xnor2 #(
+      .Width (1)
+    ) u_xnor2_sigint (
+      .in0_i (diff_pi),
+      .in1_i (diff_ni),
+      .out_o (sigint_o)
+    );
 
     assign level_o = (sigint_o) ? level_q : diff_pi;
     assign level_d = level_o;
@@ -218,57 +226,52 @@ module prim_diff_decode #(
   `ASSERT(SigintFallCheck_A,  sigint_o |-> !fall_o)
 
   if (AsyncOn) begin : gen_async_assert
-`ifdef INC_ASSERT
     // assertions for asynchronous case
-    // in this case we need to sample the input signals onto the local clock to avoid race
-    // conditions between the RTL and assertion sampling in simulation.
-    logic hlp_diff_pq, hlp_diff_nq;
-    always_ff @(posedge clk_i or negedge rst_ni) begin : p_edge_reg
-      if (!rst_ni) begin
-        hlp_diff_pq  <= 1'b0;
-        hlp_diff_nq  <= 1'b1;
-      end else begin
-        hlp_diff_pq  <= diff_pi;
-        hlp_diff_nq  <= diff_ni;
-      end
-    end
-
+`ifdef INC_ASSERT
   `ifndef FPV_ALERT_NO_SIGINT_ERR
     // correctly detect sigint issue (only one transition cycle of permissible due to skew)
-    `ASSERT(SigintCheck0_A, hlp_diff_pq == hlp_diff_nq [*2] |-> ##[0:1] sigint_o)
+    `ASSERT(SigintCheck0_A, gen_async.diff_pd == gen_async.diff_nd [*2] |-> sigint_o)
     // the synchronizer adds 2 cycles of latency with respect to input signals.
     `ASSERT(SigintCheck1_A,
-        ##1 (hlp_diff_pq ^ hlp_diff_nq) && $stable(hlp_diff_pq) && $stable(hlp_diff_nq) ##1
-        $rose(hlp_diff_pq) && $stable(hlp_diff_nq) ##1 $stable(hlp_diff_pq) && $fell(hlp_diff_nq)
-        |->
-        ##1 rise_o)
+        ##1 (gen_async.diff_pd ^ gen_async.diff_nd) &&
+        $stable(gen_async.diff_pd) && $stable(gen_async.diff_nd) ##1
+        $rose(gen_async.diff_pd) && $stable(gen_async.diff_nd) ##1
+        $stable(gen_async.diff_pd) && $fell(gen_async.diff_nd)
+        |-> rise_o)
     `ASSERT(SigintCheck2_A,
-        ##1 (hlp_diff_pq ^ hlp_diff_nq) && $stable(hlp_diff_pq) && $stable(hlp_diff_nq) ##1
-        $fell(hlp_diff_pq) && $stable(hlp_diff_nq) ##1 $stable(hlp_diff_pq) && $rose(hlp_diff_nq)
-        |->
-        ##1 fall_o)
+        ##1 (gen_async.diff_pd ^ gen_async.diff_nd) &&
+        $stable(gen_async.diff_pd) && $stable(gen_async.diff_nd) ##1
+        $fell(gen_async.diff_pd) && $stable(gen_async.diff_nd) ##1
+        $stable(gen_async.diff_pd) && $rose(gen_async.diff_nd)
+        |-> fall_o)
     `ASSERT(SigintCheck3_A,
-        ##1 (hlp_diff_pq ^ hlp_diff_nq) && $stable(hlp_diff_pq) && $stable(hlp_diff_nq) ##1
-        $rose(hlp_diff_nq) && $stable(hlp_diff_pq) ##1 $stable(hlp_diff_nq) && $fell(hlp_diff_pq)
-        |->
-        ##1 fall_o)
+        ##1 (gen_async.diff_pd ^ gen_async.diff_nd) &&
+        $stable(gen_async.diff_pd) && $stable(gen_async.diff_nd) ##1
+        $rose(gen_async.diff_nd) && $stable(gen_async.diff_pd) ##1
+        $stable(gen_async.diff_nd) && $fell(gen_async.diff_pd)
+        |-> fall_o)
     `ASSERT(SigintCheck4_A,
-        ##1 (hlp_diff_pq ^ hlp_diff_nq) && $stable(hlp_diff_pq) && $stable(hlp_diff_nq) ##1
-        $fell(hlp_diff_nq) && $stable(hlp_diff_pq) ##1 $stable(hlp_diff_nq) && $rose(hlp_diff_pq)
-        |->
-        ##1 rise_o)
+        ##1 (gen_async.diff_pd ^ gen_async.diff_nd) &&
+        $stable(gen_async.diff_pd) && $stable(gen_async.diff_nd) ##1
+        $fell(gen_async.diff_nd) && $stable(gen_async.diff_pd) ##1
+        $stable(gen_async.diff_nd) && $rose(gen_async.diff_pd)
+        |-> rise_o)
   `endif
 
     // correctly detect edges
-    `ASSERT(RiseCheck_A,  ##1 $rose(hlp_diff_pq)     && (hlp_diff_pq ^ hlp_diff_nq) |->
-        ##[1:2] rise_o,  clk_i, !rst_ni || sigint_o)
-    `ASSERT(FallCheck_A,  ##1 $fell(hlp_diff_pq)     && (hlp_diff_pq ^ hlp_diff_nq) |->
-        ##[1:2] fall_o,  clk_i, !rst_ni || sigint_o)
-    `ASSERT(EventCheck_A, ##1 $changed(hlp_diff_pq)  && (hlp_diff_pq ^ hlp_diff_nq) |->
-        ##[1:2] event_o, clk_i, !rst_ni || sigint_o)
+    `ASSERT(RiseCheck_A,
+        !sigint_o ##1 $rose(gen_async.diff_pd) && (gen_async.diff_pd ^ gen_async.diff_nd) |->
+        ##[0:1] rise_o,  clk_i, !rst_ni || sigint_o)
+    `ASSERT(FallCheck_A,
+        !sigint_o ##1 $fell(gen_async.diff_pd) && (gen_async.diff_pd ^ gen_async.diff_nd) |->
+        ##[0:1] fall_o,  clk_i, !rst_ni || sigint_o)
+    `ASSERT(EventCheck_A,
+        !sigint_o ##1 $changed(gen_async.diff_pd) && (gen_async.diff_pd ^ gen_async.diff_nd) |->
+        ##[0:1] event_o, clk_i, !rst_ni || sigint_o)
     // correctly detect level
-    `ASSERT(LevelCheck0_A, !sigint_o && (hlp_diff_pq ^ hlp_diff_nq) [*3] |=>
-        $past(hlp_diff_pq, 1) == level_o,
+    `ASSERT(LevelCheck0_A,
+        !sigint_o && (gen_async.diff_pd ^ gen_async.diff_nd) [*2] |->
+        gen_async.diff_pd == level_o,
         clk_i, !rst_ni || sigint_o)
 `endif
   end else begin : gen_sync_assert

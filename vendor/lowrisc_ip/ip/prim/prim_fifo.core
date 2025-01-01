@@ -1,5 +1,5 @@
 CAPI=2:
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -13,6 +13,7 @@ filesets:
       - lowrisc:prim:flop_2sync
     files:
       - rtl/prim_fifo_async_sram_adapter.sv
+      - rtl/prim_fifo_async_simple.sv
       - rtl/prim_fifo_async.sv
       - rtl/prim_fifo_sync.sv
       - rtl/prim_fifo_sync_cnt.sv

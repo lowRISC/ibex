@@ -1,6 +1,4 @@
----
-title: "Primitive Component: Packer"
----
+# Primitive Component: Packer
 
 # Overview
 
@@ -33,7 +31,7 @@ flush_i      | input  | Send out stored data and clear state.
 flush_done_o | output | Indicates flush operation is completed.
 err_o        | output | When EnProtection is set, the error is reported through this port. This signal is asynchronous to the datapath.
 
-# Theory of Opeations
+# Theory of Operations
 
 ```code
            /----------\
@@ -61,7 +59,7 @@ The internal register size is `InW + OutW` bits to safely store the incoming
 data and send outgoing data to the `data_o` port.
 
 
-{{< wavejson >}}
+```wavejson
 { signal: [
   { name: 'valid_i',      wave: '01.01......0.'},
   { name: 'data_i[3:0]',  wave: 'x==x===.===x.', data:'0h 1h 2h 3h 4h 5h 6h 7h'},
@@ -80,7 +78,7 @@ data and send outgoing data to the `data_o` port.
     tick: ['0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18    ']
   }
 }
-{{< /wavejson >}}
+```
 
 The above waveform shows the case of InW := 4 and OutW := 6. After the first
 transaction, `prim_packer` has `0h` in the storage. When the second `valid_i`

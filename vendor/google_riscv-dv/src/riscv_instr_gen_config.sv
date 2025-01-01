@@ -90,7 +90,7 @@ class riscv_instr_gen_config extends uvm_object;
   // Can overlap with the other GPRs used in the random generation,
   // as PMP exception handler is hardcoded and does not include any
   // random instructions.
-  rand riscv_reg_t       pmp_reg;
+  rand riscv_reg_t       pmp_reg[2];
   // Use a random register for stack pointer/thread pointer
   rand riscv_reg_t       sp;
   rand riscv_reg_t       tp;
@@ -430,10 +430,13 @@ class riscv_instr_gen_config extends uvm_object;
     !(scratch_reg inside {ZERO, sp, tp, ra, GP});
   }
 
-  // This reg is only used inside PMP exception routine,
+  // These registers is only used inside PMP exception routine,
   // so we can be a bit looser with constraints.
   constraint reserve_pmp_reg_c {
-    !(pmp_reg inside {ZERO, sp, tp});
+    foreach (pmp_reg[i]) {
+      !(pmp_reg[i] inside {ZERO, sp, tp, scratch_reg});
+    }
+    unique {pmp_reg};
   }
 
   constraint gpr_c {

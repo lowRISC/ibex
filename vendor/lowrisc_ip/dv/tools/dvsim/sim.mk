@@ -1,4 +1,4 @@
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -19,9 +19,9 @@ pre_build:
 	mkdir -p ${build_dir}
 ifneq (${pre_build_cmds},)
 	# pre_build_cmds are likely changing the in-tree sources. We hence use FLOCK
-        # utility to prevent multiple builds that may be running in parallel from
-        # stepping on each other. TODO: Enforce the list of pre_build_cmds is
-        # identical across all build modes.
+	# utility to prevent multiple builds that may be running in parallel from
+	# stepping on each other. TODO: Enforce the list of pre_build_cmds is
+	# identical across all build modes.
 	${LOCK_ROOT_DIR} "cd ${build_dir} && ${pre_build_cmds}"
 endif
 
@@ -79,45 +79,92 @@ ifneq (${sw_images},)
 			exit 1; \
 		fi; \
 		prebuilt_path=`echo $$sw_image | cut -d: -f 1`; \
-		bazel_label="`echo $$sw_image | cut -d: -f 1-2`_$${sw_build_device}"; \
 		bazel_target=`echo $$sw_image | cut -d: -f 2`; \
 		index=`echo $$sw_image | cut -d: -f 3`; \
 		flags=(`echo $$sw_image | cut -d: -f 4- --output-delimiter " "`); \
+		bazel_label="`echo $$sw_image | cut -d: -f 1-2`"; \
+		if [[ $${index} != 4 && $${index} != 5 ]]; then \
+			bazel_label="$${bazel_label}_$${sw_build_device}"; \
+			bazel_cquery="labels(data, $${bazel_label}) union labels(srcs, $${bazel_label})"; \
+		else \
+			bazel_cquery="$${bazel_label}"; \
+		fi; \
 		cd ${proj_root}; \
 		if [[ $${flags[@]} =~ "prebuilt" ]]; then \
 			echo "SW image \"$$bazel_label\" is prebuilt - copying sources."; \
 			cp ${proj_root}/$${prebuilt_path} $${run_dir}/`basename $${prebuilt_path}`; \
 		else \
 			echo "Building SW image \"$${bazel_label}\"."; \
+			bazel_airgapped_opts=""; \
 			bazel_opts="${sw_build_opts} --define DISABLE_VERILATOR_BUILD=true"; \
+			bazel_opts+=" --//hw/ip/otp_ctrl/data:img_seed=${seed}"; \
+			if [[ "${build_seed}" != "None" ]]; then \
+				bazel_opts+=" --//hw/ip/otp_ctrl/data:lc_seed=${build_seed}"; \
+				bazel_opts+=" --//hw/ip/otp_ctrl/data:otp_seed=${build_seed}"; \
+			fi; \
+			if [[ -n $${BAZEL_OTP_DATA_PERM_FLAG} ]]; then \
+				bazel_opts+=" --//hw/ip/otp_ctrl/data:data_perm=$${BAZEL_OTP_DATA_PERM_FLAG}"; \
+			fi; \
 			if [[ -z $${BAZEL_PYTHON_WHEELS_REPO} ]]; then \
 				echo "Building \"$${bazel_label}\" on network connected machine."; \
 				bazel_cmd="./bazelisk.sh"; \
 			else \
 				echo "Building \"$${bazel_label}\" on air-gapped machine."; \
-				bazel_opts+=" --distdir=$${BAZEL_DISTDIR} --repository_cache=$${BAZEL_CACHE}"; \
+				bazel_airgapped_opts+=" --define SPECIFY_BINDGEN_LIBSTDCXX=true"; \
+				bazel_airgapped_opts+=" --distdir=$${BAZEL_DISTDIR}"; \
+				bazel_airgapped_opts+=" --repository_cache=$${BAZEL_CACHE}"; \
 				bazel_cmd="bazel"; \
 			fi; \
 			echo "Building with command: $${bazel_cmd} build $${bazel_opts} $${bazel_label}"; \
-			$${bazel_cmd} build $${bazel_opts} $${bazel_label}; \
-			for dep in $$($${bazel_cmd} cquery "labels(data, $${bazel_label})" \
+			$${bazel_cmd} build $${bazel_airgapped_opts} $${bazel_opts} $${bazel_label}; \
+			kind=$$($${bazel_cmd} cquery $${bazel_airgapped_opts} \
+				$${bazel_label} \
 				--ui_event_filters=-info \
 				--noshow_progress \
-				--output=starlark); do \
-				if [[ $$dep != //hw* ]] && [[ $$dep != //util* ]] && [[ $$dep != //sw/host* ]]; then \
-					for artifact in $$($${bazel_cmd} cquery $${dep} \
-						--ui_event_filters=-info \
-						--noshow_progress \
-						--output=starlark \
-						--starlark:expr="\"\\n\".join([f.path for f in target.files.to_list()])"); do \
+				--output=label_kind | cut -f1 -d' '); \
+			if [[ $${kind} == "opentitan_test" \
+					|| $${bazel_label} == "//sw/device/lib/testing/test_rom:test_rom_sim_dv" \
+					|| $${bazel_label} == "//sw/device/silicon_creator/rom:mask_rom_sim_dv" ]]; then \
+				for artifact in $$($${bazel_cmd} cquery $${bazel_airgapped_opts} \
+					$${bazel_label} \
+					--ui_event_filters=-info \
+					--noshow_progress \
+					--output=starlark \
+					`# An opentitan_test rule has all of its needed files in its runfiles.` \
+					--starlark:expr='"\n".join([f.path for f in target.data_runfiles.files.to_list()])'); do \
 						cp -f $${artifact} $${run_dir}/$$(basename $${artifact}); \
-						if [[ $$artifact == *.scr.vmem ]]; then \
+						if [[ $$artifact == *.bin && \
+							-f "$$(echo $${artifact} | cut -d. -f 1).elf" ]]; then \
 							cp -f "$$(echo $${artifact} | cut -d. -f 1).elf" \
-								$${run_dir}/$$(basename "$${artifact%.*.scr.vmem}.elf"); \
+								$${run_dir}/$$(basename -s .bin $${artifact}).elf; \
 						fi; \
-					done; \
-				fi; \
-			done; \
+				done; \
+			else \
+				for dep in $$($${bazel_cmd} cquery $${bazel_airgapped_opts} \
+					$${bazel_cquery} \
+					--ui_event_filters=-info \
+					--noshow_progress \
+					--output=starlark \
+					`# Bazel 6 cquery outputs repository targets in canonical format (@//blabla) whereas bazel 5 does not, ` \
+					`# so we use a custom starlark printer to remove in leading @ when needed.` \
+					--starlark:expr='str(target.label)[1:] if str(target.label).startswith("@//") else target.label'); do \
+					if [[ $$dep == //hw/ip/otp_ctrl/data* ]] || \
+					  ([[ $$dep != //hw* ]] && [[ $$dep != //util* ]] && [[ $$dep != //sw/host* ]]); then \
+						for artifact in $$($${bazel_cmd} cquery $${bazel_airgapped_opts} $${dep} \
+							--ui_event_filters=-info \
+							--noshow_progress \
+							--output=starlark \
+							--starlark:expr="\"\\n\".join([f.path for f in target.files.to_list()])"); do \
+							cp -f $${artifact} $${run_dir}/$$(basename $${artifact}); \
+							if [[ $$artifact == *.bin && \
+								-f "$$(echo $${artifact} | cut -d. -f 1).elf" ]]; then \
+								cp -f "$$(echo $${artifact} | cut -d. -f 1).elf" \
+									$${run_dir}/$$(basename -s .bin $${artifact}).elf; \
+							fi; \
+						done; \
+					fi; \
+				done; \
+			fi; \
 		fi; \
 	done;
 endif
@@ -182,18 +229,18 @@ cov_analyze:
 	${cov_analyze_cmd} ${cov_analyze_opts}
 
 .PHONY: build \
-        pre_build \
-        gen_sv_flist \
-        do_build \
-        post_build \
-        build_result \
-        run \
-        pre_run \
-        sw_build \
-        simulate \
-        post_run \
-        run_result \
-        debug_waves \
-        cov_merge \
-        cov_analyze \
-        cov_report
+	pre_build \
+	gen_sv_flist \
+	do_build \
+	post_build \
+	build_result \
+	run \
+	pre_run \
+	sw_build \
+	simulate \
+	post_run \
+	run_result \
+	debug_waves \
+	cov_merge \
+	cov_analyze \
+	cov_report

@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 {
@@ -22,11 +22,6 @@
   // Default file to store build_seed value
   build_seed_file_path: "{build_dir}/build_seed.log"
 
-  // pass and fail patterns
-  build_pass_patterns: []
-  // TODO: Add back FuseSoC fail pattern after
-  // https://github.com/lowRISC/opentitan/issues/7348 is resolved.
-  build_fail_patterns: []
   run_pass_patterns:   ["^TEST PASSED (UVM_)?CHECKS$"]
   run_fail_patterns:   ["^UVM_ERROR\\s[^:].*$",
                         "^UVM_FATAL\\s[^:].*$",
@@ -75,9 +70,7 @@
                "+define+DUT_HIER={dut_instance}"]
 
   run_opts: ["+UVM_NO_RELNOTES",
-             "+UVM_VERBOSITY={expand_uvm_verbosity_{verbosity}}",
-             // TODO: remove once smoke regr passes:
-             "+prim_cdc_rand_delay_mode=disable"]
+             "+UVM_VERBOSITY={expand_uvm_verbosity_{verbosity}}"]
 
   // Default list of things to export to shell
   exports: [
@@ -107,7 +100,7 @@
   //     }
   //   ]
   //
-  // To use a build mode for a specific test, set the 'use_build_mode' key.
+  // To use a build mode for a specific test, set the 'build_mode' key.
   //
   build_modes: []
 
@@ -124,10 +117,7 @@
       tests: []
       reseed: 1
       run_opts: [// Knob used to configure an existing test / vseq to have a shorter runtime.
-                 "+smoke_test=1",
-                 // Enable CDC random delay once, at the start of the sim.
-                 // TODO: uncomment once smoke regr passes:
-                 // "+prim_cdc_rand_delay_mode=once"
+                 "+smoke_test=1"
                 ]
     }
     {
@@ -140,16 +130,13 @@
     {
       name: nightly
       en_sim_modes: ["cov"]
-      run_opts: [// Enable CDC random delay changes every 10 source data changes.
-                 // TODO: Uncomment once nightly regr passes:
-                 // "+prim_cdc_rand_delay_mode=interval", "+prim_cdc_rand_delay_interval=10"
-                ]
     }
   ]
 
   // Project defaults for VCS
   vcs_cov_cfg_file: "{{build_mode}_vcs_cov_cfg_file}"
   vcs_unr_cfg_file: "{dv_root}/tools/vcs/unr.cfg"
+  vcs_xprop_cfg_file: "{dv_root}/tools/vcs/xprop.cfg"
   vcs_fsm_reset_cov_cfg_file: "{dv_root}/tools/vcs/fsm_reset_cov.cfg"
   vcs_cov_excl_files: []
 

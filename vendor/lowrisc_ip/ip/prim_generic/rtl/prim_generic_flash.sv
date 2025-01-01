@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -34,17 +34,15 @@ module prim_generic_flash #(
   inout [TestModeWidth-1:0] flash_test_mode_a_io,
   inout flash_test_voltage_h_io,
   output logic flash_err_o,
-  output ast_pkg::ast_dif_t fl_alert_src_o,
+  // Alert indication (to be connected to alert sender in the instantiating IP)
+  output logic fatal_alert_o,
+  output logic recov_alert_o,
   input tlul_pkg::tl_h2d_t tl_i,
   output tlul_pkg::tl_d2h_t tl_o,
   // Observability
   input ast_pkg::ast_obs_ctrl_t obs_ctrl_i,
-  output logic [7:0] fla_obs_o,
-  input  devmode_i
+  output logic [7:0] fla_obs_o
 );
-
-  logic unused_devmode;
-  assign unused_devmode = devmode_i;
 
   // convert this into a tlul write later
   logic init;
@@ -114,6 +112,7 @@ module prim_generic_flash #(
   // TL-UL Test Interface Emulation //
   ////////////////////////////////////
 
+  logic intg_err;
   flash_ctrl_reg_pkg::flash_ctrl_prim_reg2hw_t reg2hw;
   flash_ctrl_reg_pkg::flash_ctrl_prim_hw2reg_t hw2reg;
   flash_ctrl_prim_reg_top u_reg_top (
@@ -123,8 +122,7 @@ module prim_generic_flash #(
     .tl_o      (tl_o),
     .reg2hw    (reg2hw),
     .hw2reg    (hw2reg),
-    .intg_err_o(), // TODO: do we need to wire this up?
-    .devmode_i (1'b1)
+    .intg_err_o(intg_err)
   );
 
   logic unused_reg_sig;
@@ -137,8 +135,8 @@ module prim_generic_flash #(
   // open source model has no error response at the moment
   assign flash_err_o = 1'b0;
 
-  // default alert assignments
-  assign fl_alert_src_o = '{p: '0, n: '1};
+  assign fatal_alert_o = intg_err;
+  assign recov_alert_o = 1'b0;
 
   logic unused_obs;
   assign unused_obs = |obs_ctrl_i;

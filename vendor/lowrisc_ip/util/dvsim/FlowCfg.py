@@ -1,18 +1,18 @@
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-import datetime
+import json
 import logging as log
 import os
 import pprint
-import re
 import subprocess
 import sys
 from pathlib import Path
 from shutil import which
 
 import hjson
+from results_server import NoGCPError, ResultsServer
 from CfgJson import set_target_attribute
 from LauncherFactory import get_launcher_cls
 from Scheduler import Scheduler
@@ -52,6 +52,8 @@ class FlowCfg():
         self.branch = args.branch
         self.job_prefix = args.job_prefix
         self.gui = args.gui
+
+        self.interactive = args.interactive
 
         # Options set from hjson cfg.
         self.project = ""
@@ -141,15 +143,11 @@ class FlowCfg():
 
         # Construct the path variables after variable expansion.
         self.results_dir = (Path(self.scratch_base_path) / "reports" /
-                                  self.rel_path / "latest")
-        self.results_page = (self.results_dir /
-                                   self.results_html_name)
+                            self.rel_path / "latest")
+        self.results_page = (self.results_dir / self.results_html_name)
 
-        tmp_path = self.results_server + "/" + self.rel_path
-        self.results_server_path = self.results_server_prefix + tmp_path
-        tmp_path += "/latest"
-        self.results_server_dir = self.results_server_prefix + tmp_path
-        tmp_path += "/" + self.results_html_name
+        tmp_path = (self.results_server + "/" + self.rel_path +
+                    "/latest/" + self.results_html_name)
         self.results_server_page = self.results_server_prefix + tmp_path
         self.results_server_url = "https://" + tmp_path
 
@@ -175,6 +173,10 @@ class FlowCfg():
         # If this is a primary configuration, it doesn't matter if we don't
         # manage to expand everything.
         partial = self.is_primary_cfg
+
+        # If custom dump script is exist, replace with run_script attribute.
+        if self.args.dump_script is not None:
+            self.run_script = '{proj_root}/' + self.args.dump_script
 
         self.__dict__ = find_and_substitute_wildcards(self.__dict__,
                                                       self.__dict__,
@@ -368,8 +370,8 @@ class FlowCfg():
         '''
         self.prune_selected_cfgs()
 
-        # GUI mode is allowed only for one cfg.
-        if self.gui and len(self.cfgs) > 1:
+        # GUI or Interactive mode is allowed only for one cfg.
+        if (self.gui or self.interactive) and len(self.cfgs) > 1:
             log.fatal("In GUI mode, only one cfg can be run.")
             sys.exit(1)
 
@@ -389,7 +391,7 @@ class FlowCfg():
             log.error("Nothing to run!")
             sys.exit(1)
 
-        return Scheduler(deploy, get_launcher_cls()).run()
+        return Scheduler(deploy, get_launcher_cls(), self.interactive).run()
 
     def _gen_results(self, results):
         '''
@@ -410,35 +412,51 @@ class FlowCfg():
 
         '''
         for item in self.cfgs:
+            json_str = (item._gen_json_results(results)
+                        if hasattr(item, '_gen_json_results')
+                        else None)
             result = item._gen_results(results)
             log.info("[results]: [%s]:\n%s\n", item.name, result)
             log.info("[scratch_path]: [%s] [%s]", item.name, item.scratch_path)
-            item.write_results_html(self.results_html_name, item.results_md)
+            item.write_results(self.results_html_name, item.results_md,
+                               json_str)
             log.log(VERBOSE, "[report]: [%s] [%s/report.html]", item.name,
                     item.results_dir)
             self.errors_seen |= item.errors_seen
 
         if self.is_primary_cfg:
             self.gen_results_summary()
-            self.write_results_html(self.results_html_name,
-                                    self.results_summary_md)
+            self.write_results(self.results_html_name,
+                               self.results_summary_md)
 
     def gen_results_summary(self):
         '''Public facing API to generate summary results for each IP/cfg file
         '''
         return
 
-    def write_results_html(self, filename, text_md):
-        """Converts md text to HTML and writes to results_dir area."""
+    def write_results(self, html_filename, text_md, json_str=None):
+        """Write results to files.
+
+        This function converts text_md to HTML and writes the result to a file
+        in self.results_dir with the file name given by html_filename.  If
+        json_str is not None, this function additionally writes json_str to a
+        file with the same path and base name as the HTML file but with '.json'
+        as suffix.
+        """
 
         # Prepare reports directory, keeping 90 day history.
         clean_odirs(odir=self.results_dir, max_odirs=89)
         mk_path(self.results_dir)
 
         # Write results to the report area.
-        with open(self.results_dir / filename, "w") as f:
+        with open(self.results_dir / html_filename, "w") as f:
             f.write(
                 md_results_to_html(self.results_title, self.css_file, text_md))
+
+        if json_str is not None:
+            filename = Path(html_filename).with_suffix('.json')
+            with open(self.results_dir / filename, "w") as f:
+                f.write(json_str)
 
     def _get_results_page_link(self, relative_to, link_text=''):
         """Create a relative markdown link to the results page."""
@@ -448,159 +466,149 @@ class FlowCfg():
                                         relative_to)
         return "[%s](%s)" % (link_text, relative_link)
 
-    def _publish_results(self):
+    def _publish_results(self, results_server: ResultsServer):
         '''Publish results to the opentitan web server.
 
-        Results are uploaded to {results_server_page}.
-        If the 'latest' directory exists, then it is renamed to its 'timestamp'
-        directory. If the list of directories in this area is > 14, then the
-        oldest entry is removed. Links to the last 7 regression results are
-        appended at the end if the results page.
+        Results are uploaded to {results_server_page}. If the 'latest'
+        directory exists, then it is renamed to its 'timestamp' directory.
+        Links to the last 7 regression results are appended at the end if the
+        results page.
         '''
-        if which('gsutil') is None or which('gcloud') is None:
-            log.error("Google cloud SDK not installed! Cannot access the "
-                      "results server")
-            return
-
         # Timeformat for moving the dir
         tf = "%Y.%m.%d_%H.%M.%S"
 
-        # Extract the timestamp of the existing self.results_server_page
-        cmd = (self.results_server_cmd + " ls -L " +
-               self.results_server_page + " | grep \'Creation time:\'")
+        # Maximum number of links to add to previous results pages at the
+        # bottom of the page that we're generating.
+        max_old_page_links = 7
 
-        log.log(VERBOSE, cmd)
-        cmd_output = subprocess.run(cmd,
-                                    shell=True,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.DEVNULL)
-        log.log(VERBOSE, cmd_output.stdout.decode("utf-8"))
-        old_results_ts = cmd_output.stdout.decode("utf-8")
-        old_results_ts = old_results_ts.replace("Creation time:", "")
-        old_results_ts = old_results_ts.strip()
+        # We're going to try to put things in a directory called "latest". But
+        # there's probably something with that name already. If so, we want to
+        # move the thing that's there already to be at a path based on its
+        # creation time.
 
-        # Move the 'latest' to its timestamp directory if lookup succeeded
-        if cmd_output.returncode == 0:
-            try:
-                if old_results_ts != "":
-                    ts = datetime.datetime.strptime(
-                        old_results_ts, "%a, %d %b %Y %H:%M:%S %Z")
-                    old_results_ts = ts.strftime(tf)
-            except ValueError as e:
-                log.error(
-                    "%s: \'%s\' Timestamp conversion value error raised!", e)
-                old_results_ts = ""
+        # Try to get the creation time of any existing "latest/report.html"
+        latest_dir = '{}/latest'.format(self.rel_path)
+        latest_report_path = '{}/report.html'.format(latest_dir)
+        old_results_time = results_server.get_creation_time(latest_report_path)
 
-            # If the timestamp conversion failed - then create a dummy one with
-            # yesterday's date.
-            if old_results_ts == "":
-                log.log(VERBOSE,
-                        "Creating dummy timestamp with yesterday's date")
-                ts = datetime.datetime.now(
-                    datetime.timezone.utc) - datetime.timedelta(days=1)
-                old_results_ts = ts.strftime(tf)
+        if old_results_time is not None:
+            # If there is indeed a creation time, we will need to move the
+            # "latest" directory to a path based on that time.
+            old_results_ts = old_results_time.strftime(tf)
+            backup_dir = '{}/{}'.format(self.rel_path, old_results_ts)
 
-            old_results_dir = self.results_server_path + "/" + old_results_ts
-            cmd = (self.results_server_cmd + " mv " + self.results_server_dir +
-                   " " + old_results_dir)
-            log.log(VERBOSE, cmd)
-            cmd_output = subprocess.run(cmd,
-                                        shell=True,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.DEVNULL)
-            log.log(VERBOSE, cmd_output.stdout.decode("utf-8"))
-            if cmd_output.returncode != 0:
-                log.error("Failed to mv old results page \"%s\" to \"%s\"!",
-                          self.results_server_dir, old_results_dir)
+            results_server.mv(latest_dir, backup_dir)
+
+        # Do an ls in the results root dir to check what directories exist. If
+        # something goes wrong then continue, behaving as if there were none.
+        try:
+            existing_paths = results_server.ls(self.rel_path)
+        except subprocess.CalledProcessError:
+            log.error('Failed to list {} with gsutil. '
+                      'Acting as if there was nothing.'
+                      .format(self.rel_path))
+            existing_paths = []
 
         # Do an ls in the results root dir to check what directories exist.
-        results_dirs = []
-        cmd = self.results_server_cmd + " ls " + self.results_server_path
-        log.log(VERBOSE, cmd)
-        cmd_output = subprocess.run(args=cmd,
-                                    shell=True,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.DEVNULL)
-        log.log(VERBOSE, cmd_output.stdout.decode("utf-8"))
-        if cmd_output.returncode == 0:
-            # Some directories exist. Check if 'latest' is one of them
-            results_dirs = cmd_output.stdout.decode("utf-8").strip()
-            results_dirs = results_dirs.split("\n")
-        else:
-            log.log(VERBOSE, "Failed to run \"%s\"!", cmd)
+        existing_basenames = []
+        for existing_path in existing_paths:
+            # Here, existing_path will start with "gs://" and should end in a
+            # time or with "latest" and then a trailing '/'. Split it to find
+            # that the directory basename. The rsplit() here will result in
+            # ["some_path", "basename_we_want", ""]. Grab the middle.
+            existing_parts = existing_path.rsplit('/', 2)
+            existing_basenames.append(existing_parts[1])
 
-        # Start pruning
-        log.log(VERBOSE, "Pruning %s area to limit last 7 results",
-                self.results_server_path)
+        # We want to add pointers to existing directories with recent
+        # timestamps. Sort in reverse (time and lexicographic!) order, then
+        # take the top few results.
+        existing_basenames.sort(reverse=True)
 
-        rdirs = []
-        for rdir in results_dirs:
-            dirname = rdir.replace(self.results_server_path, '')
-            dirname = dirname.replace('/', '')
-            # Only track history directories with format
-            # "year.month.date_hour.min.sec".
-            if not bool(re.match(r"[\d*.]*_[\d*.]*", dirname)):
-                continue
-            rdirs.append(dirname)
-        rdirs.sort(reverse=True)
-
-        rm_cmd = ""
         history_txt = "\n## Past Results\n"
         history_txt += "- [Latest](../latest/" + self.results_html_name + ")\n"
-        if len(rdirs) > 0:
-            for i in range(len(rdirs)):
-                if i < 7:
-                    rdir_url = '../' + rdirs[i] + "/" + self.results_html_name
-                    history_txt += "- [{}]({})\n".format(rdirs[i], rdir_url)
-                elif i > 14:
-                    rm_cmd += self.results_server_path + '/' + rdirs[i] + " "
-
-        if rm_cmd != "":
-            rm_cmd = self.results_server_cmd + " -m rm -r " + rm_cmd + "; "
+        for existing_basename in existing_basenames[:max_old_page_links]:
+            relative_url = '../{}/{}'.format(existing_basename,
+                                             self.results_html_name)
+            history_txt += '- [{}]({})\n'.format(existing_basename,
+                                                 relative_url)
 
         # Append the history to the results.
         publish_results_md = self.publish_results_md or self.results_md
         publish_results_md = publish_results_md + history_txt
 
-        # Publish the results page.
-        # First, write the results html file to the scratch area.
-        self.write_results_html("publish.html", publish_results_md)
-        results_html_file = self.results_dir / "publish.html"
+        # Export any results dictionary to json
+        suffixes = ['html']
+        json_str = None
+        if hasattr(self, 'results_dict'):
+            suffixes.append('json')
+            json_str = json.dumps(self.results_dict)
 
+        # Export our markdown page to HTML and dump the json to a local file.
+        # These are called publish.html and publish.json locally, but we'll
+        # rename them as part of the upload.
+        self.write_results("publish.html", publish_results_md, json_str)
+
+        html_name_no_suffix = self.results_html_name.split('.', 1)[0]
+        dst_no_suffix = '{}/latest/{}'.format(self.rel_path,
+                                              html_name_no_suffix)
+
+        # Now copy our local files over to the server
         log.info("Publishing results to %s", self.results_server_url)
-        cmd = (self.results_server_cmd + " cp " +
-               str(results_html_file) + " " +
-               self.results_server_page)
-        log.log(VERBOSE, cmd)
-        try:
-            cmd_output = subprocess.run(args=cmd,
-                                        shell=True,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.STDOUT)
-            log.log(VERBOSE, cmd_output.stdout.decode("utf-8"))
-        except Exception as e:
-            log.error("%s: Failed to publish results:\n\"%s\"", e, str(cmd))
+        for suffix in suffixes:
+            src = "{}/publish.{}".format(self.results_dir, suffix)
+            dst = "{}.{}".format(dst_no_suffix, suffix)
+            results_server.upload(src, dst)
 
     def publish_results(self):
-        '''Public facing API for publishing results to the opentitan web
-        server.
-        '''
+        """Publish these results to the opentitan web server."""
+        try:
+            server_handle = ResultsServer(self.results_server)
+        except NoGCPError:
+            # We failed to create a results server object at all, so we're not going to be able
+            # to publish any results right now.
+            log.error("Google Cloud SDK not installed. Cannot access the "
+                      "results server")
+            return
+
         for item in self.cfgs:
-            item._publish_results()
+            item._publish_results(server_handle)
 
         if self.is_primary_cfg:
-            self.publish_results_summary()
+            self.publish_results_summary(server_handle)
 
-    def publish_results_summary(self):
+        # Trigger a rebuild of the site/docs which may pull new data from
+        # the published results.
+        self.rebuild_site()
+
+    def publish_results_summary(self, results_server: ResultsServer):
         '''Public facing API for publishing md format results to the opentitan
         web server.
         '''
         # Publish the results page.
         log.info("Publishing results summary to %s", self.results_server_url)
-        cmd = (self.results_server_cmd + " cp " +
-               str(self.results_page) + " " +
-               self.results_server_page)
-        log.log(VERBOSE, cmd)
+
+        latest_dir = '{}/latest'.format(self.rel_path)
+        latest_report_path = '{}/report.html'.format(latest_dir)
+        results_server.upload(self.results_page, latest_report_path)
+
+    def rebuild_site(self):
+        '''Trigger a rebuild of the opentitan.org site using a Cloud Build trigger.
+
+        The Gcloud project which builds and deploys the site ("gold-hybrid-255131") uses
+        a cloudbuild yaml file (util/site/site-builder/cloudbuild-deploy-docs.yaml) to define
+        the rebuilding of the site.
+        A manually-triggered job ('site-builder-manual') has been created, which can be
+        triggered through an appropriately-authenticated Google Cloud SDK command. This
+        function calls that command.
+        '''
+        if which('gcloud') is None:
+            log.error("Google Cloud SDK not installed!"
+                      "Cannot access the Cloud Build API to trigger a site rebuild.")
+            return
+
+        project = 'gold-hybrid-255313'
+        trigger_name = 'site-builder-manual'
+        cmd = f"gcloud beta --project {project} builds triggers run {trigger_name}".split(' ')
         try:
             cmd_output = subprocess.run(args=cmd,
                                         shell=True,
@@ -608,7 +616,7 @@ class FlowCfg():
                                         stderr=subprocess.STDOUT)
             log.log(VERBOSE, cmd_output.stdout.decode("utf-8"))
         except Exception as e:
-            log.error("%s: Failed to publish results:\n\"%s\"", e, str(cmd))
+            log.error(f"{e}: Failed to trigger Cloud Build job to rebuild site:\n\"{cmd}\"")
 
     def has_errors(self):
         return self.errors_seen

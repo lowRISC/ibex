@@ -1,0 +1,586 @@
+# For Licence details look at https://gitlab.com/incoresemi/riscv-compliance/riscv_ctg/-/blob/master/LICENSE.incore
+
+cebreak:
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*C.*)
+  opcode: 
+    c.ebreak: 0
+
+caddi4spn:
+    config: 
+      - check ISA:=regex(.*I.*C.*)
+    opcode: 
+      c.addi4spn: 0
+    rd:
+      <<: *c_regs
+    val_comb:
+      'imm_val > 0' : 0
+      'imm_val == 1020': 0
+      abstract_comb:
+        'walking_ones("imm_val", 8,False,scale_func = lambda x: x*4)': 0
+        'walking_zeros("imm_val", 8,False,scale_func = lambda x: x*4)': 0
+        'alternate("imm_val",8,False,scale_func = lambda x: x*4)': 0
+
+clw:
+    config: 
+      - check ISA:=regex(.*I.*C.*)
+    opcode: 
+      c.lw: 0
+    rs1: 
+      <<: *c_regs
+    rd: 
+      <<: *c_regs
+    op_comb:
+        'rs1 == rd': 0
+        'rs1 != rd': 0
+    val_comb:
+        'imm_val > 0': 0
+        'imm_val == 0': 0
+        abstract_comb:
+          'walking_ones("imm_val",5,False, scale_func = lambda x: x*4)': 0
+          'walking_zeros("imm_val",5,False, scale_func = lambda x: x*4)': 0
+          'alternate("imm_val",5, False,scale_func = lambda x: x*4)': 0
+
+cld:
+    config: 
+      - check ISA:=regex(.*RV64.*I.*C.*)
+    opcode: 
+      c.ld: 0
+    rs1: 
+      <<: *c_regs
+    rd: 
+      <<: *c_regs
+    op_comb:
+        'rs1 == rd': 0
+        'rs1 != rd': 0
+    val_comb:
+        'imm_val > 0': 0
+        'imm_val == 0': 0
+        abstract_comb:
+          'walking_ones("imm_val",5,False, scale_func = lambda x: x*8)': 0
+          'walking_zeros("imm_val",5,False, scale_func = lambda x: x*8)': 0
+          'alternate("imm_val",5, False,scale_func = lambda x: x*8)': 0
+
+csw:
+    config: 
+      - check ISA:=regex(.*I.*C.*)
+    opcode: 
+      c.sw: 0
+    rs1: 
+      <<: *c_regs
+    rs2: 
+      <<: *c_regs
+    op_comb: 
+        'rs1 != rs2': 0
+    val_comb:
+        'imm_val > 0': 0
+        'imm_val == 0': 0
+        <<: [  *base_rs2val_sgn]
+        abstract_comb:
+          <<: [*rs2val_walking]
+          'walking_ones("imm_val",5,False, scale_func = lambda x: x*4)': 0
+          'walking_zeros("imm_val",5,False, scale_func = lambda x: x*4)': 0
+          'alternate("imm_val",5, False,scale_func = lambda x: x*4)': 0
+
+csd:
+    config: 
+      - check ISA:=regex(.*RV64.*I.*C.*)
+    opcode: 
+      c.sd: 0
+    rs1: 
+      <<: *c_regs
+    rs2: 
+      <<: *c_regs
+    op_comb:
+        'rs1 != rs2': 0
+    val_comb:
+        'imm_val > 0': 0
+        'imm_val == 0': 0
+        <<: [  *base_rs2val_sgn]
+        abstract_comb:
+          <<: [*rs2val_walking]
+          'walking_ones("imm_val",5,False, scale_func = lambda x: x*8)': 0
+          'walking_zeros("imm_val",5,False, scale_func = lambda x: x*8)': 0
+          'alternate("imm_val",5, False,scale_func = lambda x: x*8)': 0
+
+cnop:
+    config: 
+      - check ISA:=regex(.*I.*C.*) 
+    opcode: 
+      c.nop: 0
+    val_comb:
+      abstract_comb:
+        <<: *cbimm_val_walking
+
+caddi:
+    config: 
+      - check ISA:=regex(.*I.*C.*)
+    opcode: 
+      c.addi: 0
+    rd:
+      <<: *all_regs_mx0
+    val_comb:
+      <<: [*base_rs1val_sgn, *cbfmt_immval_sgn, *ifmt_val_comb_sgn]
+      abstract_comb:
+        'sp_dataset(xlen,["rs1_val",("imm_val",6)])': 0
+        <<: [*rs1val_walking, *cbimm_val_walking]
+
+cjal:
+  config: 
+      - check ISA:=regex(.*RV32.*I.*C.*) 
+  opcode: 
+    c.jal: 0
+  val_comb:
+    'imm_val > 0': 0
+    'imm_val < 0': 0
+    abstract_comb:
+      'walking_ones("imm_val", 11,fltr_func =lambda x: (x>=10 and x<2030) or (x<=-8 and x>-2030),scale_func = lambda x: x*2)': 0
+      'walking_zeros("imm_val", 11,fltr_func =lambda x: (x>=10 and x<2030) or (x<=-8 and x>-2030),scale_func = lambda x: x*2)': 0
+      'alternate("imm_val",11, fltr_func =lambda x: (x>=10 and x<2030) or (x<=-8 and x>-2030) ,scale_func = lambda x: x*2)': 0
+
+
+caddiw:
+    config: 
+      - check ISA:=regex(.*RV64.*I.*C.*) 
+    opcode: 
+      c.addiw: 0
+    rd: 
+      <<: *all_regs_mx0
+    val_comb: 
+      'rs1_val == (-2**(xlen-1))': 0
+      'rs1_val == 0': 0
+      'rs1_val == (2**(xlen-1)-1)': 0
+      'rs1_val == 1': 0
+      <<: [*cbfmt_immval_sgn, *ifmt_val_comb_sgn]
+      abstract_comb:
+        'sp_dataset(xlen,["rs1_val",("imm_val",6)])': 0
+        'walking_ones("rs1_val", xlen)': 0
+        'walking_zeros("rs1_val", xlen)': 0
+        'alternate("rs1_val",xlen)': 0
+        <<: [*cbimm_val_walking]
+
+cli:
+  config: 
+      - check ISA:=regex(.*I.*C.*) 
+  opcode: 
+    c.li: 0
+  rd:
+    <<: *all_regs
+  val_comb:
+    <<: [*cbfmt_immval_sgn] 
+    abstract_comb:
+      'walking_ones("imm_val", 6)': 0
+      'walking_zeros("imm_val", 6)': 0
+      'alternate("imm_val", 6)': 0
+
+caddi16sp:
+    config: 
+      - check ISA:=regex(.*I.*C.*)
+    opcode: 
+      c.addi16sp: 0
+    rd:
+      x2: 0
+    val_comb:
+      <<: [*base_rs1val_sgn,*ifmt_val_comb_sgn]
+      'imm_val == -512': 0
+      'imm_val == 496': 0
+      abstract_comb:
+        <<: [*rs1val_walking]
+        'walking_ones("imm_val", 6,True,scale_func = lambda x: x*16)': 0
+        'walking_zeros("imm_val", 6,True,scale_func = lambda x: x*16)': 0
+        'alternate("imm_val",6,True,scale_func = lambda x: x*16)': 0
+
+clui:
+  config: 
+    - check ISA:=regex(.*I.*C.*) 
+  opcode: 
+    c.lui: 0
+  rd:
+    x0: 0
+    x1: 0
+    x3: 0
+    x4: 0
+    x5: 0
+    x6: 0
+    x7: 0
+    x8: 0
+    x9: 0
+    x10: 0
+    x11: 0
+    x12: 0
+    x13: 0
+    x14: 0
+    x15: 0
+    x16: 0
+    x17: 0
+    x18: 0
+    x19: 0
+    x20: 0
+    x21: 0
+    x22: 0
+    x23: 0
+    x24: 0
+    x25: 0
+    x26: 0
+    x27: 0
+    x28: 0
+    x29: 0
+    x30: 0
+    x31: 0
+
+  val_comb:
+    'rs1_val > 0 and imm_val > 32': 0
+    'rs1_val > 0 and imm_val < 32 and imm_val !=0 ': 0
+    'rs1_val < 0 and imm_val > 32': 0
+    'rs1_val < 0 and imm_val < 32 and imm_val !=0 ': 0
+    abstract_comb:
+      'walking_ones("imm_val", 6, False)': 0
+      'walking_zeros("imm_val", 6, False)': 0
+      'alternate("imm_val", 6, False)': 0
+
+csrli:
+  config: 
+      - check ISA:=regex(.*I.*C.*) 
+  opcode: 
+    c.srli: 0
+  rs1:
+    <<: *c_regs
+  val_comb:
+      'rs1_val < 0 and imm_val < xlen': 0
+      'rs1_val > 0 and imm_val < xlen': 0
+      'rs1_val == imm_val and imm_val != 0  and imm_val < xlen': 0
+      'rs1_val == (-2**(xlen-1)) and imm_val != 0 and imm_val < xlen': 0
+      'rs1_val == 0 and imm_val != 0 and imm_val < xlen': 0
+      'rs1_val == (2**(xlen-1)-1) and imm_val != 0 and imm_val < xlen': 0
+      'rs1_val == 1 and imm_val != 0 and imm_val < xlen': 0
+      abstract_comb:
+        'sp_dataset(xlen,["rs1_val"])': 0
+        <<: [*rs1val_walking]
+        'walking_ones("imm_val", ceil(log(xlen,2)), False)': 0
+        'walking_zeros("imm_val", ceil(log(xlen,2)), False)': 0
+        'alternate("imm_val", ceil(log(xlen,2)), False)': 0
+
+csrai:
+  config: 
+      - check ISA:=regex(.*I.*C.*) 
+  opcode: 
+    c.srai: 0
+  rs1:
+    <<: *c_regs
+  val_comb:
+      'rs1_val < 0 and imm_val < xlen': 0
+      'rs1_val > 0 and imm_val < xlen': 0
+      'rs1_val == imm_val and imm_val != 0  and imm_val < xlen': 0
+      'rs1_val == (-2**(xlen-1)) and imm_val != 0 and imm_val < xlen': 0
+      'rs1_val == 0 and imm_val != 0 and imm_val < xlen': 0
+      'rs1_val == (2**(xlen-1)-1) and imm_val != 0 and imm_val < xlen': 0
+      'rs1_val == 1 and imm_val != 0 and imm_val < xlen': 0
+      abstract_comb:
+        'sp_dataset(xlen,["rs1_val"])': 0
+        <<: [*rs1val_walking]
+        'walking_ones("imm_val", ceil(log(xlen,2)), False)': 0
+        'walking_zeros("imm_val", ceil(log(xlen,2)), False)': 0
+        'alternate("imm_val", ceil(log(xlen,2)), False)': 0
+
+candi:
+    config: 
+      - check ISA:=regex(.*I.*C.*)
+    opcode: 
+      c.andi: 0
+    rs1:
+      <<: *c_regs
+    val_comb:
+      <<: [*base_rs1val_sgn,*cbfmt_immval_sgn,*ifmt_val_comb_sgn]
+      abstract_comb:
+        'sp_dataset(xlen,["rs1_val",("imm_val",6)])': 0
+        <<: [*rs1val_walking, *cbimm_val_walking]
+
+csub:
+    config: 
+      - check ISA:=regex(.*I.*C.*)
+    opcode: 
+      c.sub: 0
+    rs1:
+      <<: *c_regs
+    rs2:
+      <<: *c_regs
+    op_comb:
+      <<: *sfmt_op_comb
+    val_comb:
+      <<: [*crfmt_val_comb_sgn, *base_rs1val_sgn, *base_rs2val_sgn]
+      abstract_comb:
+        'sp_dataset(xlen)': 0
+        <<: [*rs1val_walking,*rs2val_walking] 
+
+cxor:
+    config: 
+      - check ISA:=regex(.*I.*C.*)
+    opcode: 
+      c.xor: 0
+    rs1:
+      <<: *c_regs
+    rs2:
+      <<: *c_regs
+    op_comb:
+      <<: *sfmt_op_comb
+    val_comb:
+      <<: [*crfmt_val_comb_sgn, *base_rs1val_sgn, *base_rs2val_sgn]
+      abstract_comb:
+        'sp_dataset(xlen)': 0
+        <<: [*rs1val_walking,*rs2val_walking] 
+
+cor:
+    config: 
+      - check ISA:=regex(.*I.*C.*)
+    opcode: 
+      c.or: 0
+    rs1:
+      <<: *c_regs
+    rs2:
+      <<: *c_regs
+    op_comb:
+      <<: *sfmt_op_comb
+    val_comb:
+      <<: [*crfmt_val_comb_sgn, *base_rs1val_sgn,*base_rs2val_sgn]
+      abstract_comb:
+        'sp_dataset(xlen)': 0
+        <<: [*rs1val_walking,*rs2val_walking] 
+
+cand:
+    config: 
+      - check ISA:=regex(.*I.*C.*)
+    opcode: 
+      c.and: 0
+    rs1:
+      <<: *c_regs
+    rs2:
+      <<: *c_regs
+    op_comb:
+      <<: *sfmt_op_comb
+    val_comb:
+      <<: [*crfmt_val_comb_sgn, *base_rs1val_sgn,*base_rs2val_sgn]
+      abstract_comb:
+        'sp_dataset(xlen)': 0
+        <<: [*rs1val_walking,*rs2val_walking] 
+
+csubw:
+    config: 
+      - check ISA:=regex(.*RV64.*I.*C.*)
+    opcode: 
+      c.subw: 0
+    rs1:
+      <<: *c_regs
+    rs2:
+      <<: *c_regs
+    op_comb:
+      <<: *sfmt_op_comb
+    val_comb:
+      <<: [*crfmt_val_comb_sgn, *base_rs1val_sgn, *base_rs2val_sgn]
+      abstract_comb:
+        'sp_dataset(xlen)': 0
+        <<: [*rs1val_walking,*rs2val_walking] 
+
+caddw:
+    config: 
+      - check ISA:=regex(.*RV64.*I.*C.*)
+    opcode: 
+      c.addw: 0
+    rs1:
+      <<: *c_regs
+    rs2:
+      <<: *c_regs
+    op_comb:
+      <<: *sfmt_op_comb
+    val_comb:
+      <<: [*crfmt_val_comb_sgn, *base_rs1val_sgn, *base_rs2val_sgn]
+      abstract_comb:
+        'sp_dataset(xlen)': 0
+        <<: [*rs1val_walking,*rs2val_walking] 
+
+cj:
+  config: 
+      - check ISA:=regex(.*I.*C.*) 
+  opcode: 
+    c.j: 0
+  val_comb:
+    'imm_val > 0': 0
+    'imm_val < 0': 0
+    abstract_comb:
+      'walking_ones("imm_val", 11,fltr_func =lambda x: (x>=10 and x<2030) or (x<=-8 and x>-2030),scale_func = lambda x: x*2)': 0
+      'walking_zeros("imm_val", 11,fltr_func =lambda x: (x>=10 and x<2030) or (x<=-8 and x>-2030),scale_func = lambda x: x*2)': 0
+      'alternate("imm_val",11, fltr_func =lambda x: (x>=10 and x<2030) or (x<=-8 and x>-2030) ,scale_func = lambda x: x*2)': 0
+
+cbeqz:
+  config: 
+      - check ISA:=regex(.*I.*C.*) 
+  opcode: 
+    c.beqz: 0
+  rs1:
+    <<: *c_regs
+  val_comb:
+    'rs1_val > 0 and imm_val > 0': 0
+    'rs1_val < 0 and imm_val > 0': 0
+    'rs1_val == 0 and imm_val > 0': 0
+    'rs1_val > 0 and imm_val < 0': 0
+    'rs1_val < 0 and imm_val < 0': 0
+    'rs1_val == 0 and imm_val < 0': 0
+    <<: [*base_rs1val_sgn]
+    abstract_comb:
+      'sp_dataset(xlen,["rs1_val"])': 0
+      <<: [*rs1val_walking]
+
+cbnez:
+  config: 
+      - check ISA:=regex(.*I.*C.*) 
+  opcode: 
+    c.bnez: 0
+  rs1:
+    <<: *c_regs
+  val_comb:
+    'rs1_val > 0 and imm_val > 0': 0
+    'rs1_val < 0 and imm_val > 0': 0
+    'rs1_val == 0 and imm_val > 0': 0
+    'rs1_val > 0 and imm_val < 0': 0
+    'rs1_val < 0 and imm_val < 0': 0
+    'rs1_val == 0 and imm_val < 0': 0
+    <<: [*base_rs1val_sgn]
+    abstract_comb:
+      'sp_dataset(xlen,["rs1_val"])': 0
+      <<: [*rs1val_walking]
+
+cslli:
+  config: 
+      - check ISA:=regex(.*I.*C.*) 
+  opcode: 
+    c.slli: 0
+  rd:
+    <<: *c_regs
+  val_comb:
+      'rs1_val < 0 and imm_val < xlen': 0
+      'rs1_val > 0 and imm_val < xlen': 0
+      'rs1_val == imm_val and imm_val != 0  and imm_val < xlen': 0
+      'rs1_val == (-2**(xlen-1)) and imm_val != 0 and imm_val < xlen': 0
+      'rs1_val == 0 and imm_val != 0 and imm_val < xlen': 0
+      'rs1_val == (2**(xlen-1)-1) and imm_val != 0 and imm_val < xlen': 0
+      'rs1_val == 1 and imm_val != 0 and imm_val < xlen': 0
+      abstract_comb:
+        'sp_dataset(xlen,["rs1_val"])': 0
+        <<: [*rs1val_walking]
+        'walking_ones("imm_val", ceil(log(xlen,2)), False)': 0
+        'walking_zeros("imm_val", ceil(log(xlen,2)), False)': 0
+        'alternate("imm_val", ceil(log(xlen,2)), False)': 0
+
+clwsp:
+    config: 
+      - check ISA:=regex(.*I.*C.*)
+    opcode: 
+      c.lwsp: 0
+    rd: 
+      <<: *all_regs_mx0
+    val_comb:
+        'imm_val > 0': 0
+        'imm_val == 0': 0
+        abstract_comb:
+          'walking_ones("imm_val",6,False, scale_func = lambda x: x*4)': 0
+          'walking_zeros("imm_val",6,False, scale_func = lambda x: x*4)': 0
+          'alternate("imm_val",6, False,scale_func = lambda x: x*4)': 0
+
+cldsp:
+    config: 
+      - check ISA:=regex(.*RV64.*I.*C.*)
+    opcode: 
+      c.ldsp: 0
+    rd: 
+      <<: *all_regs_mx0
+    val_comb:
+        'imm_val > 0': 0
+        'imm_val == 0': 0
+        abstract_comb:
+          'walking_ones("imm_val",6,False, scale_func = lambda x: x*8)': 0
+          'walking_zeros("imm_val",6,False, scale_func = lambda x: x*8)': 0
+          'alternate("imm_val",6, False,scale_func = lambda x: x*8)': 0
+
+cjr:
+  config: 
+      - check ISA:=regex(.*I.*C.*) 
+  opcode: 
+    c.jr: 0
+  rs1:
+    <<: *all_regs_mx0
+
+cmv:
+    config: 
+      - check ISA:=regex(.*I.*C.*)
+    opcode: 
+      c.mv: 0
+    rs2:
+      <<: *all_regs_mx0
+    rd:
+      <<: *all_regs
+    op_comb:
+      'rs2 == rd and rs2 != 0': 0
+      'rs2 != rd and rs2 != 0': 0
+    val_comb:
+      <<: [*base_rs2val_sgn]
+      abstract_comb:
+        'sp_dataset(xlen,["rs2_val"])': 0
+        <<: [*rs2val_walking]
+
+cadd:
+    config: 
+      - check ISA:=regex(.*I.*C.*)
+    opcode: 
+      c.add: 0
+    rs1:
+      <<: *all_regs
+    rs2:
+      <<: *all_regs_mx0
+    op_comb:
+      <<: *sfmt_op_comb
+    val_comb:
+      <<: [*crfmt_val_comb_sgn, *base_rs1val_sgn,*base_rs2val_sgn]
+      abstract_comb:
+        'sp_dataset(xlen)': 0
+        <<: [*rs1val_walking,*rs2val_walking]
+
+cjalr:
+  config: 
+      - check ISA:=regex(.*I.*C.*) 
+  opcode: 
+    c.jalr: 0
+  rs1:
+    <<: *all_regs_mx0
+
+cswsp:
+    config: 
+      - check ISA:=regex(.*I.*C.*)
+    opcode: 
+      c.swsp: 0
+    rs2: 
+      <<: *all_regs_mx2
+    val_comb:
+        'imm_val > 0': 0
+        'imm_val == 0': 0
+        <<: [  *base_rs2val_sgn]
+        abstract_comb:
+          <<: [*rs2val_walking]
+          'walking_ones("imm_val",6,False, scale_func = lambda x: x*4)': 0
+          'walking_zeros("imm_val",6,False, scale_func = lambda x: x*4)': 0
+          'alternate("imm_val",6, False,scale_func = lambda x: x*4)': 0
+
+csdsp:
+    config: 
+      - check ISA:=regex(.*RV64.*I.*C.*)
+    opcode: 
+      c.sdsp: 0
+    rs2: 
+      <<: *all_regs_mx2
+    val_comb:
+        'imm_val > 0': 0
+        'imm_val == 0': 0
+        <<: [  *base_rs2val_sgn]
+        abstract_comb:
+          <<: [*rs2val_walking]
+          'walking_ones("imm_val",6,False, scale_func = lambda x: x*8)': 0
+          'walking_zeros("imm_val",6,False, scale_func = lambda x: x*8)': 0
+          'alternate("imm_val",6, False,scale_func = lambda x: x*8)': 0

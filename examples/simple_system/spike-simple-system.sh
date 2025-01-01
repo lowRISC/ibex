@@ -26,7 +26,7 @@ usage () {
     echo >&2
     echo >&2 "  This will write the Spike instruction log to stderr."
 
-    exit $1
+    exit "$1"
 }
 
 declare -a opts
@@ -88,10 +88,10 @@ fi
 
 # Here are the Spike options you need to run in a simple_system world.
 declare -a ss_opts
-ss_opts=(--isa=rv32imc
-         --log-commits
-         -l
-         -m0x10000:0x30000,0x100000:0x100000)
+ss_opts=("--isa=rv32imc"
+         "--log-commits"
+         "-l"
+         "-m0x10000:0x30000,0x100000:0x100000")
 
 cmd=("$spike" "${ss_opts[@]}" "${opts[@]}")
 

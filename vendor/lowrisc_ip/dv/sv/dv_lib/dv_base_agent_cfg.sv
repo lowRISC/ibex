@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -22,6 +22,8 @@ class dv_base_agent_cfg extends uvm_object;
 
   // Indicates that the interface is under reset. The derived monitor detects and maintains it.
   bit in_reset;
+
+  bit en_monitor = 1'b1;
 
   `uvm_object_utils_begin(dv_base_agent_cfg)
     `uvm_field_int (is_active,            UVM_DEFAULT)

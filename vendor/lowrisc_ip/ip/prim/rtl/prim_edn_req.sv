@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -19,6 +19,8 @@ module prim_edn_req
   parameter int OutWidth = 32,
   // Repetition check for incoming edn data
   parameter bit RepCheck = 0,
+  // Disable reset-related assertion checks inside prim_sync_reqack primitives.
+  parameter bit EnRstChks = 0,
 
   // EDN Request latency checker
   //
@@ -56,6 +58,7 @@ module prim_edn_req
   localparam int SyncWidth = $bits({edn_i.edn_fips, edn_i.edn_bus});
   prim_sync_reqack_data #(
     .Width(SyncWidth),
+    .EnRstChks(EnRstChks),
     .DataSrc2Dst(1'b0),
     .DataReg(1'b0)
   ) u_prim_sync_reqack_data (
@@ -149,9 +152,34 @@ module prim_edn_req
   // Assertions //
   ////////////////
 
+  // Check EDN data is valid: Not all zeros, all ones, or not the same as previous data.
+`ifdef INC_ASSERT
+  //VCS coverage off
+  // pragma coverage off
+
+  logic [OutWidth-1:0] data_prev, data_curr;
+
+  always_ff @(posedge ack_o or negedge rst_ni) begin
+    if (!rst_ni) begin
+      data_prev <= '0;
+      data_curr <= '0;
+    end else if (ack_o) begin
+      data_curr <= data_o;
+      data_prev <= data_curr;
+    end
+  end
+  //VCS coverage on
+  // pragma coverage on
+
+  `ASSERT(DataOutputValid_A, ack_o |-> (data_o != 0) && (data_o != '1))
+  `ASSERT(DataOutputDiffFromPrev_A, data_prev != 0 |-> data_prev != data_o)
+`endif
+
   // EDN Max Latency Checker
 `ifndef SYNTHESIS
   if (MaxLatency != 0) begin: g_maxlatency_assertion
+    //VCS coverage off
+    // pragma coverage off
     localparam int unsigned LatencyW = $clog2(MaxLatency+1);
     logic [LatencyW-1:0] latency_counter;
     logic reset_counter;
@@ -165,6 +193,8 @@ module prim_edn_req
 
     assign reset_counter  = ack_o;
     assign enable_counter = req_i;
+    //VCS coverage on
+    // pragma coverage on
 
     `ASSERT(MaxLatency_A, latency_counter <= MaxLatency)
 

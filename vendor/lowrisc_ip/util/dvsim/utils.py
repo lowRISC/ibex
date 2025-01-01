@@ -1,4 +1,4 @@
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 r"""
@@ -83,7 +83,7 @@ def parse_hjson(hjson_file):
     hjson_cfg_dict = None
     try:
         log.debug("Parsing %s", hjson_file)
-        f = open(hjson_file, 'rU')
+        f = open(hjson_file, 'r')
         text = f.read()
         hjson_cfg_dict = hjson.loads(text, use_decimal=True)
         f.close()

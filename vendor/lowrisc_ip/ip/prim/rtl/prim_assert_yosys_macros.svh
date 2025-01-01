@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -22,6 +22,14 @@
 
 // This doesn't make much sense for a formal tool (we never get to the final block!)
 `define ASSERT_FINAL(__name, __prop)
+
+// This needs sampling just before reset assertion and thus requires an event scheduler, which Yosys
+// may or may not implement, so we leave it blank for the time being.
+`define ASSERT_AT_RESET(__name, __prop, __rst = `ASSERT_DEFAULT_RST)
+
+`define ASSERT_AT_RESET_AND_FINAL(__name, __prop, __rst = `ASSERT_DEFAULT_RST) \
+  `ASSERT_AT_RESET(AtReset_``__name``, __prop, __rst)                          \
+  `ASSERT_FINAL(Final_``__name``, __prop)
 
 `define ASSERT(__name, __prop, __clk = `ASSERT_DEFAULT_CLK, __rst = `ASSERT_DEFAULT_RST) \
   always_ff @(posedge __clk) begin                                                       \

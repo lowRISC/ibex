@@ -32,7 +32,6 @@ module tb #(
   localparam int unsigned LineSizeECC = BusSizeECC * IC_LINE_BEATS;
   localparam int unsigned TagSizeECC  = ICacheECC ? (IC_TAG_SIZE + 6) : IC_TAG_SIZE;
   localparam int unsigned NumAddrScrRounds  = 2;
-  localparam int unsigned NumDiffRounds     = NumAddrScrRounds;
 
   ibex_icache_ram_if #(
     .TagSizeECC(TagSizeECC),
@@ -137,31 +136,32 @@ module tb #(
       .Depth            (IC_NUM_LINES),
       .DataBitsPerMask  (TagSizeECC),
       .EnableParity     (0),
-      .DiffWidth        (TagSizeECC),
-      .NumAddrScrRounds (NumAddrScrRounds),
-      .NumDiffRounds    (NumDiffRounds)
+      .NumAddrScrRounds (NumAddrScrRounds)
     ) tag_bank (
-      .clk_i       (clk),
-      .rst_ni      (rst_n),
+      .clk_i            (clk),
+      .rst_ni           (rst_n),
 
-      .key_valid_i (scramble_key_valid_q),
-      .key_i       (scramble_key_q),
-      .nonce_i     (scramble_nonce_q),
+      .key_valid_i      (scramble_key_valid_q),
+      .key_i            (scramble_key_q),
+      .nonce_i          (scramble_nonce_q),
 
-      .req_i       (ram_if.ic_tag_req[way]),
+      .req_i            (ram_if.ic_tag_req[way]),
 
-      .gnt_o       (),
-      .write_i     (ram_if.ic_tag_write),
-      .addr_i      (ram_if.ic_tag_addr),
-      .wdata_i     (ram_if.ic_tag_wdata),
-      .wmask_i     ({TagSizeECC{1'b1}}),
-      .intg_error_i(1'b0),
+      .gnt_o            (),
+      .write_i          (ram_if.ic_tag_write),
+      .addr_i           (ram_if.ic_tag_addr),
+      .wdata_i          (ram_if.ic_tag_wdata),
+      .wmask_i          ({TagSizeECC{1'b1}}),
+      .intg_error_i     (1'b0),
 
-      .rdata_o     (ram_if.ic_tag_rdata_in[way]),
-      .rvalid_o    (ram_if.ic_tag_rvalid[way]),
-      .raddr_o     (),
-      .rerror_o    (),
-      .cfg_i       ('0)
+      .rdata_o          (ram_if.ic_tag_rdata_in[way]),
+      .rvalid_o         (ram_if.ic_tag_rvalid[way]),
+      .raddr_o          (),
+      .rerror_o         (),
+      .cfg_i            ('0),
+      .wr_collision_o   (),
+      .write_pending_o  (),
+      .alert_o          ()
     );
 
     // Data RAM instantiation
@@ -171,31 +171,32 @@ module tb #(
       .DataBitsPerMask    (LineSizeECC),
       .EnableParity       (0),
       .ReplicateKeyStream (1),
-      .DiffWidth          (LineSizeECC),
-      .NumAddrScrRounds   (NumAddrScrRounds),
-      .NumDiffRounds      (NumDiffRounds)
+      .NumAddrScrRounds   (NumAddrScrRounds)
     ) data_bank (
-      .clk_i       (clk),
-      .rst_ni      (rst_n),
+      .clk_i            (clk),
+      .rst_ni           (rst_n),
 
-      .key_valid_i (scramble_key_valid_q),
-      .key_i       (scramble_key_q),
-      .nonce_i     (scramble_nonce_q),
+      .key_valid_i      (scramble_key_valid_q),
+      .key_i            (scramble_key_q),
+      .nonce_i          (scramble_nonce_q),
 
-      .req_i       (ram_if.ic_data_req[way]),
+      .req_i            (ram_if.ic_data_req[way]),
 
-      .gnt_o       (),
-      .write_i     (ram_if.ic_data_write),
-      .addr_i      (ram_if.ic_data_addr),
-      .wdata_i     (ram_if.ic_data_wdata),
-      .wmask_i     ({LineSizeECC{1'b1}}),
-      .intg_error_i(1'b0),
+      .gnt_o            (),
+      .write_i          (ram_if.ic_data_write),
+      .addr_i           (ram_if.ic_data_addr),
+      .wdata_i          (ram_if.ic_data_wdata),
+      .wmask_i          ({LineSizeECC{1'b1}}),
+      .intg_error_i     (1'b0),
 
-      .rdata_o     (ram_if.ic_data_rdata_in[way]),
-      .rvalid_o    (ram_if.ic_data_rvalid[way]),
-      .raddr_o     (),
-      .rerror_o    (),
-      .cfg_i       ('0)
+      .rdata_o          (ram_if.ic_data_rdata_in[way]),
+      .rvalid_o         (ram_if.ic_data_rvalid[way]),
+      .raddr_o          (),
+      .rerror_o         (),
+      .cfg_i            ('0),
+      .wr_collision_o   (),
+      .write_pending_o  (),
+      .alert_o          ()
     );
   end
 

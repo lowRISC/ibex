@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 """dvsim is a command line tool to deploy ASIC tool flows such as regressions
@@ -33,6 +33,7 @@ from pathlib import Path
 import Launcher
 import LauncherFactory
 import LocalLauncher
+import SgeLauncher
 from CfgFactory import make_cfg
 from Deploy import RunTest
 from Timer import Timer
@@ -303,7 +304,7 @@ def parse_args():
                         nargs="*",
                         metavar='CAT',
                         choices=_LIST_CATEGORIES,
-                        help=('Parse the the given .hjson config file, list '
+                        help=('Parse the given .hjson config file, list '
                               'the things that can be run, then exit. The '
                               'list can be filtered with a space-separated '
                               'of categories from: {}.'.format(
@@ -428,13 +429,22 @@ def parse_args():
 
     buildg.add_argument("--build-timeout-mins",
                         type=int,
+                        metavar="MINUTES",
                         help=('Wall-clock timeout for builds in minutes: if '
-                              'the build takes longer it will be killed.'))
+                              'the build takes longer it will be killed. If '
+                              'GUI mode is enabled, this timeout mechanism will '
+                              'be disabled.'))
 
     disg.add_argument("--gui",
                       action='store_true',
-                      help=('Run the flow in interactive mode instead of the '
-                            'batch mode.'))
+                      help=('Run the flow in GUI mode instead of the batch '
+                            'mode.'))
+
+    disg.add_argument("--interactive",
+                      action='store_true',
+                      help=('Run the job in non-GUI interactive mode '
+                            'accepting manual user inputs and displaying the '
+                            'tool outputs transparently.'))
 
     rung = parser.add_argument_group('Options for running')
 
@@ -481,8 +491,19 @@ def parse_args():
 
     rung.add_argument("--run-timeout-mins",
                       type=int,
+                      metavar="MINUTES",
                       help=('Wall-clock timeout for runs in minutes: if '
-                            'the run takes longer it will be killed.'))
+                            'the run takes longer it will be killed. If '
+                            'GUI mode is enabled, this timeout mechanism will '
+                            'be disabled.'))
+
+    rung.add_argument("--run-timeout-multiplier",
+                      type=float,
+                      metavar="MULTIPLIER",
+                      help=('Multiplier for wall-clock run timeout as a '
+                            'floating point number: typical use is to '
+                            'uniformly magnify timeout when running '
+                            'gate-level or foundry tests.'))
 
     rung.add_argument("--verbosity",
                       "-v",
@@ -497,11 +518,11 @@ def parse_args():
     seedg.add_argument("--build-seed",
                        nargs="?",
                        type=int,
-                       const=random.getrandbits(32),
+                       const=random.getrandbits(256),
                        metavar="S",
                        help=('Randomize the build. Uses the seed value passed '
                              'an additional argument, else it randomly picks '
-                             'a 32-bit unsigned integer.'))
+                             'a 256-bit unsigned integer.'))
 
     seedg.add_argument("--seeds",
                        "-s",
@@ -539,17 +560,12 @@ def parse_args():
 
     waveg = parser.add_argument_group('Dumping waves')
 
-    waveg.add_argument(
-        "--waves",
-        "-w",
-        nargs="?",
-        choices=["default", "fsdb", "shm", "vpd", "vcd", "evcd", "fst"],
-        const="default",
-        help=("Enable dumping of waves. It takes an optional "
-              "argument to pick the desired wave format. If "
-              "the optional argument is not supplied, it picks "
-              "whatever is the default for the chosen tool. "
-              "By default, dumping waves is not enabled."))
+    waveg.add_argument("--waves",
+                       "-w",
+                       choices=["fsdb", "shm", "vpd", "vcd", "evcd", "fst"],
+                       help=("Enable dumping of waves. It takes an "
+                             "argument to pick the desired wave format."
+                             "By default, dumping waves is not enabled."))
 
     waveg.add_argument("--max-waves",
                        "-mw",
@@ -559,6 +575,12 @@ def parse_args():
                        help=('Only dump waves for the first N tests run. This '
                              'includes both tests scheduled for run and those '
                              'that are automatically rerun.'))
+
+    waveg.add_argument("--dump-script",
+                       "-ds",
+                       help=('Use user define custom dump script file'
+                             'The custom file should be located in {proj_root}'
+                             'Default file is {proj_root}/hw/dv/tools/sim.tcl'))
 
     covg = parser.add_argument_group('Generating simulation coverage')
 
@@ -623,6 +645,14 @@ def parse_args():
     if args.version:
         print(version)
         sys.exit()
+
+    # Check conflicts
+    # interactive and remote, r
+    if args.interactive and args.remote:
+        log.error("--interactive and --remote cannot be set together")
+        sys.exit()
+    if args.interactive and args.reseed != 1:
+        args.reseed = 1
 
     # We want the --list argument to default to "all categories", but allow
     # filtering. If args.list is None, then --list wasn't supplied. If it is
@@ -692,6 +722,7 @@ def main():
     # Register the common deploy settings.
     Timer.print_interval = args.print_interval
     LocalLauncher.LocalLauncher.max_parallel = args.max_parallel
+    SgeLauncher.SgeLauncher.max_parallel = args.max_parallel
     Launcher.Launcher.max_odirs = args.max_odirs
     LauncherFactory.set_launcher_type(args.local)
 

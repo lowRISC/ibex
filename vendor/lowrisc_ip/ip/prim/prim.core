@@ -1,5 +1,5 @@
 CAPI=2:
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -15,10 +15,12 @@ filesets:
       - lowrisc:prim:pad_wrapper
       - lowrisc:prim:prim_pkg
       - lowrisc:prim:clock_mux2
+      - lowrisc:prim:clock_inv
       - lowrisc:prim:buf
       - lowrisc:prim:flop
       - lowrisc:prim:flop_en
       - lowrisc:prim:flop_2sync
+      - lowrisc:prim:rst_sync
       - lowrisc:prim:arbiter
       - lowrisc:prim:fifo
       - lowrisc:prim:alert
@@ -29,6 +31,7 @@ filesets:
       - lowrisc:prim:xnor2
       - lowrisc:prim:and2
       - lowrisc:prim:reg_we_check
+      - lowrisc:prim:sha2
     files:
       - rtl/prim_clock_gating_sync.sv
       - rtl/prim_sram_arbiter.sv

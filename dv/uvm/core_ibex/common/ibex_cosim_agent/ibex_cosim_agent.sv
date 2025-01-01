@@ -44,4 +44,37 @@ class ibex_cosim_agent extends uvm_agent;
   function void write_mem_byte(bit [31:0] addr, bit [7:0] d);
     riscv_cosim_write_mem_byte(scoreboard.cosim_handle, addr, d);
   endfunction
+
+  function void write_mem_word(bit [31:0] addr, bit [DATA_WIDTH-1:0] d);
+    for (int i = 0; i < DATA_WIDTH / 8; i++) begin
+      write_mem_byte(addr + i, d[7:0]);
+      d = d >> 8;
+    end
+  endfunction
+
+  // Backdoor-load the test binary file into the cosim memory model
+  function void load_binary_to_mem(bit[31:0] base_addr, string bin);
+     bit [7:0]   r8;
+     bit [31:0]  addr = base_addr;
+     int         bin_fd;
+    bin_fd = $fopen(bin,"rb");
+    if (!bin_fd)
+      `uvm_fatal(get_full_name(), $sformatf("Cannot open file %0s", bin))
+    while ($fread(r8,bin_fd)) begin
+      `uvm_info(`gfn, $sformatf("Init mem [0x%h] = 0x%0h", addr, r8), UVM_FULL)
+      write_mem_byte(addr, r8);
+      addr++;
+    end
+  endfunction
+
+  function void reset();
+    scoreboard.rvfi_port.flush();
+    scoreboard.dmem_port.flush();
+    scoreboard.imem_port.flush();
+    scoreboard.ifetch_port.flush();
+    scoreboard.ifetch_pmp_port.flush();
+
+    scoreboard.reset_e.trigger();
+  endfunction : reset
+
 endclass : ibex_cosim_agent

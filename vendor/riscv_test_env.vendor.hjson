@@ -1,0 +1,13 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{
+  name: "riscv-test-env",
+  target_dir: "riscv-test-env",
+
+  upstream: {
+    url: "https://github.com/riscv/riscv-test-env",
+    rev: "master",
+  },
+  patch_dir: "patches/riscv_test_env"
+}

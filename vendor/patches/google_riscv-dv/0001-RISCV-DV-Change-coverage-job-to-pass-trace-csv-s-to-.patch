@@ -1,0 +1,90 @@
+--- a/cov.py
++++ b/cov.py
+@@ -61,7 +61,7 @@ def build_cov(out, cfg, cwd, opts_vec, opts_cov):
+         run_cmd(build_cmd, debug_cmd=argv.debug)
+ 
+ 
+-def sim_cov(out, cfg, cwd, opts_vec, opts_cov, csv_list):
++def sim_cov(out, cfg, cwd, opts_vec, opts_cov, trace_log):
+     """Simulation the coverage collection
+ 
+     Args:
+@@ -70,10 +70,12 @@ def sim_cov(out, cfg, cwd, opts_vec, opts_cov, csv_list):
+       cwd                 : Filesystem path to RISCV-DV repo
+       opts_vec            : Vector options
+       opts_cov            : Coverage options
+-      csv_list            : The list of trace csv
++      trace_log           : A file containing the list of trace csv files, one file per line
+     """
+     # Convert key dictionary to argv variable
+     argv = SimpleNamespace(**cfg)
++    with open(trace_log, "r") as f:
++        csv_list = f.readlines()
+     logging.info(
+         "Collecting functional coverage from {} trace CSV".format(len(csv_list)))
+     test_name = "riscv_instr_cov_test"
+@@ -115,9 +117,10 @@ def sim_cov(out, cfg, cwd, opts_vec, opts_cov, csv_list):
+                 trace_csv_opts += (",{}".format(csv_list[i]))
+         else:
+             trace_csv_opts += (" +trace_csv_{}={}".format(trace_idx, csv_list[i]))
++        # Last iter of loop
+         if (i == len(csv_list) - 1) or (
+                 (argv.batch_size > 0) and (trace_idx == argv.batch_size - 1)):
+-            sim_cmd = base_sim_cmd.replace("<trace_csv_opts>", trace_csv_opts)
++            sim_cmd = base_sim_cmd.replace("<trace_csv_opts>", f"+trace_csv_file={trace_log}")
+             sim_cmd += ("  --log_suffix _{}".format(file_idx))
+             if argv.lsf_cmd == "":
+                 logging.info(
+@@ -204,6 +207,6 @@ def collect_cov(out, cfg, cwd):
+         if argv.simulator != "pyflow":
+             build_cov(out, cfg, cwd, opts_vec, opts_cov)
+         # Simulation the coverage collection
+-        sim_cov(out, cfg, cwd, opts_vec, opts_cov, csv_list)
++        sim_cov(out, cfg, cwd, opts_vec, opts_cov, trace_log)
+ 
+ 
+--- a/test/riscv_instr_cov_test.sv
++++ b/test/riscv_instr_cov_test.sv
+@@ -5,6 +5,7 @@ class riscv_instr_cov_test extends uvm_test;
+ 
+   riscv_instr_gen_config    cfg;
+   riscv_instr_cover_group   instr_cg;
++  string                    trace_csv_file;
+   string                    trace_csv[$];
+   string                    trace[string];
+   bit                       report_illegal_instr;
+@@ -21,19 +22,23 @@ class riscv_instr_cov_test extends uvm_test;
+     string args;
+     string csv;
+     string line;
++    string line_tmp[$];
+     string header[$];
+     string entry[$];
+-    int fd;
++    int csvlist_fd, fd;
+     void'($value$plusargs("report_illegal_instr=%0d", report_illegal_instr));
+-    while(1) begin
+-      args = {$sformatf("trace_csv_%0d", i), "=%s"};
+-      if ($value$plusargs(args, csv)) begin
+-        trace_csv.push_back(csv);
+-      end else begin
+-        break;
++    void'($value$plusargs("trace_csv_file=%0s", trace_csv_file));
++    csvlist_fd = $fopen(trace_csv_file, "r");
++    if (csvlist_fd) begin
++      while(!$feof(csvlist_fd)) begin
++        $fgets(csv, csvlist_fd);
++        if (!(csv == "")) begin
++          split_string(csv, "\n", line_tmp); // Remove trailing newline
++          trace_csv.push_back(line_tmp[0]);
++        end
+       end
+-      i++;
+     end
++    $fclose(csvlist_fd);
+     cfg = riscv_instr_gen_config::type_id::create("cfg");
+     // disable_compressed_instr is not relevant to coverage test
+     cfg.disable_compressed_instr = 0;
+-- 
+2.34.1
+

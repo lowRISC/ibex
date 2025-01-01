@@ -14,39 +14,48 @@
  * Top level module of the ibex RISC-V core
  */
 module ibex_core import ibex_pkg::*; #(
-  parameter bit          PMPEnable         = 1'b0,
-  parameter int unsigned PMPGranularity    = 0,
-  parameter int unsigned PMPNumRegions     = 4,
-  parameter int unsigned MHPMCounterNum    = 0,
-  parameter int unsigned MHPMCounterWidth  = 40,
-  parameter bit          RV32E             = 1'b0,
-  parameter rv32m_e      RV32M             = RV32MFast,
-  parameter rv32b_e      RV32B             = RV32BNone,
-  parameter bit          BranchTargetALU   = 1'b0,
-  parameter bit          WritebackStage    = 1'b0,
-  parameter bit          ICache            = 1'b0,
-  parameter bit          ICacheECC         = 1'b0,
-  parameter int unsigned BusSizeECC        = BUS_SIZE,
-  parameter int unsigned TagSizeECC        = IC_TAG_SIZE,
-  parameter int unsigned LineSizeECC       = IC_LINE_SIZE,
-  parameter bit          BranchPredictor   = 1'b0,
-  parameter bit          DbgTriggerEn      = 1'b0,
-  parameter int unsigned DbgHwBreakNum     = 1,
-  parameter bit          ResetAll          = 1'b0,
-  parameter lfsr_seed_t  RndCnstLfsrSeed   = RndCnstLfsrSeedDefault,
-  parameter lfsr_perm_t  RndCnstLfsrPerm   = RndCnstLfsrPermDefault,
-  parameter bit          SecureIbex        = 1'b0,
-  parameter bit          DummyInstructions = 1'b0,
-  parameter bit          RegFileECC        = 1'b0,
-  parameter int unsigned RegFileDataWidth  = 32,
-  parameter bit          MemECC            = 1'b0,
-  parameter int unsigned MemDataWidth      = MemECC ? 32 + 7 : 32,
-  parameter int unsigned DmHaltAddr        = 32'h1A110800,
-  parameter int unsigned DmExceptionAddr   = 32'h1A110808
+  parameter bit                     PMPEnable        = 1'b0,
+  parameter int unsigned            PMPGranularity   = 0,
+  parameter int unsigned            PMPNumRegions    = 4,
+  parameter ibex_pkg::pmp_cfg_t     PMPRstCfg[16]    = ibex_pkg::PmpCfgRst,
+  parameter logic [33:0]            PMPRstAddr[16]   = ibex_pkg::PmpAddrRst,
+  parameter ibex_pkg::pmp_mseccfg_t PMPRstMsecCfg    = ibex_pkg::PmpMseccfgRst,
+  parameter int unsigned            MHPMCounterNum   = 0,
+  parameter int unsigned            MHPMCounterWidth = 40,
+  parameter bit                     RV32E            = 1'b0,
+  parameter rv32m_e                 RV32M            = RV32MFast,
+  parameter rv32b_e                 RV32B            = RV32BNone,
+  parameter bit                     BranchTargetALU  = 1'b0,
+  parameter bit                     WritebackStage   = 1'b0,
+  parameter bit                     ICache           = 1'b0,
+  parameter bit                     ICacheECC        = 1'b0,
+  parameter int unsigned            BusSizeECC       = BUS_SIZE,
+  parameter int unsigned            TagSizeECC       = IC_TAG_SIZE,
+  parameter int unsigned            LineSizeECC      = IC_LINE_SIZE,
+  parameter bit                     BranchPredictor  = 1'b0,
+  parameter bit                     DbgTriggerEn     = 1'b0,
+  parameter int unsigned            DbgHwBreakNum    = 1,
+  parameter bit                     ResetAll         = 1'b0,
+  parameter lfsr_seed_t             RndCnstLfsrSeed  = RndCnstLfsrSeedDefault,
+  parameter lfsr_perm_t             RndCnstLfsrPerm  = RndCnstLfsrPermDefault,
+  parameter bit                     SecureIbex       = 1'b0,
+  parameter bit                     DummyInstructions= 1'b0,
+  parameter bit                     RegFileECC       = 1'b0,
+  parameter int unsigned            RegFileDataWidth = 32,
+  parameter bit                     MemECC           = 1'b0,
+  parameter int unsigned            MemDataWidth     = MemECC ? 32 + 7 : 32,
+  parameter int unsigned            DmBaseAddr       = 32'h1A110000,
+  parameter int unsigned            DmAddrMask       = 32'h00000FFF,
+  parameter int unsigned            DmHaltAddr       = 32'h1A110800,
+  parameter int unsigned            DmExceptionAddr  = 32'h1A110808
 ) (
   // Clock and Reset
   input  logic                         clk_i,
+  // Internally generated resets in ibex_lockstep cause IMPERFECTSCH warnings.
+  // TODO: Remove when upgrading Verilator #2134.
+  /* verilator lint_off IMPERFECTSCH */
   input  logic                         rst_ni,
+  /* verilator lint_on IMPERFECTSCH */
 
   input  logic [31:0]                  hart_id_i,
   input  logic [31:0]                  boot_addr_i,
@@ -72,6 +81,7 @@ module ibex_core import ibex_pkg::*; #(
 
   // Register file interface
   output logic                         dummy_instr_id_o,
+  output logic                         dummy_instr_wb_o,
   output logic [4:0]                   rf_raddr_a_o,
   output logic [4:0]                   rf_raddr_b_o,
   output logic [4:0]                   rf_waddr_wb_o,
@@ -136,22 +146,27 @@ module ibex_core import ibex_pkg::*; #(
   output logic [ 3:0]                  rvfi_mem_wmask,
   output logic [31:0]                  rvfi_mem_rdata,
   output logic [31:0]                  rvfi_mem_wdata,
-  output logic [31:0]                  rvfi_ext_mip,
+  output logic [31:0]                  rvfi_ext_pre_mip,
+  output logic [31:0]                  rvfi_ext_post_mip,
   output logic                         rvfi_ext_nmi,
+  output logic                         rvfi_ext_nmi_int,
   output logic                         rvfi_ext_debug_req,
+  output logic                         rvfi_ext_debug_mode,
+  output logic                         rvfi_ext_rf_wr_suppress,
   output logic [63:0]                  rvfi_ext_mcycle,
   output logic [31:0]                  rvfi_ext_mhpmcounters [10],
   output logic [31:0]                  rvfi_ext_mhpmcountersh [10],
   output logic                         rvfi_ext_ic_scr_key_valid,
+  output logic                         rvfi_ext_irq_valid,
   `endif
 
   // CPU Control Signals
   // SEC_CM: FETCH.CTRL.LC_GATED
-  input  fetch_enable_t                fetch_enable_i,
+  input  ibex_mubi_t                   fetch_enable_i,
   output logic                         alert_minor_o,
   output logic                         alert_major_internal_o,
   output logic                         alert_major_bus_o,
-  output logic                         core_busy_o
+  output ibex_mubi_t                   core_busy_o
 );
 
   localparam int unsigned PMPNumChan      = 3;
@@ -202,10 +217,13 @@ module ibex_core import ibex_pkg::*; #(
   exc_cause_t  exc_cause;                      // Exception cause
 
   logic        instr_intg_err;
-  logic        lsu_load_err;
-  logic        lsu_store_err;
+  logic        lsu_load_err, lsu_load_err_raw;
+  logic        lsu_store_err, lsu_store_err_raw;
   logic        lsu_load_resp_intg_err;
   logic        lsu_store_resp_intg_err;
+
+  logic        expecting_load_resp_id;
+  logic        expecting_store_resp_id;
 
   // LSU signals
   logic        lsu_addr_incr_req;
@@ -281,6 +299,7 @@ module ibex_core import ibex_pkg::*; #(
   logic [1:0]  lsu_type;
   logic        lsu_sign_ext;
   logic        lsu_req;
+  logic        lsu_rdata_valid;
   logic [31:0] lsu_wdata;
   logic        lsu_req_done;
 
@@ -303,6 +322,7 @@ module ibex_core import ibex_pkg::*; #(
   logic           rf_write_wb;
   logic           outstanding_load_wb;
   logic           outstanding_store_wb;
+  logic           dummy_instr_wb;
 
   // Interrupts
   logic        nmi_mode;
@@ -368,7 +388,31 @@ module ibex_core import ibex_pkg::*; #(
 
   // Before going to sleep, wait for I- and D-side
   // interfaces to finish ongoing operations.
-  assign core_busy_o = ctrl_busy | if_busy | lsu_busy;
+  if (SecureIbex) begin : g_core_busy_secure
+    // For secure Ibex, the individual bits of core_busy_o are generated from different copies of
+    // the various busy signal.
+    localparam int unsigned NumBusySignals = 3;
+    localparam int unsigned NumBusyBits = $bits(ibex_mubi_t) * NumBusySignals;
+    logic [NumBusyBits-1:0] busy_bits_buf;
+    prim_buf #(
+      .Width(NumBusyBits)
+    ) u_fetch_enable_buf (
+      .in_i ({$bits(ibex_mubi_t){ctrl_busy, if_busy, lsu_busy}}),
+      .out_o(busy_bits_buf)
+    );
+
+    // Set core_busy_o to IbexMuBiOn if even a single input is high.
+    for (genvar i = 0; i < $bits(ibex_mubi_t); i++) begin : g_core_busy_bits
+      if (IbexMuBiOn[i] == 1'b1) begin : g_pos
+        assign core_busy_o[i] =  |busy_bits_buf[i*NumBusySignals +: NumBusySignals];
+      end else begin : g_neg
+        assign core_busy_o[i] = ~|busy_bits_buf[i*NumBusySignals +: NumBusySignals];
+      end
+    end
+  end else begin : g_core_busy_non_secure
+    // For non secure Ibex, synthesis is allowed to optimize core_busy_o.
+    assign core_busy_o = (ctrl_busy || if_busy || lsu_busy) ? IbexMuBiOn : IbexMuBiOff;
+  end
 
   //////////////
   // IF stage //
@@ -474,22 +518,21 @@ module ibex_core import ibex_pkg::*; #(
 
   // Multi-bit fetch enable used when SecureIbex == 1. When SecureIbex == 0 only use the bottom-bit
   // of fetch_enable_i. Ensure the multi-bit encoding has the bottom bit set for on and unset for
-  // off so FetchEnableOn/FetchEnableOff can be used without needing to know the value of
-  // SecureIbex.
-  `ASSERT_INIT(FetchEnableSecureOnBottomBitSet,    FetchEnableOn[0] == 1'b1)
-  `ASSERT_INIT(FetchEnableSecureOffBottomBitClear, FetchEnableOff[0] == 1'b0)
+  // off so IbexMuBiOn/IbexMuBiOff can be used without needing to know the value of SecureIbex.
+  `ASSERT_INIT(IbexMuBiSecureOnBottomBitSet,    IbexMuBiOn[0] == 1'b1)
+  `ASSERT_INIT(IbexMuBiSecureOffBottomBitClear, IbexMuBiOff[0] == 1'b0)
 
   // fetch_enable_i can be used to stop the core fetching new instructions
   if (SecureIbex) begin : g_instr_req_gated_secure
     // For secure Ibex fetch_enable_i must be a specific multi-bit pattern to enable instruction
     // fetch
     // SEC_CM: FETCH.CTRL.LC_GATED
-    assign instr_req_gated = instr_req_int & (fetch_enable_i == FetchEnableOn);
-    assign instr_exec      = fetch_enable_i == FetchEnableOn;
+    assign instr_req_gated = instr_req_int & (fetch_enable_i == IbexMuBiOn);
+    assign instr_exec      = fetch_enable_i == IbexMuBiOn;
   end else begin : g_instr_req_gated_non_secure
     // For non secure Ibex only the bottom bit of fetch enable is considered
     logic unused_fetch_enable;
-    assign unused_fetch_enable = ^fetch_enable_i[$bits(fetch_enable_t)-1:1];
+    assign unused_fetch_enable = ^fetch_enable_i[$bits(ibex_mubi_t)-1:1];
 
     assign instr_req_gated = instr_req_int & fetch_enable_i[0];
     assign instr_exec      = fetch_enable_i[0];
@@ -603,6 +646,9 @@ module ibex_core import ibex_pkg::*; #(
     .lsu_load_resp_intg_err_i (lsu_load_resp_intg_err),
     .lsu_store_err_i          (lsu_store_err),
     .lsu_store_resp_intg_err_i(lsu_store_resp_intg_err),
+
+    .expecting_load_resp_o (expecting_load_resp_id),
+    .expecting_store_resp_o(expecting_store_resp_id),
 
     // Interrupt Signals
     .csr_mstatus_mie_i(csr_mstatus_mie),
@@ -741,7 +787,7 @@ module ibex_core import ibex_pkg::*; #(
     .lsu_sign_ext_i(lsu_sign_ext),
 
     .lsu_rdata_o      (rf_wdata_lsu),
-    .lsu_rdata_valid_o(rf_we_lsu),
+    .lsu_rdata_valid_o(lsu_rdata_valid),
     .lsu_req_i        (lsu_req),
     .lsu_req_done_o   (lsu_req_done),
 
@@ -754,9 +800,9 @@ module ibex_core import ibex_pkg::*; #(
     .lsu_resp_valid_o(lsu_resp_valid),
 
     // exception signals
-    .load_err_o           (lsu_load_err),
+    .load_err_o           (lsu_load_err_raw),
     .load_resp_intg_err_o (lsu_load_resp_intg_err),
-    .store_err_o          (lsu_store_err),
+    .store_err_o          (lsu_store_err_raw),
     .store_resp_intg_err_o(lsu_store_resp_intg_err),
 
     .busy_o(lsu_busy),
@@ -766,8 +812,9 @@ module ibex_core import ibex_pkg::*; #(
   );
 
   ibex_wb_stage #(
-    .ResetAll       ( ResetAll       ),
-    .WritebackStage(WritebackStage)
+    .ResetAll         (ResetAll),
+    .WritebackStage   (WritebackStage),
+    .DummyInstructions(DummyInstructions)
   ) wb_stage_i (
     .clk_i                   (clk_i),
     .rst_ni                  (rst_ni),
@@ -791,6 +838,8 @@ module ibex_core import ibex_pkg::*; #(
     .rf_wdata_id_i(rf_wdata_id),
     .rf_we_id_i   (rf_we_id),
 
+    .dummy_instr_id_i(dummy_instr_id),
+
     .rf_wdata_lsu_i(rf_wdata_lsu),
     .rf_we_lsu_i   (rf_we_lsu),
 
@@ -800,17 +849,42 @@ module ibex_core import ibex_pkg::*; #(
     .rf_wdata_wb_o(rf_wdata_wb),
     .rf_we_wb_o   (rf_we_wb),
 
+    .dummy_instr_wb_o(dummy_instr_wb),
+
     .lsu_resp_valid_i(lsu_resp_valid),
     .lsu_resp_err_i  (lsu_resp_err),
 
     .instr_done_wb_o(instr_done_wb)
   );
 
+  if (SecureIbex) begin : g_check_mem_response
+    // For secure configurations only process load/store responses if we're expecting them to guard
+    // against false responses being injected on to the bus
+    assign lsu_load_err  = lsu_load_err_raw  & (outstanding_load_wb  | expecting_load_resp_id);
+    assign lsu_store_err = lsu_store_err_raw & (outstanding_store_wb | expecting_store_resp_id);
+    assign rf_we_lsu     = lsu_rdata_valid   & (outstanding_load_wb  | expecting_load_resp_id);
+  end else begin : g_no_check_mem_response
+    // For non-secure configurations trust the bus protocol is being followed and we'll only ever
+    // see a response if we have an outstanding request.
+    assign lsu_load_err  = lsu_load_err_raw;
+    assign lsu_store_err = lsu_store_err_raw;
+    assign rf_we_lsu     = lsu_rdata_valid;
+
+    // expected_load_resp_id/expected_store_resp_id signals are only used to guard against false
+    // responses so they are unused in non-secure configurations
+    logic unused_expecting_load_resp_id;
+    logic unused_expecting_store_resp_id;
+
+    assign unused_expecting_load_resp_id  = expecting_load_resp_id;
+    assign unused_expecting_store_resp_id = expecting_store_resp_id;
+  end
+
   /////////////////////////////
   // Register file interface //
   /////////////////////////////
 
   assign dummy_instr_id_o = dummy_instr_id;
+  assign dummy_instr_wb_o = dummy_instr_wb;
   assign rf_raddr_a_o     = rf_raddr_a;
   assign rf_waddr_wb_o    = rf_waddr_wb;
   assign rf_we_wb_o       = rf_we_wb;
@@ -847,8 +921,8 @@ module ibex_core import ibex_pkg::*; #(
     assign rf_rdata_b = rf_rdata_b_ecc_i[31:0];
 
     // Calculate errors - qualify with WB forwarding to avoid xprop into the alert signal
-    assign rf_ecc_err_a_id = |rf_ecc_err_a & rf_ren_a & ~rf_rd_a_wb_match;
-    assign rf_ecc_err_b_id = |rf_ecc_err_b & rf_ren_b & ~rf_rd_b_wb_match;
+    assign rf_ecc_err_a_id = |rf_ecc_err_a & rf_ren_a & ~(rf_rd_a_wb_match & rf_write_wb);
+    assign rf_ecc_err_b_id = |rf_ecc_err_b & rf_ren_b & ~(rf_rd_b_wb_match & rf_write_wb);
 
     // Combined error
     assign rf_ecc_err_comb = instr_valid_id & (rf_ecc_err_a_id | rf_ecc_err_b_id);
@@ -931,7 +1005,7 @@ module ibex_core import ibex_pkg::*; #(
 
   // Keep track of the PC last seen in the ID stage when fetch is disabled
   logic [31:0]   pc_at_fetch_disable;
-  fetch_enable_t last_fetch_enable;
+  ibex_mubi_t    last_fetch_enable;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
@@ -940,7 +1014,7 @@ module ibex_core import ibex_pkg::*; #(
     end else begin
       last_fetch_enable <= fetch_enable_i;
 
-      if ((fetch_enable_i != FetchEnableOn) && (last_fetch_enable == FetchEnableOn)) begin
+      if ((fetch_enable_i != IbexMuBiOn) && (last_fetch_enable == IbexMuBiOn)) begin
         pc_at_fetch_disable <= pc_id;
       end
     end
@@ -949,7 +1023,7 @@ module ibex_core import ibex_pkg::*; #(
   // When fetch is disabled no instructions should be executed. Once fetch is disabled either the
   // ID/EX stage is not valid or the PC of the ID/EX stage must remain as it was at disable. The
   // ID/EX valid should not ressert once it has been cleared.
-  `ASSERT(NoExecWhenFetchEnableNotOn, fetch_enable_i != FetchEnableOn |=>
+  `ASSERT(NoExecWhenFetchEnableNotOn, fetch_enable_i != IbexMuBiOn |=>
     (~instr_valid_id || (pc_id == pc_at_fetch_disable)) && ~$rose(instr_valid_id))
 
   `endif
@@ -980,6 +1054,9 @@ module ibex_core import ibex_pkg::*; #(
     .PMPEnable        (PMPEnable),
     .PMPGranularity   (PMPGranularity),
     .PMPNumRegions    (PMPNumRegions),
+    .PMPRstCfg        (PMPRstCfg),
+    .PMPRstAddr       (PMPRstAddr),
+    .PMPRstMsecCfg    (PMPRstMsecCfg),
     .RV32E            (RV32E),
     .RV32M            (RV32M),
     .RV32B            (RV32B)
@@ -1102,6 +1179,8 @@ module ibex_core import ibex_pkg::*; #(
     assign pmp_priv_lvl[PMP_D]  = priv_mode_lsu;
 
     ibex_pmp #(
+      .DmBaseAddr    (DmBaseAddr),
+      .DmAddrMask    (DmAddrMask),
       .PMPGranularity(PMPGranularity),
       .PMPNumChan    (PMPNumChan),
       .PMPNumRegions (PMPNumRegions)
@@ -1110,6 +1189,7 @@ module ibex_core import ibex_pkg::*; #(
       .csr_pmp_cfg_i    (csr_pmp_cfg),
       .csr_pmp_addr_i   (csr_pmp_addr),
       .csr_pmp_mseccfg_i(csr_pmp_mseccfg),
+      .debug_mode_i     (debug_mode),
       .priv_mode_i      (pmp_priv_lvl),
       // Access checking channels
       .pmp_req_addr_i   (pmp_req_addr),
@@ -1198,27 +1278,34 @@ module ibex_core import ibex_pkg::*; #(
   logic [31:0] rvfi_mem_addr_q;
   logic        rvfi_trap_id;
   logic        rvfi_trap_wb;
+  logic        rvfi_irq_valid;
   logic [63:0] rvfi_stage_order_d;
   logic        rvfi_id_done;
   logic        rvfi_wb_done;
 
   logic            new_debug_req;
   logic            new_nmi;
+  logic            new_nmi_int;
   logic            new_irq;
   ibex_pkg::irqs_t captured_mip;
   logic            captured_nmi;
+  logic            captured_nmi_int;
   logic            captured_debug_req;
   logic            captured_valid;
 
   // RVFI extension for co-simulation support
   // debug_req and MIP captured at IF -> ID transition so one extra stage
-  ibex_pkg::irqs_t rvfi_ext_stage_mip              [RVFI_STAGES+1];
+  ibex_pkg::irqs_t rvfi_ext_stage_pre_mip          [RVFI_STAGES+1];
+  ibex_pkg::irqs_t rvfi_ext_stage_post_mip         [RVFI_STAGES];
   logic            rvfi_ext_stage_nmi              [RVFI_STAGES+1];
+  logic            rvfi_ext_stage_nmi_int          [RVFI_STAGES+1];
   logic            rvfi_ext_stage_debug_req        [RVFI_STAGES+1];
+  logic            rvfi_ext_stage_debug_mode       [RVFI_STAGES];
   logic [63:0]     rvfi_ext_stage_mcycle           [RVFI_STAGES];
   logic [31:0]     rvfi_ext_stage_mhpmcounters     [RVFI_STAGES][10];
   logic [31:0]     rvfi_ext_stage_mhpmcountersh    [RVFI_STAGES][10];
   logic            rvfi_ext_stage_ic_scr_key_valid [RVFI_STAGES];
+  logic            rvfi_ext_stage_irq_valid        [RVFI_STAGES+1];
 
 
   logic        rvfi_stage_valid_d   [RVFI_STAGES];
@@ -1254,19 +1341,32 @@ module ibex_core import ibex_pkg::*; #(
   always_comb begin
     // Use always_comb instead of continuous assign so first assign can set 0 as default everywhere
     // that is overridden by more specific settings.
-    rvfi_ext_mip                                     = '0;
-    rvfi_ext_mip[CSR_MSIX_BIT]                       = rvfi_ext_stage_mip[RVFI_STAGES].irq_software;
-    rvfi_ext_mip[CSR_MTIX_BIT]                       = rvfi_ext_stage_mip[RVFI_STAGES].irq_timer;
-    rvfi_ext_mip[CSR_MEIX_BIT]                       = rvfi_ext_stage_mip[RVFI_STAGES].irq_external;
-    rvfi_ext_mip[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = rvfi_ext_stage_mip[RVFI_STAGES].irq_fast;
+    rvfi_ext_pre_mip               = '0;
+    rvfi_ext_pre_mip[CSR_MSIX_BIT] = rvfi_ext_stage_pre_mip[RVFI_STAGES].irq_software;
+    rvfi_ext_pre_mip[CSR_MTIX_BIT] = rvfi_ext_stage_pre_mip[RVFI_STAGES].irq_timer;
+    rvfi_ext_pre_mip[CSR_MEIX_BIT] = rvfi_ext_stage_pre_mip[RVFI_STAGES].irq_external;
+
+    rvfi_ext_pre_mip[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] =
+      rvfi_ext_stage_pre_mip[RVFI_STAGES].irq_fast;
+
+    rvfi_ext_post_mip               = '0;
+    rvfi_ext_post_mip[CSR_MSIX_BIT] = rvfi_ext_stage_post_mip[RVFI_STAGES-1].irq_software;
+    rvfi_ext_post_mip[CSR_MTIX_BIT] = rvfi_ext_stage_post_mip[RVFI_STAGES-1].irq_timer;
+    rvfi_ext_post_mip[CSR_MEIX_BIT] = rvfi_ext_stage_post_mip[RVFI_STAGES-1].irq_external;
+
+    rvfi_ext_post_mip[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] =
+      rvfi_ext_stage_post_mip[RVFI_STAGES-1].irq_fast;
   end
 
   assign rvfi_ext_nmi              = rvfi_ext_stage_nmi              [RVFI_STAGES];
+  assign rvfi_ext_nmi_int          = rvfi_ext_stage_nmi_int          [RVFI_STAGES];
   assign rvfi_ext_debug_req        = rvfi_ext_stage_debug_req        [RVFI_STAGES];
+  assign rvfi_ext_debug_mode       = rvfi_ext_stage_debug_mode       [RVFI_STAGES-1];
   assign rvfi_ext_mcycle           = rvfi_ext_stage_mcycle           [RVFI_STAGES-1];
   assign rvfi_ext_mhpmcounters     = rvfi_ext_stage_mhpmcounters     [RVFI_STAGES-1];
   assign rvfi_ext_mhpmcountersh    = rvfi_ext_stage_mhpmcountersh    [RVFI_STAGES-1];
   assign rvfi_ext_ic_scr_key_valid = rvfi_ext_stage_ic_scr_key_valid [RVFI_STAGES-1];
+  assign rvfi_ext_irq_valid        = rvfi_ext_stage_irq_valid        [RVFI_STAGES];
 
   // When an instruction takes a trap the `rvfi_trap` signal will be set. Instructions that take
   // traps flush the pipeline so ordinarily wouldn't be seen to be retire. The RVFI tracking
@@ -1308,10 +1408,12 @@ module ibex_core import ibex_pkg::*; #(
       end
     end
 
-    assign rvfi_trap_id = id_stage_i.controller_i.id_exception_o;
+    assign rvfi_trap_id = id_stage_i.controller_i.id_exception_o &
+      ~(id_stage_i.ebrk_insn & id_stage_i.controller_i.ebreak_into_debug);
+
     assign rvfi_trap_wb = id_stage_i.controller_i.exc_req_lsu;
     // WB is instantly done in the tracking pipeline when a trap is progress through the pipeline
-    assign rvfi_wb_done = instr_done_wb | (rvfi_stage_valid[0] & rvfi_stage_trap[0]);
+    assign rvfi_wb_done = rvfi_stage_valid[0] & (instr_done_wb | rvfi_stage_trap[0]);
   end else begin : gen_rvfi_no_wb_stage
     // Without writeback stage first RVFI stage is output stage so simply valid the cycle after
     // instruction leaves ID/EX (and so has retired)
@@ -1319,7 +1421,9 @@ module ibex_core import ibex_pkg::*; #(
     // Without writeback stage signal new instr_new_wb when instruction enters ID/EX to correctly
     // setup register write signals
     assign rvfi_instr_new_wb = instr_new_id;
-    assign rvfi_trap_id = id_stage_i.controller_i.exc_req_d | id_stage_i.controller_i.exc_req_lsu;
+    assign rvfi_trap_id =
+      (id_stage_i.controller_i.exc_req_d | id_stage_i.controller_i.exc_req_lsu) &
+      ~(id_stage_i.ebrk_insn & id_stage_i.controller_i.ebreak_into_debug);
     assign rvfi_trap_wb = 1'b0;
     assign rvfi_wb_done = instr_done_wb;
   end
@@ -1349,22 +1453,46 @@ module ibex_core import ibex_pkg::*; #(
   // appropriately.
   assign new_debug_req = (debug_req_i & ~debug_mode);
   assign new_nmi = irq_nm_i & ~nmi_mode & ~debug_mode;
-  assign new_irq = irq_pending_o & csr_mstatus_mie & ~nmi_mode & ~debug_mode;
+  assign new_nmi_int = id_stage_i.controller_i.irq_nm_int & ~nmi_mode & ~debug_mode;
+  assign new_irq = irq_pending_o & (csr_mstatus_mie || (priv_mode_id == PRIV_LVL_U)) & ~nmi_mode &
+                   ~debug_mode;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       captured_valid     <= 1'b0;
       captured_mip       <= '0;
       captured_nmi       <= 1'b0;
+      captured_nmi_int   <= 1'b0;
       captured_debug_req <= 1'b0;
+      rvfi_irq_valid     <= 1'b0;
     end else  begin
       // Capture when ID stage has emptied out and something occurs that will cause a trap and we
       // haven't yet captured
-      if (~instr_valid_id & (new_debug_req | new_irq | new_nmi) & ~captured_valid) begin
+      //
+      // When we already captured a trap, and there is upcoming nmi interrupt or
+      // a debug request then recapture as nmi or debug request are supposed to
+      // be serviced.
+      if (~instr_valid_id & (new_debug_req | new_irq | new_nmi | new_nmi_int) &
+          ((~captured_valid) |
+           (new_debug_req & ~captured_debug_req) |
+           (new_nmi & ~captured_nmi & ~captured_debug_req))) begin
         captured_valid     <= 1'b1;
         captured_nmi       <= irq_nm_i;
+        captured_nmi_int   <= id_stage_i.controller_i.irq_nm_int;
         captured_mip       <= cs_registers_i.mip;
         captured_debug_req <= debug_req_i;
+      end
+
+      // When the pipeline has emptied in preparation for handling a new interrupt send
+      // a notification up the RVFI pipeline. This is used by the cosim to deal with cases where an
+      // interrupt occurs before another interrupt or debug request but both occur before the first
+      // instruction of the handler is executed and retired (where the cosim will see all the
+      // interrupts and debug requests at once with no way to determine which occurred first).
+      if (~instr_valid_id & ~new_debug_req & (new_irq | new_nmi | new_nmi_int) & ready_wb &
+          ~captured_valid) begin
+        rvfi_irq_valid <= 1'b1;
+      end else begin
+        rvfi_irq_valid <= 1'b0;
       end
 
       // Capture cleared out as soon as a new instruction appears in ID
@@ -1382,16 +1510,43 @@ module ibex_core import ibex_pkg::*; #(
   // the DV environment will see if a trap should have been taken but wasn't.
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      rvfi_ext_stage_mip[0]       <= '0;
+      rvfi_ext_stage_pre_mip[0]       <= '0;
       rvfi_ext_stage_nmi[0]       <= '0;
+      rvfi_ext_stage_nmi_int[0]   <= '0;
       rvfi_ext_stage_debug_req[0] <= '0;
-    end else if (if_stage_i.instr_valid_id_d & if_stage_i.instr_new_id_d) begin
-      rvfi_ext_stage_mip[0]       <= instr_valid_id | ~captured_valid ? cs_registers_i.mip :
+    end else if ((if_stage_i.instr_valid_id_d & if_stage_i.instr_new_id_d) | rvfi_irq_valid) begin
+      rvfi_ext_stage_pre_mip[0]   <= instr_valid_id | ~captured_valid ? cs_registers_i.mip :
                                                                         captured_mip;
       rvfi_ext_stage_nmi[0]       <= instr_valid_id | ~captured_valid ? irq_nm_i :
                                                                         captured_nmi;
+      rvfi_ext_stage_nmi_int[0]   <=
+        instr_valid_id | ~captured_valid ? id_stage_i.controller_i.irq_nm_int :
+                                           captured_nmi_int;
       rvfi_ext_stage_debug_req[0] <= instr_valid_id | ~captured_valid ? debug_req_i        :
                                                                         captured_debug_req;
+    end
+  end
+
+
+  // rvfi_irq_valid signals an interrupt event to the cosim. These should only occur when the RVFI
+  // pipe is empty so just send it straigh through.
+  for (genvar i = 0; i < RVFI_STAGES + 1; i = i + 1) begin : g_rvfi_irq_valid
+    if (i == 0) begin : g_rvfi_irq_valid_first_stage
+      always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+          rvfi_ext_stage_irq_valid[i] <= 1'b0;
+        end else begin
+          rvfi_ext_stage_irq_valid[i] <= rvfi_irq_valid;
+        end
+      end
+    end else begin : g_rvfi_irq_valid_other_stages
+      always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+          rvfi_ext_stage_irq_valid[i] <= 1'b0;
+        end else begin
+          rvfi_ext_stage_irq_valid[i] <= rvfi_ext_stage_irq_valid[i-1];
+        end
+      end
     end
   end
 
@@ -1421,9 +1576,12 @@ module ibex_core import ibex_pkg::*; #(
         rvfi_stage_mem_rdata[i]            <= '0;
         rvfi_stage_mem_wdata[i]            <= '0;
         rvfi_stage_mem_addr[i]             <= '0;
-        rvfi_ext_stage_mip[i+1]            <= '0;
+        rvfi_ext_stage_pre_mip[i+1]        <= '0;
+        rvfi_ext_stage_post_mip[i]         <= '0;
         rvfi_ext_stage_nmi[i+1]            <= '0;
+        rvfi_ext_stage_nmi_int[i+1]        <= '0;
         rvfi_ext_stage_debug_req[i+1]      <= '0;
+        rvfi_ext_stage_debug_mode[i]       <= '0;
         rvfi_ext_stage_mcycle[i]           <= '0;
         rvfi_ext_stage_mhpmcounters[i]     <= '{10{'0}};
         rvfi_ext_stage_mhpmcountersh[i]    <= '{10{'0}};
@@ -1433,8 +1591,7 @@ module ibex_core import ibex_pkg::*; #(
 
         if (i == 0) begin
           if (rvfi_id_done) begin
-            rvfi_stage_halt[i]      <= '0;
-            // TODO: Sort this out for writeback stage
+            rvfi_stage_halt[i]                 <= '0;
             rvfi_stage_trap[i]                 <= rvfi_trap_id;
             rvfi_stage_intr[i]                 <= rvfi_intr_d;
             rvfi_stage_order[i]                <= rvfi_stage_order_d;
@@ -1456,9 +1613,7 @@ module ibex_core import ibex_pkg::*; #(
             rvfi_stage_mem_rdata[i]            <= rvfi_mem_rdata_d;
             rvfi_stage_mem_wdata[i]            <= rvfi_mem_wdata_d;
             rvfi_stage_mem_addr[i]             <= rvfi_mem_addr_d;
-            rvfi_ext_stage_mip[i+1]            <= rvfi_ext_stage_mip[i];
-            rvfi_ext_stage_nmi[i+1]            <= rvfi_ext_stage_nmi[i];
-            rvfi_ext_stage_debug_req[i+1]      <= rvfi_ext_stage_debug_req[i];
+            rvfi_ext_stage_debug_mode[i]       <= debug_mode;
             rvfi_ext_stage_mcycle[i]           <= cs_registers_i.mcycle_counter_i.counter_val_o;
             rvfi_ext_stage_ic_scr_key_valid[i] <= cs_registers_i.cpuctrlsts_ic_scr_key_valid_q;
             // This is done this way because SystemVerilog does not support looping through
@@ -1467,6 +1622,18 @@ module ibex_core import ibex_pkg::*; #(
               rvfi_ext_stage_mhpmcounters[i][k]  <= cs_registers_i.mhpmcounter[k+3][31:0];
               rvfi_ext_stage_mhpmcountersh[i][k] <= cs_registers_i.mhpmcounter[k+3][63:32];
             end
+          end
+
+          // Some of the rvfi_ext_* signals are used to provide an interrupt notification (signalled
+          // via rvfi_ext_irq_valid) when there isn't a valid retired instruction as well as
+          // providing information along with a retired instruction. Move these up the rvfi pipeline
+          // for both cases.
+          if (rvfi_id_done | rvfi_ext_stage_irq_valid[i]) begin
+            rvfi_ext_stage_pre_mip[i+1]   <= rvfi_ext_stage_pre_mip[i];
+            rvfi_ext_stage_post_mip[i]    <= cs_registers_i.mip;
+            rvfi_ext_stage_nmi[i+1]       <= rvfi_ext_stage_nmi[i];
+            rvfi_ext_stage_nmi_int[i+1]   <= rvfi_ext_stage_nmi_int[i];
+            rvfi_ext_stage_debug_req[i+1] <= rvfi_ext_stage_debug_req[i];
           end
         end else begin
           if (rvfi_wb_done) begin
@@ -1498,13 +1665,23 @@ module ibex_core import ibex_pkg::*; #(
             rvfi_stage_rd_wdata[i]  <= rvfi_rd_wdata_d;
             rvfi_stage_mem_rdata[i] <= rvfi_mem_rdata_d;
 
-            rvfi_ext_stage_mip[i+1]            <= rvfi_ext_stage_mip[i];
-            rvfi_ext_stage_nmi[i+1]            <= rvfi_ext_stage_nmi[i];
-            rvfi_ext_stage_debug_req[i+1]      <= rvfi_ext_stage_debug_req[i];
+            rvfi_ext_stage_debug_mode[i]       <= rvfi_ext_stage_debug_mode[i-1];
             rvfi_ext_stage_mcycle[i]           <= rvfi_ext_stage_mcycle[i-1];
             rvfi_ext_stage_ic_scr_key_valid[i] <= rvfi_ext_stage_ic_scr_key_valid[i-1];
             rvfi_ext_stage_mhpmcounters[i]     <= rvfi_ext_stage_mhpmcounters[i-1];
             rvfi_ext_stage_mhpmcountersh[i]    <= rvfi_ext_stage_mhpmcountersh[i-1];
+          end
+
+          // Some of the rvfi_ext_* signals are used to provide an interrupt notification (signalled
+          // via rvfi_ext_irq_valid) when there isn't a valid retired instruction as well as
+          // providing information along with a retired instruction. Move these up the rvfi pipeline
+          // for both cases.
+          if (rvfi_wb_done | rvfi_ext_stage_irq_valid[i]) begin
+            rvfi_ext_stage_pre_mip[i+1]   <= rvfi_ext_stage_pre_mip[i];
+            rvfi_ext_stage_post_mip[i]    <= rvfi_ext_stage_post_mip[i-1];
+            rvfi_ext_stage_nmi[i+1]       <= rvfi_ext_stage_nmi[i];
+            rvfi_ext_stage_nmi_int[i+1]   <= rvfi_ext_stage_nmi_int[i];
+            rvfi_ext_stage_debug_req[i+1] <= rvfi_ext_stage_debug_req[i];
           end
         end
       end
@@ -1512,7 +1689,7 @@ module ibex_core import ibex_pkg::*; #(
   end
 
 
-  // Memory adddress/write data available first cycle of ld/st instruction from register read
+  // Memory address/write data available first cycle of ld/st instruction from register read
   always_comb begin
     if (instr_first_cycle_id) begin
       rvfi_mem_addr_d  = alu_adder_result_ex;
@@ -1629,6 +1806,27 @@ module ibex_core import ibex_pkg::*; #(
     end
   end
 
+  if (WritebackStage) begin : g_rvfi_rf_wr_suppress_wb
+    logic rvfi_stage_rf_wr_suppress_wb;
+    logic rvfi_rf_wr_suppress_wb;
+
+    // Set when RF write from load data is suppressed due to an integrity error
+    assign rvfi_rf_wr_suppress_wb =
+      instr_done_wb & ~rf_we_wb_o & outstanding_load_wb & lsu_load_resp_intg_err;
+
+    always@(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        rvfi_stage_rf_wr_suppress_wb <= 1'b0;
+      end else if (rvfi_wb_done) begin
+        rvfi_stage_rf_wr_suppress_wb <= rvfi_rf_wr_suppress_wb;
+      end
+    end
+
+    assign rvfi_ext_rf_wr_suppress = rvfi_stage_rf_wr_suppress_wb;
+  end else begin : g_rvfi_no_rf_wr_suppress_wb
+    assign rvfi_ext_rf_wr_suppress = 1'b0;
+  end
+
   // rvfi_intr must be set for first instruction that is part of a trap handler.
   // On the first cycle of a new instruction see if a trap PC was set by the previous instruction,
   // otherwise maintain value.
@@ -1667,11 +1865,18 @@ module ibex_core import ibex_pkg::*; #(
   // Certain parameter combinations are not supported
   `ASSERT_INIT(IllegalParamSecure, !(SecureIbex && (RV32M == RV32MNone)))
 
+  // If the ID stage signals its ready the mult/div FSMs must be idle in the following cycle
+  `ASSERT(MultDivFSMIdleOnIdReady, id_in_ready |=> ex_block_i.sva_multdiv_fsm_idle)
+
   //////////
   // FCOV //
   //////////
 
 `ifndef SYNTHESIS
+  // fcov signals for V2S
+  `DV_FCOV_SIGNAL_GEN_IF(logic, rf_ecc_err_a_id, gen_regfile_ecc.rf_ecc_err_a_id, RegFileECC)
+  `DV_FCOV_SIGNAL_GEN_IF(logic, rf_ecc_err_b_id, gen_regfile_ecc.rf_ecc_err_b_id, RegFileECC)
+
   // fcov signals for CSR access. These are complicated by illegal accesses. Where an access is
   // legal `csr_op_en` signals the operation occurring, but this is deasserted where an access is
   // illegal. Instead `illegal_insn_id` confirms the instruction is taking an illegal instruction
@@ -1702,7 +1907,6 @@ module ibex_core import ibex_pkg::*; #(
           g_pmp.pmp_i.region_match_all[PMP_D][i_region] & data_req_out)
       // pmp_cfg[5:6] is reserved and because of that the width of it inside cs_registers module
       // is 6-bit.
-      // TODO: Cover writes to the reserved bits
       `DV_FCOV_SIGNAL(logic, warl_check_pmpcfg,
           fcov_csr_write &&
           (cs_registers_i.g_pmp_registers.g_pmp_csrs[i_region].u_pmp_cfg_csr.wr_data_i !=

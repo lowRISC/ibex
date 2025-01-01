@@ -6,7 +6,7 @@
   target_dir: "google_riscv-dv",
 
   upstream: {
-    url: "https://github.com/google/riscv-dv",
+    url: "https://github.com/chipsalliance/riscv-dv",
     rev: "master",
   },
 

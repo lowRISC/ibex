@@ -1,0 +1,10 @@
+#=======================================================================
+# Makefrag for rv64uzfh tests
+#-----------------------------------------------------------------------
+
+rv64uzfh_sc_tests = \
+	fadd fdiv fclass fcmp fcvt fcvt_w fmadd fmin \
+	ldst move recoding \
+
+rv64uzfh_p_tests = $(addprefix rv64uzfh-p-, $(rv64uzfh_sc_tests))
+rv64uzfh_v_tests = $(addprefix rv64uzfh-v-, $(rv64uzfh_sc_tests))

@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -32,6 +32,8 @@ module prim_generic_pad_wrapper
   // analog pads cannot have a scan role.
   `ASSERT_INIT(AnalogNoScan_A, PadType != AnalogIn0 || ScanRole == NoScan)
 
+  //VCS coverage off
+  // pragma coverage off
   // not all signals are used here.
   logic unused_sigs;
   assign unused_sigs = ^{attr_i.slew_rate,
@@ -41,15 +43,25 @@ module prim_generic_pad_wrapper
                          attr_i.keep_en,
                          scanmode_i,
                          pok_i};
+  //VCS coverage on
+  // pragma coverage on
+
+  // Input enable (active-high)
+  logic ie;
+  assign ie = ie_i & ~attr_i.input_disable;
 
   if (PadType == InputStd) begin : gen_input_only
+    //VCS coverage off
+    // pragma coverage off
     logic unused_in_sigs;
     assign unused_in_sigs = ^{out_i,
                               oe_i,
                               attr_i.virt_od_en,
                               attr_i.drive_strength};
+    //VCS coverage on
+    // pragma coverage on
 
-    assign in_raw_o = (ie_i) ? inout_io  : 1'bz;
+    assign in_raw_o = ie ? inout_io : 1'bz;
     // input inversion
     assign in_o = attr_i.invert ^ in_raw_o;
 
@@ -63,7 +75,7 @@ module prim_generic_pad_wrapper
                PadType == BidirOd ||
                PadType == BidirStd) begin : gen_bidir
 
-    assign in_raw_o = (ie_i) ? inout_io  : 1'bz;
+    assign in_raw_o = ie ? inout_io : 1'bz;
     // input inversion
     assign in_o = attr_i.invert ^ in_raw_o;
 
@@ -84,12 +96,23 @@ module prim_generic_pad_wrapper
   `endif
   end else if (PadType == AnalogIn0 || PadType == AnalogIn1) begin : gen_analog
 
+    //VCS coverage off
+    // pragma coverage off
     logic unused_ana_sigs;
-    assign unused_ana_sigs = ^{attr_i, out_i, oe_i, ie_i};
+    assign unused_ana_sigs = ^{attr_i.invert,
+                               attr_i.virt_od_en,
+                               attr_i.drive_strength[0],
+                               attr_i.pull_en,
+                               attr_i.pull_select,
+                               out_i,
+                               oe_i,
+                               ie_i};
+    //VCS coverage on
+    // pragma coverage on
 
     assign inout_io = 1'bz; // explicitly make this tristate to avoid lint errors.
-    assign in_o = inout_io;
-    assign in_raw_o = inout_io;
+    assign in_raw_o = ie ? inout_io : 1'bz;
+    assign in_o = in_raw_o;
 
   end else begin : gen_invalid_config
     // this should throw link warnings in elaboration

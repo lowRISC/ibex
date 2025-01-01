@@ -1,0 +1,4884 @@
+diff --git a/riscv-test-suite/rv32i_m/B/src/andn-01.S b/riscv-test-suite/rv32i_m/B/src/andn-01.S
+index ffa9cd9fc..0ae7698f0 100644
+--- a/riscv-test-suite/rv32i_m/B/src/andn-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/andn-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbb,RV32IZbkb,RV32IZk,RV32IZkn,RV32IZks")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/bclr-01.S b/riscv-test-suite/rv32i_m/B/src/bclr-01.S
+index a5cb5b11d..0df300b83 100644
+--- a/riscv-test-suite/rv32i_m/B/src/bclr-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/bclr-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbs")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/bclri-01.S b/riscv-test-suite/rv32i_m/B/src/bclri-01.S
+index a4868cfc9..8257e0473 100644
+--- a/riscv-test-suite/rv32i_m/B/src/bclri-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/bclri-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbs")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/bext-01.S b/riscv-test-suite/rv32i_m/B/src/bext-01.S
+index 005544d06..d2b824163 100644
+--- a/riscv-test-suite/rv32i_m/B/src/bext-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/bext-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbs")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/bexti-01.S b/riscv-test-suite/rv32i_m/B/src/bexti-01.S
+index 8e3de65f0..048ccc82f 100644
+--- a/riscv-test-suite/rv32i_m/B/src/bexti-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/bexti-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbs")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/binv-01.S b/riscv-test-suite/rv32i_m/B/src/binv-01.S
+index 70b90a2c1..1bd859221 100644
+--- a/riscv-test-suite/rv32i_m/B/src/binv-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/binv-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbs")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/binvi-01.S b/riscv-test-suite/rv32i_m/B/src/binvi-01.S
+index 81b2dcf19..d05d08d9b 100644
+--- a/riscv-test-suite/rv32i_m/B/src/binvi-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/binvi-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbs")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/bset-01.S b/riscv-test-suite/rv32i_m/B/src/bset-01.S
+index d4758f427..28db9dc60 100644
+--- a/riscv-test-suite/rv32i_m/B/src/bset-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/bset-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbs")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/bseti-01.S b/riscv-test-suite/rv32i_m/B/src/bseti-01.S
+index 0dc599df6..549bca515 100644
+--- a/riscv-test-suite/rv32i_m/B/src/bseti-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/bseti-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbs")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/clmul-01.S b/riscv-test-suite/rv32i_m/B/src/clmul-01.S
+index d58620bbb..9a237cd7d 100644
+--- a/riscv-test-suite/rv32i_m/B/src/clmul-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/clmul-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbc,RV32IZbkc,RV32IZk,RV32IZkn,RV32IZks")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/clmulh-01.S b/riscv-test-suite/rv32i_m/B/src/clmulh-01.S
+index a6652c061..76654014f 100644
+--- a/riscv-test-suite/rv32i_m/B/src/clmulh-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/clmulh-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbc,RV32IZbkc,RV32IZk,RV32IZkn,RV32IZks")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/clmulr-01.S b/riscv-test-suite/rv32i_m/B/src/clmulr-01.S
+index 3e7bb0c68..1971fe1a3 100644
+--- a/riscv-test-suite/rv32i_m/B/src/clmulr-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/clmulr-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbc")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/clz-01.S b/riscv-test-suite/rv32i_m/B/src/clz-01.S
+index cd2880364..87335e47f 100644
+--- a/riscv-test-suite/rv32i_m/B/src/clz-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/clz-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbb")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/cpop-01.S b/riscv-test-suite/rv32i_m/B/src/cpop-01.S
+index 7d92ef0e5..453e5ecf1 100644
+--- a/riscv-test-suite/rv32i_m/B/src/cpop-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/cpop-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbb")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/ctz-01.S b/riscv-test-suite/rv32i_m/B/src/ctz-01.S
+index 49dad457b..88da7082e 100644
+--- a/riscv-test-suite/rv32i_m/B/src/ctz-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/ctz-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbb")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/max-01.S b/riscv-test-suite/rv32i_m/B/src/max-01.S
+index 0bed6af3f..5edc8df0b 100644
+--- a/riscv-test-suite/rv32i_m/B/src/max-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/max-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbb")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/maxu-01.S b/riscv-test-suite/rv32i_m/B/src/maxu-01.S
+index 3d8de2a60..50e379a60 100644
+--- a/riscv-test-suite/rv32i_m/B/src/maxu-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/maxu-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbb")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/min-01.S b/riscv-test-suite/rv32i_m/B/src/min-01.S
+index 4a317c3c5..fb6420c77 100644
+--- a/riscv-test-suite/rv32i_m/B/src/min-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/min-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbb")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/minu-01.S b/riscv-test-suite/rv32i_m/B/src/minu-01.S
+index 42b59eebf..42c53d0aa 100644
+--- a/riscv-test-suite/rv32i_m/B/src/minu-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/minu-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbb")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/orcb_32-01.S b/riscv-test-suite/rv32i_m/B/src/orcb_32-01.S
+index 403b54b0b..93d909ebe 100644
+--- a/riscv-test-suite/rv32i_m/B/src/orcb_32-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/orcb_32-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbb")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/orn-01.S b/riscv-test-suite/rv32i_m/B/src/orn-01.S
+index 6e5725d07..952b2a473 100644
+--- a/riscv-test-suite/rv32i_m/B/src/orn-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/orn-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbb,RV32IZbkb,RV32IZk,RV32IZkn,RV32IZks")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/rev8_32-01.S b/riscv-test-suite/rv32i_m/B/src/rev8_32-01.S
+index b7a73d3cb..f2fef3887 100644
+--- a/riscv-test-suite/rv32i_m/B/src/rev8_32-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/rev8_32-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbb,RV32IZbkb,RV32IZk,RV32IZkn,RV32IZks")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/rol-01.S b/riscv-test-suite/rv32i_m/B/src/rol-01.S
+index 19325225e..b260c0e9e 100644
+--- a/riscv-test-suite/rv32i_m/B/src/rol-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/rol-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbb,RV32IZbkb,RV32IZk,RV32IZkn,RV32IZks")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/ror-01.S b/riscv-test-suite/rv32i_m/B/src/ror-01.S
+index 976b6e875..5afe79c42 100644
+--- a/riscv-test-suite/rv32i_m/B/src/ror-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/ror-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbb,RV32IZbkb,RV32IZk,RV32IZkn,RV32IZks")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/rori-01.S b/riscv-test-suite/rv32i_m/B/src/rori-01.S
+index 527157409..f425137dd 100644
+--- a/riscv-test-suite/rv32i_m/B/src/rori-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/rori-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbb,RV32IZbkb,RV32IZk,RV32IZkn,RV32IZks")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/sh1add-01.S b/riscv-test-suite/rv32i_m/B/src/sh1add-01.S
+index a704dcfb3..e1ae465d3 100644
+--- a/riscv-test-suite/rv32i_m/B/src/sh1add-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/sh1add-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZba")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/sh2add-01.S b/riscv-test-suite/rv32i_m/B/src/sh2add-01.S
+index 70a82fdfb..82d49d65f 100644
+--- a/riscv-test-suite/rv32i_m/B/src/sh2add-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/sh2add-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZba")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/sh3add-01.S b/riscv-test-suite/rv32i_m/B/src/sh3add-01.S
+index 5a00360aa..7122581f9 100644
+--- a/riscv-test-suite/rv32i_m/B/src/sh3add-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/sh3add-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZba")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/B/src/xnor-01.S b/riscv-test-suite/rv32i_m/B/src/xnor-01.S
+index 790072d60..24923c267 100644
+--- a/riscv-test-suite/rv32i_m/B/src/xnor-01.S
++++ b/riscv-test-suite/rv32i_m/B/src/xnor-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbb,RV32IZbkb,RV32IZk,RV32IZkn,RV32IZks")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/cadd-01.S b/riscv-test-suite/rv32i_m/C/src/cadd-01.S
+index 79ce281e4..1d99ca718 100644
+--- a/riscv-test-suite/rv32i_m/C/src/cadd-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/cadd-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/caddi-01.S b/riscv-test-suite/rv32i_m/C/src/caddi-01.S
+index 6332436d2..95165b2b0 100644
+--- a/riscv-test-suite/rv32i_m/C/src/caddi-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/caddi-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/caddi16sp-01.S b/riscv-test-suite/rv32i_m/C/src/caddi16sp-01.S
+index 45f4ebe3e..0f5eae4b9 100644
+--- a/riscv-test-suite/rv32i_m/C/src/caddi16sp-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/caddi16sp-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/caddi4spn-01.S b/riscv-test-suite/rv32i_m/C/src/caddi4spn-01.S
+index 18a268b61..7501649e6 100644
+--- a/riscv-test-suite/rv32i_m/C/src/caddi4spn-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/caddi4spn-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/cand-01.S b/riscv-test-suite/rv32i_m/C/src/cand-01.S
+index fdac5d5ed..3aa725942 100644
+--- a/riscv-test-suite/rv32i_m/C/src/cand-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/cand-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/candi-01.S b/riscv-test-suite/rv32i_m/C/src/candi-01.S
+index d1af09f6b..8a6a54b75 100644
+--- a/riscv-test-suite/rv32i_m/C/src/candi-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/candi-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/cbeqz-01.S b/riscv-test-suite/rv32i_m/C/src/cbeqz-01.S
+index 779cfbca6..c1c057b30 100644
+--- a/riscv-test-suite/rv32i_m/C/src/cbeqz-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/cbeqz-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/cbnez-01.S b/riscv-test-suite/rv32i_m/C/src/cbnez-01.S
+index 594464fe0..5949f2e22 100644
+--- a/riscv-test-suite/rv32i_m/C/src/cbnez-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/cbnez-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/cebreak-01.S b/riscv-test-suite/rv32i_m/C/src/cebreak-01.S
+index 7a6264618..56ab6e258 100644
+--- a/riscv-test-suite/rv32i_m/C/src/cebreak-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/cebreak-01.S
+@@ -13,6 +13,7 @@ RVTEST_ISA("RV32IC_Zicsr")
+ 
+ # Test code region
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/cj-01.S b/riscv-test-suite/rv32i_m/C/src/cj-01.S
+index bf242ee0c..6a781766c 100644
+--- a/riscv-test-suite/rv32i_m/C/src/cj-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/cj-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/cjal-01.S b/riscv-test-suite/rv32i_m/C/src/cjal-01.S
+index 85fa01397..056eae928 100644
+--- a/riscv-test-suite/rv32i_m/C/src/cjal-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/cjal-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/cjalr-01.S b/riscv-test-suite/rv32i_m/C/src/cjalr-01.S
+index 28df313d0..c4402ca30 100644
+--- a/riscv-test-suite/rv32i_m/C/src/cjalr-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/cjalr-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/cjr-01.S b/riscv-test-suite/rv32i_m/C/src/cjr-01.S
+index 73634d368..538c44537 100644
+--- a/riscv-test-suite/rv32i_m/C/src/cjr-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/cjr-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/cli-01.S b/riscv-test-suite/rv32i_m/C/src/cli-01.S
+index 05dfea4b0..612107667 100644
+--- a/riscv-test-suite/rv32i_m/C/src/cli-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/cli-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/clui-01.S b/riscv-test-suite/rv32i_m/C/src/clui-01.S
+index 60082c809..5495d7079 100644
+--- a/riscv-test-suite/rv32i_m/C/src/clui-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/clui-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/clw-01.S b/riscv-test-suite/rv32i_m/C/src/clw-01.S
+index 0d20b3ef5..6f1f22e91 100644
+--- a/riscv-test-suite/rv32i_m/C/src/clw-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/clw-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/clwsp-01.S b/riscv-test-suite/rv32i_m/C/src/clwsp-01.S
+index a0b1bc4da..587497a47 100644
+--- a/riscv-test-suite/rv32i_m/C/src/clwsp-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/clwsp-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/cmv-01.S b/riscv-test-suite/rv32i_m/C/src/cmv-01.S
+index a884a9440..6a8fe11a7 100644
+--- a/riscv-test-suite/rv32i_m/C/src/cmv-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/cmv-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/cnop-01.S b/riscv-test-suite/rv32i_m/C/src/cnop-01.S
+index 35303bf69..b0d1aa4f9 100644
+--- a/riscv-test-suite/rv32i_m/C/src/cnop-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/cnop-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/cor-01.S b/riscv-test-suite/rv32i_m/C/src/cor-01.S
+index df67845fa..9bd692338 100644
+--- a/riscv-test-suite/rv32i_m/C/src/cor-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/cor-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/cslli-01.S b/riscv-test-suite/rv32i_m/C/src/cslli-01.S
+index 54ef3c7c8..c13a39d3b 100644
+--- a/riscv-test-suite/rv32i_m/C/src/cslli-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/cslli-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/csrai-01.S b/riscv-test-suite/rv32i_m/C/src/csrai-01.S
+index dd857442f..a779dfdc0 100644
+--- a/riscv-test-suite/rv32i_m/C/src/csrai-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/csrai-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/csrli-01.S b/riscv-test-suite/rv32i_m/C/src/csrli-01.S
+index c4fab8f93..caeb3f6e4 100644
+--- a/riscv-test-suite/rv32i_m/C/src/csrli-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/csrli-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/csub-01.S b/riscv-test-suite/rv32i_m/C/src/csub-01.S
+index 68bc8803b..e6a2f74ef 100644
+--- a/riscv-test-suite/rv32i_m/C/src/csub-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/csub-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/csw-01.S b/riscv-test-suite/rv32i_m/C/src/csw-01.S
+index 3b8794f70..6268e8a11 100644
+--- a/riscv-test-suite/rv32i_m/C/src/csw-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/csw-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/cswsp-01.S b/riscv-test-suite/rv32i_m/C/src/cswsp-01.S
+index 437ac6cf9..97584686d 100644
+--- a/riscv-test-suite/rv32i_m/C/src/cswsp-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/cswsp-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/C/src/cxor-01.S b/riscv-test-suite/rv32i_m/C/src/cxor-01.S
+index 2ca675a19..4f1b636dc 100644
+--- a/riscv-test-suite/rv32i_m/C/src/cxor-01.S
++++ b/riscv-test-suite/rv32i_m/C/src/cxor-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IC")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/add-01.S b/riscv-test-suite/rv32i_m/I/src/add-01.S
+index 933edf073..aefb0fc6a 100644
+--- a/riscv-test-suite/rv32i_m/I/src/add-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/add-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/addi-01.S b/riscv-test-suite/rv32i_m/I/src/addi-01.S
+index 157efec06..96dc714e4 100644
+--- a/riscv-test-suite/rv32i_m/I/src/addi-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/addi-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/and-01.S b/riscv-test-suite/rv32i_m/I/src/and-01.S
+index 0b701254f..1e5d0c961 100644
+--- a/riscv-test-suite/rv32i_m/I/src/and-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/and-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/andi-01.S b/riscv-test-suite/rv32i_m/I/src/andi-01.S
+index 1f6864e2a..a3675b732 100644
+--- a/riscv-test-suite/rv32i_m/I/src/andi-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/andi-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/auipc-01.S b/riscv-test-suite/rv32i_m/I/src/auipc-01.S
+index 042d648e9..ac1f0dbb4 100644
+--- a/riscv-test-suite/rv32i_m/I/src/auipc-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/auipc-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/beq-01.S b/riscv-test-suite/rv32i_m/I/src/beq-01.S
+index 1f4837f75..6a8657ec1 100644
+--- a/riscv-test-suite/rv32i_m/I/src/beq-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/beq-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/bge-01.S b/riscv-test-suite/rv32i_m/I/src/bge-01.S
+index 8a063fe5f..2da56c5e9 100644
+--- a/riscv-test-suite/rv32i_m/I/src/bge-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/bge-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/bgeu-01.S b/riscv-test-suite/rv32i_m/I/src/bgeu-01.S
+index 851ee703a..7d627e991 100644
+--- a/riscv-test-suite/rv32i_m/I/src/bgeu-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/bgeu-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/blt-01.S b/riscv-test-suite/rv32i_m/I/src/blt-01.S
+index e3e35afaa..ac4364d4b 100644
+--- a/riscv-test-suite/rv32i_m/I/src/blt-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/blt-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/bltu-01.S b/riscv-test-suite/rv32i_m/I/src/bltu-01.S
+index 33eda7b5a..ac080e5a8 100644
+--- a/riscv-test-suite/rv32i_m/I/src/bltu-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/bltu-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/bne-01.S b/riscv-test-suite/rv32i_m/I/src/bne-01.S
+index bdd87a53e..b5cd42e33 100644
+--- a/riscv-test-suite/rv32i_m/I/src/bne-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/bne-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/fence-01.S b/riscv-test-suite/rv32i_m/I/src/fence-01.S
+index 515816048..d21dafbea 100644
+--- a/riscv-test-suite/rv32i_m/I/src/fence-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/fence-01.S
+@@ -11,6 +11,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/jal-01.S b/riscv-test-suite/rv32i_m/I/src/jal-01.S
+index 0584cc505..c31b6d96d 100644
+--- a/riscv-test-suite/rv32i_m/I/src/jal-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/jal-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/jalr-01.S b/riscv-test-suite/rv32i_m/I/src/jalr-01.S
+index a610c3910..15cf0c830 100644
+--- a/riscv-test-suite/rv32i_m/I/src/jalr-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/jalr-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/lb-align-01.S b/riscv-test-suite/rv32i_m/I/src/lb-align-01.S
+index ab78a9217..17319603d 100644
+--- a/riscv-test-suite/rv32i_m/I/src/lb-align-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/lb-align-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/lbu-align-01.S b/riscv-test-suite/rv32i_m/I/src/lbu-align-01.S
+index e19cff2a6..3bbd276b7 100644
+--- a/riscv-test-suite/rv32i_m/I/src/lbu-align-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/lbu-align-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/lh-align-01.S b/riscv-test-suite/rv32i_m/I/src/lh-align-01.S
+index b3c834359..3d78eddb0 100644
+--- a/riscv-test-suite/rv32i_m/I/src/lh-align-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/lh-align-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/lhu-align-01.S b/riscv-test-suite/rv32i_m/I/src/lhu-align-01.S
+index 39703fc1b..84084077d 100644
+--- a/riscv-test-suite/rv32i_m/I/src/lhu-align-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/lhu-align-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/lui-01.S b/riscv-test-suite/rv32i_m/I/src/lui-01.S
+index 1716cfb2a..dc393278c 100644
+--- a/riscv-test-suite/rv32i_m/I/src/lui-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/lui-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/lw-align-01.S b/riscv-test-suite/rv32i_m/I/src/lw-align-01.S
+index 161f32781..122879e1a 100644
+--- a/riscv-test-suite/rv32i_m/I/src/lw-align-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/lw-align-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/misalign1-jalr-01.S b/riscv-test-suite/rv32i_m/I/src/misalign1-jalr-01.S
+index f8716edeb..fdd509251 100644
+--- a/riscv-test-suite/rv32i_m/I/src/misalign1-jalr-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/misalign1-jalr-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/or-01.S b/riscv-test-suite/rv32i_m/I/src/or-01.S
+index fd3046936..ccc9fde45 100644
+--- a/riscv-test-suite/rv32i_m/I/src/or-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/or-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/ori-01.S b/riscv-test-suite/rv32i_m/I/src/ori-01.S
+index b4735a22f..a6f9ae801 100644
+--- a/riscv-test-suite/rv32i_m/I/src/ori-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/ori-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/sb-align-01.S b/riscv-test-suite/rv32i_m/I/src/sb-align-01.S
+index e4cb9f163..73dde24ea 100644
+--- a/riscv-test-suite/rv32i_m/I/src/sb-align-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/sb-align-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/sh-align-01.S b/riscv-test-suite/rv32i_m/I/src/sh-align-01.S
+index 6f6d3aad2..5f30cfc78 100644
+--- a/riscv-test-suite/rv32i_m/I/src/sh-align-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/sh-align-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/sll-01.S b/riscv-test-suite/rv32i_m/I/src/sll-01.S
+index f2821772a..2adaa4846 100644
+--- a/riscv-test-suite/rv32i_m/I/src/sll-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/sll-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/slli-01.S b/riscv-test-suite/rv32i_m/I/src/slli-01.S
+index 2a6b5eab0..e333b2c60 100644
+--- a/riscv-test-suite/rv32i_m/I/src/slli-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/slli-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/slt-01.S b/riscv-test-suite/rv32i_m/I/src/slt-01.S
+index 97d06f9f6..f1cd7eafd 100644
+--- a/riscv-test-suite/rv32i_m/I/src/slt-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/slt-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/slti-01.S b/riscv-test-suite/rv32i_m/I/src/slti-01.S
+index 1841d5ded..8d3b4523a 100644
+--- a/riscv-test-suite/rv32i_m/I/src/slti-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/slti-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/sltiu-01.S b/riscv-test-suite/rv32i_m/I/src/sltiu-01.S
+index 731b75db6..dc3acdb45 100644
+--- a/riscv-test-suite/rv32i_m/I/src/sltiu-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/sltiu-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/sltu-01.S b/riscv-test-suite/rv32i_m/I/src/sltu-01.S
+index 371f84aab..1732ed3f3 100644
+--- a/riscv-test-suite/rv32i_m/I/src/sltu-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/sltu-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/sra-01.S b/riscv-test-suite/rv32i_m/I/src/sra-01.S
+index 92a4f80d4..b22e51869 100644
+--- a/riscv-test-suite/rv32i_m/I/src/sra-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/sra-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/srai-01.S b/riscv-test-suite/rv32i_m/I/src/srai-01.S
+index 0c18ab181..aeaaa6af9 100644
+--- a/riscv-test-suite/rv32i_m/I/src/srai-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/srai-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/srl-01.S b/riscv-test-suite/rv32i_m/I/src/srl-01.S
+index 756b20b17..f510100d8 100644
+--- a/riscv-test-suite/rv32i_m/I/src/srl-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/srl-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/srli-01.S b/riscv-test-suite/rv32i_m/I/src/srli-01.S
+index 53b8a5721..e2386ede5 100644
+--- a/riscv-test-suite/rv32i_m/I/src/srli-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/srli-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/sub-01.S b/riscv-test-suite/rv32i_m/I/src/sub-01.S
+index c3fd51b50..54dc0a400 100644
+--- a/riscv-test-suite/rv32i_m/I/src/sub-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/sub-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/sw-align-01.S b/riscv-test-suite/rv32i_m/I/src/sw-align-01.S
+index 260f41e90..3069dd85b 100644
+--- a/riscv-test-suite/rv32i_m/I/src/sw-align-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/sw-align-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/xor-01.S b/riscv-test-suite/rv32i_m/I/src/xor-01.S
+index 8de70605a..c9d825d90 100644
+--- a/riscv-test-suite/rv32i_m/I/src/xor-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/xor-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/I/src/xori-01.S b/riscv-test-suite/rv32i_m/I/src/xori-01.S
+index 786d641ac..07cc63e9c 100644
+--- a/riscv-test-suite/rv32i_m/I/src/xori-01.S
++++ b/riscv-test-suite/rv32i_m/I/src/xori-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/aes32dsi-01.S b/riscv-test-suite/rv32i_m/K/src/aes32dsi-01.S
+index c90a87c62..9da91fc20 100644
+--- a/riscv-test-suite/rv32i_m/K/src/aes32dsi-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/aes32dsi-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZkn,RV32IZknd")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/aes32dsi-rwp1.S b/riscv-test-suite/rv32i_m/K/src/aes32dsi-rwp1.S
+index 473c61984..f60d704ae 100644
+--- a/riscv-test-suite/rv32i_m/K/src/aes32dsi-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/aes32dsi-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/aes32dsmi-01.S b/riscv-test-suite/rv32i_m/K/src/aes32dsmi-01.S
+index 98ca12470..79638f1d9 100644
+--- a/riscv-test-suite/rv32i_m/K/src/aes32dsmi-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/aes32dsmi-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZkn,RV32IZknd")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/aes32dsmi-rwp1.S b/riscv-test-suite/rv32i_m/K/src/aes32dsmi-rwp1.S
+index 01f32321c..b3ba3f1e8 100644
+--- a/riscv-test-suite/rv32i_m/K/src/aes32dsmi-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/aes32dsmi-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/aes32esi-01.S b/riscv-test-suite/rv32i_m/K/src/aes32esi-01.S
+index 618bbaa8a..512190bbe 100644
+--- a/riscv-test-suite/rv32i_m/K/src/aes32esi-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/aes32esi-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZkn,RV32IZkne")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/aes32esi-rwp1.S b/riscv-test-suite/rv32i_m/K/src/aes32esi-rwp1.S
+index 96156d806..9ce2126cb 100644
+--- a/riscv-test-suite/rv32i_m/K/src/aes32esi-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/aes32esi-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/aes32esmi-01.S b/riscv-test-suite/rv32i_m/K/src/aes32esmi-01.S
+index a6e1f8fff..8aa38b549 100644
+--- a/riscv-test-suite/rv32i_m/K/src/aes32esmi-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/aes32esmi-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZkn,RV32IZkne")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/aes32esmi-rwp1.S b/riscv-test-suite/rv32i_m/K/src/aes32esmi-rwp1.S
+index 86aebef49..163c4c670 100644
+--- a/riscv-test-suite/rv32i_m/K/src/aes32esmi-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/aes32esmi-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/brev8_32-01.S b/riscv-test-suite/rv32i_m/K/src/brev8_32-01.S
+index ff7448fa1..e42b3f450 100644
+--- a/riscv-test-suite/rv32i_m/K/src/brev8_32-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/brev8_32-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZbkb,RV32IZk,RV32IZkn,RV32IZks")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/pack-01.S b/riscv-test-suite/rv32i_m/K/src/pack-01.S
+index 7d393af6e..ebdfaa61e 100644
+--- a/riscv-test-suite/rv32i_m/K/src/pack-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/pack-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZbkb,RV32IZkn,RV32IZks")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/packh-01.S b/riscv-test-suite/rv32i_m/K/src/packh-01.S
+index ff1f0b176..4a44ce4cb 100644
+--- a/riscv-test-suite/rv32i_m/K/src/packh-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/packh-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZbkb,RV32IZkn,RV32IZks")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha256sig0-01.S b/riscv-test-suite/rv32i_m/K/src/sha256sig0-01.S
+index c75753460..c355b54c2 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha256sig0-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha256sig0-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZkn,RV32IZknh")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha256sig0-rwp1.S b/riscv-test-suite/rv32i_m/K/src/sha256sig0-rwp1.S
+index 46644614e..ecd7e0880 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha256sig0-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha256sig0-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha256sig0-rwp2.S b/riscv-test-suite/rv32i_m/K/src/sha256sig0-rwp2.S
+index f5ecbd72b..e9e410e0b 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha256sig0-rwp2.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha256sig0-rwp2.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha256sig1-01.S b/riscv-test-suite/rv32i_m/K/src/sha256sig1-01.S
+index e16969761..a21e5a8f0 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha256sig1-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha256sig1-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZkn,RV32IZknh")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha256sig1-rwp1.S b/riscv-test-suite/rv32i_m/K/src/sha256sig1-rwp1.S
+index f35d4fb0d..080ba30f9 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha256sig1-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha256sig1-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha256sig1-rwp2.S b/riscv-test-suite/rv32i_m/K/src/sha256sig1-rwp2.S
+index fb2c15f6c..05f246da0 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha256sig1-rwp2.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha256sig1-rwp2.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha256sum0-01.S b/riscv-test-suite/rv32i_m/K/src/sha256sum0-01.S
+index 2942a0d96..cb5c60f82 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha256sum0-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha256sum0-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZkn,RV32IZknh")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha256sum0-rwp1.S b/riscv-test-suite/rv32i_m/K/src/sha256sum0-rwp1.S
+index 297ff5cf4..d6cffb0c1 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha256sum0-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha256sum0-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha256sum0-rwp2.S b/riscv-test-suite/rv32i_m/K/src/sha256sum0-rwp2.S
+index a2d5b5611..83c7decf0 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha256sum0-rwp2.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha256sum0-rwp2.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha256sum1-01.S b/riscv-test-suite/rv32i_m/K/src/sha256sum1-01.S
+index 8d6d6a9ce..f94698e29 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha256sum1-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha256sum1-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZkn,RV32IZknh")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha256sum1-rwp1.S b/riscv-test-suite/rv32i_m/K/src/sha256sum1-rwp1.S
+index aad43e00a..c30cd91de 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha256sum1-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha256sum1-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha256sum1-rwp2.S b/riscv-test-suite/rv32i_m/K/src/sha256sum1-rwp2.S
+index 69b35f6c2..9dd07b1e2 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha256sum1-rwp2.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha256sum1-rwp2.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sig0h-01.S b/riscv-test-suite/rv32i_m/K/src/sha512sig0h-01.S
+index 1dd04cc06..804770b6c 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sig0h-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sig0h-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZkn,RV32IZknh")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sig0h-rwp1.S b/riscv-test-suite/rv32i_m/K/src/sha512sig0h-rwp1.S
+index c2e4e0dd5..ade4cc762 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sig0h-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sig0h-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sig0h-rwp2.S b/riscv-test-suite/rv32i_m/K/src/sha512sig0h-rwp2.S
+index b7514c28e..d0b4a02d5 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sig0h-rwp2.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sig0h-rwp2.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sig0l-01.S b/riscv-test-suite/rv32i_m/K/src/sha512sig0l-01.S
+index 216a048c9..911196347 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sig0l-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sig0l-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZkn,RV32IZknh")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sig0l-rwp1.S b/riscv-test-suite/rv32i_m/K/src/sha512sig0l-rwp1.S
+index b367c35d8..192e32f93 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sig0l-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sig0l-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sig0l-rwp2.S b/riscv-test-suite/rv32i_m/K/src/sha512sig0l-rwp2.S
+index df22d9462..a43f3e6af 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sig0l-rwp2.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sig0l-rwp2.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sig1h-01.S b/riscv-test-suite/rv32i_m/K/src/sha512sig1h-01.S
+index cc77ec399..558447780 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sig1h-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sig1h-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZkn,RV32IZknh")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sig1h-rwp1.S b/riscv-test-suite/rv32i_m/K/src/sha512sig1h-rwp1.S
+index 2c7c5e79a..09436b615 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sig1h-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sig1h-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sig1h-rwp2.S b/riscv-test-suite/rv32i_m/K/src/sha512sig1h-rwp2.S
+index cd49731b2..1a271dc9b 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sig1h-rwp2.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sig1h-rwp2.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sig1l-01.S b/riscv-test-suite/rv32i_m/K/src/sha512sig1l-01.S
+index dcccfdc38..fb039b536 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sig1l-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sig1l-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZkn,RV32IZknh")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sig1l-rwp1.S b/riscv-test-suite/rv32i_m/K/src/sha512sig1l-rwp1.S
+index e9289336d..e905748cf 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sig1l-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sig1l-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sig1l-rwp2.S b/riscv-test-suite/rv32i_m/K/src/sha512sig1l-rwp2.S
+index 412bb6dad..dd93ecc49 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sig1l-rwp2.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sig1l-rwp2.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sum0r-01.S b/riscv-test-suite/rv32i_m/K/src/sha512sum0r-01.S
+index f663363d3..0ef5633e2 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sum0r-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sum0r-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZkn,RV32IZknh")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sum0r-rwp1.S b/riscv-test-suite/rv32i_m/K/src/sha512sum0r-rwp1.S
+index 8eeaddaff..9451237f3 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sum0r-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sum0r-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sum0r-rwp2.S b/riscv-test-suite/rv32i_m/K/src/sha512sum0r-rwp2.S
+index dce870d2b..d2d5f8ec7 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sum0r-rwp2.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sum0r-rwp2.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sum1r-01.S b/riscv-test-suite/rv32i_m/K/src/sha512sum1r-01.S
+index f3988116b..8b45d117f 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sum1r-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sum1r-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZkn,RV32IZknh")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sum1r-rwp1.S b/riscv-test-suite/rv32i_m/K/src/sha512sum1r-rwp1.S
+index 9a474c3f7..261e83651 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sum1r-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sum1r-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sha512sum1r-rwp2.S b/riscv-test-suite/rv32i_m/K/src/sha512sum1r-rwp2.S
+index f4aa88fad..2ac894a0c 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sha512sum1r-rwp2.S
++++ b/riscv-test-suite/rv32i_m/K/src/sha512sum1r-rwp2.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sm3p0-01.S b/riscv-test-suite/rv32i_m/K/src/sm3p0-01.S
+index d7b629b8d..04351372b 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sm3p0-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/sm3p0-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZks,RV32IZksh")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sm3p0-rwp1.S b/riscv-test-suite/rv32i_m/K/src/sm3p0-rwp1.S
+index d33f72ae7..1550839d0 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sm3p0-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/sm3p0-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sm3p0-rwp2.S b/riscv-test-suite/rv32i_m/K/src/sm3p0-rwp2.S
+index 6b2050747..53909ac14 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sm3p0-rwp2.S
++++ b/riscv-test-suite/rv32i_m/K/src/sm3p0-rwp2.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sm3p1-01.S b/riscv-test-suite/rv32i_m/K/src/sm3p1-01.S
+index dbfc32a50..a17b40177 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sm3p1-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/sm3p1-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZks,RV32IZksh")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sm3p1-rwp1.S b/riscv-test-suite/rv32i_m/K/src/sm3p1-rwp1.S
+index 8750d8059..43c1293f6 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sm3p1-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/sm3p1-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sm3p1-rwp2.S b/riscv-test-suite/rv32i_m/K/src/sm3p1-rwp2.S
+index 74407e3b1..7cd6e2c11 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sm3p1-rwp2.S
++++ b/riscv-test-suite/rv32i_m/K/src/sm3p1-rwp2.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sm4ed-01.S b/riscv-test-suite/rv32i_m/K/src/sm4ed-01.S
+index 9ce11d5da..863a2a773 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sm4ed-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/sm4ed-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZks,RV32IZksed")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sm4ed-rwp1.S b/riscv-test-suite/rv32i_m/K/src/sm4ed-rwp1.S
+index 89aaf360d..97c750d37 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sm4ed-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/sm4ed-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sm4ks-01.S b/riscv-test-suite/rv32i_m/K/src/sm4ks-01.S
+index 6d583cc62..f54bf5ecd 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sm4ks-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/sm4ks-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZks,RV32IZksed")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/sm4ks-rwp1.S b/riscv-test-suite/rv32i_m/K/src/sm4ks-rwp1.S
+index fa761a438..8bbd4b6d2 100644
+--- a/riscv-test-suite/rv32i_m/K/src/sm4ks-rwp1.S
++++ b/riscv-test-suite/rv32i_m/K/src/sm4ks-rwp1.S
+@@ -4,6 +4,7 @@
+ RVTEST_ISA("RV32IK")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/unzip-01.S b/riscv-test-suite/rv32i_m/K/src/unzip-01.S
+index 68f819f98..ca0702b89 100644
+--- a/riscv-test-suite/rv32i_m/K/src/unzip-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/unzip-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZbkb,RV32IZkn,RV32IZks")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/xperm4-01.S b/riscv-test-suite/rv32i_m/K/src/xperm4-01.S
+index 2d431f093..4935dfe9c 100644
+--- a/riscv-test-suite/rv32i_m/K/src/xperm4-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/xperm4-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZbkx,RV32IZkn,RV32IZks")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/xperm8-01.S b/riscv-test-suite/rv32i_m/K/src/xperm8-01.S
+index 2eb8041ea..31e0fce53 100644
+--- a/riscv-test-suite/rv32i_m/K/src/xperm8-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/xperm8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZbkx,RV32IZkn,RV32IZks")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/K/src/zip-01.S b/riscv-test-suite/rv32i_m/K/src/zip-01.S
+index de43a7415..17102ec19 100644
+--- a/riscv-test-suite/rv32i_m/K/src/zip-01.S
++++ b/riscv-test-suite/rv32i_m/K/src/zip-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IZk,RV32IZbkb,RV32IZkn,RV32IZks")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/M/src/div-01.S b/riscv-test-suite/rv32i_m/M/src/div-01.S
+index c1274ff96..f4ed84ecd 100644
+--- a/riscv-test-suite/rv32i_m/M/src/div-01.S
++++ b/riscv-test-suite/rv32i_m/M/src/div-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IM")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/M/src/divu-01.S b/riscv-test-suite/rv32i_m/M/src/divu-01.S
+index 2e946cac5..ec83ebdb9 100644
+--- a/riscv-test-suite/rv32i_m/M/src/divu-01.S
++++ b/riscv-test-suite/rv32i_m/M/src/divu-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IM")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/M/src/mul-01.S b/riscv-test-suite/rv32i_m/M/src/mul-01.S
+index 79ba47110..c7cdfcc5f 100644
+--- a/riscv-test-suite/rv32i_m/M/src/mul-01.S
++++ b/riscv-test-suite/rv32i_m/M/src/mul-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IM, RV32IZmmul")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/M/src/mulh-01.S b/riscv-test-suite/rv32i_m/M/src/mulh-01.S
+index 02f05eb95..ab6c59944 100644
+--- a/riscv-test-suite/rv32i_m/M/src/mulh-01.S
++++ b/riscv-test-suite/rv32i_m/M/src/mulh-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IM, RV32IZmmul")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/M/src/mulhsu-01.S b/riscv-test-suite/rv32i_m/M/src/mulhsu-01.S
+index 4eb16fae2..bf88c8b3c 100644
+--- a/riscv-test-suite/rv32i_m/M/src/mulhsu-01.S
++++ b/riscv-test-suite/rv32i_m/M/src/mulhsu-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IM, RV32IZmmul")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/M/src/mulhu-01.S b/riscv-test-suite/rv32i_m/M/src/mulhu-01.S
+index 6a58c0357..a4cfed1d6 100644
+--- a/riscv-test-suite/rv32i_m/M/src/mulhu-01.S
++++ b/riscv-test-suite/rv32i_m/M/src/mulhu-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IM, RV32IZmmul")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/M/src/rem-01.S b/riscv-test-suite/rv32i_m/M/src/rem-01.S
+index ce9bfb8a2..60bc2b683 100644
+--- a/riscv-test-suite/rv32i_m/M/src/rem-01.S
++++ b/riscv-test-suite/rv32i_m/M/src/rem-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IM")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/M/src/remu-01.S b/riscv-test-suite/rv32i_m/M/src/remu-01.S
+index 226535956..76de0b545 100644
+--- a/riscv-test-suite/rv32i_m/M/src/remu-01.S
++++ b/riscv-test-suite/rv32i_m/M/src/remu-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32IM")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/add16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/add16-01.S
+index 5212733a3..7267d1c6d 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/add16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/add16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/add64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/add64-01.S
+index 324530c5e..ac83a0ae0 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/add64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/add64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/add8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/add8-01.S
+index d7e3e9c00..093ae1af5 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/add8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/add8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ave-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ave-01.S
+index db6d50999..b4268110f 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ave-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ave-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/clrs16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/clrs16-01.S
+index 7239afc8a..2bd6ad4bd 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/clrs16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/clrs16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/clrs32-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/clrs32-01.S
+index bd9f16420..c31dc6522 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/clrs32-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/clrs32-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/clrs8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/clrs8-01.S
+index 1d196b4e1..6a157135c 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/clrs8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/clrs8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/clz16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/clz16-01.S
+index a99f90d60..a395d8206 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/clz16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/clz16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/clz8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/clz8-01.S
+index 742d099fc..2ab107a10 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/clz8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/clz8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/cmpeq16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/cmpeq16-01.S
+index 7540f9b4a..daa0ea413 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/cmpeq16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/cmpeq16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/cmpeq8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/cmpeq8-01.S
+index 905c6590e..83bfa9bf8 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/cmpeq8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/cmpeq8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/cras16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/cras16-01.S
+index 1c2d830c6..cba3db797 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/cras16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/cras16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/crsa16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/crsa16-01.S
+index 60e9c22bf..2f3f259df 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/crsa16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/crsa16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/insb-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/insb-01.S
+index 0df9ff8de..003bb2e23 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/insb-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/insb-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kabs16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kabs16-01.S
+index e67e98121..f37671f33 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kabs16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kabs16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kabs8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kabs8-01.S
+index a45653b73..0264b763d 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kabs8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kabs8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kabsw-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kabsw-01.S
+index 36c1a6531..bb824e14b 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kabsw-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kabsw-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kadd16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kadd16-01.S
+index 62357ba14..4759a12cb 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kadd16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kadd16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kadd64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kadd64-01.S
+index 7f29a5059..d6211270a 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kadd64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kadd64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kadd8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kadd8-01.S
+index 2b28e28c6..59f8b16d1 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kadd8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kadd8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kaddh-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kaddh-01.S
+index 371371eeb..dbc877d4d 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kaddh-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kaddh-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kaddw-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kaddw-01.S
+index cfdade9a8..8040e2c6a 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kaddw-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kaddw-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kcras16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kcras16-01.S
+index 1fc86b5b6..4437f1737 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kcras16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kcras16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kcrsa16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kcrsa16-01.S
+index 46d5a0811..dbe9efc15 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kcrsa16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kcrsa16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kdmabb-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kdmabb-01.S
+index da0cca81e..5dcdfff40 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kdmabb-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kdmabb-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kdmabt-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kdmabt-01.S
+index 6cb37cac9..196ac7ad9 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kdmabt-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kdmabt-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kdmatt-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kdmatt-01.S
+index 996eec70a..9aa7fa8a9 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kdmatt-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kdmatt-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kdmbb-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kdmbb-01.S
+index 54239f541..4103227f0 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kdmbb-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kdmbb-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kdmbt-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kdmbt-01.S
+index 7e6e2ac95..c336ada16 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kdmbt-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kdmbt-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kdmtt-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kdmtt-01.S
+index db4814b01..52ff352c0 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kdmtt-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kdmtt-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/khm16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/khm16-01.S
+index 5d0effcf3..2cccd13af 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/khm16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/khm16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/khm8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/khm8-01.S
+index e0ab5e29b..68020d210 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/khm8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/khm8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/khmbb-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/khmbb-01.S
+index c1aef4698..c406eb0db 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/khmbb-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/khmbb-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/khmbt-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/khmbt-01.S
+index 4e599db25..53eedecda 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/khmbt-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/khmbt-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/khmtt-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/khmtt-01.S
+index 94277ad06..2dc5796de 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/khmtt-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/khmtt-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/khmx16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/khmx16-01.S
+index 55bf3d226..819e5eb7c 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/khmx16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/khmx16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/khmx8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/khmx8-01.S
+index f355b7f38..f27a0df3f 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/khmx8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/khmx8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmabb-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmabb-01.S
+index ad35ea977..4452a864d 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmabb-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmabb-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmabt-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmabt-01.S
+index e7a89d704..6ddb8818f 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmabt-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmabt-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmada-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmada-01.S
+index 6fc726bed..2a930f507 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmada-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmada-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmadrs-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmadrs-01.S
+index 807c0c0f3..46a954ee0 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmadrs-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmadrs-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmads-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmads-01.S
+index a8426edee..8497e79eb 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmads-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmads-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmar64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmar64-01.S
+index 2efac07d1..07823b4c9 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmar64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmar64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmatt-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmatt-01.S
+index 7bdefb4b7..5ff3e53c4 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmatt-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmatt-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmaxda-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmaxda-01.S
+index fbd9e047e..e790e8dee 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmaxda-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmaxda-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmaxds-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmaxds-01.S
+index 9b4a6b4bc..dbb83bc08 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmaxds-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmaxds-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmda-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmda-01.S
+index 174bd7cec..c86d68eaa 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmda-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmda-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmmac-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmmac-01.S
+index 71d74d0b7..9ac874a37 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmmac-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmmac-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmmac.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmmac.u-01.S
+index 32cf2aef2..a1d39592c 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmmac.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmmac.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmmawb-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmmawb-01.S
+index 387ce42b2..63a6635a4 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmmawb-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmmawb-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmmawb.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmmawb.u-01.S
+index 2bde78411..2a06c25f2 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmmawb.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmmawb.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmmawb2-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmmawb2-01.S
+index bd5b9dfa1..0024959b9 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmmawb2-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmmawb2-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmmawb2.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmmawb2.u-01.S
+index 21d0d3549..6486a13e4 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmmawb2.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmmawb2.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmmawt-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmmawt-01.S
+index a627c3277..bd8e4a7ab 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmmawt-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmmawt-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmmawt.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmmawt.u-01.S
+index b35d7c8bb..8b2895422 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmmawt.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmmawt.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmmawt2-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmmawt2-01.S
+index bb147ad55..2f06915fe 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmmawt2-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmmawt2-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmmawt2.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmmawt2.u-01.S
+index 5e61b4de6..398af4a89 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmmawt2.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmmawt2.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmmsb-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmmsb-01.S
+index 51ae9851d..392aefe3c 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmmsb-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmmsb-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmmsb.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmmsb.u-01.S
+index b2c9101de..59e51efaa 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmmsb.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmmsb.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmmwb2-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmmwb2-01.S
+index 0ab0fa1f1..eb462390e 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmmwb2-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmmwb2-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmmwb2.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmmwb2.u-01.S
+index 6093adc7c..7509a279d 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmmwb2.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmmwb2.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmmwt2-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmmwt2-01.S
+index a9d90ca2e..3c29de2d5 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmmwt2-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmmwt2-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmmwt2.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmmwt2.u-01.S
+index 25b196eff..6e5658644 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmmwt2.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmmwt2.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmsda-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmsda-01.S
+index 94027f3a1..086bbef83 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmsda-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmsda-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmsr64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmsr64-01.S
+index 6e23854bc..d1dbb9c28 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmsr64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmsr64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmsxda-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmsxda-01.S
+index c35fa4a02..16d5cda4f 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmsxda-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmsxda-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kmxda-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kmxda-01.S
+index bf194a77d..4630dc496 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kmxda-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kmxda-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ksll16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ksll16-01.S
+index e692a34ee..cf32062f0 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ksll16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ksll16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ksll8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ksll8-01.S
+index ef0bcdd5d..c66bc98a1 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ksll8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ksll8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kslli16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kslli16-01.S
+index d4708a565..e7aa9c2e5 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kslli16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kslli16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kslli8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kslli8-01.S
+index 5d31b737e..ee859f3d1 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kslli8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kslli8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kslliw-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kslliw-01.S
+index b6f3c4e92..9332f1e18 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kslliw-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kslliw-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ksllw-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ksllw-01.S
+index 47d9d06b7..918bdd1c7 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ksllw-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ksllw-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kslra16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kslra16-01.S
+index 059c07704..b8b988959 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kslra16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kslra16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kslra16.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kslra16.u-01.S
+index c35942f67..4182e2db0 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kslra16.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kslra16.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kslra8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kslra8-01.S
+index dfe3ba889..d559f4c74 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kslra8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kslra8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kslra8.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kslra8.u-01.S
+index 156b33a8c..0c0068093 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kslra8.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kslra8.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kslraw-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kslraw-01.S
+index 0c861319d..91fccfae7 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kslraw-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kslraw-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kslraw.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kslraw.u-01.S
+index d59def6c2..7e1e6c629 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kslraw.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kslraw.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kstas16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kstas16-01.S
+index e4872cee6..456073ff1 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kstas16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kstas16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kstsa16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kstsa16-01.S
+index 270e70699..f6442bdcf 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kstsa16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kstsa16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ksub16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ksub16-01.S
+index e8c5b588d..b4f727120 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ksub16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ksub16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ksub64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ksub64-01.S
+index a5a45cc4f..637f58165 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ksub64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ksub64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ksub8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ksub8-01.S
+index 4d017f46b..37e0ea53f 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ksub8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ksub8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ksubh-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ksubh-01.S
+index 48e221249..578bf619d 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ksubh-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ksubh-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ksubw-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ksubw-01.S
+index 856131ee0..ef896964f 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ksubw-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ksubw-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kwmmul-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kwmmul-01.S
+index f2e69bf92..3091482b0 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kwmmul-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kwmmul-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/kwmmul.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/kwmmul.u-01.S
+index 466d562f8..bf9f256ef 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/kwmmul.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/kwmmul.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/maddr32-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/maddr32-01.S
+index af2b224a9..83ebe4692 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/maddr32-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/maddr32-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/msubr32-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/msubr32-01.S
+index c66108914..540e4272b 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/msubr32-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/msubr32-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/mulr64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/mulr64-01.S
+index b3c9bb1e9..021db06db 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/mulr64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/mulr64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/mulsr64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/mulsr64-01.S
+index 0d37f0fa4..bcd071a38 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/mulsr64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/mulsr64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/pbsad-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/pbsad-01.S
+index 6ddaae919..1dd341d2a 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/pbsad-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/pbsad-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/pbsada-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/pbsada-01.S
+index 7ee7d6ae4..c661e9d6b 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/pbsada-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/pbsada-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/pkbt16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/pkbt16-01.S
+index fa551577e..6848f0a19 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/pkbt16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/pkbt16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/pktb16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/pktb16-01.S
+index 3e4fac6bc..6498550c1 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/pktb16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/pktb16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/radd16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/radd16-01.S
+index f04353a0b..6e9fdac66 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/radd16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/radd16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/radd64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/radd64-01.S
+index 947ffe24a..26d06d4a8 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/radd64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/radd64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/radd8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/radd8-01.S
+index 37ed3ead0..68d24c187 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/radd8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/radd8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/raddw-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/raddw-01.S
+index 20feb8a85..8e3731156 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/raddw-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/raddw-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/rcras16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/rcras16-01.S
+index b791cf716..812156d00 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/rcras16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/rcras16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/rcrsa16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/rcrsa16-01.S
+index d8010e5d9..e867b18a1 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/rcrsa16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/rcrsa16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/rstas16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/rstas16-01.S
+index 9539801de..67103b029 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/rstas16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/rstas16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/rstsa16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/rstsa16-01.S
+index f10de788e..66a15abd8 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/rstsa16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/rstsa16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/rsub16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/rsub16-01.S
+index a20ae73b3..5a2a10ec1 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/rsub16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/rsub16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/rsub64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/rsub64-01.S
+index c283e38e9..748e6f8c2 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/rsub64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/rsub64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/rsub8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/rsub8-01.S
+index 649a9f744..dd698f360 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/rsub8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/rsub8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/rsubw-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/rsubw-01.S
+index e86b25153..1e072371e 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/rsubw-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/rsubw-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sclip16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sclip16-01.S
+index 34d6bcd79..835cdc1cf 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sclip16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sclip16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sclip32-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sclip32-01.S
+index 1823a032f..726d6b7ed 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sclip32-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sclip32-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sclip8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sclip8-01.S
+index 254d9b483..27cb5b8d3 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sclip8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sclip8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/scmple16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/scmple16-01.S
+index b6a6d5a6f..656543d3e 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/scmple16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/scmple16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/scmple8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/scmple8-01.S
+index 9310ceb5e..c6814a2db 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/scmple8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/scmple8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/scmplt16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/scmplt16-01.S
+index f317f3dd1..363d462ef 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/scmplt16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/scmplt16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/scmplt8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/scmplt8-01.S
+index cd012b4c0..e18896910 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/scmplt8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/scmplt8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sll16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sll16-01.S
+index ead49fd70..a842ed749 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sll16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sll16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sll8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sll8-01.S
+index a0a6e1c2d..874835345 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sll8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sll8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/slli16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/slli16-01.S
+index a4a603083..2e2d92761 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/slli16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/slli16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/slli8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/slli8-01.S
+index 69da5cc3d..c9e433b1d 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/slli8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/slli8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smal-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smal-01.S
+index 7352b9d92..65407c352 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smal-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smal-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smalbb-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smalbb-01.S
+index f6980d1f7..00b2a8248 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smalbb-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smalbb-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smalbt-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smalbt-01.S
+index 76aa0f0f1..e7cb3c17e 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smalbt-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smalbt-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smalda-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smalda-01.S
+index c2966221b..4c73b490b 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smalda-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smalda-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smaldrs-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smaldrs-01.S
+index 077344fdc..4fe1f5db2 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smaldrs-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smaldrs-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smalds-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smalds-01.S
+index e85dacb32..266378c32 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smalds-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smalds-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smaltt-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smaltt-01.S
+index 7a9c53d41..41ef6135e 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smaltt-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smaltt-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smalxda-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smalxda-01.S
+index 00717f6c1..f46bd22f5 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smalxda-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smalxda-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smalxds-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smalxds-01.S
+index d86514456..3f08ee17a 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smalxds-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smalxds-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smaqa-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smaqa-01.S
+index d335687a2..056eaf04c 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smaqa-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smaqa-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smaqa.su-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smaqa.su-01.S
+index 0adae4120..19ff1042a 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smaqa.su-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smaqa.su-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smar64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smar64-01.S
+index 919110b3d..8840d1e85 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smar64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smar64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smax16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smax16-01.S
+index 5ef9941bc..3a357575c 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smax16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smax16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smax8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smax8-01.S
+index adda6926b..003450f45 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smax8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smax8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smbb16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smbb16-01.S
+index cd188fb5d..4faee4c20 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smbb16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smbb16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smbt16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smbt16-01.S
+index 2bfd3ee0f..5cfc2c8d3 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smbt16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smbt16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smdrs-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smdrs-01.S
+index 96f114349..5a480c5c2 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smdrs-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smdrs-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smds-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smds-01.S
+index 8cdf541c3..0f5d9bef7 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smds-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smds-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smin16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smin16-01.S
+index 0bd8d2fbf..7bcf8abfc 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smin16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smin16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smin8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smin8-01.S
+index 209d91172..e9bb69cec 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smin8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smin8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smmul-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smmul-01.S
+index f86e98a45..a848d2023 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smmul-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smmul-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smmul.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smmul.u-01.S
+index 5dc5b2e23..052b36dc7 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smmul.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smmul.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smmwb-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smmwb-01.S
+index 2602624a2..40ffed211 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smmwb-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smmwb-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smmwb.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smmwb.u-01.S
+index 98485baf2..ed174acc0 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smmwb.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smmwb.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smmwt-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smmwt-01.S
+index 052930835..97dd01eba 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smmwt-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smmwt-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smmwt.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smmwt.u-01.S
+index 56977234e..f639e0755 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smmwt.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smmwt.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smslda-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smslda-01.S
+index 1614fe686..7285e3bdd 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smslda-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smslda-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smslxda-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smslxda-01.S
+index 4379b6186..9e21e46be 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smslxda-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smslxda-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smsr64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smsr64-01.S
+index 258a2ed92..3f2ccd68a 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smsr64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smsr64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smtt16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smtt16-01.S
+index ebffb14ec..1c3393e2a 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smtt16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smtt16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smul16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smul16-01.S
+index cc63e15a9..32d9eb2b8 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smul16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smul16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smul8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smul8-01.S
+index d2a982fee..1278b5ad3 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smul8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smul8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smulx16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smulx16-01.S
+index 744575763..812011749 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smulx16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smulx16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smulx8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smulx8-01.S
+index b164c98a1..a7501dbcf 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smulx8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smulx8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/smxds-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/smxds-01.S
+index fb5049018..3c4c2b384 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/smxds-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/smxds-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sra.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sra.u-01.S
+index 8aa0baeac..89e6a9911 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sra.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sra.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sra16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sra16-01.S
+index c8121d555..392fa7c2e 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sra16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sra16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sra16.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sra16.u-01.S
+index 22fc3e240..eb4b43e75 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sra16.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sra16.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sra8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sra8-01.S
+index 46a43cd54..388dcd720 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sra8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sra8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sra8.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sra8.u-01.S
+index 338dcec36..08acddd3d 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sra8.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sra8.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/srai.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/srai.u-01.S
+index 1603b9e93..32b11017d 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/srai.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/srai.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/srai16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/srai16-01.S
+index fe0ffb6d3..7e979533e 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/srai16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/srai16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/srai16.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/srai16.u-01.S
+index 7962773a0..380c4e88a 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/srai16.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/srai16.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/srai8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/srai8-01.S
+index 20b417db8..51f7e204f 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/srai8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/srai8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/srai8.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/srai8.u-01.S
+index e165e7868..292b204c5 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/srai8.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/srai8.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/srl16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/srl16-01.S
+index e71b4c8bd..9e2e5d5a1 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/srl16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/srl16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/srl16.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/srl16.u-01.S
+index 16faebb5c..a2493ea3c 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/srl16.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/srl16.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/srl8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/srl8-01.S
+index a9de4403b..c5c8e10ea 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/srl8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/srl8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/srl8.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/srl8.u-01.S
+index 4a1830cf0..beb156642 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/srl8.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/srl8.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/srli16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/srli16-01.S
+index ce989593f..2f965906a 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/srli16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/srli16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/srli16.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/srli16.u-01.S
+index f71f3fa49..2e6c3ec86 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/srli16.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/srli16.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/srli8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/srli8-01.S
+index e7b3c36f8..78bce5763 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/srli8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/srli8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/srli8.u-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/srli8.u-01.S
+index f5a1014e0..2a5455619 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/srli8.u-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/srli8.u-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/stas16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/stas16-01.S
+index a7a1ea2ca..fc09b1070 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/stas16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/stas16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/stsa16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/stsa16-01.S
+index 06e727949..115d2b118 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/stsa16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/stsa16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sub16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sub16-01.S
+index ad18c8464..f283de3ff 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sub16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sub16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sub64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sub64-01.S
+index d9ee95409..0d172aa1c 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sub64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sub64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sub8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sub8-01.S
+index 6f210b361..d8f7df031 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sub8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sub8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd810-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd810-01.S
+index 0f3b48359..72c64e92a 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd810-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd810-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd820-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd820-01.S
+index f31595daa..b7df1be37 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd820-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd820-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd830-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd830-01.S
+index 43a466b5e..248bc2ca2 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd830-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd830-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd831-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd831-01.S
+index ef3ba21e5..532a4ebc7 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd831-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd831-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd832-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd832-01.S
+index 12600cc7a..4a643b6ca 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd832-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/sunpkd832-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/uclip16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/uclip16-01.S
+index 25018708a..8746f8611 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/uclip16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/uclip16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/uclip32-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/uclip32-01.S
+index 7be6ded49..20908d005 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/uclip32-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/uclip32-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/uclip8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/uclip8-01.S
+index 9676fa252..642ed647c 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/uclip8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/uclip8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ucmple16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ucmple16-01.S
+index e675d34b2..53e36bd26 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ucmple16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ucmple16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ucmple8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ucmple8-01.S
+index 3c6c65c33..8318b627f 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ucmple8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ucmple8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ucmplt16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ucmplt16-01.S
+index ba40a6e29..094065fbb 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ucmplt16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ucmplt16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ucmplt8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ucmplt8-01.S
+index fb33a438e..a7888f811 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ucmplt8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ucmplt8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ukadd16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ukadd16-01.S
+index a45e246c0..c752a9674 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ukadd16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ukadd16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ukadd64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ukadd64-01.S
+index 4f245eb56..2b8041179 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ukadd64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ukadd64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ukadd8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ukadd8-01.S
+index e99cf84b6..29e27e78b 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ukadd8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ukadd8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ukaddh-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ukaddh-01.S
+index c43eeeb49..4b0d651da 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ukaddh-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ukaddh-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ukaddw-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ukaddw-01.S
+index 5d2d5309d..5ef4ba54b 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ukaddw-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ukaddw-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ukcras16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ukcras16-01.S
+index afa573f7a..e5b038d8f 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ukcras16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ukcras16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ukcrsa16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ukcrsa16-01.S
+index 1a5544478..07e042bad 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ukcrsa16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ukcrsa16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ukmar64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ukmar64-01.S
+index dc09592f5..69c906b22 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ukmar64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ukmar64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ukmsr64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ukmsr64-01.S
+index 13752bf15..0e3d53b8b 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ukmsr64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ukmsr64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ukstas16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ukstas16-01.S
+index 56f84e891..8720844c4 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ukstas16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ukstas16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ukstsa16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ukstsa16-01.S
+index 22b2b104b..d590a9522 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ukstsa16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ukstsa16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/uksub16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/uksub16-01.S
+index 68f2725c7..ed10455c8 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/uksub16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/uksub16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/uksub64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/uksub64-01.S
+index 6d5dca993..2b3f96ef6 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/uksub64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/uksub64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/uksub8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/uksub8-01.S
+index 2282712be..1f9b79f2c 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/uksub8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/uksub8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/uksubh-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/uksubh-01.S
+index 4f9135c28..46a78ceca 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/uksubh-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/uksubh-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/uksubw-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/uksubw-01.S
+index 0ef7a7986..8e8110113 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/uksubw-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/uksubw-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/umaqa-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/umaqa-01.S
+index b75622076..96a712284 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/umaqa-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/umaqa-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/umar64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/umar64-01.S
+index 911133c7b..b646c240a 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/umar64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/umar64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/umax16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/umax16-01.S
+index b24e347d0..08d87494e 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/umax16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/umax16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/umax8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/umax8-01.S
+index caff59acb..55247488a 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/umax8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/umax8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/umin16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/umin16-01.S
+index 5e91d2524..09393420a 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/umin16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/umin16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/umin8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/umin8-01.S
+index 308f15af5..debc03260 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/umin8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/umin8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/umsr64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/umsr64-01.S
+index 065fb3e98..eddd305fc 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/umsr64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/umsr64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/umul16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/umul16-01.S
+index a8ce6458c..05682bdda 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/umul16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/umul16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/umul8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/umul8-01.S
+index df6cda423..496c56228 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/umul8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/umul8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/umulx16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/umulx16-01.S
+index 291a606d8..0ee43bd3f 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/umulx16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/umulx16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/umulx8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/umulx8-01.S
+index 520821dc2..9d044139f 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/umulx8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/umulx8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/uradd16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/uradd16-01.S
+index 3c55eedba..e08dea41f 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/uradd16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/uradd16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/uradd64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/uradd64-01.S
+index e1789846b..b89a528d3 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/uradd64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/uradd64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/uradd8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/uradd8-01.S
+index 96b89dec1..f7d731668 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/uradd8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/uradd8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/uraddw-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/uraddw-01.S
+index 70f561011..892c0c632 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/uraddw-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/uraddw-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/urcras16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/urcras16-01.S
+index ba1481f3b..ea775d690 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/urcras16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/urcras16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/urcrsa16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/urcrsa16-01.S
+index 2c73bb2b1..befb6a1bb 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/urcrsa16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/urcrsa16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/urstas16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/urstas16-01.S
+index dd4471dd4..6049816bf 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/urstas16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/urstas16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/urstsa16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/urstsa16-01.S
+index 65c751422..c56a8f73f 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/urstsa16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/urstsa16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ursub16-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ursub16-01.S
+index 417c0e311..9c30816a2 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ursub16-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ursub16-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ursub64-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ursub64-01.S
+index 96b8faf8d..926d7f728 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ursub64-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ursub64-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ursub8-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ursub8-01.S
+index 121966cf5..d73e9177b 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ursub8-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ursub8-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/ursubw-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/ursubw-01.S
+index 17bc12ca9..6cebcc477 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/ursubw-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/ursubw-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd810-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd810-01.S
+index 77197fa07..41617ad4a 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd810-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd810-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd820-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd820-01.S
+index 3b48ba88a..a9dd1e35c 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd820-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd820-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd830-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd830-01.S
+index d2088e9eb..c5676ee77 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd830-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd830-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd831-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd831-01.S
+index f1916568a..a89018cbb 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd831-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd831-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd832-01.S b/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd832-01.S
+index a4bbe6fa1..47d856c14 100644
+--- a/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd832-01.S
++++ b/riscv-test-suite/rv32i_m/P_unratified/src/zunpkd832-01.S
+@@ -22,6 +22,7 @@
+ RVTEST_ISA("RV32IPZicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/Zifencei/src/Fencei.S b/riscv-test-suite/rv32i_m/Zifencei/src/Fencei.S
+index bf48d5ff2..fff705741 100644
+--- a/riscv-test-suite/rv32i_m/Zifencei/src/Fencei.S
++++ b/riscv-test-suite/rv32i_m/Zifencei/src/Fencei.S
+@@ -14,6 +14,7 @@ RVTEST_ISA("RV32I")
+ 
+ # Test code region
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/privilege/src/ebreak.S b/riscv-test-suite/rv32i_m/privilege/src/ebreak.S
+index 593cc8ed0..a9c484e37 100644
+--- a/riscv-test-suite/rv32i_m/privilege/src/ebreak.S
++++ b/riscv-test-suite/rv32i_m/privilege/src/ebreak.S
+@@ -13,6 +13,7 @@ RVTEST_ISA("RV32I_Zicsr")
+ 
+ # Test code region
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/privilege/src/ecall.S b/riscv-test-suite/rv32i_m/privilege/src/ecall.S
+index 3a508277d..d03e90ccb 100644
+--- a/riscv-test-suite/rv32i_m/privilege/src/ecall.S
++++ b/riscv-test-suite/rv32i_m/privilege/src/ecall.S
+@@ -13,6 +13,7 @@ RVTEST_ISA("RV32I_Zicsr")
+ 
+ # Test code region
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/privilege/src/misalign-beq-01.S b/riscv-test-suite/rv32i_m/privilege/src/misalign-beq-01.S
+index cf54ecd1a..8d2482d85 100644
+--- a/riscv-test-suite/rv32i_m/privilege/src/misalign-beq-01.S
++++ b/riscv-test-suite/rv32i_m/privilege/src/misalign-beq-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I_Zicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/privilege/src/misalign-bge-01.S b/riscv-test-suite/rv32i_m/privilege/src/misalign-bge-01.S
+index 8e6384579..2c560269b 100644
+--- a/riscv-test-suite/rv32i_m/privilege/src/misalign-bge-01.S
++++ b/riscv-test-suite/rv32i_m/privilege/src/misalign-bge-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I_Zicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/privilege/src/misalign-bgeu-01.S b/riscv-test-suite/rv32i_m/privilege/src/misalign-bgeu-01.S
+index 609514a2e..4dc4e1aa0 100644
+--- a/riscv-test-suite/rv32i_m/privilege/src/misalign-bgeu-01.S
++++ b/riscv-test-suite/rv32i_m/privilege/src/misalign-bgeu-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I_Zicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/privilege/src/misalign-blt-01.S b/riscv-test-suite/rv32i_m/privilege/src/misalign-blt-01.S
+index fe90fcf86..9b721bc8a 100644
+--- a/riscv-test-suite/rv32i_m/privilege/src/misalign-blt-01.S
++++ b/riscv-test-suite/rv32i_m/privilege/src/misalign-blt-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I_Zicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/privilege/src/misalign-bltu-01.S b/riscv-test-suite/rv32i_m/privilege/src/misalign-bltu-01.S
+index e94e29241..728551a6a 100644
+--- a/riscv-test-suite/rv32i_m/privilege/src/misalign-bltu-01.S
++++ b/riscv-test-suite/rv32i_m/privilege/src/misalign-bltu-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I_Zicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/privilege/src/misalign-bne-01.S b/riscv-test-suite/rv32i_m/privilege/src/misalign-bne-01.S
+index a566ebc82..03b06755b 100644
+--- a/riscv-test-suite/rv32i_m/privilege/src/misalign-bne-01.S
++++ b/riscv-test-suite/rv32i_m/privilege/src/misalign-bne-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I_Zicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/privilege/src/misalign-jal-01.S b/riscv-test-suite/rv32i_m/privilege/src/misalign-jal-01.S
+index 92f868255..c479f353a 100644
+--- a/riscv-test-suite/rv32i_m/privilege/src/misalign-jal-01.S
++++ b/riscv-test-suite/rv32i_m/privilege/src/misalign-jal-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I_Zicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/privilege/src/misalign-lh-01.S b/riscv-test-suite/rv32i_m/privilege/src/misalign-lh-01.S
+index 0210c5d93..29f26657c 100644
+--- a/riscv-test-suite/rv32i_m/privilege/src/misalign-lh-01.S
++++ b/riscv-test-suite/rv32i_m/privilege/src/misalign-lh-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I_Zicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/privilege/src/misalign-lhu-01.S b/riscv-test-suite/rv32i_m/privilege/src/misalign-lhu-01.S
+index 6e3116fe4..45fafe173 100644
+--- a/riscv-test-suite/rv32i_m/privilege/src/misalign-lhu-01.S
++++ b/riscv-test-suite/rv32i_m/privilege/src/misalign-lhu-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I_Zicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/privilege/src/misalign-lw-01.S b/riscv-test-suite/rv32i_m/privilege/src/misalign-lw-01.S
+index 3399754e3..1306a9724 100644
+--- a/riscv-test-suite/rv32i_m/privilege/src/misalign-lw-01.S
++++ b/riscv-test-suite/rv32i_m/privilege/src/misalign-lw-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I_Zicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/privilege/src/misalign-sh-01.S b/riscv-test-suite/rv32i_m/privilege/src/misalign-sh-01.S
+index 8835556e0..2dea1a656 100644
+--- a/riscv-test-suite/rv32i_m/privilege/src/misalign-sh-01.S
++++ b/riscv-test-suite/rv32i_m/privilege/src/misalign-sh-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I_Zicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/privilege/src/misalign-sw-01.S b/riscv-test-suite/rv32i_m/privilege/src/misalign-sw-01.S
+index ca49df4d9..19d85ed59 100644
+--- a/riscv-test-suite/rv32i_m/privilege/src/misalign-sw-01.S
++++ b/riscv-test-suite/rv32i_m/privilege/src/misalign-sw-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I_Zicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT
+diff --git a/riscv-test-suite/rv32i_m/privilege/src/misalign2-jalr-01.S b/riscv-test-suite/rv32i_m/privilege/src/misalign2-jalr-01.S
+index 4b3efd0bd..ba6f0abdb 100644
+--- a/riscv-test-suite/rv32i_m/privilege/src/misalign2-jalr-01.S
++++ b/riscv-test-suite/rv32i_m/privilege/src/misalign2-jalr-01.S
+@@ -20,6 +20,7 @@
+ RVTEST_ISA("RV32I_Zicsr")
+ 
+ .section .text.init
++.org 0x80
+ .globl rvtest_entry_point
+ rvtest_entry_point:
+ RVMODEL_BOOT

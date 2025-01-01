@@ -1,10 +1,9 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
 // CSR suite of sequences that do writes and reads to csrs
 // includes hw_reset, rw, bit_bash and aliasing tests for csrs, and mem_walk for uvm_mems
-// TODO: when mem backdoor is implemented, add uvm_mem_access_seq for backdoor rd
 // The sequences perform csr writes and reads and follow the standard csr test suite. If external
 // checker is enabled, then the external entity is required to update the mirrored value on
 // writes. If not enabled, the sequences themselves call predict function to update the mirrored
@@ -63,7 +62,6 @@ class csr_base_seq extends uvm_reg_sequence #(uvm_sequence #(uvm_reg_item));
     int   chunk_size;
 
     // extract all csrs from the model
-    // TODO: add and use function here instead that allows pre filtering csrs
     all_csrs.delete();
     foreach (models[i]) begin
       models[i].get_registers(all_csrs);
@@ -90,18 +88,18 @@ class csr_base_seq extends uvm_reg_sequence #(uvm_sequence #(uvm_reg_item));
     end_idx = test_csr_chunk * chunk_size;
     if (end_idx >= all_csrs.size()) end_idx = all_csrs.size() - 1;
 
-    test_csrs = all_csrs[start_idx:end_idx];
     `uvm_info(`gtn, $sformatf("Testing %0d csrs [%0d - %0d] in all supplied models.",
                               test_csrs.size(), start_idx, end_idx), UVM_MEDIUM)
-    foreach (test_csrs[i]) begin
-      `uvm_info(`gtn, $sformatf("Testing CSR %0s, reset: 0x%0x.", test_csrs[i].get_full_name(),
-                                test_csrs[i].get_mirrored_value()), UVM_HIGH)
+    test_csrs.delete();
+    for (int i = start_idx; i <= end_idx; i++) begin
+      test_csrs.push_back(all_csrs[i]);
+      `uvm_info(`gtn, $sformatf("Testing CSR %0s, reset: 0x%0x.", all_csrs[i].get_full_name(),
+                                all_csrs[i].get_mirrored_value()), UVM_HIGH)
     end
     test_csrs.shuffle();
   endfunction
 
   // check if this csr/fld is excluded from test based on the excl info in blk.csr_excl
-  // TODO, consider to put excl info in dv_base_reg and dv_base_reg_field
   function bit is_excl(uvm_object obj,
                        csr_excl_type_e csr_excl_type,
                        csr_test_type_e csr_test_type);
@@ -180,8 +178,6 @@ class csr_write_seq extends csr_base_seq;
     uvm_reg_data_t wdata;
 
     // check all hdl paths are valid
-    // TODO: Move this check to env::end_of_elaboration_phase instead. Regular tests may also choose
-    // to access CSRs via backdoor.
     if (!test_backdoor_path_done) begin
       foreach (models[i]) begin
         bkdr_reg_path_e path_kind;
@@ -333,7 +329,19 @@ class csr_bit_bash_seq extends csr_base_seq;
   `uvm_object_new
 
   virtual task body();
+    int unsigned total_count = test_csrs.size();
+    int unsigned done_count = 0;
+
+    `uvm_info(`gtn,
+              $sformatf("Running bit bash sequence for %0d registers", total_count),
+              UVM_MEDIUM)
     foreach (test_csrs[i]) begin
+      done_count++;
+      `uvm_info(`gtn,
+                $sformatf("Verifying register bit bash for %0s (register %0d/%0d)",
+                          test_csrs[i].get_full_name(), done_count, total_count),
+                UVM_MEDIUM)
+
       // check if parent block or register is excluded from write
       if (is_excl(test_csrs[i], CsrExclWrite, CsrBitBashTest) ||
           is_excl(test_csrs[i], CsrExclWriteCheck, CsrBitBashTest)) begin
@@ -341,9 +349,6 @@ class csr_bit_bash_seq extends csr_base_seq;
                                   test_csrs[i].get_full_name()), UVM_MEDIUM)
         continue;
       end
-
-      `uvm_info(`gtn, $sformatf("Verifying register bit bash for %0s",
-                test_csrs[i].get_full_name()), UVM_MEDIUM)
 
       begin
         uvm_reg_field   fields[$];
@@ -428,7 +433,6 @@ class csr_bit_bash_seq extends csr_base_seq;
       err_msg = $sformatf("Wrote %0s[%0d]: %0b", rg.get_full_name(), k, val[k]);
       csr_wr(.ptr(rg), .value(val), .blocking(1), .predict(!external_checker));
 
-      // TODO, outstanding access to same reg isn't supported in uvm_reg. Need to add another seq
       // uvm_reg waits until transaction is completed, before start another read/write in same reg
       csr_rd_check(.ptr           (rg),
                    .blocking      (0),

@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 {
@@ -69,9 +69,7 @@
                // "--x-initial unique",
                ]
 
-  run_opts: [// Set random seed.
-             // "+verilator+seed+{seed}",
-             ]
+  run_opts: []
 
   // Supported wave dumping formats (in order of preference).
   supported_wave_formats: ["fst"]
@@ -81,7 +79,6 @@
   ]
 
   // pass and fail patterns
-  build_pass_patterns: []
   build_fail_patterns: [// Verilator compile error.
                         "^%Error.*?:",
                         // FuseSoC build error.

@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -24,7 +24,7 @@ ${module_header_params}
   ${module_header_ports}
 );
 % if num_techlibs > 1:
-  parameter prim_pkg::impl_e Impl = `PRIM_DEFAULT_IMPL;
+  localparam prim_pkg::impl_e Impl = `PRIM_DEFAULT_IMPL;
 % endif
 
 ${instances}

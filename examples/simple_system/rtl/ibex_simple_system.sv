@@ -204,15 +204,17 @@ module ibex_simple_system (
       .WritebackStage  ( WritebackStage   ),
       .BranchPredictor ( BranchPredictor  ),
       .DbgTriggerEn    ( DbgTriggerEn     ),
+      .DmBaseAddr      ( 32'h00100000     ),
+      .DmAddrMask      ( 32'h00000003     ),
       .DmHaltAddr      ( 32'h00100000     ),
       .DmExceptionAddr ( 32'h00100000     )
     ) u_top (
       .clk_i                  (clk_sys),
       .rst_ni                 (rst_sys_n),
 
-      .test_en_i              ('b0),
+      .test_en_i              (1'b0),
       .scan_rst_ni            (1'b1),
-      .ram_cfg_i              ('b0),
+      .ram_cfg_i              (prim_ram_1p_pkg::RAM_1P_CFG_DEFAULT),
 
       .hart_id_i              (32'b0),
       // First instruction executed is at 0x0 + 0x80
@@ -249,11 +251,11 @@ module ibex_simple_system (
       .scramble_nonce_i       ('0),
       .scramble_req_o         (),
 
-      .debug_req_i            ('b0),
+      .debug_req_i            (1'b0),
       .crash_dump_o           (),
       .double_fault_seen_o    (),
 
-      .fetch_enable_i         (ibex_pkg::FetchEnableOn),
+      .fetch_enable_i         (ibex_pkg::IbexMuBiOn),
       .alert_minor_o          (),
       .alert_major_internal_o (),
       .alert_major_bus_o      (),
@@ -317,6 +319,12 @@ module ibex_simple_system (
       .timer_err_o    (device_err[Timer]),
       .timer_intr_o   (timer_irq)
     );
+
+  export "DPI-C" function mhpmcounter_num;
+
+  function automatic int unsigned mhpmcounter_num();
+    return u_top.u_ibex_top.u_ibex_core.cs_registers_i.MHPMCounterNum;
+  endfunction
 
   export "DPI-C" function mhpmcounter_get;
 

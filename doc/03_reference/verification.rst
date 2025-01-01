@@ -1,3 +1,5 @@
+.. _verification:
+
 Verification
 ============
 
@@ -13,6 +15,14 @@ Overview
 
 This is a SV/UVM testbench for verification of the Ibex core, located in `dv/uvm/core_ibex`.
 At a high level, this testbench uses the open source `RISCV-DV random instruction generator <https://github.com/google/riscv-dv>`_ to generate compiled instruction binaries, loads them into a simple memory model, stimulates the Ibex core to run this program in memory, and then compares the core trace log against a golden model ISS trace log to check for correctness of execution.
+
+Verification maturity is tracked via :ref:`verification_stages` that are `defined by the OpenTitan project <https://opentitan.org/book/doc/project_governance/development_stages.html#hardware-verification-stages-v>`_.
+
+Ibex has achieved **V2S** for the ``opentitan`` configuration, broadly this means verification almost complete (over 90% code and functional coverage hit with over 90% regression pass rate with test plan and coverage plan fully implemented) but not yet closed.
+
+Nightly regression results, including a coverage summary and details of test failures, for the ``opentitan`` Ibex configuration are published at https://ibex.reports.lowrisc.org/opentitan/latest/report.html. Below is a summary of these results:
+
+.. image:: https://ibex.reports.lowrisc.org/opentitan/latest/summary.svg
 
 Testbench Architecture
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -80,8 +90,7 @@ In order to run the co-simulation flow, you'll need:
   + Some custom CSRs
   + Custom NMI behavior
 
-  Ibex verification should work with the Spike version that is tagged as ``ibex-cosim-v0.3``.
-  Other, later, versions called ``ibex-cosim-v*`` may also work but there's no guarantee of backwards compatibility.
+  Ibex verification should work with the Spike version that is tagged as ``ibex-cosim-v0.5``.
 
   Spike must be built with the ``--enable-commitlog`` and ``--enable-misaligned`` options.
   ``--enable-commitlog`` is needed to produce log output to track the instructions that were executed.
@@ -109,7 +118,7 @@ Once these are installed, you need to set some environment variables to tell the
 .. _LRSpike: https://github.com/lowRISC/riscv-isa-sim
 .. _riscv-toolchain-source: https://github.com/riscv/riscv-gnu-toolchain
 .. _riscv-toolchain-releases: https://github.com/lowRISC/lowrisc-toolchains/releases
-.. _bitmanip-patches: https://github.com/lowRISC/lowrisc-toolchains#how-to-generate-the-bitmanip-patches
+.. _bitmanip-patches: https://github.com/lowRISC/lowrisc-toolchains#how-to-generate-the-bitmanip-patch
 .. _bitmanip: https://github.com/riscv/riscv-bitmanip
 
 End-to-end RTL/ISS co-simulation flow
@@ -128,6 +137,7 @@ However, this checking model quickly falls apart once situations involving exter
 In order to provide support for these sorts of scenarios to verify if the core has entered the proper interrupt handler, entered Debug Mode properly, updated any CSRs correctly, and so on, the handshaking mechanism provided by the RISCV-DV instruction generator is heavily used, which effectively allows the core to send status information to the testbench during program execution for any analysis that is required to increase verification effectiveness.
 This mechanism is explained in detail at https://github.com/google/riscv-dv/blob/master/docs/source/handshake.rst.
 As a sidenote, the signature address that this testbench uses for the handshaking is ``0x8ffffffc``.
+
 Additionally, as is mentioned in the RISCV-DV documentation of this handshake, a small set of API tasks are provided in `dv/uvm/core_ibex/tests/core_ibex_base_test.sv <https://github.com/lowRISC/ibex/blob/master/dv/uvm/core_ibex/tests/core_ibex_base_tests.sv>`_ to enable easy and efficient integration and usage of this mechanism in this test environment.
 To see how this handshake is used during real simulations, look in `dv/uvm/core_ibex/tests/core_ibex_test_lib.sv <https://github.com/lowRISC/ibex/blob/master/dv/uvm/core_ibex/tests/core_ibex_test_lib.sv>`_.
 As can be seen, this mechanism is extensively used to provide runtime verification for situations involving external debug requests, interrupt assertions, and memory faults.
@@ -135,6 +145,15 @@ To add another layer of correctness checking to the checking already provided by
 As a result, only the final values contained in every register at the end of the test are compared against each other, since any code executed in the debug ROM and trap handlers should not corrupt register state in the rest of the program.
 
 The entirety of this flow is controlled by the Makefile found at `dv/uvm/core_ibex/Makefile <https://github.com/lowRISC/ibex/blob/master/dv/uvm/core_ibex/Makefile>`_; here is a list of frequently used commands:
+=======
+Additionally, as is mentioned in the RISCV-DV documentation of this handshake, a small set of API tasks are provided in `dv/uvm/core_ibex/tests/core_ibex_base_test.sv <https://github.com/lowRISC/ibex/blob/master/dv/uvm/core_ibex/tests/core_ibex_base_test.sv>`_ to enable easy and efficient integration and usage of this mechanism in this test environment.
+To see how this handshake is used during real simulations, look in `dv/uvm/core_ibex/tests/core_ibex_test_lib.sv <https://github.com/lowRISC/ibex/blob/master/dv/uvm/core_ibex/tests/core_ibex_test_lib.sv>`_.
+As can be seen, this mechanism is extensively used to provide runtime verification for situations involving external debug requests, interrupt assertions, and memory faults.
+To add another layer of correctness checking to the checking already provided by the handshake mechanism, a modified version of the trace log comparison is used, as comparing every register write performed during the entire simulation will lead to an incorrect result since the ISS trace log will not contain any execution information in the debug ROM or in any interrupt handler code.
+As a result, only the final values contained in every register at the end of the test are compared against each other, since any code executed in the debug ROM and trap handlers should not corrupt register state in the rest of the program.
+
+The entirety of this flow is controlled by the Makefile found at `dv/uvm/core_ibex/Makefile <https://github.com/lowRISC/ibex/blob/master/dv/uvm/core_ibex/Makefile>`_; here is a list of frequently used commands:
+
 
 .. code-block:: bash
 

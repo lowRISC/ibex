@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -14,7 +14,6 @@ module tb;
   `include "dv_macros.svh"
 
   wire clk, rst_n;
-  wire devmode;
 % if is_cip:
 % if has_interrupts:
   wire [NUM_MAX_INTERRUPTS-1:0] interrupts;
@@ -27,7 +26,6 @@ module tb;
 % if has_interrupts:
   pins_if #(NUM_MAX_INTERRUPTS) intr_if(interrupts);
 % endif
-  pins_if #(1) devmode_if(devmode);
   tl_if tl_if(.clk(clk), .rst_n(rst_n));
 % endif
 % for agent in env_agents:
@@ -35,7 +33,7 @@ module tb;
 % endfor
 
 % if has_alerts:
-  `DV_ALERT_IF_CONNECT
+  `DV_ALERT_IF_CONNECT()
 % endif
 % if num_edn:
   // edn_clk, edn_rst_n and edn_if are defined and driven in below macro
@@ -72,7 +70,6 @@ module tb;
 % if has_interrupts:
     uvm_config_db#(intr_vif)::set(null, "*.env", "intr_vif", intr_if);
 % endif
-    uvm_config_db#(devmode_vif)::set(null, "*.env", "devmode_vif", devmode_if);
     uvm_config_db#(virtual tl_if)::set(null, "*.env.m_tl_agent*", "vif", tl_if);
 % endif
 % for agent in env_agents:

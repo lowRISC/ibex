@@ -63,6 +63,8 @@ class core_base_new_seq #(type REQ = uvm_sequence_item) extends uvm_sequence #(R
 
     `uvm_info(`gfn, $sformatf("Running the \"%s\" schedule for stimulus generation",
                               iteration_modes.name()), UVM_LOW)
+    stop_seq = 1'b0;
+    seq_finished = 1'b0;
     case (iteration_modes)
       SingleRun: begin
         drive_stimulus();
@@ -72,6 +74,7 @@ class core_base_new_seq #(type REQ = uvm_sequence_item) extends uvm_sequence #(R
         `DV_CHECK_FATAL(iteration_cnt != 0)
         `uvm_info(`gfn, $sformatf("Number of stimulus iterations = %0d", iteration_cnt), UVM_LOW)
         for (int i = 0; i <= iteration_cnt; i++) begin
+          `uvm_info(`gfn, $sformatf("Running %0d/%0d", i, iteration_cnt), UVM_LOW)
           drive_stimulus();
         end
       end
@@ -129,8 +132,8 @@ class irq_new_seq extends core_base_new_seq #(irq_seq_item);
   bit no_timer;
   bit no_software;
 
-  int unsigned max_delay = 500;
-  int unsigned min_delay = 50;
+  int unsigned max_delay = 1000;
+  int unsigned min_delay = 300;
 
   rand int interval = min_delay;
 
@@ -198,30 +201,44 @@ class debug_new_seq extends core_base_new_seq#(irq_seq_item);
 
 endclass
 
-class memory_error_seq extends core_base_new_seq#(irq_seq_item);
+class memory_error_seq extends core_base_new_seq#(ibex_mem_intf_seq_item);
   core_ibex_vseq               vseq;
   rand bit                     choose_side;
-  bit                          start_seq = 0; // Use this bit to start any unique sequence once
+  // When set skip error injection if Ibex is currently handling an exception (incluing IRQs)
+  bit                          skip_on_exc = 1'b0;
 
-  rand error_type_e            err_type = PickErr;
+  error_type_e                 err_type = PickErr;
+  rand bit                     inject_intg_err;
+  // CONTROL_KNOB: Configure the rate between seeing an integrity error versus seeing a bus error.
+  int unsigned                 intg_err_pct = 50;
+  constraint inject_intg_err_c {
+     inject_intg_err dist {1 :/ intg_err_pct,
+                           0 :/ 100 - intg_err_pct};
+  }
 
   `uvm_object_utils(memory_error_seq)
   `uvm_declare_p_sequencer(core_ibex_vseqr)
 
   function new (string name = "");
     super.new(name);
-    vseq = core_ibex_vseq::type_id::create("vseq");
   endfunction
 
   virtual task send_req();
-    case (err_type)
-      IsideErr: begin
+    vseq.instr_intf_seq.suppress_error_on_exc = skip_on_exc;
+    vseq.data_intf_seq.suppress_error_on_exc  = skip_on_exc;
+
+    `DV_CHECK_MEMBER_RANDOMIZE_FATAL(inject_intg_err)
+    // If we expect to see only bus errors, we can enable this assertion. Otherwise
+    // integrity errors would cause alerts to trigger.
+    `DV_ASSERT_CTRL_REQ("tb_no_alerts_triggered", intg_err_pct == 0)
+    case ({err_type, inject_intg_err})
+      {IsideErr, 1'b0}: begin
         vseq.instr_intf_seq.inject_error();
       end
-      DsideErr: begin
+      {DsideErr, 1'b0}: begin
         vseq.data_intf_seq.inject_error();
       end
-      PickErr: begin
+      {PickErr, 1'b0}: begin
         `DV_CHECK_STD_RANDOMIZE_FATAL(choose_side)
         if (choose_side) begin
           vseq.instr_intf_seq.inject_error();
@@ -229,14 +246,24 @@ class memory_error_seq extends core_base_new_seq#(irq_seq_item);
           vseq.data_intf_seq.inject_error();
         end
       end
+      {IsideErr, 1'b1}: begin
+        vseq.instr_intf_seq.inject_intg_error();
+      end
+      {DsideErr, 1'b1}: begin
+        vseq.data_intf_seq.inject_intg_error();
+      end
+      {PickErr, 1'b1}: begin
+        `DV_CHECK_STD_RANDOMIZE_FATAL(choose_side)
+        if (choose_side) begin
+          vseq.instr_intf_seq.inject_intg_error();
+        end else begin
+          vseq.data_intf_seq.inject_intg_error();
+        end
+      end
       default: begin
         // DO nothing
       end
     endcase
-    if(!start_seq) begin
-      vseq.start(p_sequencer);
-      start_seq = 1;
-    end
   endtask
 
 endclass: memory_error_seq
@@ -258,21 +285,21 @@ class fetch_enable_seq extends core_base_new_seq#(irq_seq_item);
       all_off_values = 0;
     end
 
-    dut_vif.dut_cb.fetch_enable <= ibex_pkg::FetchEnableOn;
+    dut_vif.dut_cb.fetch_enable <= ibex_pkg::IbexMuBiOn;
     super.body();
   endtask: body
 
   virtual task send_req();
-    ibex_pkg::fetch_enable_t fetch_enable_off;
-    int unsigned             off_delay;
+    ibex_pkg::ibex_mubi_t fetch_enable_off;
+    int unsigned          off_delay;
 
     if (all_off_values) begin
       // Randomise the MUBI fetch_enable value to be one of the many possible off values
       `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(fetch_enable_off,
-        fetch_enable_off != ibex_pkg::FetchEnableOn;)
+        fetch_enable_off != ibex_pkg::IbexMuBiOn;)
     end else begin
       // Otherwise use single fixed off value
-      fetch_enable_off = ibex_pkg::FetchEnableOff;
+      fetch_enable_off = ibex_pkg::IbexMuBiOff;
     end
 
     `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(off_delay,
@@ -280,7 +307,7 @@ class fetch_enable_seq extends core_base_new_seq#(irq_seq_item);
 
     dut_vif.dut_cb.fetch_enable <= fetch_enable_off;
     clk_vif.wait_clks(off_delay);
-    dut_vif.dut_cb.fetch_enable <= ibex_pkg::FetchEnableOn;
+    dut_vif.dut_cb.fetch_enable <= ibex_pkg::IbexMuBiOn;
 
   endtask
 

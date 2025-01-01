@@ -653,14 +653,65 @@ package ibex_pkg;
   parameter logic [SCRAMBLE_NONCE_W-1:0] RndCnstIbexNonceDefault =
       64'hf79780bc735f3843;
 
-  // Fetch enable. Mult-bit signal used for security hardening. For non-secure implementation all
-  // bits other than the bottom bit are ignored.
-  typedef logic [3:0] fetch_enable_t;
+  // Mult-bit signal used for security hardening. For non-secure implementation all bits other than
+  // the bottom bit are ignored.
+  parameter int IbexMuBiWidth = 4;
+  typedef logic [IbexMuBiWidth-1:0] ibex_mubi_t;
 
   // Note that if adjusting these parameters it is assumed the bottom bit is set for On and unset
-  // for Off. This allows the use of FetchEnableOn/FetchEnableOff to work for both secure and
-  // non-secure Ibex. If this assumption is broken the RTL that uses the fetch_enable signal within
-  // `ibex_core` may need adjusting.
-  parameter fetch_enable_t FetchEnableOn  = 4'b0101;
-  parameter fetch_enable_t FetchEnableOff = 4'b1010;
+  // for Off. This allows the use of IbexMuBiOn/IbexMuBiOff to work for both secure and non-secure
+  // Ibex. If this assumption is broken the RTL that uses ibex_mubi_t types such as the fetch_enable
+  // and core_busy signals within `ibex_core` may need adjusting.
+  parameter ibex_mubi_t IbexMuBiOn  = 4'b0101;
+  parameter ibex_mubi_t IbexMuBiOff = 4'b1010;
+
+  // Default reset values for PMP CSRs. Where the number of regions
+  // (PMPNumRegions) is less than 16 the reset values for the higher numbered
+  // regions are ignored.
+  //
+  // See the Ibex Reference Guide (Custom Reset Values under Physical Memory
+  // Protection) for more information.
+
+  parameter pmp_cfg_t PmpCfgRst[16] = '{
+    '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}, // region 0
+    '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}, // region 1
+    '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}, // region 2
+    '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}, // region 3
+    '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}, // region 4
+    '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}, // region 5
+    '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}, // region 6
+    '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}, // region 7
+    '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}, // region 8
+    '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}, // region 9
+    '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}, // region 10
+    '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}, // region 11
+    '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}, // region 12
+    '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}, // region 13
+    '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}, // region 14
+    '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}  // region 15
+  };
+
+  // Addresses are given in byte granularity for readibility. A minimum of two
+  // bits will be stripped off the bottom (PMPGranularity == 0) with more stripped
+  // off at coarser granularities.
+  parameter logic [33:0] PmpAddrRst[16] = '{
+    34'h0, // region 0
+    34'h0, // region 1
+    34'h0, // region 2
+    34'h0, // region 3
+    34'h0, // region 4
+    34'h0, // region 5
+    34'h0, // region 6
+    34'h0, // region 7
+    34'h0, // region 8
+    34'h0, // region 9
+    34'h0, // region 10
+    34'h0, // region 11
+    34'h0, // region 12
+    34'h0, // region 13
+    34'h0, // region 14
+    34'h0  // region 15
+  };
+
+  parameter pmp_mseccfg_t PmpMseccfgRst = '{rlb : 1'b0, mmwp: 1'b0, mml: 1'b0};
 endpackage

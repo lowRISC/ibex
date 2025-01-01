@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -44,6 +44,9 @@ class push_pull_agent_cfg #(parameter int HostDataWidth = 32,
 
   // Enable starting the device sequence by default if configured in Device mode.
   bit start_default_device_seq = 1;
+
+  // Ignore backpressure (ready signal) if configured as a Push Host
+  bit ignore_push_host_backpressure = 0;
 
   // These data queues allows users to specify data to be driven by the sequence at a higher level.
   //
@@ -139,12 +142,14 @@ class push_pull_agent_cfg #(parameter int HostDataWidth = 32,
   // Setter method for the user data queues - must be called externally to place specific user-data
   // to be sent by the driver.
   function void add_h_user_data(bit [HostDataWidth-1:0] data);
+    `uvm_info(`gfn, $sformatf("Added h user data %p", data), UVM_HIGH)
     h_user_data_q.push_back(data);
   endfunction
 
   // Setter method for the user data queues - must be called externally to place specific user-data
   // to be sent by the driver.
   function void add_d_user_data(bit [DeviceDataWidth-1:0] data);
+    `uvm_info(`gfn, $sformatf("Added d user data %p", data), UVM_HIGH)
     d_user_data_q.push_back(data);
   endfunction
 
@@ -183,6 +188,33 @@ class push_pull_agent_cfg #(parameter int HostDataWidth = 32,
   function bit has_d_user_data();
     return (d_user_data_q.size() > 0);
   endfunction
+
+  // Return true if the interface is completely silent
+  virtual function logic is_silent();
+    return !((agent_type == PushAgent) ?
+             (vif.mon_cb.valid || vif.mon_cb.ready) :
+             (vif.mon_cb.req || vif.mon_cb.ack));
+  endfunction
+
+  // Return true if there's a stalled transaction
+  //
+  // If this is a pull agent, there is a stalled transaction when the req signal is high (so
+  // something is trying to read data), but the ack signal is low (there's no data available). If it
+  // is a push agent, there is a stalled transaction when the valid signal is high (so something is
+  // trying to provide data) but the ready signal is low (the data isn't being consumed).
+  virtual function logic is_stalled();
+    return ((agent_type == PushAgent) ?
+            (vif.mon_cb.valid && !vif.mon_cb.ready) :
+            (vif.mon_cb.req && !vif.mon_cb.ack));
+  endfunction
+
+  // Wait for any current transaction to finish
+  //
+  virtual task wait_while_running();
+    while (is_stalled()) @(vif.mon_cb);
+    // Add one last cycle to wait past the final cycle for the transaction that was stalled.
+    @(vif.mon_cb);
+  endtask
 
   `uvm_object_param_utils_begin(push_pull_agent_cfg#(HostDataWidth, DeviceDataWidth))
     `uvm_field_enum(push_pull_agent_e, agent_type,         UVM_DEFAULT)

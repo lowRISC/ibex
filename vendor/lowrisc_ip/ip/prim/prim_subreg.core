@@ -1,5 +1,5 @@
 CAPI=2:
-# Copyright lowRISC contributors.
+# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
@@ -16,6 +16,9 @@ filesets:
       - rtl/prim_subreg_ext.sv
       - rtl/prim_subreg_shadow.sv
     file_type: systemVerilogSource
+    depend:
+      - lowrisc:prim:assert
+      - lowrisc:prim:mubi
 
   files_verilator_waiver:
     depend:

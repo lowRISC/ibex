@@ -5,7 +5,7 @@
 # Rules for svlint, a SystemVerilog linter commonly used in editors.
 # The configuration matches the lowRISC SystemVerilog style guide at
 # https://github.com/lowRISC/style-guides/blob/master/VerilogCodingStyle.md.
-# See https://github.com/dalance/svlint/blob/master/RULES.md for a list of rules.
+# See https://github.com/dalance/svlint/blob/master/MANUAL.md for a list of rules.
 
 [option]
 exclude_paths = ["build.*", "sw/.*", ".sv.tpl$", "vendor/.*"]

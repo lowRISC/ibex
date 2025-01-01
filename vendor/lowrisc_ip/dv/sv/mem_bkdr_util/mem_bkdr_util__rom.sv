@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -59,7 +59,6 @@ virtual function bit [38:0] rom_encrypt_read32(bit [bus_params_pkg::BUS_AW-1:0] 
     zero_key[i] = '0;
   end
 
-  data_arr = sram_scrambler_pkg::sp_decrypt(data_arr, 39, zero_key);
   for (int i = 0; i < 39; i++) begin
     data[i] = data_arr[i] ^ keystream[i];
   end
@@ -69,7 +68,7 @@ endfunction
 
 
 virtual function void rom_encrypt_write32_integ(logic [bus_params_pkg::BUS_AW-1:0] addr,
-                                                logic [31:0]                       data,
+                                                logic [38:0]                       data,
                                                 logic [SRAM_KEY_WIDTH-1:0]         key,
                                                 logic [SRAM_BLOCK_WIDTH-1:0]       nonce,
                                                 bit                                scramble_data,
@@ -94,7 +93,7 @@ virtual function void rom_encrypt_write32_integ(logic [bus_params_pkg::BUS_AW-1:
   // Calculate the scrambled address
   scrambled_addr = sram_scrambler_pkg::encrypt_sram_addr(rom_addr, addr_width, nonce_arr);
 
-  if(scramble_data) begin
+  if (scramble_data) begin
     // Calculate the integrity constant
     integ_data = prim_secded_pkg::prim_secded_inv_39_32_enc(data);
 

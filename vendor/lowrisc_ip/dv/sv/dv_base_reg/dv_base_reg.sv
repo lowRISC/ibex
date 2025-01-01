@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -34,6 +34,14 @@ class dv_base_reg extends uvm_reg;
     super.new(name, n_bits, has_coverage);
     atomic_en_shadow_wr = new(1);
   endfunction : new
+
+  // Create this register and its fields' IP-specific functional coverage.
+  function void create_cov();
+    dv_base_reg_field fields[$];
+    get_dv_base_reg_fields(fields);
+    foreach(fields[i]) fields[i].create_cov();
+    // Create register-specific covergroups here.
+  endfunction
 
   // this is similar to get_name, but it gets the
   // simple name of the aliased register instead.
@@ -91,6 +99,15 @@ class dv_base_reg extends uvm_reg;
     this.get_dv_base_reg_fields(flds);
     foreach (flds[i]) begin
       get_reg_mask |= flds[i].get_field_mask();
+    end
+  endfunction
+
+  // Return a mask of read-only bits in the register.
+  virtual function uvm_reg_data_t get_ro_mask();
+    dv_base_reg_field flds[$];
+    this.get_dv_base_reg_fields(flds);
+    foreach (flds[i]) begin
+      get_ro_mask |= flds[i].get_ro_mask();
     end
   endfunction
 
@@ -200,8 +217,6 @@ class dv_base_reg extends uvm_reg;
   // update local variables used for the special regs.
   // - shadow register: shadow reg won't be updated until the second write has no error
   // - lock register: if wen_fld is set to 0, change access policy to all the lockable_flds
-  // TODO: create an `enable_field_access_policy` variable and set the template code during
-  // automation.
   virtual function void pre_do_predict(uvm_reg_item rw, uvm_predict_e kind);
 
     // Skip updating shadow value or access type if:
@@ -235,6 +250,7 @@ class dv_base_reg extends uvm_reg;
              flds[i].update_shadowed_val(~wr_data);
           end else begin
             shadow_update_err = 1;
+            flds[i].sample_shadow_field_cov(.update_err(1));
           end
         end
       end
@@ -278,7 +294,7 @@ class dv_base_reg extends uvm_reg;
         return;
       end else begin
         `uvm_info(`gfn, $sformatf(
-            "Shadow reg %0s has update error, update rw.value from %0h to %0h",
+            "Update shadow reg %0s rw.value from %0h to %0h",
             get_name(), rw.value[0], get_committed_val()), UVM_HIGH)
         rw.value[0] = get_committed_val();
       end
@@ -298,14 +314,15 @@ class dv_base_reg extends uvm_reg;
       end
       do_update_shadow_vals = 0;
     end
-    lock_lockable_flds(rw.value[0]);
+    lock_lockable_flds(rw.value[0], kind);
   endfunction
 
   // This function is used for wen_reg to lock its lockable flds by changing the lockable flds'
   // access policy. For register write via csr_wr(), this function is included in post_write().
   // For register write via tl_access(), user will need to call this function manually.
-  virtual function void lock_lockable_flds(uvm_reg_data_t val);
+  virtual function void lock_lockable_flds(uvm_reg_data_t val, uvm_predict_e kind);
     if (is_wen_reg()) begin
+      `uvm_info(`gfn, $sformatf("lock_lockable_flds %d val", val), UVM_LOW);
       foreach (m_fields[i]) begin
         dv_base_reg_field fld;
         `downcast(fld, m_fields[i])
@@ -315,7 +332,17 @@ class dv_base_reg extends uvm_reg;
           case (field_access)
             // discussed in issue #1922: enable register is standarized to W0C or RO (if HW has
             // write access).
-            "W0C": if (field_val == 1'b0) fld.set_lockable_flds_access(1);
+            "W0C": begin
+              // This is the regular behavior with W0C access policy enabled (i.e., only
+              // clearing is possible).
+              if (kind == UVM_PREDICT_WRITE && field_val == 1'b0) begin
+                fld.set_lockable_flds_access(1);
+              // In this case we are using direct prediction where the access policy is not
+              // applied. I.e., a regwen bit that has been set to 0 can be set to 1 again.
+              end else if (kind == UVM_PREDICT_DIRECT) begin
+                fld.set_lockable_flds_access((~field_val) & fld.get_field_mask());
+              end
+            end
             "RO": ; // if RO, it's updated by design, need to predict in scb
             default:`uvm_fatal(`gfn, $sformatf("lock register invalid access %s", field_access))
           endcase
