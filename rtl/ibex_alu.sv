@@ -1312,6 +1312,19 @@ module ibex_alu #(
     assign imd_val_we_o        = '{default: '0};
   end
 
+  ////////////
+  // Zicond //
+  ////////////
+  logic [31:0] zicond_result;
+  always_comb begin
+    zicond_result = 0;
+    unique case (operator_i)
+      ALU_CZERO_EQZ: zicond_result = (operand_b_i ==0 ) ? (0) : (operand_a_i);
+      ALU_CZERO_NEZ: zicond_result = (operand_b_i != 0) ? (0) : (operand_a_i);
+      default: zicond_result = 0;
+    endcase
+  end
+
   ////////////////
   // Result mux //
   ////////////////
@@ -1389,6 +1402,9 @@ module ibex_alu #(
       // Carry-less Multiply Operations (RV32B)
       ALU_CLMUL, ALU_CLMULR,
       ALU_CLMULH: result_o = clmul_result;
+      //ZiCond
+      ALU_CZERO_EQZ,
+      ALU_CZERO_NEZ: result_o = zicond_result;
 
       default: ;
     endcase
