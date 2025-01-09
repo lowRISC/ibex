@@ -1,0 +1,73 @@
+diff --git a/rtl/cv32e40x_controller_fsm.sv b/rtl/cv32e40x_controller_fsm.sv
+index a069abc0..ee118df6 100644
+--- a/rtl/cv32e40x_controller_fsm.sv
++++ b/rtl/cv32e40x_controller_fsm.sv
+@@ -591,6 +591,56 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
+ 
+ 
+ 
++
++always_ff @(posedge clk) begin
++    if (ctrl_fsm_o.wake_from_sleep) begin
++      unique case (ctrl_fsm_cs)
++      RESET: begin
++        $display("[%s:%0d] %t ctrl_fsm_cs= RESET", `__FILE__, `__LINE__, $time);
++      end
++
++      FUNCTIONAL: begin
++        $display("[%s:%0d] %t ctrl_fsm_cs= FUNCTIONAL", `__FILE__, `__LINE__, $time);
++      end
++      SLEEP: begin
++        $display("[%s:%0d] %t ctrl_fsm_cs= SLEEP", `__FILE__, `__LINE__, $time);
++                  ctrl_fsm_ns = FUNCTIONAL;
++          ctrl_fsm_o.ctrl_busy = 1'b1;
++          ctrl_fsm_o.instr_req         = 1'b0;
++
++            $display("[%s:%0d] %t wake_from_sleep: %b", `__FILE__, `__LINE__, $time, ctrl_fsm_o.wake_from_sleep);
++        $display("[%s:%0d] %t ctrl_busy: %b", `__FILE__, `__LINE__, $time, ctrl_fsm_o.ctrl_busy);
++        $display("[%s:%0d] %t instr_req: %b", `__FILE__, `__LINE__, $time, ctrl_fsm_o.instr_req);
++          // Keep IF/ID halted while waking up (EX contains a bubble)
++          // Any jump/table jump/mret which is in ID in this cycle must also remain in ID
++          // the next cycle for their side effects to be taken during the FUNCTIONAL state in case the interrupt is not actually taken.
++          ctrl_fsm_o.halt_id = 1'b1;
++
++          // Unhalt WB to allow WFI to retire when we exit SLEEP mode
++          // Using limited version of halt_wb to avoid timing paths through cs_registers and bypass onto the data OBI bus.
++          ctrl_fsm_o.halt_limited_wb = 1'b0;
++      end
++      DEBUG_TAKEN: begin
++        $display("[%s:%0d] %t ctrl_fsm_cs= DEBUG_TAKEN", `__FILE__, `__LINE__, $time);
++      end
++    endcase
++          unique case (ctrl_fsm_ns)
++      RESET: begin
++        $display("[%s:%0d] %t ctrl_fsm_ns= RESET", `__FILE__, `__LINE__, $time);
++      end
++
++      FUNCTIONAL: begin
++        $display("[%s:%0d] %t ctrl_fsm_ns= FUNCTIONAL", `__FILE__, `__LINE__, $time);
++      end
++      SLEEP: begin
++        $display("[%s:%0d] %t ctrl_fsm_ns= SLEEP", `__FILE__, `__LINE__, $time);
++      end
++      DEBUG_TAKEN: begin
++        $display("[%s:%0d] %t ctrl_fsm_ns= DEBUG_TAKEN", `__FILE__, `__LINE__, $time);
++      end
++    endcase
++    end
++end
+   // Mux used to select PC from the different pipeline stages
+   always_comb begin
+ 
+@@ -1091,6 +1141,11 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
+         if (ctrl_fsm_o.wake_from_sleep) begin
+           ctrl_fsm_ns = FUNCTIONAL;
+           ctrl_fsm_o.ctrl_busy = 1'b1;
++          ctrl_fsm_o.instr_req         = 1'b0;
++
++            $display("[%s:%0d] %t wake_from_sleep: %b", `__FILE__, `__LINE__, $time, ctrl_fsm_o.wake_from_sleep);
++        $display("[%s:%0d] %t ctrl_busy: %b", `__FILE__, `__LINE__, $time, ctrl_fsm_o.ctrl_busy);
++        $display("[%s:%0d] %t instr_req: %b", `__FILE__, `__LINE__, $time, ctrl_fsm_o.instr_req);
+           // Keep IF/ID halted while waking up (EX contains a bubble)
+           // Any jump/table jump/mret which is in ID in this cycle must also remain in ID
+           // the next cycle for their side effects to be taken during the FUNCTIONAL state in case the interrupt is not actually taken.

@@ -49,12 +49,25 @@ reset_handler:
   .global _start
 _start:
  
-  # Enabling interrupts globally.  mstatus.MIE
-  li      t0, 0x8
+#ifdef CV32E40X
+  # Enabling CV32E40X mstatus.MIE
+  li      t0, 0x1
   csrrs   zero, mstatus, t0
-  # Enabling  SW interrupt (mie[3]) , see https://ibex-core.readthedocs.io/en/latest/03_reference/cs_registers.html#machine-interrupt-enable-register-mie
+  # Enabling CV32E40P SW interrupt (mie[3])
   li      t0, 0x8
   csrrs   zero, mie, t0
+#elif defined(IBEX)
+  # Enabling interrupts globally. mstatus.MIE
+  li      t0, 0x8
+  csrrs   zero, mstatus, t0
+  # Enabling SW interrupt (mie[3]), see https://ibex-core.readthedocs.io/en/latest/03_reference/cs_registers.html#machine-interrupt-enable-register-mie
+  li      t0, 0x8
+  csrrs   zero, mie, t0
+#else
+  # Error: No supported core defined
+  .error "Unsupported core: Please define CV32E40X or IBEX."
+#endif
+
 
 
   /* Stack initialization */

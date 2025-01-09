@@ -6,3 +6,5 @@ vsim/
 *.vcd
 tmp/
 .bender/
+*.gtkw
+*.log

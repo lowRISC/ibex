@@ -1,0 +1,18 @@
+@startuml
+' see https://plantuml.com/guide
+'VSCODE extension: https://marketplace.visualstudio.com/items?itemName=jebbs.plantuml
+title isolde decoder(simplified) state diagram
+[*] --> BOOT
+BOOT --> BOOT : EvReset
+BOOT -down-> FETCH_COMPUTE : [read_ptr=6]
+
+FETCH_COMPUTE -[#blue,bold]left-> FETCH_REST
+FETCH_REST -[#red,bold]up-> FETCH_COMPUTE: <color:red>[vlen_instr_words_q == read_ptr] </color>
+
+BOOT : read_ptr <= read_ptr + 1
+FETCH_COMPUTE : read_ptr <= 1
+FETCH_COMPUTE : vlen_instr_words_q <= decode_instr_length()
+FETCH_REST : read_ptr <= read_ptr + 1
+
+
+@enduml

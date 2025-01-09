@@ -40,6 +40,7 @@ module isolde_fetch_vleninstr (
   localparam logic [6:0] RISCV_ENC_64   = 7'b0111111;  // Custom opcode for 64-bit instruction (2 words)
 
   localparam logic [2:0] RISCV_ENC_GE80_N5 = 3'h5;  // Custom encoding for N5 (5 words)
+  localparam logic [2:0] RISCV_ENC_GE80_N3 = 3'h3;  // Custom encoding for N5 (4 words)
   localparam logic [2:0] RISCV_ENC_GE80_N1 = 3'h1;  // Custom encoding for N1 (3 words)
 
   // Internal control signals
@@ -98,6 +99,8 @@ module isolde_fetch_vleninstr (
           RISCV_ENC_GE80: begin
             if (nnn == RISCV_ENC_GE80_N5) begin
               _vlen_instr_words_o <= 5;  // 5-word instruction (160 bits)
+            end else if (nnn == RISCV_ENC_GE80_N3) begin
+              _vlen_instr_words_o <= 4;  // 3-word instruction (96 bits)
             end else if (nnn == RISCV_ENC_GE80_N1) begin
               _vlen_instr_words_o <= 3;  // 3-word instruction (96 bits)
             end else begin

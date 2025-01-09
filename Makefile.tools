@@ -41,7 +41,7 @@ cores:
 
 riscv32-gcc: $(GCC_INSTALL_DIR)
 
-$(GCC_INSTALL_DIR): vendor/riscv32-gcc.url
+$(GCC_INSTALL_DIR): vendor/riscv32-elf-gcc.url
 	rm -fr $(GCC_INSTALL_DIR)
 	mkdir -p $(INSTALL_DIR)
 	cd vendor && \

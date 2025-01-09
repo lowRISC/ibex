@@ -62,10 +62,4 @@ isolde_opcode_q
 
 vlen_instr_words_d
 vlen_instr_words_q
-
-
-u_top.u_ibex_top.u_ibex_core.id_stage_i.fetch_exec_conn.isolde_exec_req
-u_top.u_ibex_top.u_ibex_core.id_stage_i.fetch_exec_conn.isolde_exec_gnt
-u_top.u_ibex_top.u_ibex_core.id_stage_i.fetch_exec_conn.isolde_exec_dne
-
 }

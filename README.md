@@ -8,6 +8,12 @@
 First time:   
 ```sh
 . ./setup.sh 
+```sh
+git checkout tmp/exp
+git submodule update --init
+cd isolde/tca_system/
+. ./eth.sh 
+bender update
 ```
 * install toolchain
 
@@ -52,7 +58,36 @@ Finally:
 git commit -m"NEW git submodule: vendor/<ip>"
 git push
 ```
+# Miscellaneous
+# working on a branch
+```sh
+git checkout <branch>
+git submodule update --init
+cd isolde/tca_system/
+. ./eth.sh 
+bender update
+```
+# merging
+```sh
+# Step 1: Switch to the target branch isolde/dev
+git checkout isolde/dev
 
+# Step 2: Perform the merge using squash
+git merge --squash tmp/exp
+
+# Step 3: Resolve all conflicts in favor of 'theirs'
+git checkout --theirs .
+
+# Step 4: 
+git submodule update --init
+#perform tests
+
+# Step 5: Stage the changes after conflict resolution
+git add .
+
+# Step 6: Commit the changes with a custom message
+git commit -m "Squash merge tmp/exp into isolde/dev using theirs strategy"
+```
 # Ibex RISC-V Core
 
 Ibex is a production-quality open source 32-bit RISC-V CPU core written in

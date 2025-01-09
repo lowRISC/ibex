@@ -9,7 +9,8 @@ package isolde_decoder_pkg;
     isolde_opcode_gemm,
     isolde_opcode_conv2d,
     isolde_opcode_R_type,
-    isolde_opcode_redmule
+    isolde_opcode_redmule,
+    isolde_opcode_redmule_gemm
   } isolde_opcode_e;
 
 
@@ -25,6 +26,7 @@ package isolde_decoder_pkg;
     localparam logic [6:0] RISCV_ENC_C3   = 7'b1111011;  // Custom-3 opcode for 32-bit instruction (1 word) 
 
     localparam logic [2:0] RISCV_ENC_GE80_N5 = 3'h5;  // Custom encoding for N5 (5 words)
+    localparam logic [2:0] RISCV_ENC_GE80_N3 = 3'h3;  // Custom encoding for N5 (5 words)
     localparam logic [2:0] RISCV_ENC_GE80_N1 = 3'h1;  // Custom encoding for N1 (3 words)
     begin
       case (opCode_i)
@@ -33,6 +35,12 @@ package isolde_decoder_pkg;
             vlen_instr_words_o = 5;
             case (func7_i)
               7'b0000011: isolde_op_code_o = isolde_opcode_vle32_4;
+              default: isolde_op_code_o = isolde_opcode_nop;
+            endcase
+          end else if (nnn_i == RISCV_ENC_GE80_N3) begin
+            vlen_instr_words_o = 4;
+            case (func7_i)
+              7'b0000100: isolde_op_code_o = isolde_opcode_redmule_gemm;
               default: isolde_op_code_o = isolde_opcode_nop;
             endcase
           end else if (nnn_i == RISCV_ENC_GE80_N1) begin

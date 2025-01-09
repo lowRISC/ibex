@@ -4,10 +4,9 @@ IBEX_CONFIG         ?=  isolde
 FUSESOC_CONFIG_OPTS := $(shell cd $(ROOT_DIR) && $(ROOT_DIR)/util/ibex_config.py $(IBEX_CONFIG) fusesoc_opts)
 FUSESOC_PARAMS      ?=
 TEST                ?= redmule_complex
-TEST_SRC_DIR	    = $(ROOT_DIR)/isolde/sw/simple_system/$(TEST)
+TEST_SRC_DIR	    = $(ROOT_DIR)/isolde/sw/$(TEST)
 TEST_BIN_DIR	    = $(mkfile_path)/sw/bin
 test-program        ?= $(TEST_BIN_DIR)/$(TEST)
-BUILD_DIR           := build/$(IBEX_CONFIG)
 SYNTH_DIR           := synth/$(IBEX_CONFIG)
 TMP_DIR             := tmp/$(IBEX_CONFIG)
 FUSESOC_BUILD_ROOT  :=$(mkfile_path)/$(TMP_DIR)
@@ -32,14 +31,21 @@ num_cores_half := $(shell echo "$$(($(num_cores) / 2))")
 
 REDMULE_COMPLEX := 1
 export REDMULE_COMPLEX
+###
+VLT_TOP_MODULE      ?= tb_tca_system
+IMEM_LATENCY        ?= 0
+VLT_TOP_MODULE_PARAMS := -GIMEM_LATENCY=$(IMEM_LATENCY)
 
-include Makefile.verilator
+
+
+include ../mk/sw-build.mk
+include ../mk/verilator-build.mk
 
 
 
 .PHONY: sim-input
 sim-input:
-	$(MAKE)  TEST=redmule_complex TEST_FILES=redmule_complex.c TEST_SRC_DIR=$(REDMULE_ROOT_DIR)/sw test-app
+	$(MAKE)  TEST=redmule_complex TEST_FILES=redmule_complex.c TEST_SRC_DIR=$(REDMULE_ROOT_DIR)/sw test-build
 
 
 $(SIM_TEST_INPUTS):
@@ -65,21 +71,24 @@ synth: synth-setup
 
 	
 
-.PHONY: test-app $(test-program) clean $(TEST_BIN_DIR)
+.PHONY: test-build $(test-program) clean $(TEST_BIN_DIR)
 
 $(TEST_BIN_DIR):
 	mkdir -p $@
 
 
 $(test-program).hex: $(test-program).elf
-test-app: $(TEST_BIN_DIR) $(test-program).hex
+test-build: $(TEST_BIN_DIR) $(test-program).hex
 
-clean-test:
+test-clean: clean-bsp
 	rm -f $(test-program)*
+	rm -fr $(TEST_BIN_DIR) 
+	rm -fr $(SIM_BSP_RESULTS)
+	-find $(TEST_SRC_DIR) -name "*.o"       -delete
 
 
 
-clean: veri-clean clean-test-programs
+clean: veri-clean test-clean-programs
 	rm -fr $(BUILD_DIR) $(TEST_BIN_DIR) logs 
 	rm -f *.log *.csv
 

@@ -1,0 +1,31 @@
+@startuml
+' see https://plantuml.com/guide
+'VSCODE extension: https://marketplace.visualstudio.com/items?itemName=jebbs.plantuml
+/'  logic isolde_exec_req;  // The isolde decoder sets this high
+    logic isolde_exec_gnt;  // The exec_block then answers with isolde_exec_qnt set high as soon as it is ready to serve the request. 
+                          // This may happen in the same cycle as the request was sent or any number of cycles later.
+    logic isolde_exec_dne;  // The exec_bloc answers with isolde_exec_dne set high for exactly one cycle to signal the completion.
+                          // This may happen one or more cycles after the grant has been asserted. I
+'/
+title isolde decoder--> execute block timing diagram
+clock clk with period 1
+binary  "isolde_exec_req" as req
+binary  "isolde_exec_gnt" as gnt
+binary   "isolde_exec_dne" as dne
+
+@0
+req is low
+@1
+req is high
+gnt is high
+@2
+req is low
+@3
+gnt is low
+@7
+dne is high
+@8
+dne is low
+
+
+@enduml

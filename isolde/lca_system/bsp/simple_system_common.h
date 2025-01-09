@@ -137,4 +137,12 @@ inline uint32_t getTicks(){
 #define END_TIMING(value) \
     printf("Timing for %s: %u cycles\n", #value, getTicks() - initval_##value)
 
+#define START_PERFCNT(id) \
+    (*(volatile int *) MMADDR_PERF_COUNTERS) =(int) id
+
+#define STOP_PERFCNT(id) \
+    (*(volatile int *) MMADDR_PERF_COUNTERS) =(int) id; \
+    printPerfCnt();
+
+ void printPerfCnt();
 #endif

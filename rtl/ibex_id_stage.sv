@@ -212,6 +212,7 @@ module ibex_id_stage
   logic isolde_decoder_busy;
   logic std_decoder_rst_n;
   logic illegal_std_instr;  //RV32 illegal operation
+  logic illegal_custom_instr;  //custom illegal operation
   logic illegal_dret_insn;
   logic illegal_umode_insn;
   logic ebrk_insn;
@@ -270,10 +271,11 @@ module ibex_id_stage
   //ISOLDE signals
   logic isolde_exec_busy;
   logic controller_stall_fetch;
+  logic isolde_stall_fetch;
 
   // while ISOLDE decoder is bussy, standard decoder( ibex_decoder) shall be disable(  reset asserted)
   assign std_decoder_rst_n = ~isolde_decoder_busy & rst_ni;
-  assign id_in_ready_o = controller_stall_fetch & ~isolde_exec_busy;
+  assign id_in_ready_o = controller_stall_fetch & isolde_stall_fetch;
 
   // Read enables should only be asserted for valid and legal instructions
   assign rf_ren_a = instr_valid_i & ~instr_fetch_err_i & ~illegal_insn_o & rf_ren_a_dec;
@@ -588,9 +590,10 @@ module ibex_id_stage
       .clk_i(clk_i),
       .rst_ni(rst_ni),
       .isolde_decoder_instr_exec_i(instr_exec_i),
+      .isolde_decoder_instr_valid_i(instr_valid_i),
       .isolde_decoder_instr_batch_i(instr_batch_rdata_i),
-      .isolde_decoder_enable_i(illegal_std_instr),
-      .isolde_decoder_illegal_instr_o(illegal_insn_dec),
+      .isolde_decoder_enable_i(1'b1),
+      .isolde_decoder_illegal_instr_o(illegal_custom_instr),
       .isolde_decoder_busy_o(isolde_decoder_busy),
 
       //ISOLDE register file
@@ -599,6 +602,9 @@ module ibex_id_stage
       .isolde_decoder_exec_bus(fetch_exec_conn)
   );
 
+
+assign illegal_insn_dec = illegal_std_instr & illegal_custom_instr;
+assign isolde_stall_fetch = ~fetch_exec_conn.isolde_decoder_stalled;
   ///////////////////////////
   // ISOLDE  execute block //
   ///////////////////////////

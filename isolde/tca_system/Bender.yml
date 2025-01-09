@@ -14,5 +14,4 @@ sources:
 
     - target: redmule_test_complex
       files:
-        - tb/xif_monitor_cpu_issue.sv
         - tb/tb_tca_system.sv

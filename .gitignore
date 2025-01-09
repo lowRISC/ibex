@@ -24,8 +24,9 @@ modelsim.ini
 vendor/riscv.tar.gz
 vendor/verilator/
 install/
+install
 sim.fst
-
+*.txt
 *.tar.gz
 logs*/
 *.log
@@ -37,5 +38,4 @@ synth/
 bin/
 tmp/
 *.flist
-
-
+*.gtkw
