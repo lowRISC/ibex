@@ -99,9 +99,9 @@ module spec_api #(
     output logic [3:0] mem_write_snd_be_o
 );
 
-bit rX_sail_invoke[1:0];
-logic [31:0] rX_sail_invoke_ret[1:0];
-logic [63:0] rX_sail_invoke_arg_0[1:0];
+bit rX_sail_invoke[2];
+logic [31:0] rX_sail_invoke_ret[2];
+logic [63:0] rX_sail_invoke_arg_0[2];
 assign rx_a_en_o = rX_sail_invoke[0];
 assign rx_a_addr_o = rX_sail_invoke_arg_0[0][4:0];
 assign rX_sail_invoke_ret[0] = rx_a_i;
@@ -109,17 +109,17 @@ assign rx_b_en_o = rX_sail_invoke[1];
 assign rx_b_addr_o = rX_sail_invoke_arg_0[1][4:0];
 assign rX_sail_invoke_ret[1] = rx_b_i;
 
-logic wX_sail_invoke[0:0];
-logic [63:0] wX_sail_invoke_arg_0[0:0];
-logic [31:0] wX_sail_invoke_arg_1[0:0];
+logic wX_sail_invoke[1];
+logic [63:0] wX_sail_invoke_arg_0[1];
+logic [31:0] wX_sail_invoke_arg_1[1];
 assign wx_en_o = wX_sail_invoke[0];
 assign wx_addr_o = wX_sail_invoke_arg_0[0][4:0];
 assign wx_o = wX_sail_invoke_arg_1[0];
 
-logic write_ram_sail_invoke[1:0];
-logic [31:0] write_ram_sail_invoke_arg_1[1:0];
-logic [31:0] write_ram_sail_invoke_arg_2[1:0];
-logic [3:0] write_ram_sail_invoke_arg_3[1:0];
+logic write_ram_sail_invoke[2];
+logic [31:0] write_ram_sail_invoke_arg_1[2];
+logic [31:0] write_ram_sail_invoke_arg_2[2];
+logic [3:0] write_ram_sail_invoke_arg_3[2];
 assign mem_write_o = write_ram_sail_invoke[0];
 assign mem_write_snd_gran_o = write_ram_sail_invoke[1];
 assign mem_write_fst_addr_o = write_ram_sail_invoke_arg_1[0];
@@ -129,9 +129,9 @@ assign mem_write_snd_wdata_o = write_ram_sail_invoke_arg_2[1];
 assign mem_write_fst_be_o = write_ram_sail_invoke_arg_3[0];
 assign mem_write_snd_be_o = write_ram_sail_invoke_arg_3[1];
 
-logic read_ram_sail_invoke[1:0];
-logic [31:0] read_ram_sail_invoke_ret[1:0];
-logic [31:0] read_ram_sail_invoke_arg_1[1:0];
+logic read_ram_sail_invoke[2];
+logic [31:0] read_ram_sail_invoke_ret[2];
+logic [31:0] read_ram_sail_invoke_arg_1[2];
 assign mem_read_o = read_ram_sail_invoke[0];
 assign mem_read_snd_gran_o = read_ram_sail_invoke[1];
 assign mem_read_fst_addr_o = read_ram_sail_invoke_arg_1[0];
@@ -160,10 +160,10 @@ assign mcounteren_o = mcounteren_out.bits;
 t_Mtvec mtvec_out;
 assign mtvec_o = mtvec_out.bits;
 
-t_Pmpcfg_ent pmpcfg_n_in[63:0];
-logic [31:0] pmpaddr_n_in[63:0];
-t_Pmpcfg_ent pmpcfg_n_out[63:0];
-logic [31:0] pmpaddr_n_out[63:0];
+t_Pmpcfg_ent pmpcfg_n_in[64];
+logic [31:0] pmpaddr_n_in[64];
+t_Pmpcfg_ent pmpcfg_n_out[64];
+logic [31:0] pmpaddr_n_out[64];
 for (genvar i = 0; i < 64; i++) begin: g_pmp_bind
     if (i < PMPNumRegions) begin: g_pmp_bind_real
         assign pmpcfg_n_in[i] = '{bits: pmp_cfg_i[i]};

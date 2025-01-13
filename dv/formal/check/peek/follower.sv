@@ -49,7 +49,9 @@ always_comb begin
         ex_has_branched_d = ex_has_branched_q;
     end
 
-    ex_has_branched_d = (ex_has_branched_d | `IF.branch_req) && ~ex_kill && (`IDC.ctrl_fsm_cs == `IDC.DECODE);
+    ex_has_branched_d = (ex_has_branched_d | `IF.branch_req) &&
+                        ~ex_kill &&
+                        (`IDC.ctrl_fsm_cs == `IDC.DECODE);
 end
 
 always @(posedge clk_i or negedge rst_ni) begin

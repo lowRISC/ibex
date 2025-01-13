@@ -124,7 +124,10 @@ ConstantBoot: assume property (boot_addr_i == $past(boot_addr_i));
 // 3. Always fetch enable
 FetchEnable: assume property (fetch_enable_i == IbexMuBiOn);
 // 4. Never try to sleep if we couldn't ever wake up
-WFIStart: assume property (`IDC.ctrl_fsm_cs == SLEEP |-> `CSR.mie_q.irq_software | `CSR.mie_q.irq_timer | `CSR.mie_q.irq_external);
+WFIStart: assume property (`IDC.ctrl_fsm_cs == SLEEP |->
+                                                        `CSR.mie_q.irq_software |
+                                                        `CSR.mie_q.irq_timer |
+                                                        `CSR.mie_q.irq_external);
 // 5. Disable clock gating
 TestEn: assume property (test_en_i);
 // See protocol/* for further assumptions
@@ -169,7 +172,7 @@ TestEn: assume property (test_en_i);
 ////////////////////// Abstract State //////////////////////
 
 // Pre state is the architectural state of Ibex at the start of the cycle
-logic [31:0] pre_regs[31:0];
+logic [31:0] pre_regs[32];
 logic [31:0] pre_nextpc;
 logic [31:0] pre_mip;
 
@@ -262,10 +265,11 @@ assign lsu_had_first_resp = `LSU.ls_fsm_cs == `LSU.WAIT_GNT && `LSU.split_misali
 ////////////////////// Wrap signals //////////////////////
 
 logic spec_en; // The specification is being queried in this cycle
-logic has_spec_past; // There is a previous step to compare against. Will become 0 on uncheckable CSRs and at reset.
+logic has_spec_past; // There is a previous step to compare against.
+                     // Will become 0 on uncheckable CSRs and at reset.
 
 // The previous specification output to be compared with the new input
-logic [31:0] spec_past_regs[31:0];
+logic [31:0] spec_past_regs[32];
 logic [31:0] spec_past_has_reg; // Registers will have past values only when they are written to.
 `define X(n) spec_past_``n
 `X_EACH_CSR_TYPED
@@ -286,7 +290,8 @@ logic wbexc_illegal; // EXC has an illegal instruction
 logic wbexc_compressed_illegal; // EXC has an illegal instruction
 logic wbexc_err; // EXC has an error
 logic instr_will_progress; // Instruction will finish EX
-logic wfi_will_finish; // WFI instruction retire by flushing the pipeline, but that isn't an exception
+logic wfi_will_finish; // WFI instruction retire by flushing the pipeline,
+                       // but that isn't an exception.
 logic wbexc_csr_pipe_flush; // The pipeline is being flushed due to a CSR write
 logic wbexc_handling_irq; // Check the results of handling an IRQ
 
@@ -326,7 +331,8 @@ logic spec_post_wX_en;
 
 logic spec_int_err;
 
-logic spec_fetch_err; // The specification has experienced a fetch error, regardless of whether or not it was told to.
+logic spec_fetch_err; // The specification has experienced a fetch error,
+                      // regardless of whether or not it was told to.
 assign spec_fetch_err =
     (main_mode == MAIN_IFERR && spec_api_i.main_result == MAINRES_OK) ||
     spec_api_i.main_result == MAINRES_IFERR_1 || spec_api_i.main_result == MAINRES_IFERR_2;
@@ -386,10 +392,14 @@ assign lsu_waiting_for_misal =
       ((`LSU.data_type_q == 2'b01) && (`LSU.rdata_offset_q == 2'b11));
 
 logic addr_last_matches;
-assign addr_last_matches = `ID.rf_rdata_a_fwd + (ex_is_store_instr? `ID.imm_s_type : `ID.imm_i_type) == `LSU.addr_last_q;
+assign addr_last_matches = `ID.rf_rdata_a_fwd +
+                           (ex_is_store_instr? `ID.imm_s_type : `ID.imm_i_type) ==
+                           `LSU.addr_last_q;
 
 logic addr_last_d_matches;
-assign addr_last_d_matches = `ID.rf_rdata_a_fwd + (ex_is_store_instr? `ID.imm_s_type : `ID.imm_i_type) == `LSU.addr_last_d;
+assign addr_last_d_matches = `ID.rf_rdata_a_fwd +
+                             (ex_is_store_instr? `ID.imm_s_type : `ID.imm_i_type) ==
+                             `LSU.addr_last_d;
 
 ////////////////////// Compare //////////////////////
 
