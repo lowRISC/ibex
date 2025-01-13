@@ -1,0 +1,11 @@
+--- build/fusesoc/src/lowrisc_ibex_ibex_core_0.1/rtl/ibex_id_stage.sv	2024-08-25 12:37:56.787684672 +0100
++++ build/fusesoc/src/lowrisc_ibex_ibex_core_0.1/rtl/ibex_id_stage.sv	2024-08-25 12:39:23.606231887 +0100
+@@ -522,7 +522,7 @@
+     // - When modifying any PMP CSR, PMP check of the next instruction might get invalidated.
+     //   Hence, a pipeline flush is needed to instantiate another PMP check with the updated CSRs.
+     // - When modifying debug CSRs.
+-    if (csr_op_en_o == 1'b1 && (csr_op_o == CSR_OP_WRITE || csr_op_o == CSR_OP_SET)) begin
++    if (csr_op_en_o == 1'b1 && (csr_op_o == CSR_OP_WRITE || csr_op_o == CSR_OP_SET || csr_op_o == CSR_OP_CLEAR)) begin
+       if (csr_num_e'(instr_rdata_i[31:20]) == CSR_MSTATUS ||
+           csr_num_e'(instr_rdata_i[31:20]) == CSR_MIE     ||
+           csr_num_e'(instr_rdata_i[31:20]) == CSR_MSECCFG ||
