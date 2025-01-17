@@ -1,0 +1,31 @@
+--- build/fusesoc/rtl/ibex_top.sv	2024-08-25 12:49:31.975238123 +0100
++++ build/fusesoc/rtl/ibex_top.sv	2024-08-25 12:51:45.786743599 +0100
+@@ -142,7 +142,7 @@
+ );
+ 
+   localparam bit          Lockstep              = SecureIbex;
+-  localparam bit          ResetAll              = Lockstep;
++  localparam bit          ResetAll              = 1;
+   localparam bit          DummyInstructions     = SecureIbex;
+   localparam bit          RegFileECC            = SecureIbex;
+   localparam bit          RegFileWrenCheck      = SecureIbex;
+@@ -236,12 +236,13 @@
+ 
+   assign core_sleep_o = ~clock_en;
+ 
+-  prim_clock_gating core_clock_gate_i (
+-    .clk_i    (clk_i),
+-    .en_i     (clock_en),
+-    .test_en_i(test_en_i),
+-    .clk_o    (clk)
+-  );
++  assign clk = clk_i;
++  // prim_clock_gating core_clock_gate_i (
++  //   .clk_i    (clk_i),
++  //   .en_i     (clock_en),
++  //   .test_en_i(test_en_i),
++  //   .clk_o    (clk)
++  // );
+ 
+   ////////////////////////
+   // Core instantiation //
