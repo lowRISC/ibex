@@ -1020,13 +1020,19 @@ module ibex_core import ibex_pkg::*; #(
     end
   end
 
-  // When fetch is disabled no instructions should be executed. Once fetch is disabled either the
+  // A 1-bit encoding of fetch_enable_i to avoid polluting the NoExecWhenFetchEnableNotOn assertion
+  // with notes about SecureIbex and mubi values.
+  logic fetch_enable_raw;
+  assign fetch_enable_raw = SecureIbex ? (fetch_enable_i == IbexMuBiOn) : fetch_enable_i[0];
+
+  // When fetch is disabled, no instructions should be executed. Once fetch is disabled either the
   // ID/EX stage is not valid or the PC of the ID/EX stage must remain as it was at disable. The
   // ID/EX valid should not ressert once it has been cleared.
-  `ASSERT(NoExecWhenFetchEnableNotOn, fetch_enable_i != IbexMuBiOn |=>
-    (~instr_valid_id || (pc_id == pc_at_fetch_disable)) && ~$rose(instr_valid_id))
+  `ASSERT(NoExecWhenFetchEnableNotOn,
+          !fetch_enable_raw |=>
+          (~instr_valid_id || (pc_id == pc_at_fetch_disable)) && ~$rose(instr_valid_id))
 
-  `endif
+  `endif // INC_ASSERT
 
   ////////////////////////
   // RF (Register File) //
