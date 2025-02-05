@@ -1,0 +1,6 @@
+version: 1
+test_lists:
+  - name: regression
+    path: ./regression.otl.yaml
+  - name: minimal_regression
+    path: ./minimal_regression.otl.yaml
