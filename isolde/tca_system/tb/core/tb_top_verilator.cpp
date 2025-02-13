@@ -66,7 +66,7 @@ void dut_set_fetch_en(dut_ptr&dut, const vluint64_t sim_time, bool value) {
 
 int main(int argc, char **argv, char **env){
 
-    uint32_t timeOut{207374};
+    uint32_t timeOut{407374};
     Verilated::commandArgs(argc, argv);
     dut_ptr dut = std::make_unique<VTopModule>();
 

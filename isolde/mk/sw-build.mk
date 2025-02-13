@@ -43,10 +43,16 @@
 ###############################################################################
 ##
 ###############################################################################
-
+## redmule config
+REDMULE_ROOT_DIR :=$(shell bender path redmule)
 
 num_cores := $(shell nproc)
 num_cores_half := $(shell echo "$$(($(num_cores) / 2))")
+
+ifeq ($(PE), redmule)
+    TEST_SRC_DIR       = $(REDMULE_ROOT_DIR)/sw
+	TEST_FILES         = $(TEST).c
+endif
 
 
 CORE_V_VERIF  := $(mkfile_path)
@@ -56,12 +62,11 @@ CORE_V_VERIF  := $(mkfile_path)
 SCRIPTS_DIR     = $(REDMULE_ROOT_DIR)/scripts
 ###############################################################################
 ##
-RISCV            = $(CV_SW_TOOLCHAIN)
 RISCV_PREFIX     = $(CV_SW_PREFIX)
-RISCV_EXE_PREFIX = $(RISCV)/bin/$(RISCV_PREFIX)
+RISCV_EXE_PREFIX = $(CV_SW_TOOLCHAIN)/bin/$(RISCV_PREFIX)
 
 RISCV_MARCH      =  $(CV_SW_MARCH)
-RISCV_CC         =  $(CV_SW_CC)
+RISCV_CC_SUFFIX  =  $(CV_SW_CC_SUFFIX)
 RISCV_CFLAGS     += 
 
 
@@ -91,19 +96,19 @@ RISCV_CFLAGS += -DIBEX
 RISCV_CFLAGS += $(TEST_CFLAGS)
 
 %.elf:
-	@echo "$(BANNER)"
-	@echo "* Compiling $@"
+	@echo "**** sw-build.mk compiling:"
+	@echo "**** $@"
+	@echo "**** TEST_FILES = $(TEST_FILES) "
 	@echo "$(BANNER)"
 	mkdir -p $(SIM_BSP_RESULTS)
 	cp $(BSP)/Makefile $(SIM_BSP_RESULTS)
 	make -C $(SIM_BSP_RESULTS) \
-		APP_FILES=$(TEST_FILES)    \
+		APP_FILES="$(TEST_FILES)"    \
 		VPATH=$(TEST_SRC_DIR):$(BSP) \
-		RISCV=$(RISCV) \
+		CV_SW_TOOLCHAIN=$(CV_SW_TOOLCHAIN) \
 		RISCV_PREFIX=$(RISCV_PREFIX) \
-		RISCV_EXE_PREFIX=$(RISCV_EXE_PREFIX) \
+		RISCV_CC_SUFFIX=$(RISCV_CC_SUFFIX) \
 		RISCV_MARCH=$(RISCV_MARCH) \
-		RISCV_CC=$(RISCV_CC) \
 		RISCV_CFLAGS="$(RISCV_CFLAGS)" \
 		LD_FILE=$(BSP)/link.ld \
 		$@
@@ -113,13 +118,13 @@ RISCV_CFLAGS += $(TEST_CFLAGS)
 	@echo "$(BANNER)"
 	@echo "* Generating $@, readelf and objdump files"
 	@echo "$(BANNER)"
-	$(RISCV_EXE_PREFIX)objcopy -O verilog \
+	$(CV_SW_TOOLCHAIN)/bin/riscv32-unknown-elf-objcopy -O verilog \
 		$< \
 		$@
 	python $(SCRIPTS_DIR)/addr_offset.py  $@  $*-m.hex 0x00100000
 	python $(SCRIPTS_DIR)/addr_offset.py  $@  $*-d.hex 0x00100000
-	$(RISCV_EXE_PREFIX)readelf -a $< > $*.readelf
-	$(RISCV_EXE_PREFIX)objdump \
+	$(CV_SW_TOOLCHAIN)/bin/riscv32-unknown-elf-readelf -a $< > $*.readelf
+	$(CV_SW_TOOLCHAIN)/bin/riscv32-unknown-elf-objdump   \
 		-fhSD \
 		-M no-aliases \
 		-M numeric \
@@ -127,21 +132,7 @@ RISCV_CFLAGS += $(TEST_CFLAGS)
 		$*.elf > $*.objdump
 
 
-bsp:
-	@echo "$(BANNER)"
-	@echo "* Compiling the BSP"
-	@echo "$(BANNER)"
-	mkdir -p $(SIM_BSP_RESULTS)
-	cp $(BSP)/Makefile $(SIM_BSP_RESULTS)
-	make -C $(SIM_BSP_RESULTS) \
-		VPATH=$(BSP) \
-		RISCV=$(RISCV) \
-		RISCV_PREFIX=$(RISCV_PREFIX) \
-		RISCV_EXE_PREFIX=$(RISCV_EXE_PREFIX) \
-		RISCV_MARCH=$(RISCV_MARCH) \
-		RISCV_CC=$(RISCV_CC) \
-		RISCV_CFLAGS="$(RISCV_CFLAGS)" \
-		all
+
 
 
 
@@ -162,3 +153,33 @@ clean-test-programs: clean-bsp
 	find  $(CORE_V_VERIF)/../sw -name "corev_*.S" -delete
 	find  $(CORE_V_VERIF)/../sw -name "*.itb" -delete	
 
+###ISOLDE specific
+
+golden:
+	make -C $(REDMULE_ROOT_DIR) $@
+
+
+
+.PHONY: test-build $(test-program) clean $(TEST_BIN_DIR)
+
+$(TEST_BIN_DIR):
+	mkdir -p $@
+
+
+$(test-program).hex: $(test-program).elf
+test-build: $(TEST_BIN_DIR) $(test-program).hex
+
+test-clean: clean-bsp
+	rm -f $(test-program)*
+	rm -fr $(TEST_BIN_DIR) 
+	rm -fr $(SIM_BSP_RESULTS)
+	-find $(TEST_SRC_DIR) -name "*.o"       -delete
+
+
+
+clean: veri-clean test-clean-programs
+	rm -fr $(BUILD_DIR) $(TEST_BIN_DIR) logs 
+	rm -f *.log *.csv
+
+clean-hw:
+	rm -fr $(BUILD_DIR) logs

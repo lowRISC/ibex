@@ -12,16 +12,23 @@ For a list of possible configurations, see [ibex_configs.yaml](../../ibex_config
 in folder **isolde/simple_system**:  
 * get a clean slate:
 ```
-make veri-clean clean-test
-```
-or
-```
-make veri-clean clean-test-programs
+make redmule-update veri-clean verilate 
+make clean-test-programs
 ```
 
 ## build the simulation and run the a test application
+```sh
+make verilate
+make  TEST=dhrystone test-clean test-build veri-run
 ```
-make TEST=fibonacci veri-clean verilate clean-test test-app run-test2
+with instruction memory latency:   
+```sh
+make IMEM_LATENCY=1   veri-clean verilate
+make IMEM_LATENCY=1  TEST=dhrystone test-clean test-build veri-run
+```
+Other tests:   
+```
+make  TEST=fibonacci test-clean test-build veri-run
 ``` 
 Output should be similar to this:  
 ```
@@ -60,8 +67,7 @@ make sim-input
 ## 128b custom instruction
 
 ```sh
-make  veri-clean verilate test-clean sim-input TEST_CFLAGS=-DCUSTOM_128B veri-run
-make  test-clean sim-input TEST_CFLAGS=-DCUSTOM_128B veri-run
+make PE=redmule TEST=redmule_complex_128b test-clean test-build veri-run
 ```
 Expected output:
 ```
@@ -82,7 +88,7 @@ Timing for REDMULE_TCA_VLI: 226 cycles
 ```
 ## 32b custom instruction
 ```sh
-make  test-clean sim-input TEST_CFLAGS=-DCUSTOM_32B veri-run
+make PE=redmule TEST=redmule_complex_32b test-clean test-build veri-run
 ```
 Expected output:
 ```
@@ -111,8 +117,7 @@ make IMEM_LATENCY=17 verilate
 ```
 ## execute tests
 ```sh
-make IMEM_LATENCY=0 test-clean  sim-input TEST_CFLAGS=-DCUSTOM_128B veri-run
-make IMEM_LATENCY=17 test-clean  sim-input TEST_CFLAGS=-DCUSTOM_128B veri-run
+make IMEM_LATENCY=4  PE=redmule TEST=redmule_complex_32b test-clean test-build veri-run
 ```
 ---
 ---

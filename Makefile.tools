@@ -62,16 +62,10 @@ $(LLVM_INSTALL_DIR): vendor/riscv32-elf-llvm.tar.gz
 	rm -fr $(LLVM_INSTALL_DIR)
 	mkdir -p $(INSTALL_DIR)
 	cd vendor && \
-	tar -xzvf riscv32-elf-llvm.tar.gz -C  $(INSTALL_DIR)/ riscv	
-	mv $(INSTALL_DIR)/riscv $(LLVM_INSTALL_DIR)
+	tar -xzvf riscv32-elf-llvm.tar.gz -C  $(INSTALL_DIR)/ riscv-llvm
 	touch  $(LLVM_INSTALL_DIR)
 
-riscv32-llvm-patch:
-	@cd $(prj_path)/util/isolde &&   \
-	tar -xzvf tools.tar.gz     &&   \
-	mv $(prj_path)/util/isolde/riscv32-unknown-elf-objcopy $(LLVM_INSTALL_DIR)/bin  && \
-	mv $(prj_path)/util/isolde/riscv32-unknown-elf-objdump  $(LLVM_INSTALL_DIR)/bin  && \
-	echo "REPLACED riscv32-unknown-elf- objcopy/objdump"
+
 
 dev-dep:
 	sudo apt-get install libelf-dev

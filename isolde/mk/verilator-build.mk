@@ -109,3 +109,9 @@ help:
 	@echo veri-clean                               -- gets a clean slate for simulation
 	@echo verilate VLT_TOP_MODULE=tb_top_verilator
 	
+bender-clean:
+	rm -fr ./.bender
+	rm Bender.lock
+
+redmule-update:	bender-clean
+	git submodule update --init
