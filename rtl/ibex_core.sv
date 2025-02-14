@@ -618,6 +618,7 @@ module ibex_core import ibex_pkg::*; #(
     // CSR ID/EX
     .csr_access_o         (csr_access),
     .csr_op_o             (csr_op),
+    .csr_addr_o           (csr_addr),
     .csr_op_en_o          (csr_op_en),
     .csr_save_if_o        (csr_save_if),  // control signal to save PC
     .csr_save_id_o        (csr_save_id),  // control signal to save PC
@@ -1046,7 +1047,6 @@ module ibex_core import ibex_pkg::*; #(
   /////////////////////////////////////////
 
   assign csr_wdata  = alu_operand_a_ex;
-  assign csr_addr   = csr_num_e'(csr_access ? alu_operand_b_ex[11:0] : 12'b0);
 
   ibex_cs_registers #(
     .DbgTriggerEn     (DbgTriggerEn),

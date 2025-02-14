@@ -95,6 +95,7 @@ module ibex_id_stage #(
   // CSR
   output logic                      csr_access_o,
   output ibex_pkg::csr_op_e         csr_op_o,
+  output ibex_pkg::csr_num_e        csr_addr_o,
   output logic                      csr_op_en_o,
   output logic                      csr_save_if_o,
   output logic                      csr_save_id_o,
@@ -497,6 +498,7 @@ module ibex_id_stage #(
     // CSRs
     .csr_access_o(csr_access_o),
     .csr_op_o    (csr_op_o),
+    .csr_addr_o  (csr_addr_o),
 
     // LSU
     .data_req_o           (lsu_req_dec),
