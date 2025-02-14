@@ -50,7 +50,7 @@ module tb_tca_system (
   localparam logic [31:0] BASE_ADDR = 32'h1c000000;
   localparam logic [31:0] HWPE_ADDR_BASE_BIT = 20;
 
-  int fh;  //filehandle
+  int fh,fh_csv;  //filehandles
   //
   /* see bsp/link.ld
 MEMORY
@@ -193,15 +193,14 @@ MEMORY
           //$display("DIFF @%t id=%d,cycle_counter=%h\n",$time,  perfcnt_d.id, cycle_counter);
         end
         PRINT: begin
-          $display("PRINT @%t id=%d,cycles =%d\n", $time, perfcnt_q.id, perfcnt_q.cycle_counter);
-          // $display("[TB TCA] @ t=%0t - writes[imemory] =%d", $time, tb_tca_system.i_dummy_imemory.cnt_wr);
-          $display("[TB TCA] @ t=%0t - reads [imemory] =%d", $time, perfcnt_q.imem.cnt_rd);
-          //
-          $display("[TB TCA] @ t=%0t - writes[dmemory] =%d", $time, perfcnt_q.dmem.cnt_wr);
-          $display("[TB TCA] @ t=%0t - reads [dmemory] =%d", $time, perfcnt_q.dmem.cnt_rd);
-          //
-          $display("[TB TCA] @ t=%0t - writes[stack] =%d", $time, perfcnt_q.stack_mem.cnt_wr);
-          $display("[TB TCA] @ t=%0t - reads [stack] =%d", $time, perfcnt_q.stack_mem.cnt_rd);
+          //$display("PRINT @%t id=%d,cycles =%d\n", $time, perfcnt_q.id, perfcnt_q.cycle_counter);
+          $fwrite(fh_csv, "%d,%d,",    perfcnt_q.id, perfcnt_q.cycle_counter);
+          $fwrite(fh_csv, "%d,",       perfcnt_q.imem.cnt_rd);
+          $fwrite(fh_csv, "%d,",       perfcnt_q.dmem.cnt_wr);
+          $fwrite(fh_csv, "%d,",       perfcnt_q.dmem.cnt_rd);
+          $fwrite(fh_csv, "%d,",       perfcnt_q.stack_mem.cnt_wr);
+          $fwrite(fh_csv, "%d,",       perfcnt_q.stack_mem.cnt_rd);
+          $fwrite(fh_csv, "%d,TCA\n",  IMEM_LATENCY);
         end
       endcase
     end
@@ -554,6 +553,8 @@ read performance counters implementation
     integer id;
     int cnt_rd, cnt_wr;
     fh = $fopen("rtl_debug_trace.log", "w");
+    fh_csv = $fopen("perfcnt.csv", "w");
+    $fwrite(fh_csv, "id,cycles,reads[imemory],writes[dmemory],reads[dmemory],writes[stack],reads[stack],latency,arch\n");
     // Load instruction and data memory
     if (!$value$plusargs("STIM_INSTR=%s", stim_instr)) begin
       $display("No STIM_INSTR specified");
@@ -579,6 +580,7 @@ read performance counters implementation
   final begin
 
     $fclose(fh);
+    $fclose(fh_csv);
 
   end
 endmodule  // tb_tca_system

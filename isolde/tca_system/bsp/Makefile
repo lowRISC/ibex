@@ -21,8 +21,6 @@ OBJS += $(SRC_C:.c=.o)
 
 DEPS = $(OBJS:.o=.d)
 
-# Library output
-LIBCV-VERIF = libcv-verif.a
 
 # Flags for tinyprintf
 TINY_PRINTF_FLAGS += -DTINYPRINTF_DEFINE_TFP_PRINTF=1
@@ -32,12 +30,6 @@ TINY_PRINTF_FLAGS += -DTINYPRINTF_DEFINE_TFP_SPRINTF=0
 CFLAGS ?= -march=$(RISCV_MARCH) -mabi=ilp32 -static -mcmodel=medany -Wall -g -O3 \
 	-fvisibility=hidden -nostdlib -nostartfiles -ffreestanding $(TINY_PRINTF_FLAGS) $(RISCV_CFLAGS)
 
-# Build the library
-all: $(LIBCV-VERIF)
-
-$(LIBCV-VERIF): $(OBJS)
-	@echo '***  packing ' $(OBJS) into $(CURDIR)/$@
-	$(RISCV_AR) rcs $@ $(OBJS)
 
 # Compilation rules
 %.o : %.c
@@ -60,7 +52,7 @@ vars:
 	@echo "   RISCV_EXE_PREFIX = $(RISCV_EXE_PREFIX)"
 	@echo "   RISCV_CC        = $(RISCV_CC)"
 	@echo "   RISCV_MARCH      = $(RISCV_MARCH)"    
-	     
+
 
 %.elf:  vars $(OBJS)
 #	mkdir -p $(SIM_TEST_PROGRAM_RESULTS)

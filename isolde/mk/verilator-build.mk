@@ -99,6 +99,8 @@ veri-run: $(BIN_DIR)/verilator_executable
 		| tee $(VERI_LOG_DIR)/$(TEST).log
 	mv verilator_tb.vcd $(VERI_LOG_DIR)/$(TEST).vcd
 	mv rtl_debug_trace.log $(VERI_LOG_DIR)
+	mv perfcnt.csv $(VERI_LOG_DIR)/$(TEST).csv
+
 
 
 .PHONY: help
