@@ -753,7 +753,7 @@ module ibex_tracer (
       if (fh == 32'h0) begin
         static string file_name_base = "trace_core";
         void'($value$plusargs("ibex_tracer_file_base=%s", file_name_base));
-        $sformat(file_name, "%s_%h.log", file_name_base, hart_id_i);
+        $sformat(file_name, "%s_%h_%m.log", file_name_base, hart_id_i);
 
         $display("%m: Writing execution trace to %s", file_name);
         fh = $fopen(file_name, "w");
