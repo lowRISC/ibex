@@ -39,3 +39,6 @@ bin/
 tmp/
 *.flist
 *.gtkw
+*.pdf
+
+
