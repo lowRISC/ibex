@@ -10,7 +10,8 @@ package isolde_decoder_pkg;
     isolde_opcode_conv2d,
     isolde_opcode_R_type,
     isolde_opcode_redmule,
-    isolde_opcode_redmule_gemm
+    isolde_opcode_redmule_gemm,
+    isolde_opcode_redmule_gemm1
   } isolde_opcode_e;
 
 
@@ -60,11 +61,22 @@ package isolde_decoder_pkg;
         end
         RISCV_ENC_C0: begin
           vlen_instr_words_o = 1;
-          isolde_op_code_o = isolde_opcode_R_type;
+          isolde_op_code_o   = isolde_opcode_R_type;
         end
         RISCV_ENC_C1: begin
           vlen_instr_words_o = 1;
-          isolde_op_code_o = isolde_opcode_redmule;
+          case (nnn_i)  //a.k.a funct3
+            3'b000: begin
+              case (func7_i[1:0])
+                2'b00:   isolde_op_code_o = isolde_opcode_redmule;
+                2'b01:   isolde_op_code_o = isolde_opcode_redmule_gemm1;
+                default: isolde_op_code_o = isolde_opcode_invalid;
+              endcase
+            end
+            3'b001:  isolde_op_code_o = isolde_opcode_invalid;  //reserved
+            3'b011:  isolde_op_code_o = isolde_opcode_invalid;  //reserved
+            default: isolde_op_code_o = isolde_opcode_invalid;
+          endcase
         end
         default: isolde_op_code_o = isolde_opcode_invalid;
       endcase

@@ -77,6 +77,7 @@ module isolde_exec_block
             isolde_opcode_gemm: start_gemm();
             isolde_opcode_conv2d: start_conv2d();
             isolde_opcode_redmule_gemm: start_redmule_gemm();
+            isolde_opcode_redmule_gemm1: start_redmule_gemm1();
             default: begin
               cnt_max <= 4;  //dummy value
             end
@@ -240,6 +241,35 @@ module isolde_exec_block
       xif_issue_if.issue_req.rs_valid <= 3'b111;
       xif_issue_if.issue_req.imm32 <= isolde_exec_from_decoder.isolde_decoder_imm32;
       xif_issue_if.issue_req.imm32_valid <= isolde_exec_from_decoder.isolde_decoder_imm32_valid;
+      xif_issue_if.issue_valid <= 1;
+      //
+      ievli_state <= DONE;
+    end
+  endtask
+
+  task static start_redmule_gemm1;
+`ifndef SYNTHESIS
+    $display(" --- @t=%t    %s\n", $time, "isolde_exec_block::start_redmule_gemm1");
+    $fwrite(log_fh, " --- @t=%t    %s\n", $time, "isolde_exec_block::start_redmule_gemm1");
+    $fwrite(log_fh, "    instr=%h\n", isolde_exec_from_decoder.isolde_decoder_instr);
+    $fwrite(log_fh, "    func3=%b\n", isolde_exec_from_decoder.func3);
+    $fwrite(log_fh, "    @rd1=%d: %h\n", x_rf_bus.raddr_0, x_rf_bus.rdata_0);
+    $fwrite(log_fh, "    @rs1=%d: %h\n", x_rf_bus.raddr_1, x_rf_bus.rdata_1);
+    $fwrite(log_fh, "    @rs2=%d: %h\n", x_rf_bus.raddr_2, x_rf_bus.rdata_2);
+    $fwrite(log_fh, "    @rs3=%d: [ %d, %d, %d, %d ]\n", isolde_rf_bus.raddr_0,
+            isolde_rf_bus.rdata_0[0], isolde_rf_bus.rdata_0[1], isolde_rf_bus.rdata_0[2],
+            isolde_rf_bus.rdata_0[3]);
+`endif
+    begin
+      xif_issue_if.issue_req.instr <= 32'h087332ff; //hack to simplify redmule instruction decoder
+      xif_issue_if.issue_req.rs[0] <= x_rf_bus.rdata_0;  //rs1
+      xif_issue_if.issue_req.rs[1] <= x_rf_bus.rdata_1;  // rs2
+      xif_issue_if.issue_req.rs[2] <= x_rf_bus.rdata_2;  // rs3
+      xif_issue_if.issue_req.rs_valid <= 3'b111;
+      xif_issue_if.issue_req.imm32[0] <= isolde_rf_bus.rdata_0[0];
+      xif_issue_if.issue_req.imm32[1] <= isolde_rf_bus.rdata_0[1];
+      xif_issue_if.issue_req.imm32[2] <= isolde_rf_bus.rdata_0[2];
+      xif_issue_if.issue_req.imm32_valid <= 3'b111;;
       xif_issue_if.issue_valid <= 1;
       //
       ievli_state <= DONE;

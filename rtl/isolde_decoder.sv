@@ -103,16 +103,24 @@ module isolde_decoder
                 if (1 == vlen_instr_words_d) begin
                   //isolde_decoder_exec_bus.isolde_decoder_stalled <= 1;
                   isolde_decoder_exec_bus.isolde_decoder_instr <= isolde_decoder_instr_batch_i[0];
-                  if (isolde_opcode_d == isolde_opcode_R_type) begin
-                    x_rf_bus.raddr_2 <= isolde_decoder_instr_batch_i[0][24:20];  //rs2
-                    x_rf_bus.raddr_1 <= isolde_decoder_instr_batch_i[0][19:15];  //rs1
-                    x_rf_bus.raddr_0 <= isolde_decoder_instr_batch_i[0][11:7];  //rd    
-                  end else if (isolde_opcode_d == isolde_opcode_redmule) begin
-                    x_rf_bus.raddr_2 <= isolde_decoder_instr_batch_i[0][31:27];  //rs3
-                    x_rf_bus.raddr_1 <= isolde_decoder_instr_batch_i[0][24:20];  //rs2
-                    x_rf_bus.raddr_0 <= isolde_decoder_instr_batch_i[0][19:15];  //rs1  
-
-                  end
+                  case (isolde_opcode_d)
+                    isolde_opcode_R_type: begin
+                      x_rf_bus.raddr_2 <= isolde_decoder_instr_batch_i[0][24:20];  //rs2
+                      x_rf_bus.raddr_1 <= isolde_decoder_instr_batch_i[0][19:15];  //rs1
+                      x_rf_bus.raddr_0 <= isolde_decoder_instr_batch_i[0][11:7];  //rd    
+                    end
+                    isolde_opcode_redmule: begin
+                      x_rf_bus.raddr_2 <= isolde_decoder_instr_batch_i[0][31:27];  //rs3
+                      x_rf_bus.raddr_1 <= isolde_decoder_instr_batch_i[0][24:20];  //rs2
+                      x_rf_bus.raddr_0 <= isolde_decoder_instr_batch_i[0][19:15];  //rs1  
+                    end
+                    isolde_opcode_redmule_gemm1: begin
+                      isolde_rf_bus.raddr_0 <= isolde_decoder_instr_batch_i[0][31:27];   //rs3
+                      x_rf_bus.raddr_2 <= isolde_decoder_instr_batch_i[0][24:20];        //rs2
+                      x_rf_bus.raddr_1 <= isolde_decoder_instr_batch_i[0][19:15];        //rs1
+                      x_rf_bus.raddr_0 <= isolde_decoder_instr_batch_i[0][11:7];         //rd    
+                    end
+                  endcase
                 end  /*else isolde_decoder_exec_bus.isolde_decoder_stalled <= 0;*/
 
               end else begin
@@ -187,7 +195,7 @@ module isolde_decoder
 
         isolde_decoder_busy_o = isolde_decoder_fsm_guard ? 0 : 1;
 
-        idvli_next = isolde_decoder_fsm_guard ?  FETCH_COMPUTE : DONE;
+        idvli_next = isolde_decoder_fsm_guard ? FETCH_COMPUTE : DONE;
 
       end
 
@@ -259,4 +267,6 @@ module isolde_decoder
       end
     end
   endtask
+
+
 endmodule
