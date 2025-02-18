@@ -266,9 +266,9 @@ module isolde_exec_block
       xif_issue_if.issue_req.rs[1] <= x_rf_bus.rdata_1;  // rs2
       xif_issue_if.issue_req.rs[2] <= x_rf_bus.rdata_2;  // rs3
       xif_issue_if.issue_req.rs_valid <= 3'b111;
-      xif_issue_if.issue_req.imm32[0] <= isolde_rf_bus.rdata_0[0];
-      xif_issue_if.issue_req.imm32[1] <= isolde_rf_bus.rdata_0[1];
-      xif_issue_if.issue_req.imm32[2] <= isolde_rf_bus.rdata_0[2];
+      xif_issue_if.issue_req.imm32[0] <= isolde_rf_bus.rdata_0[1];
+      xif_issue_if.issue_req.imm32[1] <= isolde_rf_bus.rdata_0[2];
+      xif_issue_if.issue_req.imm32[2] <= isolde_rf_bus.rdata_0[3];
       xif_issue_if.issue_req.imm32_valid <= 3'b111;;
       xif_issue_if.issue_valid <= 1;
       //

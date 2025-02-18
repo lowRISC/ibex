@@ -42,12 +42,14 @@ package isolde_decoder_pkg;
             vlen_instr_words_o = 4;
             case (func7_i)
               7'b0000100: isolde_op_code_o = isolde_opcode_redmule_gemm;
+              7'b0000011: isolde_op_code_o = isolde_opcode_vle32_4;
               default: isolde_op_code_o = isolde_opcode_nop;
             endcase
           end else if (nnn_i == RISCV_ENC_GE80_N1) begin
             vlen_instr_words_o = 3;
             case (func7_i)
               7'b0000000: isolde_op_code_o = isolde_opcode_conv2d;
+              7'b0000011: isolde_op_code_o = isolde_opcode_vle32_4;
               default: isolde_op_code_o = isolde_opcode_nop;
             endcase
           end else isolde_op_code_o = isolde_opcode_invalid;
