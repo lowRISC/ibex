@@ -81,9 +81,11 @@ case "$ID-$VERSION_ID" in
     # Install Verible
     mkdir -p build/verible
     cd build/verible
-    curl -Ls -o verible.tar.gz "https://github.com/google/verible/releases/download/$VERIBLE_VERSION/verible-$VERIBLE_VERSION-Ubuntu-$VERSION_ID-$VERSION_CODENAME-x86_64.tar.gz"
-    $SUDO_CMD mkdir -p /tools/verible && $SUDO_CMD chmod 777 /tools/verible
-    $SUDO_CMD tar -C /tools/verible -xf verible.tar.gz --strip-components=1
+    VERIBLE_URL="https://github.com/chipsalliance/verible/releases/download/$VERIBLE_VERSION/verible-$VERIBLE_VERSION-linux-static-x86_64.tar.gz"
+    $SUDO_CMD mkdir -p /tools/verible
+    curl -sSfL "$VERIBLE_URL" | $SUDO_CMD tar -C /tools/verible -xvzf - --strip-components=1
+    # Fixup bin permission which is broken in tarball.
+    $SUDO_CMD chmod 755 /tools/verible/bin
     echo "/tools/verible/bin" >> $GITHUB_PATH
     ;;
 
