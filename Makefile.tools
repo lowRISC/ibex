@@ -15,6 +15,8 @@ ISA_SIM_MOD_INSTALL_DIR ?= ${INSTALL_DIR}/riscv-isa-sim-mod
 VERIL_SRC_ROOT           ?= $(prj_path)/vendor
 VERIL_INSTALL_DIR       ?= ${INSTALL_DIR}/verilator
 VERIL_VERSION           ?= v5.030
+BENDER_DOWNLOAD_LINK    ?= https://github.com/pulp-platform/bender/releases/download/v0.28.0/bender-0.28.0-x86_64-linux-gnu-ubuntu22.04.tar.gz
+BENDER_ARCH_FILE        ?= $(shell basename $(BENDER_DOWNLOAD_LINK))
 
 all: verilator riscv32-gcc riscv32-llvm dev-dep
 # Verilator
@@ -68,5 +70,17 @@ $(LLVM_INSTALL_DIR): vendor/riscv32-elf-llvm.tar.gz
 
 
 dev-dep:
+	sudo apt-get install flex bison clang help2man
 	sudo apt-get install libelf-dev
 	sudo apt-get install srecord
+
+$(HOME)/eth/$(BENDER_ARCH_FILE):
+	mkdir -p $(HOME)/eth && cd $(HOME)/eth       &&  \
+	wget $(BENDER_DOWNLOAD_LINK)                 
+
+bender: $(HOME)/eth/$(BENDER_ARCH_FILE)
+	cd $(HOME)/eth                               &&  \
+	tar xzf $(BENDER_ARCH_FILE)                  &&  \
+	mkdir -p bin && mv bender bin/ 				 &&  \
+	mkdir -p doc && cd doc						     &&  \
+	wget https://github.com/pulp-platform/bender/blob/master/README.md
