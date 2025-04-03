@@ -323,7 +323,7 @@ class RegressionMetadata(scripts_lib.testdata_cls):
         matched_list: ibex_cmd._TestEntries = []
         for entry in m.get('tests'):
             select_test = any(x in self.test.split(',')
-                              for x in ['all_directed', entry.get('test')])
+                              for x in ['all_directed', 'all', entry.get('test')])
             if select_test:
                 entry.update({'iterations': (self.iterations or entry['iterations'])})
                 if entry['iterations'] > 0:
