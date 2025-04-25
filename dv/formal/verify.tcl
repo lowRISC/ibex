@@ -88,8 +88,7 @@ proc prove_lemmas {} {
 	prove -task Step5
 	report -task Step5
 
-	prove -property Step6::top.Ibex_FetchErrRoot
-	prove -property {Step6::top.Ibex_SpecStableLoad Step6::top.Ibex_SpecStableLoadSnd Step6::top.Ibex_SpecStableLoadAddr Step6::top.Ibex_SpecStableLoadSndAddr Step6::top.Ibex_SpecStableStore Step6::top.Ibex_SpecStableStoreSnd Step6::top.Ibex_SpecStableStoreAddr Step6::top.Ibex_SpecStableStoreSndAddr Step6::top.Ibex_SpecStableStoreData Step6::top.Ibex_SpecStableStoreSndData} -engine_mode Hp
+	prove -property {Step6::top.Ibex_SpecStableLoad Step6::top.Ibex_SpecStableLoadSnd Step6::top.Ibex_SpecStableLoadAddr Step6::top.Ibex_SpecStableLoadSndAddr Step6::top.Ibex_SpecStableStore Step6::top.Ibex_SpecStableStoreSnd Step6::top.Ibex_SpecStableStoreAddr Step6::top.Ibex_SpecStableStoreSndAddr Step6::top.Ibex_SpecStableStoreData Step6::top.Ibex_SpecStableStoreSndData Step6::top.Ibex_FetchErrRoot} -engine_mode Hp
 	prove -task Step6
 	report -task Step6
 
