@@ -209,6 +209,10 @@ lemma ibex
   BecameDecodeIsEmptyWbexc: have (`IDC.ctrl_fsm_cs == `IDC.DECODE && !$stable(`IDC.ctrl_fsm_cs) |-> ~wbexc_exists)
   FetchErrIsErr: have (wbexc_fetch_err & wbexc_exists |-> wbexc_err & `IDC.instr_fetch_err)
 
+  # If control FSM is in `FIRST_FETCH`, then there shouldn't be an instruction that is already fetched by IF but not consumed by ID.
+  # This helps to prove FetchErrRoot.
+  FirstFetchNoInstr: have (`IDC.ctrl_fsm_ns == `IDC.FIRST_FETCH |-> ~`IF.instr_valid_id_q)
+
   MemOpRequiresValid: have (`LSU.ls_fsm_cs != `LSU.IDLE || `CR.lsu_req |-> `ID.instr_valid_i)
 
   MultEndState: have (instr_will_progress |=> `MULTG.mult_state_q == `MULTG.ALBL)
@@ -242,6 +246,8 @@ lemma ibex
   SpecStableStoreData: have (ex_is_pres_store_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_write_fst_wdata))
   SpecStableStoreSndData: have (ex_is_pres_store_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_write_snd_wdata))
 
+  FetchErrRoot: have (`ID.instr_valid_i && (`IDC.ctrl_fsm_cs == `IDC.FLUSH -> ~$past(`IDC.csr_pipe_flush)) |-> spec_fetch_err == `ID.instr_fetch_err_i)
+
   LoadNotSpecWrite: have (ex_is_pres_load_instr |-> ~spec_mem_write)
   StoreNotSpecRead: have (ex_is_pres_store_instr |-> ~spec_mem_read)
 
@@ -256,8 +262,6 @@ lemma ibex
     (instr_mem_assume.outstanding_reqs_q == 0) == (~`IFP.rdata_outstanding_q[1] && ~`IFP.rdata_outstanding_q[0])
   )
   
-  # Slow!
-  FetchErrRoot: have (`ID.instr_valid_i && (`IDC.ctrl_fsm_cs == `IDC.FLUSH -> ~$past(`IDC.csr_pipe_flush)) |-> spec_fetch_err == `ID.instr_fetch_err_i)
   /
 
   MepcEn: have (`CSR.mepc_en |-> instr_will_progress | wbexc_finishing | wbexc_handling_irq)
