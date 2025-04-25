@@ -63,12 +63,12 @@ proc exit_stopat {} {
 	stopat -reset -clear
 }
 
-proc assume_mtypes {} {
-	assume -from_assert {Step10::top.MType_*_Data}
+proc skip_mtypes {} {
+	assert -disable {Step10::top.MType_*_Data}
 }
 
 proc prove_lemmas {} {
-	assume_mtypes
+	skip_mtypes
 
 	prove -task Step0
 	report -task Step0
