@@ -103,6 +103,9 @@ module top import ibex_pkg::*; #(
   input logic                          scan_rst_ni
 );
 
+localparam logic [31:0] CSR_MVENDORID_VALUE = 32'b0;
+localparam logic [31:0] CSR_MIMPID_VALUE = 32'b0;
+
 default clocking @(posedge clk_i); endclocking
 
 ibex_top #(
@@ -113,7 +116,9 @@ ibex_top #(
     .RV32E(RV32E),
     .BranchTargetALU(1'b1),
     .PMPEnable(1'b1),
-    .PMPNumRegions(PMPNumRegions)
+    .PMPNumRegions(PMPNumRegions),
+    .CsrMvendorId (CSR_MVENDORID_VALUE),
+    .CsrMimpId (CSR_MIMPID_VALUE)
 ) ibex_top_i(.*);
 
 // Core constraints
