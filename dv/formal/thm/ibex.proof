@@ -13,7 +13,8 @@ lemma ibex
   PrivMorUMpp: have ((`CSR.mstatus_q.mpp == PRIV_LVL_U) || (`CSR.mstatus_q.mpp == PRIV_LVL_M))
   PrivMorUCur: have ((`CSR.priv_lvl_q == PRIV_LVL_U) || (`CSR.priv_lvl_q == PRIV_LVL_M))
 
-  PCBit0: have (~`CR.pc_id[0])
+  PCBit0: have (`ID.instr_valid_i -> ~`CR.pc_id[0])
+  MEPCBit0: have (~`CSR.mepc_q[0])
   MtvecLow: have (pre_mtvec[7:0] == 8'h01)
   NmiMode: have (~`IDC.nmi_mode_q)
   EBreakIntoDebug: have (~`IDC.ebreak_into_debug)
@@ -26,7 +27,7 @@ lemma ibex
   ReqRequiresInstr: have (data_req_o |-> ex_has_compressed_instr)
   ReqRequiresNotIllegal: have (data_req_o |->  ~`CR.illegal_insn_id & ~`CR.illegal_c_insn_id)
 
-  AluInstrMatch: have (`CR.instr_rdata_id == `CR.instr_rdata_alu_id)
+  AluInstrMatch: have (`ID.instr_valid_i |-> `CR.instr_rdata_id == `CR.instr_rdata_alu_id)
 
   IdExNotReq: have (~ex_is_mem_instr -> ~data_req_o)
   IdExNotMemMuteIncr: have (`CR.instr_valid_id & ~ex_is_mem_instr -> ~`ID.lsu_addr_incr_req_i & ~`ID.lsu_req_done_i)
@@ -64,7 +65,7 @@ lemma ibex
   ProgressNoWbStall: have (instr_will_progress |-> ~`IDC.stall_wb_i)
   
   NoStoreWb: have (`WBG.wb_instr_type_q == WB_INSTR_STORE |-> ~`WB.rf_we_wb_o)
-  WbInstrDefined: have (`WBG.wb_instr_type_q != 2'b11)
+  WbInstrDefined: have (`WBG.wb_valid_q |-> `WBG.wb_instr_type_q != 2'b11)
 
   RfWriteWb: have (`CR.rf_write_wb & wbexc_finishing |-> `WB.rf_we_wb_o)
 
@@ -125,7 +126,8 @@ lemma ibex
   Memory: graph_induction +rev
     inv idle (
       ~`LSU.handle_misaligned_q &&
-      `CR.lsu_resp_valid == outstanding_mem
+      `CR.lsu_resp_valid == outstanding_mem &&
+      data_mem_assume.outstanding_reqs == data_gnt_i
     )
     inv idle_active (
       data_mem_assume.outstanding_reqs == data_gnt_i &&
@@ -163,7 +165,7 @@ lemma ibex
 
     entry ($rose(rst_ni)) -> idle
 
-    node idle idle (`LSU.ls_fsm_cs == `LSU.IDLE && data_mem_assume.outstanding_reqs == data_gnt_i)
+    node idle idle (`LSU.ls_fsm_cs == `LSU.IDLE && ~`IDG.outstanding_memory_access && (`ID.lsu_req_dec || ~`ID.lsu_req_done_i))
     edge idle => idle
     edge idle -> idle_active
     
@@ -192,7 +194,7 @@ lemma ibex
     node step_fail step_fail (`LSU.lsu_req_done_o && `LSU.pmp_err_d)
     edge step_fail => fail
     
-    node wait wait (has_resp_waiting_q && ~`CR.lsu_resp_valid && `LSU.ls_fsm_cs == `LSU.IDLE && ~instr_will_progress)
+    node wait wait (`IDG.outstanding_memory_access && ~`CR.lsu_resp_valid && `LSU.ls_fsm_cs == `LSU.IDLE && ~instr_will_progress)
     edge wait => wait end
 
     node end end (`CR.lsu_resp_valid && `LSU.ls_fsm_cs == `LSU.IDLE && data_rvalid_i)
@@ -248,8 +250,8 @@ lemma ibex
 
   FetchErrRoot: have (`ID.instr_valid_i && (`IDC.ctrl_fsm_cs == `IDC.FLUSH -> ~$past(`IDC.csr_pipe_flush)) |-> spec_fetch_err == `ID.instr_fetch_err_i)
 
-  LoadNotSpecWrite: have (ex_is_pres_load_instr |-> ~spec_mem_write)
-  StoreNotSpecRead: have (ex_is_pres_store_instr |-> ~spec_mem_read)
+  LoadNotSpecWrite: have (`ID.instr_valid_i & ex_is_pres_load_instr |-> ~spec_mem_write)
+  StoreNotSpecRead: have (`ID.instr_valid_i & ex_is_pres_store_instr |-> ~spec_mem_read)
 
   FirstCycleNoGnt: have (`ID.instr_first_cycle |-> ~mem_gnt_fst_q)
   MemStartFirstCycle: have (`LSU.ls_fsm_cs == `LSU.IDLE && `CR.lsu_req |-> `ID.instr_first_cycle)
