@@ -134,8 +134,6 @@ WFIStart: assume property (`IDC.ctrl_fsm_cs == SLEEP |-> (
                                                           `CSR.mie_q.irq_timer |
                                                           `CSR.mie_q.irq_external
                                                          ));
-// 5. Disable clock gating
-TestEn: assume property (test_en_i);
 // See protocol/* for further assumptions
 
 ///////////////////////////////// Declarations /////////////////////////////////

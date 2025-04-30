@@ -138,7 +138,7 @@ lemma mem
 lemma load
   cond (ex_is_pres_load_instr)
 
-  NoWe: have (spec_mem_read |-> ~data_we_o)
+  NoWe: have (spec_mem_read & data_req_o |-> ~data_we_o)
   En: have (data_req_o |-> spec_mem_read)
   /
   SndEn: have (mem_req_snd_d |-> spec_mem_read_snd)
@@ -154,7 +154,7 @@ lemma load
 lemma store
   cond (ex_is_pres_store_instr)
 
-  We: have (spec_mem_write |-> data_we_o)
+  We: have (spec_mem_write & data_req_o |-> data_we_o)
   En: have (data_req_o |-> spec_mem_write)
   /
   SndEn: have (mem_req_snd_d |-> spec_mem_write_snd)
