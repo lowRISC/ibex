@@ -4,3 +4,5 @@ test_lists:
     path: ./regression.otl.yaml
   - name: minimal_regression
     path: ./minimal_regression.otl.yaml
+  - name: known_failing
+    path: ./known_failing.otl.yaml

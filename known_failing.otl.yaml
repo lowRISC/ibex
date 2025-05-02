@@ -1,0 +1,29 @@
+# List of tests that actually have failures as of ibex mainline 8a3d46f
+
+- name: pip_install_requirements
+  rule: raw_bash_build
+  rule_args:
+    cmds:
+      - pip3 install -r python-requirements.txt
+
+- name: riscv_debug_basic_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_debug_basic_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_assorted_traps_interrupts_debug_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_assorted_traps_interrupts_debug_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_mem_intg_error_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_mem_intg_error_test"
+    deps:
+      - pip_install_requirements
