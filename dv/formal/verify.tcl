@@ -99,6 +99,7 @@ proc prove_no_liveness {} {
 	prove -task Step9
 	prove -property {Step10::*.BType_* Step10::*.JType_*}
 	prove -property {Step10::*.Mem_*}
+	prove -property {Step10::top.MType_Div*_Addr Step10::top.MType_Div*_CSR Step10::top.MType_Div*_PC Step10::top.MType_Rem*_Addr Step10::top.MType_Rem*_CSR Step10::top.MType_Rem*_PC}
 	prove_hps Step10 *
 	prove -property {Step11::*.BType_* Step11::*.JType_* Step11::*.Mem_*}
 	prove_hps Step11 *
