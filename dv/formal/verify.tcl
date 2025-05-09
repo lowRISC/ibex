@@ -86,7 +86,7 @@ proc prove_no_liveness {} {
 	prove -bg -task Step5
 	prove -wait
 	prove -bg -property {Step6::*SpecStable*} -engine_mode Hp
-	prove -bg -property {Step6::top.Ibex_FetchErrRoot}
+	prove -bg -property {Step6::top.Ibex_FetchErrRoot} -engine_mode Hp
 	prove -bg -property {Step6::top.Ibex_PreNextPcMatch}
 	prove -wait
 	prove -bg -task Step6
