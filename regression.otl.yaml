@@ -75,3 +75,346 @@
       - "./run_test.sh riscv_illegal_instr_test"
     deps:
       - pip_install_requirements
+- name: riscv_hint_instr_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_hint_instr_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_ebreak_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_ebreak_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_debug_basic_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_debug_basic_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_debug_triggers_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_debug_triggers_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_debug_stress_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_debug_stress_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_debug_branch_jump_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_debug_branch_jump_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_debug_instr_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_debug_instr_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_debug_wfi_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_debug_wfi_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_dret_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_dret_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_debug_ebreak_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_debug_ebreak_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_debug_ebreakmu_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_debug_ebreakmu_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_debug_csr_entry_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_debug_csr_entry_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_irq_in_debug_mode_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_irq_in_debug_mode_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_debug_in_irq_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_debug_in_irq_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_assorted_traps_interrupts_debug_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_assorted_traps_interrupts_debug_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_single_interrupt_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_single_interrupt_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_multiple_interrupt_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_multiple_interrupt_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_nested_interrupt_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_nested_interrupt_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_interrupt_instr_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_interrupt_instr_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_interrupt_wfi_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_interrupt_wfi_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_interrupt_csr_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_interrupt_csr_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_csr_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_csr_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_unaligned_load_store_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_unaligned_load_store_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_mem_error_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_mem_error_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_mem_intg_error_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_mem_intg_error_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_debug_single_step_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_debug_single_step_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_reset_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_reset_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_pc_intg_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_pc_intg_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_rf_intg_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_rf_intg_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_rf_ctrl_intg_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_rf_ctrl_intg_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_ram_intg_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_ram_intg_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_icache_intg_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_icache_intg_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_rv32im_instr_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_rv32im_instr_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_user_mode_rand_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_user_mode_rand_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_umode_tw_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_umode_tw_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_invalid_csr_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_invalid_csr_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_pmp_basic_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_pmp_basic_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_pmp_disable_all_regions_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_pmp_disable_all_regions_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_pmp_out_of_bounds_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_pmp_out_of_bounds_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_pmp_full_random_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_pmp_full_random_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_pmp_region_exec_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_pmp_region_exec_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_epmp_mml_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_epmp_mml_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_epmp_mml_execute_only_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_epmp_mml_execute_only_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_epmp_mml_read_only_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_epmp_mml_read_only_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_epmp_mmwp_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_epmp_mmwp_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_epmp_rlb_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_epmp_rlb_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_bitmanip_full_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_bitmanip_full_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_bitmanip_otearlgrey_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_bitmanip_otearlgrey_test"
+    deps:
+      - pip_install_requirements
+- name: riscv_bitmanip_balanced_test
+  rule: raw_bash
+  rule_args:
+    cmds:
+      - "./run_test.sh riscv_bitmanip_balanced_test"
+    deps:
+      - pip_install_requirements
