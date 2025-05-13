@@ -132,7 +132,7 @@ def _main() -> int:
                 # table (via MTVEC), and place jump instructions at these two
                 # addresses to the generated debug test sections.
                 r" -define DEBUG_MODE_HALT_ADDR=8000_0000 " + \
-                r" -define DEBUG_MODE_EXCEPTION_ADDR=8000_0004 ",
+                r" -define DEBUG_MODE_EXCEPTION_ADDR=8000_0008 ",
             'dir_shared_cov': (md.dir_shared_cov if md.cov else ''),
             'xlm_cov_cfg_file': f"{md.ot_xcelium_cov_scripts}/cover.ccf",
             'dut_cov_rtl_path': md.dut_cov_rtl_path
