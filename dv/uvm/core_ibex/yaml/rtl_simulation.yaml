@@ -24,6 +24,7 @@
       - >-
         vcs
           -full64
+          -f <core_ibex>/ibex_dv_defines.f
           -f <core_ibex>/ibex_dv.f
           -l <tb_build_log>
           -sverilog
@@ -95,6 +96,7 @@
       - >
         vlog
           -64
+          -f <core_ibex>/ibex_dv_defines.f
           -f <core_ibex>/ibex_dv.f
           -sv
           -mfcu -cuname design_cuname
@@ -141,6 +143,7 @@
           +define+UVM
           +define+DSIM
           +acc+rwb
+          -f <core_ibex>/ibex_dv_defines.f
           -f <core_ibex>/ibex_dv.f
           -l <tb_build_log>
           -suppress EnumMustBePositive"
@@ -175,6 +178,7 @@
           -work <tb_dir>/work
           -uvmver 1.2
           +define+UVM
+          -f <core_ibex>/ibex_dv_defines.f
           -f <core_ibex>/ibex_dv.f
           <cmp_opts>
   sim:
@@ -200,6 +204,7 @@
     cmd:
       - >-
         qrun
+          -f <core_ibex>/ibex_dv_defines.f
           -f <core_ibex>/ibex_dv.f
           -uvmhome uvm-1.2
           +define+UVM
@@ -232,6 +237,7 @@
         xrun
         -64bit
         -q
+        -f <core_ibex>/ibex_dv_defines.f
         -f <core_ibex>/ibex_dv.f
         -sv
         -licqueue
