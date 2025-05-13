@@ -147,6 +147,8 @@ class core_ibex_base_test extends uvm_test;
     cosim_cfg.relax_cosim_check = cfg.disable_cosim;
     cosim_cfg.secure_ibex = secure_ibex;
     cosim_cfg.icache = icache;
+    cosim_cfg.dm_start_addr = 32'h`BOOT_ADDR;
+    cosim_cfg.dm_end_addr = 32'h`BOOT_ADDR; + (32'h0000_0007 + 1); // Exclusive
 
     uvm_config_db#(core_ibex_cosim_cfg)::set(null, "*cosim_agent*", "cosim_cfg", cosim_cfg);
 

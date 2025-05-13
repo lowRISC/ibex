@@ -70,9 +70,13 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
   protected function void init_cosim();
     cleanup_cosim();
 
+    `DV_CHECK_FATAL(cfg.dm_start_addr > 0, "Debug module start address configured to zero.")
+    `DV_CHECK_FATAL(cfg.dm_end_addr > 0, "Debug module end address configured to zero.")
+
     // TODO: Ensure log file on reset gets append rather than overwrite?
     cosim_handle = spike_cosim_init(cfg.isa_string, cfg.start_pc, cfg.start_mtvec, cfg.log_file,
-      cfg.pmp_num_regions, cfg.pmp_granularity, cfg.mhpm_counter_num, cfg.secure_ibex, cfg.icache);
+      cfg.pmp_num_regions, cfg.pmp_granularity, cfg.mhpm_counter_num, cfg.secure_ibex, cfg.icache,
+      cfg.dm_start_addr, cfg.dm_end_addr);
 
     if (cosim_handle == null) begin
       `uvm_fatal(`gfn, "Could not initialise cosim")
