@@ -50,6 +50,7 @@ module core_ibex_tb_top;
     `define IBEX_CFG_RegFile ibex_pkg::RegFileFF
   `endif
 
+  // Ibex Parameters
   parameter bit          PMPEnable        = 1'b0;
   parameter int unsigned PMPGranularity   = 0;
   parameter int unsigned PMPNumRegions    = 4;
@@ -67,6 +68,12 @@ module core_ibex_tb_top;
   parameter bit SecureIbex                = 1'b0;
   parameter bit ICacheScramble            = 1'b0;
   parameter bit DbgTriggerEn              = 1'b0;
+  parameter int unsigned DmBaseAddr       = 32'h`DM_ADDR;
+  parameter int unsigned DmAddrMask       = 32'h`DM_ADDR_MASK;
+  parameter int unsigned DmHaltAddr       = 32'h`DEBUG_MODE_HALT_ADDR;
+  parameter int unsigned DmExceptionAddr  = 32'h`DEBUG_MODE_EXCEPTION_ADDR;
+  // Ibex Inputs
+  parameter int unsigned BootAddr         = 32'h`BOOT_ADDR; // ResetVec = BootAddr/256b + 0x80
 
   // Scrambling interface instantiation
   logic [ibex_pkg::SCRAMBLE_KEY_W-1:0]   scramble_key;
@@ -84,10 +91,6 @@ module core_ibex_tb_top;
   assign {scramble_key, scramble_nonce} = scrambling_key_if.d_data;
 
   ibex_top_tracing #(
-    .DmBaseAddr       (32'h`BOOT_ADDR       ),
-    .DmAddrMask       (32'h0000_0007        ),
-    .DmHaltAddr       (32'h`BOOT_ADDR + 'h0 ),
-    .DmExceptionAddr  (32'h`BOOT_ADDR + 'h4 ),
     .PMPEnable        (PMPEnable        ),
     .PMPGranularity   (PMPGranularity   ),
     .PMPNumRegions    (PMPNumRegions    ),
@@ -104,7 +107,11 @@ module core_ibex_tb_top;
     .SecureIbex       (SecureIbex       ),
     .ICacheScramble   (ICacheScramble   ),
     .BranchPredictor  (BranchPredictor  ),
-    .DbgTriggerEn     (DbgTriggerEn     )
+    .DbgTriggerEn     (DbgTriggerEn     ),
+    .DmBaseAddr       (DmBaseAddr       ),
+    .DmAddrMask       (DmAddrMask       ),
+    .DmHaltAddr       (DmHaltAddr       ),
+    .DmExceptionAddr  (DmExceptionAddr  )
 
   ) dut (
     .clk_i                  (clk                        ),
@@ -115,7 +122,7 @@ module core_ibex_tb_top;
     .ram_cfg_i              ('b0                        ),
 
     .hart_id_i              (32'b0                      ),
-    .boot_addr_i            (32'h`BOOT_ADDR             ), // align with spike boot address
+    .boot_addr_i            (BootAddr                   ),
 
     .instr_req_o            (instr_mem_vif.request      ),
     .instr_gnt_i            (instr_mem_vif.grant        ),
