@@ -7,7 +7,7 @@
 int main(int argc, char **argv) {
   SimpleSystem simple_system(
       "TOP.ibex_simple_system.u_ram.u_ram.gen_generic.u_impl_generic",
-      1024 * 1024);
+      SimpleSystem::kRAM_SizeBytes / 4);
 
   return simple_system.Main(argc, argv);
 }
