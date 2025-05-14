@@ -71,7 +71,7 @@ int SimpleSystem::Setup(int argc, char **argv, bool &exit_app) {
   simctrl.SetTop(&_top, &_top.IO_CLK, &_top.IO_RST_N,
                  VerilatorSimCtrlFlags::ResetPolarityNegative);
 
-  _memutil.RegisterMemoryArea("ram", 0x0, &_ram);
+  _memutil.RegisterMemoryArea("ram", kRAM_BaseAddr, &_ram);
   simctrl.RegisterExtension(&_memutil);
 
   exit_app = false;
