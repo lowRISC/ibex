@@ -15,6 +15,8 @@ It has the same ports as the ibex top.
 
 // Preprocessor decoding of instructions. Could be replaced with internal signals of the Sail one day
 `include "encodings.sv"
+// Abstract memory interface definition.
+`include "protocol/mem.sv"
 
 `define CR ibex_top_i.u_ibex_core
 `define CSR `CR.cs_registers_i
@@ -471,7 +473,23 @@ ibex_compressed_decoder decompression_assertion_decoder_2(
 
 ////////////////////// IRQ + Memory Protocols //////////////////////
 `include "protocol/irqs.sv"
-`include "protocol/mem.sv"
+
+mem_assume_t instr_mem_assume(
+    .clk_i    (clk_i),
+    .rst_ni   (rst_ni),
+    .req_o    (instr_req_o),
+    .gnt_i    (instr_gnt_i),
+    .rvalid_i (instr_rvalid_i),
+    .err_i    (instr_err_i)
+);
+mem_assume_t data_mem_assume(
+    .clk_i    (clk_i),
+    .rst_ni   (rst_ni),
+    .req_o    (data_req_o),
+    .gnt_i    (data_gnt_i),
+    .rvalid_i (data_rvalid_i),
+    .err_i    (data_err_i)
+);
 
 ////////////////////// Following //////////////////////
 `include "peek/abs.sv" // Abstract state
