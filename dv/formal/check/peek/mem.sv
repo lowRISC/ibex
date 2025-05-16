@@ -70,12 +70,26 @@ always @(posedge clk_i or negedge rst_ni) begin
 end
 
 `define ALT_LSU_STATE_COPY \
+    .clk_i(clk_i), \
+    .rst_ni(rst_ni), \
+    .data_addr_o( ), \
+    .data_be_o( ), \
+    .data_wdata_o( ), \
     .data_rvalid_i(1'b1), \
     .data_bus_err_i(1'b0), \
     .data_we_q(`LSU.data_we_q), \
     .handle_misaligned_q(`LSU.handle_misaligned_q), \
     .pmp_err_q(`LSU.pmp_err_q), \
     .lsu_err_q(`LSU.lsu_err_q), \
+    .lsu_rdata_valid_o( ), \
+    .adder_result_ex_i('0), \
+    .lsu_resp_valid_o( ), \
+    .load_err_o( ), \
+    .load_resp_intg_err_o( ), \
+    .store_err_o( ), \
+    .store_resp_intg_err_o( ),
+
+logic [31:0] alt_lsu_late_res;
 
 alt_lsu alt_lsu_late_i (
     .data_rdata_i(
@@ -87,12 +101,11 @@ alt_lsu alt_lsu_late_i (
     .data_type_q(`LSU.data_type_q),
     .rdata_offset_q(`LSU.rdata_offset_q),
     .data_sign_ext_q(`LSU.data_sign_ext_q),
-    .rdata_q(`LSU.rdata_q)
+    .rdata_q(`LSU.rdata_q),
+    .lsu_rdata_o(alt_lsu_late_res)
 );
 
-logic [31:0] alt_lsu_late_res;
-assign alt_lsu_late_res = alt_lsu_late_i.lsu_rdata_o;
-
+logic [31:0] alt_lsu_very_early_res;
 alt_lsu alt_lsu_very_early_i (
     .data_rdata_i(
         ~`LSU.split_misaligned_access ?
@@ -103,11 +116,11 @@ alt_lsu alt_lsu_very_early_i (
     .data_type_q(mem_gnt_fst_q ? `LSU.data_type_q : `LSU.lsu_type_i),
     .data_sign_ext_q(mem_gnt_fst_q ? `LSU.data_sign_ext_q : `LSU.lsu_sign_ext_i),
     .rdata_offset_q(mem_gnt_fst_q ? `LSU.rdata_offset_q : `LSU.data_offset),
-    .rdata_q(spec_mem_read_fst_rdata[31:8])
+    .rdata_q(spec_mem_read_fst_rdata[31:8]),
+    .lsu_rdata_o(alt_lsu_very_early_res)
 );
 
-logic [31:0] alt_lsu_very_early_res;
-assign alt_lsu_very_early_res = alt_lsu_very_early_i.lsu_rdata_o;
+logic [31:0] alt_lsu_early_res;
 
 alt_lsu alt_lsu_early_i (
     .data_rdata_i(spec_mem_read_snd_rdata),
@@ -115,8 +128,6 @@ alt_lsu alt_lsu_early_i (
     .data_type_q(`LSU.data_type_q),
     .data_sign_ext_q(`LSU.data_sign_ext_q),
     .rdata_offset_q(`LSU.rdata_offset_q),
-    .rdata_q(`LSU.rdata_q)
+    .rdata_q(`LSU.rdata_q),
+    .lsu_rdata_o(alt_lsu_early_res)
 );
-
-logic [31:0] alt_lsu_early_res;
-assign alt_lsu_early_res = alt_lsu_early_i.lsu_rdata_o;

@@ -22,54 +22,27 @@ module alt_lsu #(
   input  logic         rst_ni,
 
   // data interface
-  output logic         data_req_o,
-  input  logic         data_gnt_i,
   input  logic         data_rvalid_i,
   input  logic         data_bus_err_i,
-  input  logic         data_pmp_err_i,
 
   output logic [31:0]             data_addr_o,
-  output logic                    data_we_o,
   output logic [3:0]              data_be_o,
   output logic [MemDataWidth-1:0] data_wdata_o,
   input  logic [MemDataWidth-1:0] data_rdata_i,
 
-  // signals to/from ID/EX stage
-  input  logic         lsu_we_i,             // write enable                     -> from ID/EX
-  input  logic [1:0]   lsu_type_i,           // data type: word, half word, byte -> from ID/EX
-  input  logic [31:0]  lsu_wdata_i,          // data to write to memory          -> from ID/EX
-  input  logic         lsu_sign_ext_i,       // sign extension                   -> from ID/EX
-
   output logic [31:0]  lsu_rdata_o,          // requested data                   -> to ID/EX
   output logic         lsu_rdata_valid_o,
-  input  logic         lsu_req_i,            // data request                     -> from ID/EX
 
   input  logic [31:0]  adder_result_ex_i,    // address computed in ALU          -> from ID/EX
-
-  output logic         addr_incr_req_o,      // request address increment for
-                                              // misaligned accesses              -> to ID/EX
-  output logic [31:0]  addr_last_o,          // address of last transaction      -> to controller
-                                              // -> mtval
-                                              // -> AGU for misaligned accesses
-
-  output logic         lsu_req_done_o,       // Signals that data request is complete
-                                              // (only need to await final data
-                                              // response)                        -> to ID/EX
 
   output logic         lsu_resp_valid_o,     // LSU has response from transaction -> to ID/EX
 
   // exception signals
   output logic         load_err_o,
-  output logic         load_reXsp_intg_err_o,
+  output logic         load_resp_intg_err_o,
   output logic         store_err_o,
   output logic         store_resp_intg_err_o,
 
-  output logic         busy_o,
-
-  output logic         perf_load_o,
-  output logic         perf_store_o,
-
-  input logic [31:0] addr_last_q,
   input logic [31:8] rdata_q,
   input logic [1:0] rdata_offset_q,
   input logic [1:0] data_type_q,
@@ -82,7 +55,6 @@ module alt_lsu #(
 
   logic [31:0]  data_addr;
   logic [31:0]  data_addr_w_aligned;
-  logic [31:0]  addr_last_d;
 
   logic         addr_update;
   logic         ctrl_update;
@@ -99,7 +71,6 @@ module alt_lsu #(
   logic [31:0]  rdata_h_ext; // sign extension for half words
   logic [31:0]  rdata_b_ext; // sign extension for bytes
 
-  logic         split_misaligned_access;
   logic         handle_misaligned_d; // high after receiving grant for first
                                                           // part of a misaligned access
   logic         pmp_err_d;
@@ -108,12 +79,6 @@ module alt_lsu #(
 
   assign data_addr   = adder_result_ex_i;
   assign data_offset = data_addr[1:0];
-
-  // Store last address for mtval + AGU for misaligned transactions.  Do not update in case of
-  // errors, mtval needs the (first) failing address.  Where an aligned access or the first half of
-  // a misaligned access sees an error provide the calculated access address. For the second half of
-  // a misaligned access provide the word aligned address of the second half.
-  assign addr_last_d = addr_incr_req_o ? data_addr_w_aligned : data_addr;
 
   // take care of misaligned words
   always_comb begin
@@ -225,15 +190,6 @@ module alt_lsu #(
   assign data_intg_err = 1'b0;
 
   /////////////
-  // LSU FSM //
-  /////////////
-
-  // check for misaligned accesses that need to be split into two word-aligned accesses
-  assign split_misaligned_access =
-      ((lsu_type_i == 2'b00) && (data_offset != 2'b00)) || // misaligned word access
-      ((lsu_type_i == 2'b01) && (data_offset == 2'b11));   // misaligned half-word access
-
-  /////////////
   // Outputs //
   /////////////
 
@@ -250,7 +206,6 @@ module alt_lsu #(
 
   // output to data interface
   assign data_addr_o   = data_addr_w_aligned;
-  assign data_we_o     = lsu_we_i;
   assign data_be_o     = data_be;
 
   /////////////////////////////////////
@@ -259,9 +214,6 @@ module alt_lsu #(
 
   // SEC_CM: BUS.INTEGRITY
   assign data_wdata_o = data_wdata;
-
-  // output to ID stage: mtval + AGU for misaligned transactions
-  assign addr_last_o   = addr_last_q;
 
   // Signal a load or store error depending on the transaction type outstanding
   assign load_err_o      = data_or_pmp_err & ~data_we_q & lsu_resp_valid_o;
