@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
-This is the top module. Everything else in check/* will be included into this file.
+This is the top module. Everything else in the "check" directory is included in this file.
 This module contains the ibex instance, the specification instance and the assertions
 (included via the built psgen file), most of the non assertion code is setting up
 infrastructure for those assertions.
@@ -339,9 +339,6 @@ logic spec_int_err;
 
 logic spec_fetch_err; // The specification has experienced a fetch error,
                       // regardless of whether or not it was told to.
-assign spec_fetch_err =
-    (main_mode == MAIN_IFERR && spec_api_i.main_result == MAINRES_OK) ||
-    spec_api_i.main_result == MAINRES_IFERR_1 || spec_api_i.main_result == MAINRES_IFERR_2;
 
 logic spec_mem_read;
 logic spec_mem_read_snd;
@@ -503,5 +500,11 @@ mem_assume_t data_mem_assume(
 ////////////////////// Proof //////////////////////
 `define INSTR wbexc_decompressed_instr
 `include "../build/psgen.sv"
+`undef INSTR
+
+// Assign spec fetch error after instantiating the specification.
+assign spec_fetch_err =
+    (main_mode == MAIN_IFERR && spec_api_i.main_result == MAINRES_OK) ||
+    spec_api_i.main_result == MAINRES_IFERR_1 || spec_api_i.main_result == MAINRES_IFERR_2;
 
 endmodule
