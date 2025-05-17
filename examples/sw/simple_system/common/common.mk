@@ -19,9 +19,9 @@ SRCS = $(COMMON_SRCS) $(PROGRAM_C) $(EXTRA_SRCS)
 C_SRCS = $(filter %.c, $(SRCS))
 ASM_SRCS = $(filter %.S, $(SRCS))
 
-CC = riscv32-unknown-elf-gcc
+CC = /home/wajahat/RISCV/riscv64-unknown-elf-toolchain/riscv/bin/riscv64-unknown-elf-gcc
 
-CROSS_COMPILE = $(patsubst %-gcc,%-,$(CC))
+CROSS_COMPILE = /home/wajahat/RISCV/riscv64-unknown-elf-toolchain/riscv/bin/riscv64-unknown-elf-
 OBJCOPY ?= $(CROSS_COMPILE)objcopy
 OBJDUMP ?= $(CROSS_COMPILE)objdump
 
