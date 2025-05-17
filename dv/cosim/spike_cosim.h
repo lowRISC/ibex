@@ -40,6 +40,11 @@ class SpikeCosim : public simif_t, public Cosim {
   std::vector<std::string> errors;
   bool nmi_mode;
 
+  // Start/End address of the debug module. The PMP module requires these
+  // addresses to implement a always-allow policy for accesses in debug mode.
+  uint32_t dm_start_addr;
+  uint32_t dm_end_addr;
+
   typedef struct {
     uint8_t mpp;
     bool mpie;
@@ -103,7 +108,8 @@ class SpikeCosim : public simif_t, public Cosim {
   SpikeCosim(const std::string &isa_string, uint32_t start_pc,
              uint32_t start_mtvec, const std::string &trace_log_path,
              bool secure_ibex, bool icache_en, uint32_t pmp_num_regions,
-             uint32_t pmp_granularity, uint32_t mhpm_counter_num);
+             uint32_t pmp_granularity, uint32_t mhpm_counter_num,
+             uint32_t dm_start_addr, uint32_t dm_end_addr);
 
   // simif_t implementation
   virtual char *addr_to_mem(reg_t addr) override;
