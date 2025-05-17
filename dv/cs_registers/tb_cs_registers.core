@@ -121,7 +121,7 @@ targets:
           - '--trace-structs'
           - '--trace-params'
           - '--trace-max-array 1024'
-          - '-CFLAGS "-std=c++14 -Wall -DTOPLEVEL_NAME=tb_cs_registers -DVM_TRACE_FMT_FST -g"'
-          - '-LDFLAGS "-pthread -lutil -lelf"'
+          - '-CFLAGS "-std=c++14 -Wall -DTOPLEVEL_NAME=tb_cs_registers -DVM_TRACE_FMT_FST -g -fexceptions -I$(shell verilator --getenv VERILATOR_ROOT)/include -I$(shell verilator --getenv VERILATOR_ROOT)/include/vltstd"'
+          - '-LDFLAGS "-pthread -lutil -lelf -fexceptions"'
           - "-Wall"
           - '-Wno-fatal' # Do not fail on (style) issues, only warn about them.

@@ -23,21 +23,41 @@ LDFLAGS  = -shared
 CC       = $(CXX)
 
 # Add svdpi include
-ifeq ($(TOOL),vcs)
-  # For VCS, add include path
-  TOOLDIR = $(subst bin/$(TOOL),,$(shell which $(TOOL)))
-  INCLUDES += -I$(TOOLDIR)include
+# Check if VERILATOR_ROOT is set, use it first if available
+ifdef VERILATOR_ROOT
+  VERILATOR_INCLUDE = $(VERILATOR_ROOT)/include
 else
-  # For Verilator, use verilator command to find root directory
-  ifeq ($(shell which verilator),)
-    $(error "Verilator not found in PATH. Please install Verilator or add it to your PATH")
+  # Try to find Verilator installation directory
+  TOOLDIR = $(subst bin/$(TOOL),,$(shell which $(TOOL) 2>/dev/null))
+  
+  # Define list of possible Verilator include paths to check
+  VERILATOR_INCLUDE_PATHS := \
+    $(TOOLDIR)share/verilator/include \
+    $(TOOLDIR)share/verilator/include/vltstd \
+    /usr/share/verilator/include \
+    /usr/local/share/verilator/include \
+    /opt/verilator/share/verilator/include \
+    $(HOME)/verilator/include
+    
+  # Find first valid include path
+  VERILATOR_INCLUDE := $(firstword $(foreach dir,$(VERILATOR_INCLUDE_PATHS),$(if $(wildcard $(dir)/svdpi.h),$(dir),)))
+  
+  # If include path not found, provide error messages
+  ifeq ($(VERILATOR_INCLUDE),)
+    $(warning WARNING: Could not find Verilator include directory with svdpi.h)
+    $(warning Searched in: $(VERILATOR_INCLUDE_PATHS))
+    $(warning You can manually specify it using: make build-csr-test INCLUDES="-I/path/to/verilator/include -I./env -I./rst_driver -I./reg_driver -I./model")
+    $(warning Or set VERILATOR_ROOT environment variable pointing to your Verilator installation)
   endif
-  VERILATOR_ROOT = $(shell verilator --getenv VERILATOR_ROOT 2>/dev/null)
-  ifeq ($(VERILATOR_ROOT),)
-    $(error "Could not determine VERILATOR_ROOT. Please make sure Verilator is properly installed")
+endif
+
+# Add appropriate includes based on tool
+ifeq ($(TOOL),vcs)
+  INCLUDES += -I$(TOOLDIR)include
+else ifeq ($(TOOL),verilator)
+  ifdef VERILATOR_INCLUDE
+    INCLUDES += -I$(VERILATOR_INCLUDE) -I$(VERILATOR_INCLUDE)/vltstd
   endif
-  # Add both main include directory and vltstd directory where svdpi.h is located
-  INCLUDES += -I$(VERILATOR_ROOT)/include -I$(VERILATOR_ROOT)/include/vltstd
 endif
 
 .PHONY: all clean
