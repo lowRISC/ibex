@@ -23,11 +23,21 @@ LDFLAGS  = -shared
 CC       = $(CXX)
 
 # Add svdpi include
-TOOLDIR = $(subst bin/$(TOOL),,$(shell which $(TOOL)))
 ifeq ($(TOOL),vcs)
+  # For VCS, add include path
+  TOOLDIR = $(subst bin/$(TOOL),,$(shell which $(TOOL)))
   INCLUDES += -I$(TOOLDIR)include
 else
-  INCLUDES += -I$(TOOLDIR)share/verilator/include/vltstd
+  # For Verilator, use verilator command to find root directory
+  ifeq ($(shell which verilator),)
+    $(error "Verilator not found in PATH. Please install Verilator or add it to your PATH")
+  endif
+  VERILATOR_ROOT = $(shell verilator --getenv VERILATOR_ROOT 2>/dev/null)
+  ifeq ($(VERILATOR_ROOT),)
+    $(error "Could not determine VERILATOR_ROOT. Please make sure Verilator is properly installed")
+  endif
+  # Add both main include directory and vltstd directory where svdpi.h is located
+  INCLUDES += -I$(VERILATOR_ROOT)/include -I$(VERILATOR_ROOT)/include/vltstd
 endif
 
 .PHONY: all clean
