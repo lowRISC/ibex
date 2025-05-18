@@ -24,7 +24,7 @@ How to run RISC-V Compliance on Ibex
    On Ubuntu/Debian, install the required tools like this:
 
    ```sh
-   sudo apt-get install srecord python3-pip
+   sudo apt-get install srecord python3-pip libelf-dev
    pip3 install --user -U fusesoc
    ```
 
@@ -50,7 +50,7 @@ How to run RISC-V Compliance on Ibex
    The upstream RISC-V compliance test suite supports Ibex out of the box.
 
    ```
-   git clone https://github.com/riscv/riscv-compliance.git
+   git clone https://github.com/riscv/riscv-arch-test.git
    cd riscv-compliance
    ```
 
@@ -62,7 +62,7 @@ How to run RISC-V Compliance on Ibex
    # give the absolute path to the simulation binary compiled in step 1
    export TARGET_SIM=/path/to/your/Vibex_riscv_compliance
 
-   export RISCV_DEVICE=rv32imc
+   export RISCV_DEVICE=I            # Other targets for compliance can be C & M
    export RISCV_TARGET=ibex
 
    # Note: rv32imc does not include the I and M extension tests
