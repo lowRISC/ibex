@@ -35,9 +35,13 @@ else
     $(TOOLDIR)share/verilator/include \
     $(TOOLDIR)share/verilator/include/vltstd \
     /usr/share/verilator/include \
+    /usr/share/verilator/include/vltstd \
     /usr/local/share/verilator/include \
+    /usr/local/share/verilator/include/vltstd \
     /opt/verilator/share/verilator/include \
-    $(HOME)/verilator/include
+    /opt/verilator/share/verilator/include/vltstd \
+    $(HOME)/verilator/include \
+    $(HOME)/verilator/include/vltstd
     
   # Find first valid include path
   VERILATOR_INCLUDE := $(firstword $(foreach dir,$(VERILATOR_INCLUDE_PATHS),$(if $(wildcard $(dir)/svdpi.h),$(dir),)))
@@ -48,6 +52,7 @@ else
     $(warning Searched in: $(VERILATOR_INCLUDE_PATHS))
     $(warning You can manually specify it using: make build-csr-test INCLUDES="-I/path/to/verilator/include -I./env -I./rst_driver -I./reg_driver -I./model")
     $(warning Or set VERILATOR_ROOT environment variable pointing to your Verilator installation)
+    VERILATOR_INCLUDE = # Leave empty or set a default fallback path if applicable
   endif
 endif
 
