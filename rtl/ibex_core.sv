@@ -1944,6 +1944,20 @@ module ibex_core import ibex_pkg::*; #(
           g_pmp.pmp_i.region_match_all[PMP_D][i_region];
       end
     end
+
+    // Create a signal 'fcov_access_attempted_into_dm' for each PMP channel, which becomes true at
+    // the point when a memory access into the debug_module address space via that channel is
+    // accesses-checked by it's PMP unit. If true we know that the current instruction at least
+    // attempted to make an access, and we can then cross this signal with the result of the pmp
+    // check and the current debug_mode state to capture all appropriate coverage.
+    logic [PMPNumChan-1:0] access_check_into_dm;
+    for (genvar c = 0; c < PMPNumChan; c++) begin : g_pmp_channel_access_check
+      assign access_check_into_dm[c] = (g_pmp.pmp_req_addr[c][31:0] & ~DmAddrMask) == DmBaseAddr;
+    end
+    `DV_FCOV_SIGNAL(logic [PMPNumChan-1:0], access_attempted_into_dm,
+                    {access_check_into_dm[PMP_D]  & data_req_out,                  // [2]
+                     access_check_into_dm[PMP_I2] & if_stage_i.if_id_pipe_reg_we,  // [1]
+                     access_check_into_dm[PMP_I]  & if_stage_i.if_id_pipe_reg_we}) // [0]
   end
 `endif
 
