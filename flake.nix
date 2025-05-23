@@ -2,6 +2,7 @@
   description = "Environment for developing and simulating the ibex core.";
 
   inputs = {
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     # The input 'lowrisc-nix' contains some common dependencies that can be used
     # by lowRISC projects. There is also an associated public binary cache.
     lowrisc-nix.url = "github:lowRISC/lowrisc-nix";
@@ -31,6 +32,13 @@
       config = {
         allowUnfree = true;
         allowBroken = true; # sv2v marked as broken.
+      };
+    };
+
+    pkgs-unstable = import inputs.nixpkgs-unstable {
+      inherit system;
+      config = {
+        allowUnfree = true;
       };
     };
 
@@ -85,7 +93,7 @@
         srecord
       ]);
 
-    ibex_syn = import ./nix/syn.nix {inherit inputs pkgs;};
+    ibex_syn = import ./nix/syn.nix {inherit inputs pkgs pkgs-unstable;};
 
     ################
     # ENVIRONMENTS #
