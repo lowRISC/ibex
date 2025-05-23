@@ -2,7 +2,7 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 {
-  description = "Nix Flake for Ibex development and testing.";
+  description = "Environment for developing and simulating the ibex core.";
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-24.05";
@@ -34,6 +34,11 @@
       url = "github:lowrisc/sail-riscv?ref=81a266b6f65365b34180af7b91708265da653878";
       flake = false;
     };
+
+    sv2v = {
+      url = "github:zachjs/sv2v";
+      flake = false;
+    };
   };
 
   # The lowRISC public nix-cache contains builds of nix packages used by lowRISC, primarily coming from github:lowRISC/lowrisc-nix.
@@ -55,10 +60,60 @@
 
         pkgs = import inputs.nixpkgs {
           inherit system;
+          config = {
+            allowUnfree = true;
+            allowBroken = true; # sv2v marked as broken.
+          };
         };
         inherit (pkgs) lib;
 
         mkshell-minimal = inputs.mkshell-minimal pkgs;
+
+        ################
+        # DEPENDENCIES #
+        ################
+
+        # Python environment, defined in ./nix/env/pyproject.toml
+        pythonEnv = import ./nix/env {inherit inputs pkgs;};
+
+        # lowRISC fork of Spike used as a cosimulation model for Ibex Verification
+        spike = inputs.lowrisc-nix.packages.${system}.spike-ibex-cosim;
+
+        # Currently we don't build the riscv-toolchain from src, we use a github release
+        # See https://github.com/lowRISC/lowrisc-nix/blob/main/pkgs/lowrisc-toolchain-gcc-rv32imcb.nix
+        rv32imcb_toolchain = inputs.lowrisc-nix.packages.${system}.lowrisc-toolchain-gcc-rv32imcb;
+
+        ibex_runtime_deps = with pkgs; [
+          libelf # Used in DPI code
+          zlib # Verilator run-time dep
+        ];
+
+        sim_shared_lib_deps = with pkgs; [
+          elfutils
+          openssl
+        ];
+
+        ibex_project_deps =
+          [
+            pythonEnv
+            spike
+            rv32imcb_toolchain
+          ] ++
+          sim_shared_lib_deps ++
+          (with pkgs; [
+            # Tools
+            cmake
+            pkg-config
+
+            # Applications
+            verilator
+            gtkwave
+
+            # Libraries
+            srecord
+          ]);
+
+        ibex_syn = import ./nix/syn.nix {inherit inputs pkgs;};
 
         # lowRISC fork of the Sail repository. The SAIL -> SV flow is used to generate the reference model.
         lowrisc_sail = import ./nix/lowrisc_sail.nix {
@@ -71,6 +126,33 @@
           inherit pkgs;
           src = inputs.lowrisc_sail_riscv;
         }).src;
+
+
+        ################
+        # ENVIRONMENTS #
+        ################
+
+        # These exports are required by scripts within the Ibex DV flow.
+        ibex_profile_common = ''
+          export SPIKE_PATH=${spike}/bin
+
+          export RISCV_TOOLCHAIN=${rv32imcb_toolchain}
+          export RISCV_GCC=${rv32imcb_toolchain}/bin/riscv32-unknown-elf-gcc
+          export RISCV_OBJCOPY=${rv32imcb_toolchain}/bin/riscv32-unknown-elf-objcopy
+        '';
+
+        shell = pkgs.lib.makeOverridable pkgs.mkShell {
+          name = "ibex-devshell";
+          buildInputs = ibex_runtime_deps;
+          nativeBuildInputs = ibex_project_deps;
+          shellHook = ''
+            # Unset these environment variables provided by stdenv, as the SS makefiles will not
+            # be able to discover the riscv toolchain versions otherwise.
+            unset CC OBJCOPY OBJDUMP
+
+            ${ibex_profile_common}
+          '';
+        };
 
         # Create a python package set suitable for the formal flow
         # - The file dv/formal/pyproject.toml defines the package set for this environment
@@ -96,6 +178,7 @@
             inherit lowrisc_sail;
           };
           devShells = rec {
+            inherit shell;
             formal = mkshell-minimal {
               packages = [
                 inputs.psgen.packages.${system}.default
