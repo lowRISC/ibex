@@ -6,25 +6,16 @@
 
   inputs = {
 
-    nixpkgs.follows = "lowrisc-nix/nixpkgs";
-    flake-utils.follows = "lowrisc-nix/flake-utils";
-
-    poetry2nix = {
-      url = "github:nix-community/poetry2nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
-    };
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
 
     mkshell-minimal.url = "github:viperML/mkshell-minimal";
 
     # The input 'lowrisc-nix' contains some common dependencies that can be used
     # by lowRISC projects. There is also an associated public binary cache.
-    lowrisc-nix = {
-      # Checkout from when
-      # url = "github:lowrisc/lowrisc-nix?ref=d7e90e450bcfbed83b6b8a2458d29c0ddd7fe58d";
-      url = "github:lowrisc/lowrisc-nix";
-    };
+    lowrisc-nix.url = "github:lowrisc/lowrisc-nix";
 
+    # Deps for the dv/formal flow
     psgen = {
       url = "github:mndstrmr/psgen";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -44,7 +35,24 @@
     # to evaluate without the appropriate credentials.
     # All outputs which depend on this input are suffixed '_lowrisc'
     lowrisc-nix-private.url = "git+ssh://git@github.com/lowRISC/lowrisc-nix-private.git";
+    lowrisc-nix-private.inputs.nixpkgs.follows = "nixpkgs";
 
+    pyproject-nix.url = "github:pyproject-nix/pyproject.nix";
+    pyproject-build-systems = {
+      url = "github:pyproject-nix/build-system-pkgs";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.uv2nix.follows = "uv2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    uv2nix = {
+      url = "github:pyproject-nix/uv2nix";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    uv2nix_hammer_overrides.url = "github:TyberiusPrime/uv2nix_hammer_overrides";
+    uv2nix_hammer_overrides.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Deps for synthesis flows
     sv2v = {
       url = "github:zachjs/sv2v";
       flake = false;
@@ -90,8 +98,8 @@
         # DEPENDENCIES #
         ################
 
-        # Python environment, defined in ./nix/env/pyproject.toml
-        pythonEnv = import ./nix/env {inherit inputs pkgs;};
+        # Python environment, as defined in ./nix/pythonEnv/pyproject.toml
+        pythonEnv = import ./nix/pythonEnv {inherit inputs pkgs;};
 
         # lowRISC fork of Spike used as a cosimulation model for Ibex Verification
         spike = inputs.lowrisc-nix.packages.${system}.spike-ibex-cosim;

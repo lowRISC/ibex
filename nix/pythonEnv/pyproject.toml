@@ -1,0 +1,48 @@
+[project]
+name = "ibex"
+version = "0.1.0"
+description = "Ibex is a production-quality open source 32-bit RISC-V CPU core written in SystemVerilog."
+authors = []
+license = {text = "Apache 2.0"}
+requires-python = "<4.0,>=3.10"
+dependencies = [
+    "packaging==23.1",
+    "anytree==2.8.0",
+    "hjson==3.1.0",
+    "mako==1.1.6",
+    "pyyaml==6.0",
+    "wheel==0.41.2",
+    "edalize @ git+https://github.com/lowRISC/edalize.git@v0.4.0",
+    "fusesoc @ git+https://github.com/lowRISC/fusesoc.git@ot-0.4",
+    "rpds-py==0.13.2",
+    "libcst<2.0.0,>=1.1.0",
+    "isort<6.0.0,>=5.13.2",
+    "junit-xml<2.0,>=1.9",
+    "pathlib3x<3.0.0,>=2.0.3",
+    "typing-utils<1.0.0,>=0.1.0",
+    "typeguard<5.0.0,>=4.1.5",
+    "portalocker<3.0.0,>=2.8.2",
+    "pydantic<3.0.0,>=2.5.3",
+    "svg-py<2.0.0,>=1.4.2",
+    "mistletoe<2.0.0,>=1.2.1",
+    "premailer<4.0.0,>=3.10.0",
+    "bitstring<5.0.0,>=4.1.4",
+    "sphinx<8.0.0,>=7.2.6",
+    "pallets-sphinx-themes<3.0.0,>=2.1.1",
+    "sphinxcontrib-log-cabinet<2.0.0,>=1.0.1",
+    "sphinx-issues<4.0.0,>=3.0.1",
+    "sphinx-rtd-theme<3.0.0,>=2.0.0",
+    "rst2pdf<1.0,>=0.101",
+    "flake8<8.0.0,>=7.0.0",
+    "pyvsc<1.0.0.0,>=0.8.8.7162283399",
+    "tabulate<1.0.0,>=0.9.0",
+    "pandas<3.0.0,>=2.1.4",
+    # "PyBoolector==3.2.4.20240823.1",
+]
+
+[tool.uv]
+# Uv2nix refuses to apply the sourcePreference = "wheel" to this package
+# unless given this directive. PyBoolector cannot easily be built from
+# sdist as the extension module requires some patches to be applied.
+# (see <boolector>/pypi/build.sh)
+only-binary = ["PyBoolector"] # Dependency of pyvsc, used by riscv-dv
