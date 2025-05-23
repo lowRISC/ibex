@@ -154,6 +154,12 @@
           '';
         };
 
+        syn_shell = shell.override (prev: {
+          name = "ibex-devshell-synthesis";
+          nativeBuildInputs = prev.nativeBuildInputs ++ ibex_syn.deps;
+          shellHook = prev.shellHook + ibex_syn.profile;
+        });
+
         # Create a python package set suitable for the formal flow
         # - The file dv/formal/pyproject.toml defines the package set for this environment
         # - Using the fusesoc .core files in this repo requires a lowrisc-fork of fusesoc, so this
@@ -179,6 +185,7 @@
           };
           devShells = rec {
             inherit shell;
+            inherit syn_shell;
             formal = mkshell-minimal {
               packages = [
                 inputs.psgen.packages.${system}.default
