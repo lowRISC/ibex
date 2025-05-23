@@ -10,13 +10,9 @@
   ...
 }: let
 
-  sv2v_local = import ./sv2v.nix {inherit inputs pkgs;};
-
-  ibex_syn_deps = [
-    sv2v_local.default
-  ] ++ (with pkgs; [
-    # haskellPackages.sv2v # broken
+  ibex_syn_deps = (with pkgs; [
     yosys
+    yosys-synlig
     openroad
   ]);
 
@@ -42,6 +38,7 @@
   ibex_syn_profile = ''
     export LR_SYNTH_CELL_LIBRARY_NAME=nangate
     export LR_SYNTH_CELL_LIBRARY_PATH=${nangate45}/lib/NangateOpenCellLibrary_typical.lib
+    export LR_SYNTH_SYNLIG_PLUGIN_PATH=${pkgs.yosys-synlig}/share/yosys/plugins/systemverilog.so
   '';
 
 in {
