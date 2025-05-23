@@ -45,12 +45,8 @@
     },
     "lowrisc-nix": {
       "inputs": {
-        "flake-utils": [
-          "flake-utils"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ],
+        "flake-utils": "flake-utils",
+        "nixpkgs": "nixpkgs",
         "pyproject-build-systems": "pyproject-build-systems",
         "pyproject-nix": "pyproject-nix",
         "uv2nix": "uv2nix"
@@ -71,7 +67,7 @@
     },
     "lowrisc-nix-private": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs_2"
       },
       "locked": {
         "lastModified": 1744886009,
@@ -159,6 +155,22 @@
     },
     "nixpkgs": {
       "locked": {
+        "lastModified": 1747862697,
+        "narHash": "sha256-U4HaNZ1W26cbOVm0Eb5OdGSnfQVWQKbLSPrSSa78KC0=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "2baa12ff69913392faf0ace833bc54bba297ea95",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-24.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
         "lastModified": 1744440957,
         "narHash": "sha256-FHlSkNqFmPxPJvy+6fNLaNeWnF1lZSgqVCl/eWaJRc4=",
         "owner": "NixOS",
@@ -171,21 +183,6 @@
         "ref": "nixos-24.11",
         "repo": "nixpkgs",
         "type": "github"
-      }
-    },
-    "nixpkgs_2": {
-      "locked": {
-        "lastModified": 1735563628,
-        "narHash": "sha256-OnSAY7XDSx7CtDoqNh8jwVwh4xNL/2HaJxGjryLWzX8=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "b134951a4c9f3c995fd7be05f3243f8ecd65d798",
-        "type": "github"
-      },
-      "original": {
-        "id": "nixpkgs",
-        "ref": "nixos-24.05",
-        "type": "indirect"
       }
     },
     "poetry2nix": {
@@ -290,13 +287,19 @@
     },
     "root": {
       "inputs": {
-        "flake-utils": "flake-utils",
+        "flake-utils": [
+          "lowrisc-nix",
+          "flake-utils"
+        ],
         "lowrisc-nix": "lowrisc-nix",
         "lowrisc-nix-private": "lowrisc-nix-private",
         "lowrisc_sail": "lowrisc_sail",
         "lowrisc_sail_riscv": "lowrisc_sail_riscv",
         "mkshell-minimal": "mkshell-minimal",
-        "nixpkgs": "nixpkgs_2",
+        "nixpkgs": [
+          "lowrisc-nix",
+          "nixpkgs"
+        ],
         "poetry2nix": "poetry2nix",
         "psgen": "psgen",
         "sv2v": "sv2v"

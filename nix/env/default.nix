@@ -9,7 +9,7 @@
 }: let
   poetry2nix = inputs.poetry2nix.lib.mkPoetry2Nix {inherit pkgs;};
   ibexPoetryOverrides = import ./poetryOverrides.nix {inherit pkgs;};
-  lowriscPoetryOverrides = inputs.lowrisc-nix.lib.poetryOverrides {inherit pkgs;};
+  lowriscPoetryOverrides = import ./poetryOverridesLowriscNix.nix {inherit pkgs;};
 in
   poetry2nix.mkPoetryEnv {
     projectDir = ./.;

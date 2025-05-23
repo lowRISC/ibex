@@ -37,6 +37,36 @@ let
     pyboolector = prev.pyboolector.override { # missing "setuptools"
       preferWheel = true;
     };
+    click = prev.click.override {
+      preferWheel = true;
+    };
+    markdown = prev.markdown.override {
+      preferWheel = true;
+    };
+    typing-extensions = prev.typing-extensions.override {
+      preferWheel = true;
+    };
+    typing-inspection = prev.typing-inspection.override {
+      preferWheel = true;
+    };
+    urllib3 = prev.urllib3.override {
+      preferWheel = true;
+    };
+    attrs = prev.attrs.override {
+      preferWheel = true;
+    };
+    referencing = prev.referencing.override {
+      preferWheel = true;
+    };
+    jsonschema-specifications = prev.jsonschema-specifications.override {
+      preferWheel = true;
+    };
+    pallets-sphinx-themes = prev.pallets-sphinx-themes.override {
+      preferWheel = true;
+    };
+    pillow = prev.pillow.override {
+      preferWheel = true;
+    };
   };
 in
   pkgs.lib.composeManyExtensions [

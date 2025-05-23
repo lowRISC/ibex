@@ -5,22 +5,24 @@
   description = "Environment for developing and simulating the ibex core.";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-24.05";
-    flake-utils.url = "github:numtide/flake-utils";
+
+    nixpkgs.follows = "lowrisc-nix/nixpkgs";
+    flake-utils.follows = "lowrisc-nix/flake-utils";
 
     poetry2nix = {
       url = "github:nix-community/poetry2nix";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
     };
+
     mkshell-minimal.url = "github:viperML/mkshell-minimal";
 
     # The input 'lowrisc-nix' contains some common dependencies that can be used
     # by lowRISC projects. There is also an associated public binary cache.
     lowrisc-nix = {
+      # Checkout from when
+      # url = "github:lowrisc/lowrisc-nix?ref=d7e90e450bcfbed83b6b8a2458d29c0ddd7fe58d";
       url = "github:lowrisc/lowrisc-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
     };
 
     psgen = {
