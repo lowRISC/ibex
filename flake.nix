@@ -15,6 +15,8 @@
     };
     mkshell-minimal.url = "github:viperML/mkshell-minimal";
 
+    # The input 'lowrisc-nix' contains some common dependencies that can be used
+    # by lowRISC projects. There is also an associated public binary cache.
     lowrisc-nix = {
       url = "github:lowrisc/lowrisc-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -34,6 +36,12 @@
       url = "github:lowrisc/sail-riscv?ref=81a266b6f65365b34180af7b91708265da653878";
       flake = false;
     };
+
+    # The input 'lowrisc-nix-private' is access-controlled.
+    # Outputs which depend on this input are for internal use only, and will fail
+    # to evaluate without the appropriate credentials.
+    # All outputs which depend on this input are suffixed '_lowrisc'
+    lowrisc-nix-private.url = "git+ssh://git@github.com/lowRISC/lowrisc-nix-private.git";
 
     sv2v = {
       url = "github:zachjs/sv2v";
@@ -66,6 +74,13 @@
           };
         };
         inherit (pkgs) lib;
+
+        # This import creates internal-use only outputs, which build on
+        # input attributes that cannot be fetched without appropriate credentials.
+        lr = import ./nix/lowrisc.nix {
+          inherit inputs pkgs system;
+          extraDependencies = sim_shared_lib_deps;
+        };
 
         mkshell-minimal = inputs.mkshell-minimal pkgs;
 
@@ -160,6 +175,16 @@
           shellHook = prev.shellHook + ibex_syn.profile;
         });
 
+        # This shell uses mkShellNoCC as the stdenv CC can interfere with EDA tools.
+        eda_shell = pkgs.lib.makeOverridable pkgs.mkShellNoCC {
+          name = "ibex-devshell-eda";
+          buildInputs = ibex_runtime_deps;
+          nativeBuildInputs = ibex_project_deps;
+          shellHook = ''
+            ${ibex_profile_common}
+          '';
+        };
+
         # Create a python package set suitable for the formal flow
         # - The file dv/formal/pyproject.toml defines the package set for this environment
         # - Using the fusesoc .core files in this repo requires a lowrisc-fork of fusesoc, so this
@@ -186,6 +211,7 @@
           devShells = rec {
             inherit shell;
             inherit syn_shell;
+            inherit eda_shell;
             formal = mkshell-minimal {
               packages = [
                 inputs.psgen.packages.${system}.default
@@ -230,7 +256,7 @@
                 EOF
               '';
             });
-          };
+          } // lr.devShells;
         }
     );
 }
