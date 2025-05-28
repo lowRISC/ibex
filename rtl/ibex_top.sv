@@ -1034,7 +1034,9 @@ module ibex_top import ibex_pkg::*; #(
       .DmBaseAddr       (DmBaseAddr),
       .DmAddrMask       (DmAddrMask),
       .DmHaltAddr       (DmHaltAddr),
-      .DmExceptionAddr  (DmExceptionAddr)
+      .DmExceptionAddr  (DmExceptionAddr),
+      .CsrMvendorId     (CsrMvendorId),
+      .CsrMimpId        (CsrMimpId)
     ) u_ibex_lockstep (
       .clk_i                  (clk),
       .rst_ni                 (rst_ni),
