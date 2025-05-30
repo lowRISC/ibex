@@ -23,11 +23,46 @@ LDFLAGS  = -shared
 CC       = $(CXX)
 
 # Add svdpi include
-TOOLDIR = $(subst bin/$(TOOL),,$(shell which $(TOOL)))
+# Check if VERILATOR_ROOT is set, use it first if available
+ifdef VERILATOR_ROOT
+  VERILATOR_INCLUDE = $(VERILATOR_ROOT)/include
+else
+  # Try to find Verilator installation directory
+  TOOLDIR = $(subst bin/$(TOOL),,$(shell which $(TOOL) 2>/dev/null))
+  
+  # Define list of possible Verilator include paths to check
+  VERILATOR_INCLUDE_PATHS := \
+    $(TOOLDIR)share/verilator/include \
+    $(TOOLDIR)share/verilator/include/vltstd \
+    /usr/share/verilator/include \
+    /usr/share/verilator/include/vltstd \
+    /usr/local/share/verilator/include \
+    /usr/local/share/verilator/include/vltstd \
+    /opt/verilator/share/verilator/include \
+    /opt/verilator/share/verilator/include/vltstd \
+    $(HOME)/verilator/include \
+    $(HOME)/verilator/include/vltstd
+    
+  # Find first valid include path
+  VERILATOR_INCLUDE := $(firstword $(foreach dir,$(VERILATOR_INCLUDE_PATHS),$(if $(wildcard $(dir)/svdpi.h),$(dir),)))
+  
+  # If include path not found, provide error messages
+  ifeq ($(VERILATOR_INCLUDE),)
+    $(warning WARNING: Could not find Verilator include directory with svdpi.h)
+    $(warning Searched in: $(VERILATOR_INCLUDE_PATHS))
+    $(warning You can manually specify it using: make build-csr-test INCLUDES="-I/path/to/verilator/include -I./env -I./rst_driver -I./reg_driver -I./model")
+    $(warning Or set VERILATOR_ROOT environment variable pointing to your Verilator installation)
+    VERILATOR_INCLUDE = # Leave empty or set a default fallback path if applicable
+  endif
+endif
+
+# Add appropriate includes based on tool
 ifeq ($(TOOL),vcs)
   INCLUDES += -I$(TOOLDIR)include
-else
-  INCLUDES += -I$(TOOLDIR)share/verilator/include/vltstd
+else ifeq ($(TOOL),verilator)
+  ifdef VERILATOR_INCLUDE
+    INCLUDES += -I$(VERILATOR_INCLUDE) -I$(VERILATOR_INCLUDE)/vltstd
+  endif
 endif
 
 .PHONY: all clean
