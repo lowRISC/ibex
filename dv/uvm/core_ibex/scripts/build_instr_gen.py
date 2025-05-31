@@ -44,6 +44,8 @@ def _main() -> int:
              '--end_signature_addr', md.signature_addr])]
 
     retcode = run_one(md.verbose, md.riscvdv_build_cmds[0], redirect_stdstreams=md.riscvdv_build_stdout)
+    if retcode:
+        logger.warning(f"WARNING: Saw non-zero retcode while building instr_gen : logfile -> {md.riscvdv_build_stdout}")
 
     return retcode
 

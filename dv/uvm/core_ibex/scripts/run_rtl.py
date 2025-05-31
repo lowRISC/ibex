@@ -31,6 +31,9 @@ def _main() -> int:
     md = RegressionMetadata.construct_from_metadata_dir(args.dir_metadata)
     trr = TestRunResult.construct_from_metadata_dir(args.dir_metadata, f"{tds[0]}.{tds[1]}")
 
+    if md.verbose:
+        logger.setLevel(logging.INFO)
+
     if (trr.testtype == TestType.RISCVDV):
         testopts = get_test_entry(trr.testname, md.ibex_riscvdv_testlist)
     elif (trr.testtype == TestType.DIRECTED):
@@ -62,6 +65,7 @@ def _main() -> int:
         'seed': str(trr.seed),
         'binary': trr.binary,
         'test_dir': trr.dir_test,
+        'SIM_DIR': trr.dir_test, # Read by 'dv/uvm/core_ibex/vcs.tcl'
         'tb_dir': md.dir_tb,
         'dir_shared_cov': md.dir_shared_cov,
         'rtl_sim_log': trr.rtl_log,
@@ -99,12 +103,15 @@ def _main() -> int:
 
         try:
             for cmd in trr.rtl_cmds:
-                # Note that we don't capture the success or failure of the subprocess:
                 sim_fd.write(f"Running run-rtl command :\n{' '.join(cmd)}\n".encode())
-                run_one(md.verbose, cmd,
-                        redirect_stdstreams=sim_fd,
-                        timeout_s=md.run_rtl_timeout_s+60,  # Ideally we time-out inside the simulation
-                        reraise=True)  # Allow us to catch timeout exceptions at this level
+                retcode = run_one(md.verbose, cmd,
+                                  redirect_stdstreams=sim_fd,
+                                  timeout_s=md.run_rtl_timeout_s+60,  # Ideally we time-out inside the simulation
+                                  reraise=True)  # Allow us to catch timeout exceptions at this level
+                # Note that we don't bail out if the retcode is not 0, this may just be a test-failure
+                # we wish to capture.
+                if retcode:
+                    logger.warning(f"WARNING: Saw non-zero retcode while running simulation command : logfile -> {trr.rtl_stdout}")
         except subprocess.TimeoutExpired:
             trr.failure_mode = Failure_Modes.TIMEOUT
             trr.failure_message = "[FAILURE] Simulation process killed due to timeout " \

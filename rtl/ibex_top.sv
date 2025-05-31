@@ -24,7 +24,7 @@ module ibex_top import ibex_pkg::*; #(
   parameter bit                     RV32E                        = 1'b0,
   parameter rv32m_e                 RV32M                        = RV32MFast,
   parameter rv32b_e                 RV32B                        = RV32BNone,
-  parameter regfile_e               RegFile                      = RegFileFF,
+  parameter regfile_e               RegFile                      = RegFileLatch,
   parameter bit                     BranchTargetALU              = 1'b0,
   parameter bit                     WritebackStage               = 1'b0,
   parameter bit                     ICache                       = 1'b0,
