@@ -48,46 +48,34 @@ module ibex_register_file_ff #(
   localparam int unsigned NUM_WORDS  = 2**ADDR_WIDTH;
 
   logic [DataWidth-1:0] rf_reg   [NUM_WORDS];
-  logic [NUM_WORDS-1:0] we_a_dec;
 
+  // Encode we_a/raddr_a/raddr_b into one-hot encoded signals
+  logic [NUM_WORDS-1:0] raddr_onehot_a, raddr_onehot_b, we_onehot_a;
+
+  // One-hot encoding error signals
   logic oh_raddr_a_err, oh_raddr_b_err, oh_we_err;
 
-  always_comb begin : we_a_decoder
-    for (int unsigned i = 0; i < NUM_WORDS; i++) begin
-      we_a_dec[i] = (waddr_a_i == 5'(i)) ? we_a_i : 1'b0;
-    end
-  end
-
-  // SEC_CM: DATA_REG_SW.GLITCH_DETECT
-  // This checks for spurious WE strobes on the regfile.
-  if (WrenCheck) begin : gen_wren_check
-    // Buffer the decoded write enable bits so that the checker
-    // is not optimized into the address decoding logic.
-    logic [NUM_WORDS-1:0] we_a_dec_buf;
-    prim_buf #(
-      .Width(NUM_WORDS)
-    ) u_prim_buf (
-      .in_i(we_a_dec),
-      .out_o(we_a_dec_buf)
-    );
-
-    prim_onehot_check #(
-      .AddrWidth(ADDR_WIDTH),
-      .AddrCheck(1),
-      .EnableCheck(1)
-    ) u_prim_onehot_check (
-      .clk_i,
-      .rst_ni,
-      .oh_i(we_a_dec_buf),
-      .addr_i(waddr_a_i),
-      .en_i(we_a_i),
-      .err_o(oh_we_err)
-    );
-  end else begin : gen_no_wren_check
-    logic unused_strobe;
-    assign unused_strobe = we_a_dec[0]; // this is never read from in this case
-    assign oh_we_err = 1'b0;
-  end
+  // Common security functionality
+  ibex_register_file_common #(
+    .AddrWidth(ADDR_WIDTH),
+    .NumWords(NUM_WORDS),
+    .WrenCheck(WrenCheck),
+    .RdataMuxCheck(RdataMuxCheck)
+  ) security_module (
+    .clk_i,
+    .rst_ni,
+    .raddr_a_i,
+    .raddr_onehot_a,
+    .oh_raddr_a_err,
+    .raddr_b_i,
+    .raddr_onehot_b,
+    .oh_raddr_b_err,
+    .waddr_a_i,
+    .we_a_i,
+    .we_onehot_a,
+    .oh_we_err,
+    .err_o
+  );
 
   // No flops for R0 as it's hard-wired to 0
   for (genvar i = 1; i < NUM_WORDS; i++) begin : g_rf_flops
@@ -96,7 +84,7 @@ module ibex_register_file_ff #(
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
         rf_reg_q <= WordZeroVal;
-      end else if (we_a_dec[i]) begin
+      end else if (we_onehot_a[i]) begin
         rf_reg_q <= wdata_a_i;
       end
     end
@@ -134,75 +122,6 @@ module ibex_register_file_ff #(
   end
 
   if (RdataMuxCheck) begin : gen_rdata_mux_check
-    // Encode raddr_a/b into one-hot encoded signals.
-    logic [NUM_WORDS-1:0] raddr_onehot_a, raddr_onehot_b;
-    logic [NUM_WORDS-1:0] raddr_onehot_a_buf, raddr_onehot_b_buf;
-    prim_onehot_enc #(
-      .OneHotWidth(NUM_WORDS)
-    ) u_prim_onehot_enc_raddr_a (
-      .in_i  (raddr_a_i),
-      .en_i  (1'b1),
-      .out_o (raddr_onehot_a)
-    );
-
-    prim_onehot_enc #(
-      .OneHotWidth(NUM_WORDS)
-    ) u_prim_onehot_enc_raddr_b (
-      .in_i  (raddr_b_i),
-      .en_i  (1'b1),
-      .out_o (raddr_onehot_b)
-    );
-
-    // Buffer the one-hot encoded signals so that the checkers
-    // are not optimized.
-    prim_buf #(
-      .Width(NUM_WORDS)
-    ) u_prim_buf_raddr_a (
-      .in_i (raddr_onehot_a),
-      .out_o(raddr_onehot_a_buf)
-    );
-
-    prim_buf #(
-      .Width(NUM_WORDS)
-    ) u_prim_buf_raddr_b (
-      .in_i (raddr_onehot_b),
-      .out_o(raddr_onehot_b_buf)
-    );
-
-    // SEC_CM: DATA_REG_SW.GLITCH_DETECT
-    // Check the one-hot encoded signals for glitches.
-    prim_onehot_check #(
-      .AddrWidth(ADDR_WIDTH),
-      .OneHotWidth(NUM_WORDS),
-      .AddrCheck(1),
-      // When AddrCheck=1 also EnableCheck needs to be 1.
-      .EnableCheck(1)
-    ) u_prim_onehot_check_raddr_a (
-      .clk_i,
-      .rst_ni,
-      .oh_i   (raddr_onehot_a_buf),
-      .addr_i (raddr_a_i),
-      // Set enable=1 as address is always valid.
-      .en_i   (1'b1),
-      .err_o  (oh_raddr_a_err)
-    );
-
-    prim_onehot_check #(
-      .AddrWidth(ADDR_WIDTH),
-      .OneHotWidth(NUM_WORDS),
-      .AddrCheck(1),
-      // When AddrCheck=1 also EnableCheck needs to be 1.
-      .EnableCheck(1)
-    ) u_prim_onehot_check_raddr_b (
-      .clk_i,
-      .rst_ni,
-      .oh_i   (raddr_onehot_b_buf),
-      .addr_i (raddr_b_i),
-      // Set enable=1 as address is always valid.
-      .en_i   (1'b1),
-      .err_o  (oh_raddr_b_err)
-    );
-
     // MUX register to rdata_a/b_o according to raddr_a/b_onehot.
     prim_onehot_mux  #(
       .Width(DataWidth),
@@ -228,14 +147,21 @@ module ibex_register_file_ff #(
   end else begin : gen_no_rdata_mux_check
     assign rdata_a_o = rf_reg[raddr_a_i];
     assign rdata_b_o = rf_reg[raddr_b_i];
-    assign oh_raddr_a_err = 1'b0;
-    assign oh_raddr_b_err = 1'b0;
-  end
 
-  assign err_o = oh_raddr_a_err || oh_raddr_b_err || oh_we_err;
+    logic unused_raddr_onehot, unused_oh_raddr_err;
+    assign unused_raddr_onehot = ^{raddr_onehot_a, raddr_onehot_b};
+    assign unused_oh_raddr_err = ^{oh_raddr_a_err, oh_raddr_b_err};
+  end
 
   // Signal not used in FF register file
   logic unused_test_en;
   assign unused_test_en = test_en_i;
+
+  if (WrenCheck) begin : gen_wren_check
+  end else begin : gen_no_wren_check
+    logic unused_strobe, unused_oh_we_err;
+    assign unused_strobe = we_onehot_a[0];  // this is never read from in this case
+    assign unused_oh_we_err = oh_we_err;  // this is never read from in this case
+  end
 
 endmodule
