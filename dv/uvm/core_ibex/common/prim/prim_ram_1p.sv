@@ -12,10 +12,10 @@ module prim_ram_1p import prim_ram_1p_pkg::*;
 
 #(
 
-  parameter  int Width           = 32, // bit
-  parameter  int Depth           = 128,
-  parameter  int DataBitsPerMask = 1, // Number of data bits per bit of write mask
-  parameter      MemInitFile     = "", // VMEM file to initialize the memory width
+  parameter    int Width           = 32, // bit
+  parameter    int Depth           = 128,
+  parameter    int DataBitsPerMask = 1,  // Number of data bits per bit of write mask
+  parameter string MemInitFile     = "", // VMEM file to initialize the memory width
 
   localparam int Aw              = $clog2(Depth)  // derived parameter
 

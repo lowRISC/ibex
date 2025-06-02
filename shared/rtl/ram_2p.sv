@@ -9,8 +9,8 @@
 `include "prim_assert.sv"
 
 module ram_2p #(
-    parameter int Depth       = 128,
-    parameter     MemInitFile = ""
+    parameter int    Depth       = 128,
+    parameter string MemInitFile = ""
 ) (
     input               clk_i,
     input               rst_ni,

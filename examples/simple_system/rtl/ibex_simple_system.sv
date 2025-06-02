@@ -52,7 +52,7 @@ module ibex_simple_system (
   parameter bit                 DbgTriggerEn             = 1'b0;
   parameter bit                 ICacheECC                = 1'b0;
   parameter bit                 BranchPredictor          = 1'b0;
-  parameter                     SRAMInitFile             = "";
+  parameter string              SRAMInitFile             = "";
 
   logic clk_sys = 1'b0, rst_sys_n;
 
