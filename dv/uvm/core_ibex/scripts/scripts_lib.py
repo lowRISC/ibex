@@ -10,16 +10,29 @@ import sys
 import pickle
 import yaml
 import pathlib3x as pathlib
-from io import IOBase
+import io
+from io import IOBase, TextIOBase, BufferedIOBase
 from typing import Dict, TextIO, Optional, Union, List
 from typing_utils import get_args
 import dataclasses
 from typeguard import typechecked
+from textwrap import dedent
 
 
 import logging
 logger = logging.getLogger(__name__)
 
+
+def write_str(dest: IOBase, mystr: str) -> None:
+    """Write string to IO destination, taking encoding of the destination into account."""
+    if issubclass(type(dest), io.TextIOBase):
+        # We opened as text, so no need to encode the string
+        dest.write(mystr)
+    elif issubclass(type(dest), (io.RawIOBase, io.BufferedIOBase)):
+        # We opened in binary mode, so need to encode the string
+        dest.write(mystr.encode())
+    else:
+        logger.error("Failure to determine 'dest' type!")
 
 @typechecked
 def run_one(verbose: bool,
@@ -43,37 +56,64 @@ def run_one(verbose: bool,
 
     if redirect_stdstreams is not None:
         if redirect_stdstreams == '/dev/null':
+            # If this string is passed, we should discard all stdstream outputs.
             stdstream_dest = subprocess.DEVNULL
         elif isinstance(redirect_stdstreams, pathlib.Path):
+            # We've been passed a filepath where to direct the logs.
+            # This file should not already exist. We need to open it
+            # in binary-mode.
             stdstream_dest = open(redirect_stdstreams, 'wb')
             needs_closing = True
         elif isinstance(redirect_stdstreams, IOBase):
+            # We've been passed an already-open handle to an IO object.
+            # If there is any outstanding, unflushed output pending, flush
+            # it before continuing. This ensures this previous output is
+            # placed at the top of the file.
             stdstream_dest = redirect_stdstreams
+            stdstream_dest.flush()
         else:
             raise RuntimeError(
-                f"redirect_stdstream called as {redirect_stdstreams} "
+                f"'redirect_stdstreams' given as {redirect_stdstreams} "
                 f"but that argument is invalid.")
 
-    cmd_str = ' '.join(shlex.quote(w) for w in cmd)
+
+    # If verbose, print the command before running it (the equivalent of bash -x)
     if verbose:
-        # The equivalent of bash -x
+        cmd_str = ' '.join(shlex.quote(w) for w in cmd)
+
+        # If we are redirecting the stdstreams, print out the command with a shell
+        # redirection at the end to help the reader understand where the outputs may
+        # be located. The commands are not invoked in this way, but equivalently using
+        # subprocess.run's arguments 'stdout' and 'stderr' to direct the output.
         if redirect_stdstreams is not None:
-            if isinstance(redirect_stdstreams, str):
-                redir = f'>{shlex.quote(redirect_stdstreams)}'
+            if stdstream_dest == subprocess.DEVNULL:
+                redir = f'>/dev/null'
+            elif issubclass(type(redirect_stdstreams), io.StringIO):
+                # We are redirecting to an in-memory buffer, so printing a redirection
+                # is not applicable.
+                redir = ""
             else:
                 redir = f'>>{shlex.quote(redirect_stdstreams.name)}'
+            # Append the equivalent shell redirection to the command string.
             cmd_str = f'{cmd_str} {redir} 2>&1'
 
-        print('+ ' + cmd_str, file=sys.stderr)
+        cmd_str = f"+ {cmd_str}"
 
-        # Try to print the command to the file as well. This will fail if it's
-        # a binary file: ignore the failure.
-        if stdstream_dest:
-            try:
-                print('+ ' + cmd_str, file=stdstream_dest)
-            except (TypeError, AttributeError):
-                pass
+        # Print the command we are about to run to stderr
+        print((cmd_str + '\n'), file=sys.stderr)
 
+        # Print the command to the redirected location as well.
+        if redirect_stdstreams is not None:
+            mystr = dedent(f"""\
+            #-----------#
+            {cmd_str}
+            #-----------#
+            """)
+            write_str(stdstream_dest, mystr)
+            stdstream_dest.flush()
+
+
+    # Run the command
     try:
         # Passing close_fds=False ensures that if cmd is a call to Make then
         # we'll pass through the jobserver fds. If you don't do this, you get a
@@ -84,6 +124,14 @@ def run_one(verbose: bool,
                             close_fds=False,
                             timeout=timeout_s,
                             env=env)
+        stdstream_dest.flush()
+        mystr = dedent(f"""\
+        #-----------#
+          Retcode:{ps.returncode}
+        #-----------#
+        """)
+        write_str(stdstream_dest, mystr)
+        stdstream_dest.flush()
         return ps.returncode
     except subprocess.CalledProcessError:
         print(ps.communicate()[0])
@@ -93,7 +141,7 @@ def run_one(verbose: bool,
         # print(ps.communicate()[0])
         return(1)
     except subprocess.TimeoutExpired as e:
-        print("Error: Timeout[{}s]: {}".format(timeout_s, cmd_str))
+        print("Error: Timeout[{}s]: {}".format(timeout_s, cmd))
         if reraise:
             raise e
         else:

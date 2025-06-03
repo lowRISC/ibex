@@ -2,25 +2,20 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 {
-  description = "Nix Flake for Ibex development and testing.";
+  description = "Environment for developing and simulating the ibex core.";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-24.05";
+
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
 
-    poetry2nix = {
-      url = "github:nix-community/poetry2nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
-    };
     mkshell-minimal.url = "github:viperML/mkshell-minimal";
 
-    lowrisc-nix = {
-      url = "github:lowrisc/lowrisc-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
-    };
+    # The input 'lowrisc-nix' contains some common dependencies that can be used
+    # by lowRISC projects. There is also an associated public binary cache.
+    lowrisc-nix.url = "github:lowrisc/lowrisc-nix";
 
+    # Deps for the dv/formal flow
     psgen = {
       url = "github:mndstrmr/psgen";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -32,6 +27,34 @@
     };
     lowrisc_sail_riscv = {
       url = "github:lowrisc/sail-riscv?ref=81a266b6f65365b34180af7b91708265da653878";
+      flake = false;
+    };
+
+    # The input 'lowrisc-nix-private' is access-controlled.
+    # Outputs which depend on this input are for internal use only, and will fail
+    # to evaluate without the appropriate credentials.
+    # All outputs which depend on this input are suffixed '_lowrisc'
+    lowrisc-nix-private.url = "git+ssh://git@github.com/lowRISC/lowrisc-nix-private.git";
+    lowrisc-nix-private.inputs.nixpkgs.follows = "nixpkgs";
+
+    pyproject-nix.url = "github:pyproject-nix/pyproject.nix";
+    pyproject-build-systems = {
+      url = "github:pyproject-nix/build-system-pkgs";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.uv2nix.follows = "uv2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    uv2nix = {
+      url = "github:pyproject-nix/uv2nix";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    uv2nix_hammer_overrides.url = "github:TyberiusPrime/uv2nix_hammer_overrides";
+    uv2nix_hammer_overrides.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Deps for synthesis flows
+    sv2v = {
+      url = "github:zachjs/sv2v";
       flake = false;
     };
   };
@@ -55,10 +78,67 @@
 
         pkgs = import inputs.nixpkgs {
           inherit system;
+          config = {
+            allowUnfree = true;
+            allowBroken = true; # sv2v marked as broken.
+          };
         };
         inherit (pkgs) lib;
 
+        # This import creates internal-use only outputs, which build on
+        # input attributes that cannot be fetched without appropriate credentials.
+        lr = import ./nix/lowrisc.nix {
+          inherit inputs pkgs system;
+          extraDependencies = sim_shared_lib_deps;
+        };
+
         mkshell-minimal = inputs.mkshell-minimal pkgs;
+
+        ################
+        # DEPENDENCIES #
+        ################
+
+        # Python environment, as defined in ./nix/pythonEnv/pyproject.toml
+        pythonEnv = import ./nix/pythonEnv {inherit inputs pkgs;};
+
+        # lowRISC fork of Spike used as a cosimulation model for Ibex Verification
+        spike = inputs.lowrisc-nix.packages.${system}.spike-ibex-cosim;
+
+        # Currently we don't build the riscv-toolchain from src, we use a github release
+        # See https://github.com/lowRISC/lowrisc-nix/blob/main/pkgs/lowrisc-toolchain-gcc-rv32imcb.nix
+        rv32imcb_toolchain = inputs.lowrisc-nix.packages.${system}.lowrisc-toolchain-gcc-rv32imcb;
+
+        ibex_runtime_deps = with pkgs; [
+          libelf # Used in DPI code
+          zlib # Verilator run-time dep
+        ];
+
+        sim_shared_lib_deps = with pkgs; [
+          elfutils
+          openssl
+        ];
+
+        ibex_project_deps =
+          [
+            pythonEnv
+            spike
+            rv32imcb_toolchain
+          ] ++
+          sim_shared_lib_deps ++
+          (with pkgs; [
+            # Tools
+            cmake
+            pkg-config
+
+            # Applications
+            verilator
+            gtkwave
+
+            # Libraries
+            srecord
+          ]);
+
+        ibex_syn = import ./nix/syn.nix {inherit inputs pkgs;};
 
         # lowRISC fork of the Sail repository. The SAIL -> SV flow is used to generate the reference model.
         lowrisc_sail = import ./nix/lowrisc_sail.nix {
@@ -71,6 +151,49 @@
           inherit pkgs;
           src = inputs.lowrisc_sail_riscv;
         }).src;
+
+
+        ################
+        # ENVIRONMENTS #
+        ################
+
+        # These exports are required by scripts within the Ibex DV flow.
+        ibex_profile_common = ''
+          export SPIKE_PATH=${spike}/bin
+
+          export RISCV_TOOLCHAIN=${rv32imcb_toolchain}
+          export RISCV_GCC=${rv32imcb_toolchain}/bin/riscv32-unknown-elf-gcc
+          export RISCV_OBJCOPY=${rv32imcb_toolchain}/bin/riscv32-unknown-elf-objcopy
+        '';
+
+        shell = pkgs.lib.makeOverridable pkgs.mkShell {
+          name = "ibex-devshell";
+          buildInputs = ibex_runtime_deps;
+          nativeBuildInputs = ibex_project_deps;
+          shellHook = ''
+            # Unset these environment variables provided by stdenv, as the SS makefiles will not
+            # be able to discover the riscv toolchain versions otherwise.
+            unset CC OBJCOPY OBJDUMP
+
+            ${ibex_profile_common}
+          '';
+        };
+
+        syn_shell = shell.override (prev: {
+          name = "ibex-devshell-synthesis";
+          nativeBuildInputs = prev.nativeBuildInputs ++ ibex_syn.deps;
+          shellHook = prev.shellHook + ibex_syn.profile;
+        });
+
+        # This shell uses mkShellNoCC as the stdenv CC can interfere with EDA tools.
+        eda_shell = pkgs.lib.makeOverridable pkgs.mkShellNoCC {
+          name = "ibex-devshell-eda";
+          buildInputs = ibex_runtime_deps;
+          nativeBuildInputs = ibex_project_deps;
+          shellHook = ''
+            ${ibex_profile_common}
+          '';
+        };
 
         # Create a python package set suitable for the formal flow
         # - The file dv/formal/pyproject.toml defines the package set for this environment
@@ -96,6 +219,9 @@
             inherit lowrisc_sail;
           };
           devShells = rec {
+            inherit shell;
+            inherit syn_shell;
+            inherit eda_shell;
             formal = mkshell-minimal {
               packages = [
                 inputs.psgen.packages.${system}.default
@@ -140,7 +266,7 @@
                 EOF
               '';
             });
-          };
+          } // lr.devShells;
         }
     );
 }
