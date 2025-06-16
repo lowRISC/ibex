@@ -51,6 +51,7 @@ def get_riscvdv_compile_cmds(md: RegressionMetadata, trr: TestRunResult) -> List
                          cmd=trr.compile_asm_gen_cmds[0],
                          redirect_stdstreams=trr.compile_asm_gen_log)
         if dv_ret:
+            logger.warning(f"WARNING: Saw non-zero retcode while compiling test : logfile -> {trr.compile_asm_gen_log}")
             return dv_ret
 
         orig_cmds = []
