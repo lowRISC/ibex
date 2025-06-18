@@ -143,7 +143,7 @@
           +acc+rwb
           -f <core_ibex>/ibex_dv.f
           -l <tb_build_log>
-          -suppress EnumMustBePositive"
+          -suppress EnumMustBePositive
   sim:
     cmd:
       - >-
