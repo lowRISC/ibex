@@ -358,7 +358,7 @@ class core_ibex_base_test extends uvm_test;
 
 
   virtual task wait_for_mem_txn(
-    input bit [ibex_mem_intf_pkg:ADDR_WIDTH-1:0] ref_addr,
+    input bit [ibex_mem_intf_pkg::ADDR_WIDTH-1:0] ref_addr,
     input signature_type_t ref_type,
     input uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item) txn_port = item_collected_port
     );
