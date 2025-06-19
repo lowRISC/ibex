@@ -127,7 +127,7 @@
 
 ############################################################
 - tool: dsim
-  env_var: DSIM,DSIM_LIB_PATH
+  env_var: DSIM,DSIM_LIB_PATH,IBEX_ROOT
   compile:
     cmd:
       - >-
@@ -144,6 +144,11 @@
           -f <core_ibex>/ibex_dv.f
           -l <tb_build_log>
           -suppress EnumMustBePositive
+          <cosim_opts>
+    cosim_opts: >-
+      -f <core_ibex>/ibex_dv_cosim_dpi.f
+      -ld-opts '<ISS_LDFLAGS> <ISS_LIBS> -lstdc++'
+      -c-opts '<ISS_CFLAGS> <ISS_LIBS> -lstdc++ -I<IBEX_ROOT>/dv/cosim'
   sim:
     cmd:
       - >-
