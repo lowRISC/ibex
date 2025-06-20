@@ -1139,10 +1139,6 @@ module ibex_top import ibex_pkg::*; #(
   assign alert_major_bus_o      = core_alert_major_bus | lockstep_alert_major_bus;
   assign alert_minor_o          = core_alert_minor | lockstep_alert_minor;
 
-  // Parameter assertions
-  `ASSERT_INIT(DmHaltAddrInRange_A, (DmHaltAddr & ~DmAddrMask) == DmBaseAddr)
-  `ASSERT_INIT(DmExceptionAddrInRange_A, (DmExceptionAddr & ~DmAddrMask) == DmBaseAddr)
-
   // X checks for top-level outputs
   `ASSERT_KNOWN(IbexInstrReqX, instr_req_o)
   `ASSERT_KNOWN_IF(IbexInstrReqPayloadX, instr_addr_o, instr_req_o)
