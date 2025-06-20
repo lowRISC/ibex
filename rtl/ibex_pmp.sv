@@ -41,6 +41,7 @@ module ibex_pmp #(
   logic [PMPNumChan-1:0][PMPNumRegions-1:0]   region_match_all;
   logic [PMPNumChan-1:0][PMPNumRegions-1:0]   region_basic_perm_check;
   logic [PMPNumChan-1:0][PMPNumRegions-1:0]   region_perm_check;
+  logic [PMPNumChan-1:0]                      access_fault_check_res;
   logic [PMPNumChan-1:0]                      debug_mode_allowed_access;
 
   ///////////////////////
@@ -241,14 +242,14 @@ module ibex_pmp #(
 
     // Once the permission checks of the regions are done, decide if the access is
     // denied by figuring out the matching region and its permission check.
-    // No error is raised if the access is allowed as Debug Module access (first term).
-    assign pmp_req_err_o[c] = ~debug_mode_allowed_access[c] &
-                              access_fault_check(csr_pmp_mseccfg_i.mmwp,
-                                                 csr_pmp_mseccfg_i.mml,
-                                                 pmp_req_type_i[c],
-                                                 region_match_all[c],
-                                                 priv_mode_i[c],
-                                                 region_perm_check[c]);
+    assign access_fault_check_res[c] = access_fault_check(csr_pmp_mseccfg_i.mmwp,
+                                                          csr_pmp_mseccfg_i.mml,
+                                                          pmp_req_type_i[c],
+                                                          region_match_all[c],
+                                                          priv_mode_i[c],
+                                                          region_perm_check[c]);
+    // Debug Module accesses in Debug Mode are always allowed.
+    assign pmp_req_err_o[c] = ~debug_mode_allowed_access[c] & access_fault_check_res[c];
 
     // Access fails check against one region but access allowed due to another higher-priority
     // region.
