@@ -1052,8 +1052,8 @@ bool SpikeCosim::pc_is_debug_ebreak(uint32_t pc) {
   // ebreak debug entry is controlled by the ebreakm (bit 15) and ebreaku (bit
   // 12) fields of DCSR. If the appropriate bit of the current privlege level
   // isn't set ebreak won't enter debug so return false.
-  if ((processor->get_state()->prv == PRV_M) && ((dcsr & 0x1000) == 0) ||
-      (processor->get_state()->prv == PRV_U) && ((dcsr & 0x8000) == 0)) {
+  if (((processor->get_state()->prv == PRV_M) && ((dcsr & 0x1000) == 0)) ||
+      ((processor->get_state()->prv == PRV_U) && ((dcsr & 0x8000) == 0))) {
     return false;
   }
 
