@@ -191,7 +191,7 @@ module core_ibex_tb_top;
 
   // Data load/store vif connection
   assign data_mem_vif.reset = ~rst_n;
-  // Instruction fetch vif connnection
+  // Instruction fetch vif connection
   assign instr_mem_vif.reset = ~rst_n;
   assign instr_mem_vif.we    = 0;
   assign instr_mem_vif.be    = 0;
@@ -368,13 +368,13 @@ module core_ibex_tb_top;
           unused_assert_connected = 1;
   end
 
-  // Disable the assertion for onhot check in case WrenCheck (set by SecureIbex) is enabled.
+  // Disable the assertion for onehot check in case WrenCheck (set by SecureIbex) is enabled.
   if (SecureIbex) begin : gen_disable_onehot_check
     assign dut.u_ibex_top.gen_regfile_ff.register_file_i.gen_wren_check.u_prim_onehot_check.
           unused_assert_connected = 1;
   end
 
-  // Disable the assertion for onhot check in case RdataMuxCheck (set by SecureIbex) is enabled.
+  // Disable the assertion for onehot check in case RdataMuxCheck (set by SecureIbex) is enabled.
   if (SecureIbex) begin : gen_disable_rdata_mux_check
     assign dut.u_ibex_top.gen_regfile_ff.register_file_i.gen_rdata_mux_check.
           u_prim_onehot_check_raddr_a.unused_assert_connected = 1;

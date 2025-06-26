@@ -112,7 +112,7 @@ class ibex_asm_program_gen extends riscv_asm_program_gen;
   endfunction
 
   // Re-define gen_test_done() to override the base-class with an empty implementation.
-  // Then, our own overrided gen_program() can append new test_done code.
+  // Then, our own overriding gen_program() can append new test_done code.
   virtual function void gen_test_done();
     // empty
   endfunction

@@ -80,7 +80,7 @@ module top import ibex_pkg::*; #(
   input  logic                         irq_timer_i,
   input  logic                         irq_external_i,
   input  logic [14:0]                  irq_fast_i,
-  input  logic                         irq_nm_i,       // non-maskeable interrupt
+  input  logic                         irq_nm_i,       // non-maskable interrupt
 
   // Scrambling Interface
   input  logic                         scramble_key_valid_i,
@@ -435,7 +435,7 @@ assign ex_is_checkable_csr = ~(
 `undef INSTR
 `define INSTR wbexc_decompressed_instr
 
-// Illegal instructions arent checkable unless the relevant specifications are present.
+// Illegal instructions aren't checkable unless the relevant specifications are present.
 logic can_check_illegal;
 assign can_check_illegal = `SPEC_ILLEGAL & `SPEC_CSR & `SPEC_MRET & `SPEC_WFI;
 

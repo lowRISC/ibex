@@ -107,10 +107,10 @@ int kernel_stack_len = 5000;
 int kernel_program_instr_cnt = 400;
 
 // ----------------------------------------------------------------------------
-// Previleged CSR implementation
+// Privileged CSR implementation
 // ----------------------------------------------------------------------------
 
-// Implemented previlieged CSR list
+// Implemented privileged CSR list
 // TODO: Bring back commented out CSRs, these are currently removed as they can
 // cause co-sim mismatches. These must be investigated and fixed
 const privileged_reg_t implemented_csr[] = {

@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 def _get_iss_pkgconfig_flags(specifiers: List[str], iss_pc: List[str], simulator: str) -> str:
     all_tokens = []
 
-    # Seperate pkg-config calls for each specifier as combining them has been
+    # Separate pkg-config calls for each specifier as combining them has been
     # observed misbehaving on CentOS 7
     # Generate a list of tokens for each call, and append it to the all_tokens variable
     for s in specifiers:

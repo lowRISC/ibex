@@ -51,7 +51,7 @@ class ibex_breakpoint_stream extends riscv_directed_instr_stream;
     la_instr.rd                = cfg.gpr[1];
 
     // Create the ebreak insn which will cause us to enter debug mode, and run the
-    // special code in the debugrom.
+    // special code in the debug ROM.
     ebreak_insn = riscv_instr::get_instr(EBREAK);
 
     // Add the instructions into the stream.
