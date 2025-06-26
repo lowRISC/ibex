@@ -133,7 +133,7 @@ void stop_time(void) {
 
         Actual value returned may be cpu cycles, milliseconds or any other
    value, as long as it can be converted to seconds by <time_in_secs>. This
-   methodology is taken to accomodate any hardware or simulated platform. The
+   methodology is taken to accommodate any hardware or simulated platform. The
    sample implementation returns millisecs by default, and the resolution is
    controlled by <TIMER_RES_DIVIDER>
 */
@@ -144,7 +144,7 @@ CORE_TICKS get_time(void) {
 /* Function : time_in_secs
         Convert the value returned by get_time to seconds.
 
-        The <secs_ret> type is used to accomodate systems with no support for
+        The <secs_ret> type is used to accommodate systems with no support for
    floating point. Default implementation implemented by the EE_TICKS_PER_SEC
    macro above.
 */
