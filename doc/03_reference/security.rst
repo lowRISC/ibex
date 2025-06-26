@@ -61,7 +61,7 @@ Other values of **dummy_instr_mask** are legal, but will have a less predictable
 
 The interval between instruction insertion is randomized in the core using an LFSR.
 The initial seed and output permutation for this LFSR can be set using parameters from the top-level of Ibex.
-Sofware can periodically re-seed this LFSR with true random numbers (if available) via the **secureseed** CSR.
+Software can periodically re-seed this LFSR with true random numbers (if available) via the **secureseed** CSR.
 This will make the insertion interval of dummy instructions much harder for an attacker to predict.
 
 Note that the dummy instruction feature inserts multiply and divide instructions.
