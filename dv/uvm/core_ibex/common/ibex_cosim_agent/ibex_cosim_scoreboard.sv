@@ -347,7 +347,7 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
   endfunction : final_phase
 
   // If the UVM_EXIT action is triggered (such as by reaching max_quit_count), this callback is run.
-  // This ensures proper cleanup, such as commiting the logfile to disk.
+  // This ensures proper cleanup, such as committing the logfile to disk.
   function void pre_abort();
     cleanup_cosim();
   endfunction

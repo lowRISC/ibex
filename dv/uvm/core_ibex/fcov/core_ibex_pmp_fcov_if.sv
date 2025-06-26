@@ -255,7 +255,7 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
                  csr_pmp_cfg[i_region].mode != PMP_MODE_OFF                                  &&
                  !(fcov_access_attempted_into_dm[PMP_I])) {
 
-            // Will never see a succesful exec access when execute is disallowed
+            // Will never see a successful exec access when execute is disallowed
             illegal_bins illegal_allow_exec =
               // Ensuring MML is low and we are not in a X allowed configuration
               (binsof(cp_region_priv_bits) intersect {NONE, R, W, WR, L, LR, LW, LWR} &&
@@ -313,7 +313,7 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
                  csr_pmp_cfg[i_region].mode != PMP_MODE_OFF                                   &&
                    !(fcov_access_attempted_into_dm[PMP_I2])) {
 
-          // Will never see a succesful exec access when execute is disallowed
+          // Will never see a successful exec access when execute is disallowed
           illegal_bins illegal_allow_exec =
             // Ensuring MML is low and we are not in a X allowed configuration
             (binsof(cp_region_priv_bits) intersect {NONE, R, W, WR, L, LR, LW, LWR} &&
@@ -371,7 +371,7 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
                  csr_pmp_cfg[i_region].mode != PMP_MODE_OFF                                  &&
                  !(fcov_access_attempted_into_dm[PMP_D])) {
 
-          // Will never see a succesful read access when read is disallowed
+          // Will never see a successful read access when read is disallowed
           illegal_bins illegal_allow_read =
             // Ensuring MML is low and we are not in a R allowed configuration
             (binsof(cp_region_priv_bits) intersect {NONE, W, X, XW, L, LW, LX, LXW} &&
@@ -415,7 +415,7 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
              binsof(cp_req_type_dside) intersect {PMP_ACC_READ} &&
              binsof(pmp_dside_req_err) intersect {1});
 
-          // Will never see a succesful write access when write is disallowed
+          // Will never see a successful write access when write is disallowed
           illegal_bins illegal_allow_write =
             // Ensuring MML is low and we are not in a W allowed configuration
             (binsof(cp_region_priv_bits) intersect {NONE, R, X, XR, L, LR, LX, LXR} &&
@@ -613,7 +613,7 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
       pmp_iside_nomatch_cross :
         cross cp_req_type_iside, cp_priv_lvl_iside, pmp_iside_req_err, cp_mmwp, cp_mml
           iff (pmp_iside_nomatch) {
-          // Will never see a succesful exec access when execute is disallowed
+          // Will never see a successful exec access when execute is disallowed
           illegal_bins illegal_user_allow_exec =
             // In User mode - no match case, we should always deny
             (binsof(cp_priv_lvl_iside) intersect {PRIV_LVL_U} &&
@@ -639,7 +639,7 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
       pmp_iside2_nomatch_cross :
         cross cp_req_type_iside2, cp_priv_lvl_iside2, pmp_iside2_req_err, cp_mmwp, cp_mml
           iff (pmp_iside2_nomatch) {
-          // Will never see a succesful exec access when execute is disallowed
+          // Will never see a successful exec access when execute is disallowed
           illegal_bins illegal_user_allow_exec =
             // In User mode - no match case, we should always deny
             (binsof(cp_priv_lvl_iside2) intersect {PRIV_LVL_U} &&
@@ -666,7 +666,7 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
         cross cp_req_type_dside, cp_priv_lvl_dside, pmp_dside_req_err, cp_mmwp, cp_mml
           iff (pmp_dside_nomatch) {
 
-          // Will never see a succesful write/read access when it should be denied
+          // Will never see a successful write/read access when it should be denied
           illegal_bins illegal_machine_allow_wr =
             // Deny WR when MMWP = 1 in Machine mode
             (binsof(cp_priv_lvl_dside) intersect {PRIV_LVL_M} &&
