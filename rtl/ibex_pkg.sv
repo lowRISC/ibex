@@ -388,7 +388,7 @@ package ibex_pkg;
   parameter int unsigned PMP_MAX_REGIONS      = 16;
   parameter int unsigned PMP_CFG_W            = 8;
 
-  // PMP acces type
+  // PMP access type
   parameter int unsigned PMP_I  = 0;
   parameter int unsigned PMP_I2 = 1;
   parameter int unsigned PMP_D  = 2;
@@ -624,7 +624,7 @@ package ibex_pkg;
   localparam logic [31:0] CSR_MARCHID_VALUE = {1'b0, 31'd22};
 
   // Machine Configuration Pointer
-  // 0 indicates the configuration data structure does not eixst. Ibex implementors may wish to
+  // 0 indicates the configuration data structure does not exist. Ibex implementers may wish to
   // alter this to point to their system specific configuration data structure.
   localparam logic [31:0] CSR_MCONFIGPTR_VALUE = 32'b0;
 
@@ -642,7 +642,7 @@ package ibex_pkg;
   parameter logic [SCRAMBLE_NONCE_W-1:0] RndCnstIbexNonceDefault =
       64'hf79780bc735f3843;
 
-  // Mult-bit signal used for security hardening. For non-secure implementation all bits other than
+  // Multi-bit signal used for security hardening. For non-secure implementation all bits other than
   // the bottom bit are ignored.
   parameter int IbexMuBiWidth = 4;
   typedef logic [IbexMuBiWidth-1:0] ibex_mubi_t;
@@ -680,7 +680,7 @@ package ibex_pkg;
     '{lock: 1'b0, mode: PMP_MODE_OFF, exec: 1'b0, write: 1'b0, read: 1'b0}  // region 15
   };
 
-  // Addresses are given in byte granularity for readibility. A minimum of two
+  // Addresses are given in byte granularity for readability. A minimum of two
   // bits will be stripped off the bottom (PMPGranularity == 0) with more stripped
   // off at coarser granularities.
   parameter logic [33:0] PmpAddrRst[16] = '{

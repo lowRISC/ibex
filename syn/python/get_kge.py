@@ -4,7 +4,7 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-# Parse a yosys area report and give a kGE equivalient
+# Parse a yosys area report and give a kGE equivalent
 
 import argparse
 

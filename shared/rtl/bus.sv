@@ -61,7 +61,7 @@ module bus #(
   logic [NumBitsHostSel-1:0] host_sel_req, host_sel_resp;
   logic [NumBitsDeviceSel-1:0] device_sel_req, device_sel_resp;
 
-  // Master select prio arbiter
+  // Master select priority arbiter
   always_comb begin
     host_sel_valid = 1'b0;
     host_sel_req = '0;
