@@ -71,7 +71,7 @@ module ibex_top_tracing import ibex_pkg::*; #(
   input  logic                         irq_timer_i,
   input  logic                         irq_external_i,
   input  logic [14:0]                  irq_fast_i,
-  input  logic                         irq_nm_i,       // non-maskeable interrupt
+  input  logic                         irq_nm_i,       // non-maskable interrupt
 
   // Scrambling Interface
   input  logic                         scramble_key_valid_i,

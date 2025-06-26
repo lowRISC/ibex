@@ -61,7 +61,7 @@ module simulator_ctrl #(
       rvalid_o <= 0;
       sim_finish <= 'b0;
     end else begin
-      // Immeditely respond to any request
+      // Immediately respond to any request
       rvalid_o <= req_i;
 
       if (req_i & we_i) begin

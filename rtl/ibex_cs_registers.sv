@@ -109,7 +109,7 @@ module ibex_cs_registers #(
   input  ibex_pkg::exc_cause_t csr_mcause_i,
   input  logic [31:0]          csr_mtval_i,
   output logic                 illegal_csr_insn_o,     // access to non-existent CSR,
-                                                        // with wrong priviledge level, or
+                                                        // with wrong privilege level, or
                                                         // missing write permissions
   output logic                 double_fault_seen_o,
   // Performance Counters
@@ -199,7 +199,7 @@ module ibex_cs_registers #(
   } dcsr_t;
 
   // Partial CPU control and status register fields
-  // ICache scramble key valid (ic_scr_key_valid) is registered seperately to this struct. This is
+  // ICache scramble key valid (ic_scr_key_valid) is registered separately to this struct. This is
   // because it is sampled from the top-level every cycle whilst the other fields only change
   // occasionally.
   typedef struct packed {
@@ -343,7 +343,7 @@ module ibex_cs_registers #(
       CSR_MIMPID: csr_rdata_int = CsrMimpId;
       // mhartid: unique hardware thread id
       CSR_MHARTID: csr_rdata_int = hart_id_i;
-      // mconfigptr: pointer to configuration data structre
+      // mconfigptr: pointer to configuration data structure
       CSR_MCONFIGPTR: csr_rdata_int = CSR_MCONFIGPTR_VALUE;
 
       // mstatus: always M-mode, contains IE bit
