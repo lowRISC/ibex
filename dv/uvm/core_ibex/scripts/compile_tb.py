@@ -137,6 +137,7 @@ def _main() -> int:
     # Write all compile-tb output into a single logfile
     with md.tb_build_stdout.open('wb') as compile_fd:
         for cmd in md.tb_build_cmds:
+            print(f"Running compile_tb command :\n{' '.join(cmd)}\n")
             compile_fd.write(f"Running compile_tb command :\n{' '.join(cmd)}\n".encode())
             retcode = run_one(md.verbose, cmd, redirect_stdstreams=compile_fd)
             if retcode:
