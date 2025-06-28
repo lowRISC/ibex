@@ -23,7 +23,7 @@ module ibex_ex_block #(
   input  logic                  alu_instr_first_cycle_i,
 
   // Branch Target ALU
-  // All of these signals are unusued when BranchTargetALU == 0
+  // All of these signals are unused when BranchTargetALU == 0
   input  logic [31:0]           bt_a_operand_i,
   input  logic [31:0]           bt_b_operand_i,
 
@@ -197,7 +197,7 @@ module ibex_ex_block #(
   assign ex_valid_o = multdiv_sel ? multdiv_valid : ~(|alu_imd_val_we);
 
 `ifdef INC_ASSERT
-  // This is intended to be accessed via hierarchal references so isn't output from this module nor
+  // This is intended to be accessed via hierarchical references so isn't output from this module nor
   // used in any logic in this module
   logic sva_multdiv_fsm_idle;
 

@@ -1860,7 +1860,7 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
     //
     // We don't terminate immediately as sometimes the test hits an illegal instruction exception
     // but finds its way back to generated code and terminates as usual. Sometimes it doesn't. The
-    // treshold allows for normal test termination in cases where that's possible.
+    // threshold allows for normal test termination in cases where that's possible.
     if (!cfg.enable_mem_intg_err) begin
       return;
     end

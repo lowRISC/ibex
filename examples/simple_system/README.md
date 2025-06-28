@@ -45,7 +45,7 @@ comes from replacing `small` in the command above with `opentitan`.
 
 Simple System related software can be found in `examples/sw/simple_system`.
 
-To build the hello world example, from the Ibex reposistory root run:
+To build the hello world example, from the Ibex repository root run:
 
 ```
 make -C examples/sw/simple_system/hello_test

@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
-This module contains the actual instance of the specification. It's quite ugly. Mostly it's just forwaring things to
+This module contains the actual instance of the specification. It's quite ugly. Mostly it's just forwarding things to
 different names and ignoring registers we don't care about.
 */
 

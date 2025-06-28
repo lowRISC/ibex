@@ -62,7 +62,7 @@ class SpikeCosim : public simif_t, public Cosim {
   uint32_t pending_iside_err_addr;
 
   typedef enum {
-    kCheckMemOk,           // Checks passed and access succeded in RTL
+    kCheckMemOk,           // Checks passed and access succeeded in RTL
     kCheckMemCheckFailed,  // Checks failed
     kCheckMemBusError  // Checks passed, but access generated bus error in RTL
   } check_mem_result_e;

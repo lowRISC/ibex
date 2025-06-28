@@ -1,7 +1,7 @@
 Badbit RAM
 ==========
 
-This is an SRAM wrapper that allows a testbench to force bit errors onthe read interface.
+This is an SRAM wrapper that allows a testbench to force bit errors on the read interface.
 
 This works as a dummy technology library.
 Instantiate it by adding setting `PRIM_DEFAULT_IMPL` to prim_pkg::ImplBadbit (see the README.md in the prim directory for details).

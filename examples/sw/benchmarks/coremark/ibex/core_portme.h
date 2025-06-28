@@ -74,7 +74,7 @@ extern unsigned int _stack_start;
         To avoid compiler issues, define the data types that need to be used for
    8b, 16b and 32b in <core_portme.h>.
 
-        *Imprtant* :
+        *Important* :
         ee_ptr_int needs to be the data type used to hold pointers, otherwise
    CoreMark may fail!!!
 */
@@ -175,7 +175,7 @@ typedef ee_u32 CORE_TICKS;
 #endif
 
 /* Variable : default_num_contexts
-        Not used for this simple port, must cintain the value 1.
+        Not used for this simple port, must contain the value 1.
 */
 extern ee_u32 default_num_contexts;
 

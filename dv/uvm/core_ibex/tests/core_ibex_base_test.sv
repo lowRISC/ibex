@@ -23,7 +23,7 @@ class core_ibex_base_test extends uvm_test;
   int unsigned                                    timeout_in_cycles = 100000000;
   int unsigned                                    max_quit_count  = 1;
   // If no signature_addr handshake functionality is desired between the testbench and the generated
-  // code, the test will wait for the specifield number of cycles before starting stimulus
+  // code, the test will wait for the specified number of cycles before starting stimulus
   // sequences (irq and debug)
   int unsigned                                    stimulus_delay = 800;
   bit[ibex_mem_intf_pkg::DATA_WIDTH-1:0]    signature_data_q[$];
@@ -171,7 +171,7 @@ class core_ibex_base_test extends uvm_test;
     void'($value$plusargs("disable_spurious_dside_responses=%0d",
       disable_spurious_dside_responses));
 
-    // Disable spurious reponses for non secure configs or when disabled through plusarg
+    // Disable spurious responses for non secure configs or when disabled through plusarg
     if ((secure_ibex == 0) || disable_spurious_dside_responses) begin
       cfg.enable_spurious_dside_responses = 0;
     end
@@ -277,7 +277,7 @@ class core_ibex_base_test extends uvm_test;
     end
   endtask : handle_reset
 
-  // Watch for all of the different critera for test pass/failure here
+  // Watch for all of the different criteria for test pass/failure here
   virtual task wait_for_test_done();
     longint timeout_timestamp, ts;
     bit result;

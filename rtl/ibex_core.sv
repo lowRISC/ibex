@@ -109,7 +109,7 @@ module ibex_core import ibex_pkg::*; #(
   input  logic                         irq_timer_i,
   input  logic                         irq_external_i,
   input  logic [14:0]                  irq_fast_i,
-  input  logic                         irq_nm_i,       // non-maskeable interrupt
+  input  logic                         irq_nm_i,       // non-maskable interrupt
   output logic                         irq_pending_o,
 
   // Debug Interface
@@ -291,7 +291,7 @@ module ibex_core import ibex_pkg::*; #(
   logic [31:0] csr_rdata;
   logic [31:0] csr_wdata;
   logic        illegal_csr_insn_id;    // CSR access to non-existent register,
-                                       // with wrong priviledge level,
+                                       // with wrong privilege level,
                                        // or missing write permissions
 
   // Data Memory Control
@@ -897,7 +897,7 @@ module ibex_core import ibex_pkg::*; #(
     logic [1:0] rf_ecc_err_a, rf_ecc_err_b;
     logic       rf_ecc_err_a_id, rf_ecc_err_b_id;
 
-    // ECC checkbit generation for regiter file wdata
+    // ECC checkbit generation for register file wdata
     prim_secded_inv_39_32_enc regfile_ecc_enc (
       .data_i(rf_wdata_wb),
       .data_o(rf_wdata_wb_ecc_o)
@@ -1537,7 +1537,7 @@ module ibex_core import ibex_pkg::*; #(
 
 
   // rvfi_irq_valid signals an interrupt event to the cosim. These should only occur when the RVFI
-  // pipe is empty so just send it straigh through.
+  // pipe is empty so just send it straight through.
   for (genvar i = 0; i < RVFI_STAGES + 1; i = i + 1) begin : g_rvfi_irq_valid
     if (i == 0) begin : g_rvfi_irq_valid_first_stage
       always_ff @(posedge clk_i or negedge rst_ni) begin
