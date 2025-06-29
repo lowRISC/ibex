@@ -8,3 +8,6 @@ tmp/
 .bender/
 *.gtkw
 *.log
+*.back/
+*.hex
+

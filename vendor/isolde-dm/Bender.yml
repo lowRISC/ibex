@@ -1,0 +1,21 @@
+# Copyleft 2024
+# Solderpad Hardware License, Version 0.51, see LICENSE for details.
+# SPDX-License-Identifier: SHL-0.51
+package:
+  name: isolde-dm
+  authors:
+    - daro <daro@tsr>
+
+dependencies:
+  riscv-dbg:          { path: ../riscv-dbg }
+  isolde-soc:         { path: ../isolde-soc }
+#  axi:                { git: "https://github.com/pulp-platform/axi.git", version: 0.39.6 }
+
+export_include_dirs:
+  - rtl/include
+
+sources:
+  files:   
+    - rtl/jtag_pkg.sv
+    - rtl/rv_dm_pkg.sv
+    - rtl/rv_dm.sv

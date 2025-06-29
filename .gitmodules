@@ -4,3 +4,6 @@
 [submodule "vendor/core-v-xif"]
 	path = vendor/core-v-xif
 	url = https://github.com/ISOLDE-Project/core-v-xif.git
+[submodule "vendor/riscv-dbg"]
+	path = vendor/riscv-dbg
+	url = https://github.com/ISOLDE-Project/riscv-dbg.git

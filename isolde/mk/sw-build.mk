@@ -54,12 +54,16 @@ ifeq ($(PE), redmule)
 	TEST_FILES         = $(TEST).c
 endif
 
+ifeq ($(PE), onnx)
+    TEST_SRC_DIR       = $(ROOT_DIR)/isolde/sw/onnx
+	TEST_FILES         = $(TEST).c
+endif
 
 CORE_V_VERIF  := $(mkfile_path)
 
 
 #
-SCRIPTS_DIR     = $(REDMULE_ROOT_DIR)/scripts
+SCRIPTS_DIR     = $(ROOT_DIR)/isolde/scripts
 ###############################################################################
 ##
 RISCV_PREFIX     = $(CV_SW_PREFIX)
@@ -121,8 +125,15 @@ RISCV_CFLAGS += $(TEST_CFLAGS)
 	$(CV_SW_TOOLCHAIN)/bin/riscv32-unknown-elf-objcopy -O verilog \
 		$< \
 		$@
-	python $(SCRIPTS_DIR)/addr_offset.py  $@  $*-m.hex 0x00100000
-	python $(SCRIPTS_DIR)/addr_offset.py  $@  $*-d.hex 0x00100000
+	python $(SCRIPTS_DIR)/addr_offset.py   $@  $*-m.hex 0x00100000
+	python $(SCRIPTS_DIR)/addr_offset.py   $@  $*-d.hex 0x00100000
+#	python $(SCRIPTS_DIR)/hex2bin_split.py $@  $*-instr.bin $*-data.bin
+	python $(SCRIPTS_DIR)/hex2ihex_split.py  --input $@ \
+											--instr-base 0x00100000 --instr-size 0x8000 \
+											--data-base  0x00110000 --data-size 0x30000 \
+											--instr-out instr.hex \
+											--data-out data.hex \
+											--verbose
 	$(CV_SW_TOOLCHAIN)/bin/riscv32-unknown-elf-readelf -a $< > $*.readelf
 	$(CV_SW_TOOLCHAIN)/bin/riscv32-unknown-elf-objdump   \
 		-fhSD \
@@ -130,6 +141,8 @@ RISCV_CFLAGS += $(TEST_CFLAGS)
 		-M numeric \
 		-S \
 		$*.elf > $*.objdump
+
+
 
 
 

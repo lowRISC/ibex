@@ -1,0 +1,17 @@
+CAPI=2:
+# Copyleft ISOLDE
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+name: "isolde:dv_verilator:verilator_main"
+description: "PULP riscv  debug module"
+filesets:
+  files_cpp:
+    files:
+      - tool_verilator ?  (tb/core/tb_dm_top_verilator.cpp)
+    file_type: cppSource
+
+targets:
+  default:
+    filesets:
+      - files_cpp

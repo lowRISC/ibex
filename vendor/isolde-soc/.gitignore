@@ -1,0 +1,12 @@
+tcdm_2_axi.sv
+tb_dm.sv
+.bender/
+Bender.lock
+*.flist
+bin/
+vsim/
+*.vcd
+tmp/
+.bender/
+*.gtkw
+*.log

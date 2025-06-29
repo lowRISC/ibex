@@ -14,6 +14,7 @@ interface isolde_register_file_if;
   `GEN_READ_PORT(1)
   `GEN_READ_PORT(2)
   `GEN_READ_PORT(3)
+  `GEN_READ_PORT(4)
 
   // Write port W1
   logic [RegAddrWidth-1:0] waddr_0;  // Write address

@@ -43,7 +43,7 @@ IMEM_LATENCY        ?= 0
 VLT_TOP_MODULE_PARAMS := -GIMEM_LATENCY=$(IMEM_LATENCY)
 
 
-
+include ../mk/redmule.mk
 include ../mk/sw-build.mk
 include ../mk/verilator-build.mk
 include ../mk/vivado.mk

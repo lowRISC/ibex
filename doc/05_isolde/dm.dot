@@ -1,0 +1,30 @@
+digraph AXI_System {
+    rankdir=LR; // Left to Right layout
+
+    node [shape=record, fontname=Helvetica];
+
+    RV_instr[label="Instruction\n memory interface"]
+    RV_data[label="Data\n memory interface"]
+    I_MEM[label="{<s> tcdm_s | tb_tcdm_mem:\ni_dummy_imemory}"]
+    
+    M1 [label="{Memory map instr|{<imem> imem |<dm> debug}}"];
+    M2 [label="{Memory map data |{<dmem> dmem |<dm> debug}}"];
+    SHIM_I [label="{<s> tcdm_s|isolde_addr_shim:\ni_imem_shim |<m> tcdm_m}"];
+    // MUX block
+    MUX [label="{{<S1>S1|<S2> S2}|isolde_mux_tcdm: \n i_mux_1|<M> M}"];
+
+    // AXI Slave with two named ports
+    S [label="{ { <m_bus> m_bus | <s_dmi> s_dmi } |rv:dm   }", shape=record];
+
+    // Connections
+    RV_instr ->M1[label="tcdm_core_inst"]
+    RV_data -> M2[label="tcdm_core_data"];
+    M1:dm -> MUX:S1 [label="tcdm_inst_dm"];
+    M1:imem -> SHIM_I:s [label="tcdm_inst_mem"];
+    SHIM_I:m -> I_MEM:s [label="tcdm_imem_shim"];
+    M2:dm -> MUX:s2 [label="tcdm_data_dm"];
+
+    MUX -> S:s_dmi [label="tcdm_debug_dmi"];
+    //MUX -> S:csr_dmi [label="to csr_dmi"];
+}
+

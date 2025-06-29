@@ -13,7 +13,7 @@ TMP_DIR             := tmp/$(IBEX_CONFIG)
 FUSESOC_BUILD_ROOT  :=$(mkfile_path)/$(TMP_DIR)
 FUSESOC_PROJECT     := isolde
 FUSESOC_CORE        := ibex
-FUSESOC_SYSTEM      := lca_system
+FUSESOC_SYSTEM      := lca_dm_system
 FUSESOC_PKG_NAME    := $(FUSESOC_PROJECT):$(FUSESOC_CORE):$(FUSESOC_SYSTEM)
 
 ##
@@ -40,9 +40,11 @@ endif
 VLT_TOP_MODULE        ?= tb_lca_system
 IMEM_LATENCY          ?= 0
 VLT_TOP_MODULE_PARAMS := -GIMEM_LATENCY=$(IMEM_LATENCY)
+common_targs += -t tb_dm
 
 
 
+include ../mk/redmule.mk
 include ../mk/sw-build.mk
 include ../mk/verilator-build.mk
 include ../mk/vivado.mk

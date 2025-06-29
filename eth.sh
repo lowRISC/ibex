@@ -17,10 +17,10 @@ export ROOT_DIR=$(git rev-parse --show-toplevel)
 
 export BENDER=~/eth/bin/bender
 # export PULP_RISCV_GCC_TOOLCHAIN=$ROOT_DIR/install/riscv
-# export GCC_TOOLCHAIN=$ROOT_DIR/install/riscv-gcc/bin
+export GCC_TOOLCHAIN=$ROOT_DIR/install/riscv-gcc/bin
 # export LLVM_TOOLCHAIN=$ROOT_DIR/install/riscv-llvm/bin
-export CC=gcc-10
-export CXX=g++-10
+export CC=gcc-11
+export CXX=g++-11
 #
 # export CV_SIMULATOR=verilator
 # export CV_SW_TOOLCHAIN=$ROOT_DIR/install/riscv-gcc
@@ -32,7 +32,7 @@ export CXX=g++-10
 source $MINICONDA
 conda activate $MINICONDA_ENV
 
-export PATH=~/eth/bin:~/verible/bin:$ROOT_DIR/install/verilator/bin:$GCC_TOOLCHAIN:$PATH
+export PATH=~/eth/bin:~/verible/bin:$ROOT_DIR/install/verilator/bin:$ROOT_DIR/install/openocd/bin:$GCC_TOOLCHAIN:$PATH
 source ~/vivado.sh
 
 echo  `verilator --version`

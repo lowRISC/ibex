@@ -2,16 +2,18 @@
 #
 # Copyleft  2024 ISOLDE
 
+
+
+ifeq ($(NO_TEE),1)
+  TEE_CMD := 
+else
+  TEE_CMD := | tee $(VERI_LOG_DIR)/$(TEST).log
+endif
+
+
 #############
 # Verilator #
 #############
-
-include $(REDMULE_ROOT_DIR)/bender_common.mk
-include $(REDMULE_ROOT_DIR)/bender_sim.mk
-include $(REDMULE_ROOT_DIR)/bender_synth.mk
-
-
-
 
 
 #####
@@ -68,7 +70,7 @@ manifest.flist: Bender.yml
 	@$(BENDER) script verilator $(common_targs) $(VLT_BENDER)  >$@
 	touch $@
 
-#$(BIN_DIR)/verilator_executable:  ibex_sim.flist manifest.flist
+
 verilate:  ibex_sim.flist manifest.flist
 #	mkdir -p $(dir $@)
 	mkdir -p $(BIN_DIR)
@@ -92,15 +94,30 @@ veri-run: $(BIN_DIR)/verilator_executable
 	@echo "$(BANNER)"
 	mkdir -p $(VERI_LOG_DIR)
 	rm -f $(VERI_LOG_DIR)/verilator_tb.vcd
+	@echo "TEE_CMD=$(TEE_CMD)"
 	$(BIN_DIR)/verilator_executable  \
 		$(VERI_FLAGS) \
 		"+STIM_INSTR=$(test-program)-m.hex" \
 		"+STIM_DATA=$(test-program)-d.hex" \
-		| tee $(VERI_LOG_DIR)/$(TEST).log
+		$(TEE_CMD)
 	mv verilator_tb.vcd $(VERI_LOG_DIR)/$(TEST).vcd
 	mv rtl_debug_trace.log $(VERI_LOG_DIR)
 	mv perfcnt.csv $(VERI_LOG_DIR)/$(TEST).csv
 
+.PHONY: veri-run-u-test
+veri-run-u-test: $(BIN_DIR)/verilator_executable 
+	@echo "$(BANNER)"
+	@echo "* Running with Verilator: "
+	@echo "*                            logfile: $(VERI_LOG_DIR)/$(TEST).log"
+	@echo "*                    rtl debug trace: $(VERI_LOG_DIR)/rtl_debug_trace.log"
+	@echo "*                              *.vcd: $(VERI_LOG_DIR)"
+	@echo "$(BANNER)"
+	mkdir -p $(VERI_LOG_DIR)
+	rm -f $(VERI_LOG_DIR)/verilator_tb.vcd
+	$(BIN_DIR)/verilator_executable  \
+		| tee $(VERI_LOG_DIR)/$(VLT_TOP_MODULE).log
+	mv verilator_tb.vcd $(VERI_LOG_DIR)/$(VLT_TOP_MODULE).vcd
+	
 
 
 .PHONY: help

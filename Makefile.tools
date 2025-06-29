@@ -12,13 +12,14 @@ GCC_INSTALL_DIR         ?= ${INSTALL_DIR}/riscv-gcc
 LLVM_INSTALL_DIR        ?= ${INSTALL_DIR}/riscv-llvm
 ISA_SIM_INSTALL_DIR     ?= ${INSTALL_DIR}/riscv-isa-sim
 ISA_SIM_MOD_INSTALL_DIR ?= ${INSTALL_DIR}/riscv-isa-sim-mod
-VERIL_SRC_ROOT           ?= $(prj_path)/vendor
+OPENOCD_INSTALL_DIR     ?= ${INSTALL_DIR}/openocd
+VERIL_SRC_ROOT          ?= $(prj_path)/vendor
 VERIL_INSTALL_DIR       ?= ${INSTALL_DIR}/verilator
 VERIL_VERSION           ?= v5.030
 BENDER_DOWNLOAD_LINK    ?= https://github.com/pulp-platform/bender/releases/download/v0.28.0/bender-0.28.0-x86_64-linux-gnu-ubuntu22.04.tar.gz
 BENDER_ARCH_FILE        ?= $(shell basename $(BENDER_DOWNLOAD_LINK))
 
-all: verilator riscv32-gcc riscv32-llvm dev-dep
+all: dev-dep verilator riscv32-gcc riscv32-llvm  openocd
 # Verilator
 verilator: ${VERIL_INSTALL_DIR}/bin/verilator
 
@@ -71,8 +72,8 @@ $(LLVM_INSTALL_DIR): vendor/riscv32-elf-llvm.tar.gz
 
 dev-dep:
 	sudo apt-get install flex bison clang help2man
-	sudo apt-get install libelf-dev
-	sudo apt-get install srecord autoconf clang 
+	sudo apt-get install libelf-dev autoconf
+	sudo apt-get install srecord gtkwave
 
 $(HOME)/eth/$(BENDER_ARCH_FILE):
 	mkdir -p $(HOME)/eth && cd $(HOME)/eth       &&  \
@@ -85,8 +86,14 @@ bender: $(HOME)/eth/$(BENDER_ARCH_FILE)
 	mkdir -p doc && cd doc						     &&  \
 	wget https://github.com/pulp-platform/bender/blob/master/README.md
 
-verible:
-	mkdir ~/verible && cd ~/verible &&  \
-	wget https://github.com/chipsalliance/verible/releases/download/v0.0-3640-gec69caeb/verible-v0.0-3640-gec69caeb-linux-static-x86_64.tar.gz &&  \
-	tar xzf verible-v0.0-3640-gec69caeb-linux-static-x86_64.tar.gz &&  \
-	ln -s verible-v0.0-3640-gec69caeb/bin/ bin	
+vendor/xpack-openocd.tar.gz: vendor/xpack-openocd.url
+	cd vendor && \
+	wget `cat $(CURDIR)/$<` -O xpack-openocd.tar.gz 
+	touch $@
+
+.PHONY: openocd
+openocd: vendor/xpack-openocd.tar.gz
+	mkdir -p $(OPENOCD_INSTALL_DIR)
+	cd vendor && \
+	tar -xzvf xpack-openocd.tar.gz  --strip-components=1 -C $(OPENOCD_INSTALL_DIR)/ 
+	touch  $(OPENOCD_INSTALL_DIR)

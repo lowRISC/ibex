@@ -1,0 +1,1 @@
+make TEST=hello_test test-clean test-build veri-run

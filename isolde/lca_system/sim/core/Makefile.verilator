@@ -52,9 +52,10 @@ VERI_TRACE="--trace"
 VLT_CFLAGS  += -DVCD_TRACE
 endif
 
-VLT_FLAGS    += --no-timing
+VLT_FLAGS    += --timing
 VLT_FLAGS    += -O3
-VLT_CFLAGS   +=  -O3  -I $(VLT_ROOT)/include -I $(VLT_ROOT)/include/vltstd  
+VLT_CFLAGS   += -I $(VLT_ROOT)/include -I $(VLT_ROOT)/include/vltstd 
+#VLT_CFLAGS   += -g 
 #VLT_CFLAGS   +=  -O3 -fno-var-tracking-assignments -I $(VLT_ROOT)/include -I $(VLT_ROOT)/include/vltstd  
 
 .PHONY: build_simulation

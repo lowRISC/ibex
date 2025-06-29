@@ -141,6 +141,9 @@ module isolde_decoder
                 isolde_opcode_redmule_gemm: begin
                   decode_redmule_gemm();
                 end
+                isolde_opcode_conv2d:begin
+                  decode_conv_2d();
+                end
               endcase
 
             end
@@ -236,7 +239,41 @@ module isolde_decoder
     end
   endtask
 
+  task static decode_conv_2d;
+  /**
+  (v4i32 QPR:$rd2),  ( IntOp (  iPTR     GPR:$rd1)
+                                                  ,(  iPTR     GPR:$rs1)
+                                                  ,(  v4i32    QPR:$rs3)
+                                                  ,(  iPTR     GPR:$rs2)
+                                                  ,(  v4i32    QPR:$rs4)
+                                                  ,(  iPTR     GPR:$rs5)
+                                                  ,(  v4i32    QPR:$rs6)
+                                                  ,(  v4i32    QPR:$rs7)
+                                                  
+                          
+                          )
+  **/
 
+    begin
+
+      if (3'h2 == read_ptr) begin
+                //first 32 bits
+        isolde_decoder_exec_bus.isolde_decoder_instr <= isolde_decoder_instr_batch_i[3];
+        x_rf_bus.raddr_2 <= isolde_decoder_instr_batch_i[2][24:20];  //rs2
+        x_rf_bus.raddr_1 <= isolde_decoder_instr_batch_i[2][19:15];  //rs1
+        x_rf_bus.raddr_0 <= isolde_decoder_instr_batch_i[2][11:7];  //rd1    
+          //
+        x_rf_bus.raddr_3      <= isolde_decoder_instr_batch_i[1][29:25];  //rs5  
+        isolde_rf_bus.raddr_2 <= isolde_decoder_instr_batch_i[1][24:20];  //rs4
+        isolde_rf_bus.raddr_1 <= isolde_decoder_instr_batch_i[1][19:15];  //rs3
+        isolde_rf_bus.raddr_0 <= isolde_decoder_instr_batch_i[1][11:7];  //rd2    
+        // 
+        isolde_rf_bus.raddr_4 <= isolde_decoder_instr_batch_i[0][24:20];  //rs7
+        isolde_rf_bus.raddr_3 <= isolde_decoder_instr_batch_i[0][19:15];  //rs6
+        
+      end 
+    end
+  endtask
 
   task static decode_64b_gemm;
     /**

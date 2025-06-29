@@ -6,6 +6,7 @@ for i in {0..10}; do
   make -C tca_system IMEM_LATENCY=$i PE=redmule TEST=redmule_complex_32b     verilate test-build veri-run
   make -C tca_system IMEM_LATENCY=$i PE=redmule TEST=redmule_complex_128b    verilate test-build veri-run
   make -C tca_system IMEM_LATENCY=$i PE=redmule TEST=redmule_complex_ex_reg  verilate test-build veri-run
+  make -C tca_system IMEM_LATENCY=$i PE=onnx    TEST=conv2d_test             verilate test-build veri-run
 
   # Check if the command succeeded
   if [ $? -ne 0 ]; then

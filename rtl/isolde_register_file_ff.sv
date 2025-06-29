@@ -76,6 +76,9 @@ module isolde_register_file_ff
   // Register Read Processes (Combinational logic)
   `GEN_READ_BLOCK(0)
   `GEN_READ_BLOCK(1)
+  `GEN_READ_BLOCK(2)
+  `GEN_READ_BLOCK(3)
+  `GEN_READ_BLOCK(4)
 
   // Combine read and write error signals
   assign isolde_rf_bus.isolde_rf_err = isolde_rf_err_write | isolde_rf_err_read;

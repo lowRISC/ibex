@@ -7,11 +7,19 @@ package:
     - daro <daro@tsr>
 
 dependencies:
-  redmule: {path: ../../vendor/redmule }
+  common_cells:       { git: "https://github.com/pulp-platform/common_cells.git"      , version: 1.38.0                               }
+  redmule:            {path: ../../vendor/redmule }
+  isolde-dm:          {path: ../../vendor/isolde-dm}
+  isolde-soc:         {path: ../../vendor/isolde-soc}
+
 
 sources:
   files:   
-
-    - target: redmule_test_hwpe
+  # - target: redmule_test_hwpe
+  #   files:
+  #     - tb/tb_axi_lca_system.sv
+  #     - tb/tb_axi_mem.sv     
+    - target: tb_dm
       files:
-        - tb/tb_lca_system.sv
+        - tb/tb_dm.sv
+  

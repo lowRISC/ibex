@@ -27,7 +27,7 @@ package isolde_decoder_pkg;
     localparam logic [6:0] RISCV_ENC_C3   = 7'b1111011;  // Custom-3 opcode for 32-bit instruction (1 word) 
 
     localparam logic [2:0] RISCV_ENC_GE80_N5 = 3'h5;  // Custom encoding for N5 (5 words)
-    localparam logic [2:0] RISCV_ENC_GE80_N3 = 3'h3;  // Custom encoding for N5 (5 words)
+    localparam logic [2:0] RISCV_ENC_GE80_N3 = 3'h3;  // Custom encoding for N5 (4 words)
     localparam logic [2:0] RISCV_ENC_GE80_N1 = 3'h1;  // Custom encoding for N1 (3 words)
     begin
       case (opCode_i)

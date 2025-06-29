@@ -1,0 +1,31 @@
+# Copyleft 2024
+# Solderpad Hardware License, Version 0.51, see LICENSE for details.
+# SPDX-License-Identifier: SHL-0.51
+package:
+  name: isolde-soc
+  authors:
+    - daro <daro@tsr>
+
+dependencies:
+  common_cells:       { git: "https://github.com/pulp-platform/common_cells.git"      , version: 1.38.0  }
+  axi:                { git: "https://github.com/pulp-platform/axi.git"               , version: 0.39.6  }
+
+#export_include_dirs:
+#  - rtl/include
+
+sources:
+  files:   
+    - rtl/isolde_tcdm_if.sv
+    - rtl/isolde_tcdm_to_axi.sv
+    - rtl/isolde_addr_shim.sv
+    - rtl/isolde_demux_tcdm.sv
+    - rtl/isolde_mux_tcdm.sv   
+    - target: tb_dm
+      files:
+        - tb/tb_tcdm_mem.sv
+#        - tb/tb_axi_mem.sv
+    - target: u_test
+      files:
+        - tb/tb_isolde_addr_shim.sv
+        - tb/tb_isolde_mux_tcdm.sv
+        - tb/tb_isolde_template.sv

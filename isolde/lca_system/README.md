@@ -85,3 +85,55 @@ Dhrystones per 1000 cycle:                     1
 [TB LCA] @ t=272960 - errors=00000000
 - /ubuntu_20.04/home/ext/tristan-project/ibex.tca/isolde/lca_system/tb/tb_lca_system.sv:513: Verilog $finish
 ```
+
+
+# Debug Module
+
+Assuming working directory *isolde/lca_system* and each command from bellow in a separate terminal window.  
+1. start simulation
+```sh
+. ./eth.sh
+make TEST=hello_test  veri-run
+```
+**Note**: Application( in this example *hello_test*) has to be an endless loop.   
+
+2. start openocd
+```sh
+. ./eth.sh
+openocd -f isolde.cfg 
+```
+3. start telnet connection
+```sh
+telnet localhost 4444
+```
+In the telnet terminal type:   
+```
+reset halt
+reg pc 0x100000
+resume
+shutdown
+```
+or 
+In the telnet terminal type( make sure that your working directory is **isolde/lca_system)**:   
+```
+source ./quick_test.tcl
+```
+
+### kill telnet connection
+```sh
+lsof -i :6666
+```
+Output:
+```
+COMMAND   PID USER   FD   TYPE    DEVICE SIZE/OFF NODE NAME
+openocd 27459  dan    5u  IPv4 558111571      0t0  TCP localhost:6666 (LISTEN)
+```
+```sh
+kill -9 27459
+```
+# OpenOCD General Commands
+[https://openocd.org/doc/html/General-Commands.html?utm_source=chatgpt.com](https://openocd.org/doc/html/General-Commands.html?utm_source=chatgpt.com)
+# Known issues
+ RISC-V memory access method(s) shall be used as follow:
+ - *progbuf*  for reading/writting dmem and stack
+ - *sysbus*   for reading/writting imem
