@@ -319,6 +319,7 @@ module core_ibex_tb_top;
   initial begin
     // Drive the clock and reset lines. Reset everything and start the clock at the beginning of
     // time
+    #0; // needed for dsim
     ibex_clk_if.set_active();
     fork
       ibex_clk_if.apply_reset(.reset_width_clks (100));
