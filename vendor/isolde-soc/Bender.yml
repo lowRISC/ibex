@@ -10,7 +10,8 @@ dependencies:
   common_cells:       { git: "https://github.com/pulp-platform/common_cells.git"      , version: 1.38.0  }
   axi:                { git: "https://github.com/pulp-platform/axi.git"               , version: 0.39.6  }
 
-#export_include_dirs:
+export_include_dirs:
+  - tb/include
 #  - rtl/include
 
 sources:
@@ -20,9 +21,10 @@ sources:
     - rtl/isolde_addr_shim.sv
     - rtl/isolde_demux_tcdm.sv
     - rtl/isolde_mux_tcdm.sv   
-    - target: tb_dm
+    - target: any(tb_dm,redmule_test_hwpe)
       files:
         - tb/tb_tcdm_mem.sv
+        - tb/monitor/perfCounters.sv
 #        - tb/tb_axi_mem.sv
     - target: u_test
       files:

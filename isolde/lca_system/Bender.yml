@@ -15,11 +15,10 @@ dependencies:
 
 sources:
   files:   
-  # - target: redmule_test_hwpe
-  #   files:
-  #     - tb/tb_axi_lca_system.sv
-  #     - tb/tb_axi_mem.sv     
-    - target: tb_dm
-      files:
+   - target: redmule_test_hwpe
+     files:
+       - tb/tb_lca_system.sv 
+   - target: tb_dm
+     files:
         - tb/tb_dm.sv
   

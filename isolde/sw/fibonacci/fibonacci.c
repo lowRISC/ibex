@@ -55,5 +55,6 @@ int main(int argc, char *argv[]) {
         printf("[after  ]dummyData[%d] = %d\n", i, dummyData[i]);
     }
    STOP_PERFCNT(1); 
-    return 0;
+     printPerfCnt();
+    return 0xbadc0de;
 }

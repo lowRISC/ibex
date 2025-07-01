@@ -9,8 +9,9 @@
 
 // see tb/core/mm_ram.sv
 void _Exit(int exit_code){
-
+#ifndef WFI_LOOP
 DEV_WRITE(MMADDR_EXIT, (uint32_t)exit_code); 
+#endif
  while (1) {
         asm volatile ("wfi");
     }
