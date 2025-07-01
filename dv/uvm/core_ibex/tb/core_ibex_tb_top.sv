@@ -2,6 +2,8 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
+`include "uvm_macros.svh"
+`include "dv_macros.svh"
 `include "prim_assert.sv"
 
 module core_ibex_tb_top;
