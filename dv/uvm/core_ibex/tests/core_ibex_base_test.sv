@@ -27,8 +27,8 @@ class core_ibex_base_test extends uvm_test;
   // code, the test will wait for the specified number of cycles before starting stimulus
   // sequences (irq and debug)
   int unsigned                                    stimulus_delay = 800;
-  bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0]    signature_data_q[$];
-  bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0]    signature_data;
+  bit[ibex_mem_intf_pkg::DATA_WIDTH-1:0]    signature_data_q[$];
+  bit[ibex_mem_intf_pkg::DATA_WIDTH-1:0]    signature_data;
   uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item) item_collected_port;
   uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item) test_done_port;
   uvm_tlm_analysis_fifo #(irq_seq_item)           irq_collected_port;
@@ -402,7 +402,7 @@ class core_ibex_base_test extends uvm_test;
 
 
   virtual task wait_for_mem_txn(
-    input bit [ibex_mem_intf_agent_pkg::ADDR_WIDTH-1:0] ref_addr,
+    input bit [ibex_mem_intf_pkg::ADDR_WIDTH-1:0] ref_addr,
     input signature_type_t ref_type,
     input uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item) txn_port = item_collected_port
     );

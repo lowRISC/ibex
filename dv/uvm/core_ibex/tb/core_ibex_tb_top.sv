@@ -2,6 +2,8 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
+`include "uvm_macros.svh"
+`include "dv_macros.svh"
 `include "prim_assert.sv"
 
 module core_ibex_tb_top;
@@ -326,6 +328,7 @@ module core_ibex_tb_top;
   initial begin
     // Drive the clock and reset lines. Reset everything and start the clock at the beginning of
     // time
+    #0; // needed for dsim
     ibex_clk_if.set_active();
     fork
       ibex_clk_if.apply_reset(.reset_width_clks (100));

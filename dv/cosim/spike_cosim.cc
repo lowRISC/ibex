@@ -331,7 +331,7 @@ bool SpikeCosim::check_retired_instr(uint32_t write_reg,
     std::stringstream err_str;
     err_str << "PC mismatch, DUT retired : " << std::hex << dut_pc
             << " , but the ISS retired: " << std::hex
-            << processor->get_state()->last_inst_pc;
+            << (processor->get_state()->last_inst_pc & 0xffffffff);
     errors.emplace_back(err_str.str());
     return false;
   }
