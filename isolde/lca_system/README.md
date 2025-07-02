@@ -93,7 +93,7 @@ Assuming working directory *isolde/lca_system* and each command from bellow in a
 1. start simulation
 ```sh
 . ./eth.sh
-make TEST=hello_test  veri-run
+make  DBG_MODULE=1 TEST=hello_test NO_TEE=1 test-clean test-build  veri-clean verilate veri-run
 ```
 **Note**: Application( in this example *hello_test*) has to be an endless loop.   
 
@@ -116,9 +116,12 @@ shutdown
 or 
 In the telnet terminal type( make sure that your working directory is **isolde/lca_system)**:   
 ```
-source ./quick_test.tcl
+source ./read_test.tcl
 ```
-
+or
+```
+source imem_test.tcl
+```
 ### kill telnet connection
 ```sh
 lsof -i :6666

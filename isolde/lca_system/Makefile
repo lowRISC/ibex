@@ -40,8 +40,11 @@ endif
 VLT_TOP_MODULE        ?= tb_lca_system
 IMEM_LATENCY          ?= 0
 VLT_TOP_MODULE_PARAMS := -GIMEM_LATENCY=$(IMEM_LATENCY)
-#common_targs += -t tb_dm
-common_targs += -t redmule_test_hwpe
+ifeq ($(DBG_MODULE), 1)
+	common_targs += -t tb_dm
+else	
+	common_targs += -t redmule_test_hwpe
+endif 
 ##
 #TEST_CFLAGS += -DWFI_LOOP
 

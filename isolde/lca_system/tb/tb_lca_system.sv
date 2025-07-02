@@ -9,9 +9,11 @@ timeunit 1ps; timeprecision 1ps;
 
 class MyCallback extends MemStatisticsCallback;
 
+  int unsigned m_instrMemLatency;
 
-  function new();
+  function new(int unsigned instrMemLatency);
     super.new();
+    m_instrMemLatency = instrMemLatency;
   endfunction
 
   virtual function int instMemWrites();
@@ -32,7 +34,15 @@ class MyCallback extends MemStatisticsCallback;
   virtual function int stackMemReads();
     return tb_lca_system.i_dummy_stack_memory.cnt_rd;
   endfunction
-
+  virtual function int instrMemLatency();
+    return m_instrMemLatency;
+  endfunction
+  virtual function string strInfo();
+    /**
+  ** avoid spaces in the string
+  **/
+    return "LCA";
+  endfunction
 endclass
 
 module tb_lca_system (
@@ -91,7 +101,7 @@ module tb_lca_system (
   localparam rule_addr_t BASE_ADDR = 32'h1c000000;
   localparam rule_addr_t HWPE_ADDR_BASE_BIT = 20;
 
-  int fh;  //filehandles
+  int fh;  //filehandle
   //
   /* see bsp/link.ld
 MEMORY
@@ -140,18 +150,10 @@ MEMORY
   // global signals
   string stim_instr, stim_data;
   logic                          test_mode;
-
-
   //
   logic                          redmule_busy;
 
-
-
-
-
   logic [rv_dm_pkg::NrHarts-1:0] debug_req;
-
-
   localparam bit JTAG_BOOT = 1;
   localparam int unsigned OPENOCD_PORT = 9999;
   localparam CLUSTER_ID = 6'd0;
@@ -178,7 +180,7 @@ MEMORY
   //
   isolde_tcdm_if tcdm_perfCountersSim ();
   logic sim_exit;
-  
+
   MemStatisticsCallback mem_stats_cb;
   perfCounters #(
       .MMIO_ADDR(MMIO_ADDR)
@@ -263,21 +265,10 @@ MEMORY
       PERIPH_IDX: periph.req = tcdm_core_data.req.req;
       DATA_IDX:   tcdm[MP].req = tcdm_core_data.req.req;
       STACK_IDX: begin  //bind_stack
-        //tcdm_stack.req.req  = tcdm_core_data.req.req;
-        //tcdm_stack.req.addr = tcdm_core_data.req.addr;
-        //tcdm_stack.req.we   = tcdm_core_data.req.we;
-        //tcdm_stack.req.be   = tcdm_core_data.req.be;
-        //tcdm_stack.req.data = tcdm_core_data.req.data;
         tcdm_stack.req = tcdm_core_data.req;
       end
       MMIO_IDX:   tcdm_perfCountersSim.req = tcdm_core_data.req;
-      // PERF_IDX:   perfcnt_req = tcdm_core_data.req.req;
       DEBUG_IDX: begin  //bind_debug module
-        //tcdm_data_dm.req.req  = tcdm_core_data.req.req;
-        //tcdm_data_dm.req.addr = tcdm_core_data.req.addr;
-        //tcdm_data_dm.req.we   = tcdm_core_data.req.we;
-        //tcdm_data_dm.req.be   = tcdm_core_data.req.be;
-        //tcdm_data_dm.req.data = tcdm_core_data.req.data;
         tcdm_data_dm.req = tcdm_core_data.req;
       end
 
@@ -294,7 +285,6 @@ MEMORY
         DATA_IDX: tcdm_core_data.rsp.gnt = tcdm[MP].gnt;
         STACK_IDX: tcdm_core_data.rsp.gnt = tcdm_stack.rsp.gnt;
         MMIO_IDX: tcdm_core_data.rsp.gnt = tcdm_perfCountersSim.rsp.gnt;
-        //PERF_IDX: tcdm_core_data.rsp.gnt = perfcnt_gnt;
         DEBUG_IDX: tcdm_core_data.rsp.gnt = tcdm_data_dm.rsp.gnt;
         default: tcdm_core_data.rsp.gnt = '0;
       endcase
@@ -310,31 +300,15 @@ MEMORY
       DATA_IDX: tcdm_core_data.rsp.data = tcdm[MP].r_data;
       STACK_IDX: tcdm_core_data.rsp.data = tcdm_stack.rsp.data;
       MMIO_IDX: tcdm_core_data.rsp.data = tcdm_perfCountersSim.rsp.data;
-      //PERF_IDX: tcdm_core_data.rsp.data = perfcnt_rdata;
       DEBUG_IDX: tcdm_core_data.rsp.data = tcdm_data_dm.rsp.data;
       default: tcdm_core_data.rsp.data = '0;
     endcase
   end
 
-
-
-
-
-
-
-
-
   hci_core_intf #(.DW(DW)) redmule_tcdm (.clk(clk_i));
   hwpe_ctrl_intf_periph #(.ID_WIDTH(ID)) periph (.clk(clk_i));
 
-
-
-
-
-
-
   always_comb begin : bind_periph
-
     periph.add  = tcdm_core_data.req.addr;
     periph.wen  = ~tcdm_core_data.req.we;
     periph.be   = tcdm_core_data.req.be;
@@ -355,6 +329,7 @@ MEMORY
     assign tcdm_r_valid[ii] = tcdm[ii].r_valid;
     assign tcdm_r_data[ii]  = tcdm[ii].r_data;
   end
+
   assign redmule_tcdm.gnt = &tcdm_gnt;
   assign redmule_tcdm.r_data = {tcdm_r_data};
   assign redmule_tcdm.r_valid = &tcdm_r_valid;
@@ -366,14 +341,6 @@ MEMORY
   assign tcdm[MP].wen = ~tcdm_core_data.req.we;
   assign tcdm[MP].be = tcdm_core_data.req.be;
   assign tcdm[MP].data = tcdm_core_data.req.data;
-
-
-
-
-
-
-
-
 
 
   tb_tcdm_verilator #(
@@ -534,9 +501,6 @@ MEMORY
       .periph        (periph)
   );
 
-
-
-
   // Declare the task with an input parameter for errors
   task endSimulation(input int errors);
 
@@ -567,12 +531,10 @@ MEMORY
   endtask
 
 
-
-
   initial begin
     integer id;
     int cnt_rd, cnt_wr;
-    MyCallback i_callback = new();
+    MyCallback i_callback = new(IMEM_LATENCY);
     mem_stats_cb = i_callback;
     fh = $fopen("rtl_debug_trace.log", "w");
 
@@ -599,9 +561,6 @@ MEMORY
 
   // close output file for writing
   final begin
-
     $fclose(fh);
-
-
   end
 endmodule  // tb_lca_system

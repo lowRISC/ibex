@@ -8,7 +8,11 @@ virtual class MemStatisticsCallback;
   pure virtual function int dataMemReads();
   pure virtual function int stackMemWrites();
   pure virtual function int stackMemReads();
-
+  pure virtual function int instrMemLatency();
+      /**
+  ** user defined string, avoid spaces
+  **/
+  pure virtual function string strInfo();
 endclass
 
 `endif  // MEM_STATISTICS_SVH

@@ -12,13 +12,17 @@ dependencies:
   isolde-dm:          {path: ../../vendor/isolde-dm}
   isolde-soc:         {path: ../../vendor/isolde-soc}
 
-
+# *                matches any target
+# name             matches the target "name"
+# all(T1, ..., TN) matches if all of the targets T1 to TN match (boolean AND)
+# any(T1, ..., TN) matches if any of the targets T1 to TN match (boolean OR)
+# not(T)           matches if target T does not match (boolean NOT)
 sources:
   files:   
+   - target: all(tb_dm ,redmule_hwpe ,rtl ,redmule_test_hwpe)
+     files:
+        - tb/tb_dm.sv
    - target: redmule_test_hwpe
      files:
        - tb/tb_lca_system.sv 
-   - target: tb_dm
-     files:
-        - tb/tb_dm.sv
   

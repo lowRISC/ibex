@@ -118,7 +118,7 @@ module perfCounters #(
           $fwrite(fh_csv, "%d,", perfcnt_q.dmem.cnt_rd);
           $fwrite(fh_csv, "%d,", perfcnt_q.stack_mem.cnt_wr);
           $fwrite(fh_csv, "%d,", perfcnt_q.stack_mem.cnt_rd);
-          // $fwrite(fh_csv, "%d,LCA\n", IMEM_LATENCY);
+          $fwrite(fh_csv, "%d,%s\n", mem_statistics_cb.instrMemLatency(), mem_statistics_cb.strInfo());
         end
       endcase
     end
@@ -235,7 +235,7 @@ read performance counters implementation
     end else begin
       $fwrite(
           fh_csv,
-          "id,cycles,reads[imemory],writes[dmemory],reads[dmemory],writes[stack],reads[stack],latency,arch\n");
+          "id,cycles,reads[imemory],writes[dmemory],reads[dmemory],writes[stack],reads[stack],latency,info\n");
     end
   end
 
