@@ -18,6 +18,7 @@ module ibex_if_stage import ibex_pkg::*; #(
   parameter int unsigned DmExceptionAddr   = 32'h1A110808,
   parameter bit          DummyInstructions = 1'b0,
   parameter bit          ICache            = 1'b0,
+  parameter rv32zc_e     RV32ZC            = RV32ZcaZcbZcmp,
   parameter bit          ICacheECC         = 1'b0,
   parameter int unsigned BusSizeECC        = BUS_SIZE,
   parameter int unsigned TagSizeECC        = IC_TAG_SIZE,
@@ -404,7 +405,9 @@ module ibex_if_stage import ibex_pkg::*; #(
   //
   // since it does not matter where we decompress instructions, we do it here
   // to ease timing closure
-  ibex_compressed_decoder compressed_decoder_i (
+  ibex_compressed_decoder #(
+    .RV32ZC (RV32ZC)
+  ) compressed_decoder_i (
     .clk_i          (clk_i),
     .rst_ni         (rst_ni),
     .valid_i        (fetch_valid & ~fetch_err),
