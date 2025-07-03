@@ -52,6 +52,13 @@ package ibex_pkg;
     RV32BFull       = 3
   } rv32b_e;
 
+  typedef enum integer {
+    RV32ZcNone       = 0,
+    RV32Zcb          = 1,
+    RV32Zcmp         = 2,
+    RV32ZcbZcmp      = 3
+  } rv32zc_e;
+
   /////////////
   // Opcodes //
   /////////////
