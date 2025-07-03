@@ -13,7 +13,9 @@
 
 `include "prim_assert.sv"
 
-module ibex_compressed_decoder (
+module ibex_compressed_decoder #(
+  parameter ibex_pkg::rv32zc_e RV32ZC = ibex_pkg::RV32ZcaZcbZcmp
+) (
   input  logic        clk_i,
   input  logic        rst_ni,
   input  logic        valid_i,
@@ -214,59 +216,65 @@ module ibex_compressed_decoder (
           end
 
           3'b100: begin // loads and stores
-             unique case (instr_i[12:10])
-               3'b000: begin
-                  // c.lbu -> lbu  rd', imm(rs1')
-                  instr_o = {10'b0, instr_i[5], instr_i[6], 2'b01, instr_i[9:7],
-                             3'b100, 2'b01, instr_i[4:2], {OPCODE_LOAD}};
-               end
+            if (RV32ZC == RV32ZcaZcbZcmp || RV32ZC == RV32ZcaZcb) begin
+              unique case (instr_i[12:10])
+                3'b000: begin
+                    // c.lbu -> lbu  rd', imm(rs1')
+                    instr_o = {10'b0, instr_i[5], instr_i[6], 2'b01, instr_i[9:7],
+                               3'b100, 2'b01, instr_i[4:2], {OPCODE_LOAD}};
+                end
 
-               3'b001: begin
-                  unique case (instr_i[6])
-                    1'b0: begin
-                       // c.lhu -> lhu rd', imm(rs1')
-                       instr_o = {10'b0, instr_i[5], 1'b0, 2'b01, instr_i[9:7],
-                                  3'b101, 2'b01, instr_i[4:2], {OPCODE_LOAD}};
-                    end
-                    1'b1: begin
-                       // c.lh -> lh rd', imm(rs1')
+                3'b001: begin
+                    unique case (instr_i[6])
+                      1'b0: begin
+                        // c.lhu -> lhu rd', imm(rs1')
                         instr_o = {10'b0, instr_i[5], 1'b0, 2'b01, instr_i[9:7],
-                                  3'b001, 2'b01, instr_i[4:2], {OPCODE_LOAD}};
-                    end
+                                   3'b101, 2'b01, instr_i[4:2], {OPCODE_LOAD}};
+                      end
+                      1'b1: begin
+                        // c.lh -> lh rd', imm(rs1')
+                          instr_o = {10'b0, instr_i[5], 1'b0, 2'b01, instr_i[9:7],
+                                     3'b001, 2'b01, instr_i[4:2], {OPCODE_LOAD}};
+                      end
 
-                    default: begin
-                       illegal_instr_o = 1'b1;
-                    end
-                  endcase
-               end
+                      default: begin
+                        illegal_instr_o = 1'b1;
+                      end
+                    endcase
+                end
 
-               3'b010: begin
-                  // c.sb -> sb rs2', imm(rs1')
-                  instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7],
-                             3'b000, 3'b0, instr_i[5], instr_i[6], {OPCODE_STORE}};
-               end
+                3'b010: begin
+                    // c.sb -> sb rs2', imm(rs1')
+                    instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7],
+                               3'b000, 3'b0, instr_i[5], instr_i[6], {OPCODE_STORE}};
+                end
 
-               3'b011: begin
-                  unique case (instr_i[6])
-                    1'b0: begin
-                       // c.sh -> sh rs2', imm(rs1') // The instr_i[6] should always be zero according to the reference
-                      instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7],
-                                 3'b001, 3'b0, instr_i[5], 1'b0, {OPCODE_STORE}};
-                    end
-                    1'b1: begin
-                      illegal_instr_o = 1'b1;
-                    end
+                3'b011: begin
+                    unique case (instr_i[6])
+                      1'b0: begin
+                        // c.sh -> sh rs2', imm(rs1')
+                        // The instr_i[6] should always be zero according to the reference
+                        instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7],
+                                   3'b001, 3'b0, instr_i[5], 1'b0, {OPCODE_STORE}};
+                      end
+                      1'b1: begin
+                        illegal_instr_o = 1'b1;
+                      end
 
-                    default: begin
-                       illegal_instr_o = 1'b1;
-                    end
-                  endcase
-               end
+                      default: begin
+                        illegal_instr_o = 1'b1;
+                      end
+                    endcase
+                end
 
-               default: begin
+                default: begin
                   illegal_instr_o = 1'b1;
-               end
-             endcase // unique case (instr_i[12:10])
+                end
+              endcase // unique case (instr_i[12:10])
+            end else begin
+              // The Zcb extension is not enabled
+              illegal_instr_o = 1'b1;
+            end
           end
 
           3'b001,
@@ -371,59 +379,68 @@ module ibex_compressed_decoder (
 
                   3'b100,
                   3'b101: begin
-                     // 100: c.subw
-                     // 101: c.addw
-                     illegal_instr_o = 1'b1;
+                    // 100: c.subw
+                    // 101: c.addw
+                    illegal_instr_o = 1'b1;
                   end
 
                   3'b110: begin
-                     // c.mul -> m.mul rsd', rsd', rs2'
-                     instr_o = {7'b0000001, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7],
-                                3'b000, 2'b01, instr_i[9:7], {OPCODE_OP}};
+                    if (RV32ZC == RV32ZcaZcbZcmp || RV32ZC == RV32ZcaZcb) begin
+                      // c.mul -> m.mul rsd', rsd', rs2'
+                      instr_o = {7'b0000001, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7],
+                                 3'b000, 2'b01, instr_i[9:7], {OPCODE_OP}};
+                    end else begin
+                      // The Zcb extension is not enabled
+                      illegal_instr_o = 1'b1;
+                    end
                   end
 
                   3'b111: begin
-                    unique case ({instr_i[4:2]})
-                      3'b000: begin
-                         // c.zext.b -> andi rsd', rsd', 8'hff
-                         instr_o = {4'b0, 8'hff, 2'b01, instr_i[9:7], 3'b111,
-                                    2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+                    if (RV32ZC == RV32ZcaZcbZcmp || RV32ZC == RV32ZcaZcb) begin
+                      unique case ({instr_i[4:2]})
+                        3'b000: begin
+                          // c.zext.b -> andi rsd', rsd', 8'hff
+                          instr_o = {4'b0, 8'hff, 2'b01, instr_i[9:7], 3'b111,
+                                     2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+                        end
 
-                      end
+                        3'b001: begin
+                          // c.sext.b -> sext.b rsd', rsd'
+                          instr_o = {7'b0110000, 5'b00100, 2'b01, instr_i[9:7],
+                                     3'b001, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+                        end
 
-                      3'b001: begin
-                         // c.sext.b -> sext.b rsd', rsd'
-                         instr_o = {7'b0110000, 5'b00100, 2'b01, instr_i[9:7],
-                                    3'b001, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
-                      end
+                        3'b010: begin
+                          // c.zext.h -> zext.h rsd', rsd'
+                          instr_o = {7'b0000100, 5'b0, 2'b01, instr_i[9:7],
+                                     3'b100, 2'b01, instr_i[9:7], {OPCODE_OP}};
+                        end
 
-                      3'b010: begin
-                         // c.zext.h -> zext.h rsd', rsd'
-                         instr_o = {7'b0000100, 5'b0, 2'b01, instr_i[9:7],
-                                    3'b100, 2'b01, instr_i[9:7], {OPCODE_OP}};
-                      end
+                        3'b011: begin
+                          // c.sext.h -> sext.h rsd', rsd'
+                          instr_o = {7'b0110000, 5'b00101, 2'b01, instr_i[9:7],
+                                     3'b001, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+                        end
 
-                      3'b011: begin
-                         // c.sext.h -> sext.h rsd', rsd'
-                         instr_o = {7'b0110000, 5'b00101, 2'b01, instr_i[9:7],
-                                    3'b001, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
-                      end
+                        3'b100: begin
+                          // c.zext.w -> add.uw: only valid instruction for RV64 cores
+                          illegal_instr_o = 1'b1;
+                        end
 
-                      3'b100: begin
-                         // c.zext.w -> add.uw: only valid instruction for RV64 cores
-                         illegal_instr_o = 1'b1;
-                      end
+                        3'b101: begin
+                          // c.not -> xori rsd', rsd', -1
+                          instr_o = {12'hfff, 2'b01, instr_i[9:7], 3'b100,
+                                     2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+                        end
 
-                      3'b101: begin
-                         // c.not -> xori rsd', rsd', -1
-                         instr_o = {12'hfff, 2'b01, instr_i[9:7], 3'b100,
-                                    2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
-                      end
-
-                      default: begin
-                         illegal_instr_o = 1'b1;
-                      end
-                    endcase
+                        default: begin
+                          illegal_instr_o = 1'b1;
+                        end
+                      endcase
+                    end else begin
+                      // The Zcb extension is not enabled
+                      illegal_instr_o = 1'b1;
+                    end
                   end
 
                   default: begin
@@ -502,215 +519,218 @@ module ibex_compressed_decoder (
           end
 
           3'b101: begin
-            unique casez (instr_i[12:8])
-              // cm.push
-              5'b11000: begin
-                // This compressed instruction gets expanded into multiple instructions.
-                gets_expanded_o = 1'b1;
-                unique case (cm_state_q)
-                  CmIdle: begin
-                    // No cm.push instruction is active yet; start a new one.
-                    // Initialize `rlist` to the value provided by the instruction.
-                    cm_rlist_d = cm_rlist_init(instr_i[7:4]);
-                    // Store the register at the top of `rlist`.
-                    instr_o = cm_push_store_reg(.rlist(cm_rlist_d), .sp_offset(5'd1));
-                    if (cm_rlist_d <= 5'd3) begin
-                      // Reserved --> illegal instruction.
-                      illegal_instr_o = 1'b1;
-                    end else if (cm_rlist_d == 5'd4) begin
-                      // Only `ra` has to be stored, which is done in this cycle.  Proceed by
-                      // decrementing SP.
-                      if (id_in_ready_i) begin
-                        cm_state_d = CmPushDecrSp;
-                      end
-                    end else begin
-                      // More registers have to be stored.
-                      // Remove the current register from `rlist`.
-                      cm_rlist_d -= 5'd1;
-                      // Initialize SP offset to 2.
-                      cm_sp_offset_d = 5'd2;
-                      // Proceed with storing registers.
-                      if (id_in_ready_i) begin
-                        cm_state_d = CmPushStoreReg;
-                      end
-                    end
-                  end
-                  CmPushStoreReg: begin
-                    // Store register at the top of current `rlist`.
-                    instr_o = cm_push_store_reg(.rlist(cm_rlist_q), .sp_offset(cm_sp_offset_q));
-                    if (id_in_ready_i) begin
-                      // Remove top register from `rlist`.
-                      cm_rlist_d = cm_rlist_q - 5'd1;
-                      // Increment the SP offset.
-                      cm_sp_offset_d = cm_sp_offset_q + 5'd1;
-                      if (cm_rlist_q == 5'd4) begin
-                        // The last register gets stored in this cycle.  Proceed by decrementing
-                        // SP.
-                        cm_state_d = CmPushDecrSp;
-                      end
-                    end
-                  end
-                  CmPushDecrSp: begin
-                    // Decrement stack pointer.
-                    instr_o = cm_sp_addi(.rlist(instr_i[7:4]),
-                                         .spimm(instr_i[3:2]),
-                                         .decr(1'b1));
-                    if (id_in_ready_i) begin
-                      // This is the final operation, so stop expanding and return to idle.
-                      gets_expanded_o = 1'b0;
-                      cm_state_d = CmIdle;
-                    end
-                  end
-                  default: cm_state_d = CmIdle;
-                endcase
-              end
-
-              // cm.pop, cm.popretz, cm.popret
-              5'b11010,
-              5'b11100,
-              5'b11110: begin
-                // This compressed instruction gets expanded into multiple instructions.
-                gets_expanded_o = 1'b1;
-                unique case (cm_state_q)
-                  CmIdle: begin
-                    // No cm.pop instruction is active yet; start a new one.
-                    // Initialize `rlist` to the value provided by the instruction.
-                    cm_rlist_d = cm_rlist_init(instr_i[7:4]);
-                    // Initialize SP offset.
-                    cm_sp_offset_d = cm_stack_adj_word(.rlist(instr_i[7:4]),
-                                                       .spimm(instr_i[3:2])) - 5'd1;
-                    // Load the register at the top of `rlist`.
-                    instr_o = cm_pop_load_reg(.rlist(cm_rlist_d), .sp_offset(cm_sp_offset_d));
-                    if (cm_rlist_d <= 5'd3) begin
-                      // Reserved --> illegal instruction.
-                      illegal_instr_o = 1'b1;
-                    end else if (cm_rlist_d == 5'd4) begin
-                      // Only `ra` has to be loaded, which is done in this cycle.  Proceed by
-                      // incrementing SP.
-                      if (id_in_ready_i) begin
-                        cm_state_d = CmPopIncrSp;
-                      end
-                    end else begin
-                      // More registers have to be loaded.
-                      // Remove the current register from `rlist` and decrement the SP offset.
-                      cm_rlist_d -= 5'd1;
-                      cm_sp_offset_d -= 5'd1;
-                      // Proceed with loading registers.
-                      if (id_in_ready_i) begin
-                        cm_state_d = CmPopLoadReg;
-                      end
-                    end
-                  end
-                  CmPopLoadReg: begin
-                    // Load register at the top of current `rlist`.
-                    instr_o = cm_pop_load_reg(.rlist(cm_rlist_q), .sp_offset(cm_sp_offset_q));
-                    if (id_in_ready_i) begin
-                      // Remove top register from `rlist`.
-                      cm_rlist_d = cm_rlist_q - 5'd1;
-                      // Decrement the SP offset.
-                      cm_sp_offset_d = cm_sp_offset_q - 5'd1;
-                      if (cm_rlist_q == 5'd4) begin
-                        // The last register gets stored in this cycle.  Proceed by incrementing
-                        // SP.
-                        cm_state_d = CmPopIncrSp;
-                      end
-                    end
-                  end
-                  CmPopIncrSp: begin
-                    // Increment stack pointer.
-                    instr_o = cm_sp_addi(.rlist(instr_i[7:4]),
-                                         .spimm(instr_i[3:2]),
-                                         .decr(1'b0));
-                    if (id_in_ready_i) begin
-                      unique case (instr_i[12:8])
-                        5'b11100: cm_state_d = CmPopZeroA0; // cm.popretz
-                        5'b11110: cm_state_d = CmPopRetRa;  // cm.popret
-                        default: begin // cm.pop
-                          // This is the final operation, so stop expanding and return to idle.
-                          gets_expanded_o = 1'b0;
-                          cm_state_d = CmIdle;
+            if (RV32ZC == RV32ZcaZcbZcmp || RV32ZC == RV32ZcaZcmp) begin
+              unique casez (instr_i[12:8])
+                // cm.push
+                5'b11000: begin
+                  // This compressed instruction gets expanded into multiple instructions.
+                  gets_expanded_o = 1'b1;
+                  unique case (cm_state_q)
+                    CmIdle: begin
+                      // No cm.push instruction is active yet; start a new one.
+                      // Initialize `rlist` to the value provided by the instruction.
+                      cm_rlist_d = cm_rlist_init(instr_i[7:4]);
+                      // Store the register at the top of `rlist`.
+                      instr_o = cm_push_store_reg(.rlist(cm_rlist_d), .sp_offset(5'd1));
+                      if (cm_rlist_d <= 5'd3) begin
+                        // Reserved --> illegal instruction.
+                        illegal_instr_o = 1'b1;
+                      end else if (cm_rlist_d == 5'd4) begin
+                        // Only `ra` has to be stored, which is done in this cycle.  Proceed by
+                        // decrementing SP.
+                        if (id_in_ready_i) begin
+                          cm_state_d = CmPushDecrSp;
                         end
+                      end else begin
+                        // More registers have to be stored.
+                        // Remove the current register from `rlist`.
+                        cm_rlist_d -= 5'd1;
+                        // Initialize SP offset to 2.
+                        cm_sp_offset_d = 5'd2;
+                        // Proceed with storing registers.
+                        if (id_in_ready_i) begin
+                          cm_state_d = CmPushStoreReg;
+                        end
+                      end
+                    end
+                    CmPushStoreReg: begin
+                      // Store register at the top of current `rlist`.
+                      instr_o = cm_push_store_reg(.rlist(cm_rlist_q), .sp_offset(cm_sp_offset_q));
+                      if (id_in_ready_i) begin
+                        // Remove top register from `rlist`.
+                        cm_rlist_d = cm_rlist_q - 5'd1;
+                        // Increment the SP offset.
+                        cm_sp_offset_d = cm_sp_offset_q + 5'd1;
+                        if (cm_rlist_q == 5'd4) begin
+                          // The last register gets stored in this cycle.  Proceed by decrementing
+                          // SP.
+                          cm_state_d = CmPushDecrSp;
+                        end
+                      end
+                    end
+                    CmPushDecrSp: begin
+                      // Decrement stack pointer.
+                      instr_o = cm_sp_addi(.rlist(instr_i[7:4]), .spimm(instr_i[3:2]), .decr(1'b1));
+                      if (id_in_ready_i) begin
+                        // This is the final operation, so stop expanding and return to idle.
+                        gets_expanded_o = 1'b0;
+                        cm_state_d = CmIdle;
+                      end
+                    end
+                    default: cm_state_d = CmIdle;
+                  endcase
+                end
+
+                // cm.pop, cm.popretz, cm.popret
+                5'b11010,
+                5'b11100,
+                5'b11110: begin
+                  // This compressed instruction gets expanded into multiple instructions.
+                  gets_expanded_o = 1'b1;
+                  unique case (cm_state_q)
+                    CmIdle: begin
+                      // No cm.pop instruction is active yet; start a new one.
+                      // Initialize `rlist` to the value provided by the instruction.
+                      cm_rlist_d = cm_rlist_init(instr_i[7:4]);
+                      // Initialize SP offset.
+                      cm_sp_offset_d = cm_stack_adj_word(.rlist(instr_i[7:4]),
+                                                        .spimm(instr_i[3:2])) - 5'd1;
+                      // Load the register at the top of `rlist`.
+                      instr_o = cm_pop_load_reg(.rlist(cm_rlist_d), .sp_offset(cm_sp_offset_d));
+                      if (cm_rlist_d <= 5'd3) begin
+                        // Reserved --> illegal instruction.
+                        illegal_instr_o = 1'b1;
+                      end else if (cm_rlist_d == 5'd4) begin
+                        // Only `ra` has to be loaded, which is done in this cycle.  Proceed by
+                        // incrementing SP.
+                        if (id_in_ready_i) begin
+                          cm_state_d = CmPopIncrSp;
+                        end
+                      end else begin
+                        // More registers have to be loaded.
+                        // Remove the current register from `rlist` and decrement the SP offset.
+                        cm_rlist_d -= 5'd1;
+                        cm_sp_offset_d -= 5'd1;
+                        // Proceed with loading registers.
+                        if (id_in_ready_i) begin
+                          cm_state_d = CmPopLoadReg;
+                        end
+                      end
+                    end
+                    CmPopLoadReg: begin
+                      // Load register at the top of current `rlist`.
+                      instr_o = cm_pop_load_reg(.rlist(cm_rlist_q), .sp_offset(cm_sp_offset_q));
+                      if (id_in_ready_i) begin
+                        // Remove top register from `rlist`.
+                        cm_rlist_d = cm_rlist_q - 5'd1;
+                        // Decrement the SP offset.
+                        cm_sp_offset_d = cm_sp_offset_q - 5'd1;
+                        if (cm_rlist_q == 5'd4) begin
+                          // The last register gets stored in this cycle.  Proceed by incrementing
+                          // SP.
+                          cm_state_d = CmPopIncrSp;
+                        end
+                      end
+                    end
+                    CmPopIncrSp: begin
+                      // Increment stack pointer.
+                      instr_o = cm_sp_addi(.rlist(instr_i[7:4]),
+                                          .spimm(instr_i[3:2]),
+                                          .decr(1'b0));
+                      if (id_in_ready_i) begin
+                        unique case (instr_i[12:8])
+                          5'b11100: cm_state_d = CmPopZeroA0; // cm.popretz
+                          5'b11110: cm_state_d = CmPopRetRa;  // cm.popret
+                          default: begin // cm.pop
+                            // This is the final operation, so stop expanding and return to idle.
+                            gets_expanded_o = 1'b0;
+                            cm_state_d = CmIdle;
+                          end
+                        endcase
+                      end
+                    end
+                    CmPopZeroA0: begin
+                      instr_o = cm_zero_a0();
+                      if (id_in_ready_i) begin
+                        cm_state_d = CmPopRetRa;
+                      end
+                    end
+                    CmPopRetRa: begin
+                      instr_o = cm_ret_ra();
+                      if (id_in_ready_i) begin
+                        // This is the final operation, so stop expanding and return to idle.
+                        gets_expanded_o = 1'b0;
+                        cm_state_d = CmIdle;
+                      end
+                    end
+                    default: cm_state_d = CmIdle;
+                  endcase
+                end
+
+                // cm.mvsa01, cm.mva01s
+                5'b011??: begin
+                  unique case (instr_i[6:5])
+                    // cm.mvsa01
+                    2'b01: begin
+                      // This compressed instruction gets expanded into multiple instructions.
+                      gets_expanded_o = 1'b1;
+                      unique case (cm_state_q)
+                        CmIdle: begin
+                          // No cm.mvsa01 instruction is active yet; start a new one.
+                          // Move a0 to register indicated by r1s'.
+                          instr_o = cm_mvsa01(.a01(1'b0), .rs(instr_i[9:7]));
+                          if (id_in_ready_i) begin
+                            cm_state_d = CmMvSA1;
+                          end
+                        end
+                        CmMvSA1: begin
+                          // Move a1 to register indicated by r2s'.
+                          instr_o = cm_mvsa01(.a01(1'b1), .rs(instr_i[4:2]));
+                          if (id_in_ready_i) begin
+                            // This is the final operation, so stop expanding and return to idle.
+                            gets_expanded_o = 1'b0;
+                            cm_state_d = CmIdle;
+                          end
+                        end
+                        default: cm_state_d = CmIdle;
                       endcase
                     end
-                  end
-                  CmPopZeroA0: begin
-                    instr_o = cm_zero_a0();
-                    if (id_in_ready_i) begin
-                      cm_state_d = CmPopRetRa;
+
+                    // cm.mva01s
+                    2'b11: begin
+                      // This compressed instruction gets expanded into multiple instructions.
+                      gets_expanded_o = 1'b1;
+                      unique case (cm_state_q)
+                        CmIdle: begin
+                          // No cm.mva01s instruction is active yet; start a new one.
+                          // Move register indicated by r1s' into a0.
+                          instr_o = cm_mva01s(.rs(instr_i[9:7]), .a01(1'b0));
+                          if (id_in_ready_i) begin
+                            cm_state_d = CmMvA1S;
+                          end
+                        end
+                        CmMvA1S: begin
+                          // Move register indicated by r2s' into a1.
+                          instr_o = cm_mva01s(.rs(instr_i[4:2]), .a01(1'b1));
+                          if (id_in_ready_i) begin
+                            // This is the final operation, so stop expanding and return to idle.
+                            gets_expanded_o = 1'b0;
+                            cm_state_d = CmIdle;
+                          end
+                        end
+                        default: cm_state_d = CmIdle;
+                      endcase
                     end
-                  end
-                  CmPopRetRa: begin
-                    instr_o = cm_ret_ra();
-                    if (id_in_ready_i) begin
-                      // This is the final operation, so stop expanding and return to idle.
-                      gets_expanded_o = 1'b0;
-                      cm_state_d = CmIdle;
-                    end
-                  end
-                  default: cm_state_d = CmIdle;
-                endcase
-              end
+                    default: illegal_instr_o = 1'b1;
+                  endcase
+                end
 
-              // cm.mvsa01, cm.mva01s
-              5'b011??: begin
-                unique case (instr_i[6:5])
-                  // cm.mvsa01
-                  2'b01: begin
-                    // This compressed instruction gets expanded into multiple instructions.
-                    gets_expanded_o = 1'b1;
-                    unique case (cm_state_q)
-                      CmIdle: begin
-                        // No cm.mvsa01 instruction is active yet; start a new one.
-                        // Move a0 to register indicated by r1s'.
-                        instr_o = cm_mvsa01(.a01(1'b0), .rs(instr_i[9:7]));
-                        if (id_in_ready_i) begin
-                          cm_state_d = CmMvSA1;
-                        end
-                      end
-                      CmMvSA1: begin
-                        // Move a1 to register indicated by r2s'.
-                        instr_o = cm_mvsa01(.a01(1'b1), .rs(instr_i[4:2]));
-                        if (id_in_ready_i) begin
-                          // This is the final operation, so stop expanding and return to idle.
-                          gets_expanded_o = 1'b0;
-                          cm_state_d = CmIdle;
-                        end
-                      end
-                      default: cm_state_d = CmIdle;
-                    endcase
-                  end
-
-                  // cm.mva01s
-                  2'b11: begin
-                    // This compressed instruction gets expanded into multiple instructions.
-                    gets_expanded_o = 1'b1;
-                    unique case (cm_state_q)
-                      CmIdle: begin
-                        // No cm.mva01s instruction is active yet; start a new one.
-                        // Move register indicated by r1s' into a0.
-                        instr_o = cm_mva01s(.rs(instr_i[9:7]), .a01(1'b0));
-                        if (id_in_ready_i) begin
-                          cm_state_d = CmMvA1S;
-                        end
-                      end
-                      CmMvA1S: begin
-                        // Move register indicated by r2s' into a1.
-                        instr_o = cm_mva01s(.rs(instr_i[4:2]), .a01(1'b1));
-                        if (id_in_ready_i) begin
-                          // This is the final operation, so stop expanding and return to idle.
-                          gets_expanded_o = 1'b0;
-                          cm_state_d = CmIdle;
-                        end
-                      end
-                      default: cm_state_d = CmIdle;
-                    endcase
-                  end
-                  default: illegal_instr_o = 1'b1;
-                endcase
-              end
-
-              default: illegal_instr_o = 1'b1;
-            endcase
+                default: illegal_instr_o = 1'b1;
+              endcase
+            end else begin
+              // The Zcmp extension is not enabled
+              illegal_instr_o = 1'b1;
+            end
           end
 
           3'b110: begin
