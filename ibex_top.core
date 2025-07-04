@@ -19,6 +19,7 @@ filesets:
       - lowrisc:prim:onehot_check
       - lowrisc:prim:onehot
     files:
+      - rtl/ibex_register_file_common.sv
       - rtl/ibex_register_file_ff.sv # generic FF-based
       - rtl/ibex_register_file_fpga.sv # FPGA
       - rtl/ibex_register_file_latch.sv # ASIC
