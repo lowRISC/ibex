@@ -175,7 +175,7 @@ targets:
           - '--trace-structs'
           - '--trace-params'
           - '--trace-max-array 1024'
-          - '-CFLAGS "-std=c++14 -Wall -DVM_TRACE_FMT_FST -DTOPLEVEL_NAME=ibex_simple_system -g"'
+          - '-CFLAGS "-std=c++17 -Wall -DVM_TRACE_FMT_FST -DTOPLEVEL_NAME=ibex_simple_system -g"'
           - '-LDFLAGS "-pthread -lutil -lelf"'
           - "-Wall"
           # RAM primitives wider than 64bit (required for ECC) fail to build in

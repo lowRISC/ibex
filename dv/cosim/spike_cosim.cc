@@ -37,7 +37,8 @@ SpikeCosim::SpikeCosim(const std::string &isa_string, uint32_t start_pc,
                        uint32_t start_mtvec, const std::string &trace_log_path,
                        bool secure_ibex, bool icache_en,
                        uint32_t pmp_num_regions, uint32_t pmp_granularity,
-                       uint32_t mhpm_counter_num)
+                       uint32_t mhpm_counter_num, uint32_t dm_start_addr,
+                       uint32_t dm_end_addr)
     : nmi_mode(false), pending_iside_error(false), insn_cnt(0) {
   FILE *log_file = nullptr;
   if (trace_log_path.length() != 0) {
@@ -67,6 +68,7 @@ SpikeCosim::SpikeCosim(const std::string &isa_string, uint32_t start_pc,
   processor->set_mhpm_counter_num(mhpm_counter_num);
   processor->set_pmp_granularity(1 << (pmp_granularity + 2));
   processor->set_ibex_flags(secure_ibex, icache_en);
+  processor->set_debug_module_range(dm_start_addr, dm_end_addr);
 
   initial_proc_setup(start_pc, start_mtvec, mhpm_counter_num);
 
@@ -1050,8 +1052,8 @@ bool SpikeCosim::pc_is_debug_ebreak(uint32_t pc) {
   // ebreak debug entry is controlled by the ebreakm (bit 15) and ebreaku (bit
   // 12) fields of DCSR. If the appropriate bit of the current privilege level
   // isn't set ebreak won't enter debug so return false.
-  if ((processor->get_state()->prv == PRV_M) && ((dcsr & 0x1000) == 0) ||
-      (processor->get_state()->prv == PRV_U) && ((dcsr & 0x8000) == 0)) {
+  if (((processor->get_state()->prv == PRV_M) && ((dcsr & 0x1000) == 0)) ||
+      ((processor->get_state()->prv == PRV_U) && ((dcsr & 0x8000) == 0))) {
     return false;
   }
 
