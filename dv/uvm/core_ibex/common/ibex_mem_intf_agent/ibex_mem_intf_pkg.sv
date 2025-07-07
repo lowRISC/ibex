@@ -13,7 +13,6 @@ package ibex_mem_intf_pkg;
   typedef enum { READ, WRITE } rw_e;
 
   `include "uvm_macros.svh"
-  `include "dv_macros.svh"
   `include "ibex_mem_intf_seq_item.sv"
 
 endpackage
