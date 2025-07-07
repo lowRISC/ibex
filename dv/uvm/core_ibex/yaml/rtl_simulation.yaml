@@ -145,6 +145,7 @@
           -f <core_ibex>/ibex_dv.f
           -l <tb_build_log>
           -suppress EnumMustBePositive
+          <cmp_opts>
           <cosim_opts>
       # dsim does not link image.so with ISS_LDFLAGS and ISS_LIBS, so symbols are missing
       # so we need to re-link image.so with the linker flags and libraries
