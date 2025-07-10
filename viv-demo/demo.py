@@ -11,10 +11,8 @@ import sys
 import subprocess
 import tempfile
 import urllib.request
-import gzip
 import shutil
 from dataclasses import dataclass
-from typing import List
 
 
 @dataclass
@@ -148,7 +146,6 @@ def main() -> None:
     print("\033[1;37mViv Demo Tool\033[0m")
     print()
 
-    # Display available bugs
     display_bugs()
 
     # Get user selection
@@ -156,25 +153,17 @@ def main() -> None:
     print(f"Selected: {selected_bug.name}")
     print()
 
-    # Create temporary directory for artifacts
     temp_dir = tempfile.mkdtemp(prefix="viv_demo_")
     artifact_path = os.path.join(temp_dir, "artifacts.tar.gz")
 
     try:
-        # Download artifact
         download_artifact(selected_bug.artifact_url, artifact_path)
-        
-        # Switch git branch
         switch_git_branch(selected_bug.git_revision)
-        
-        # Run viv
         run_viv(selected_bug.name, artifact_path)
-        
     except KeyboardInterrupt:
         print("\nOperation cancelled by user")
         sys.exit(0)
     finally:
-        # Clean up temporary files
         cleanup_temp_files(temp_dir)
 
 
