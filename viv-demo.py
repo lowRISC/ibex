@@ -69,7 +69,7 @@ def get_user_selection() -> Bug:
             choice = input(f"Please select a bug for Viv to debug. (1-{len(BUGS)}) ").strip()
             if not choice:
                 continue
-            
+
             index = int(choice) - 1
             if 0 <= index < len(BUGS):
                 return BUGS[index]
@@ -93,6 +93,41 @@ def download_artifact(url: str, dest_path: str) -> None:
         sys.exit(1)
 
 
+def get_git_diff(revision: str) -> str:
+    """Get git diff for the specified revision."""
+    try:
+        # Get the diff from the revision's HEAD
+        result = subprocess.run(
+            ["git", "show", "--no-merges", revision],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        print(f"Error getting git diff: {e}")
+        return f"Could not retrieve diff for {revision}"
+
+
+def confirm_execution(bug: Bug, artifact_path: str) -> bool:
+    """Display diff and command, then ask for confirmation."""
+    print(f"\n{SHELL_BOLD}=== Git Diff for {bug.git_revision} ==={SHELL_END}")
+    diff = get_git_diff(bug.git_revision)
+    print(diff)
+
+    print(f"\n{SHELL_BOLD}=== Command to be executed ==={SHELL_END}")
+    viv_command = f"viv submit --job-name={bug.name} --artifact-path={artifact_path}"
+    print(viv_command)
+
+    print(f"\n{SHELL_BOLD}Continue with execution? (Y/n):{SHELL_END} ", end="")
+
+    try:
+        response = input().strip().lower()
+        return response in ("", "y", "yes")
+    except KeyboardInterrupt:
+        return False
+
+
 def switch_git_branch(revision: str) -> None:
     """Switch to the specified git revision."""
     print(f"Switching to git revision: {revision}")
@@ -104,14 +139,14 @@ def switch_git_branch(revision: str) -> None:
             text=True,
             check=True
         )
-        
+
         # Fetch latest changes
         subprocess.run(["git", "fetch"], check=True)
-        
+
         # Switch to the revision
         subprocess.run(["git", "checkout", revision], check=True)
         print(f"Successfully switched to {revision}")
-        
+
     except subprocess.CalledProcessError as e:
         print(f"Error switching git branch: {e}")
         print("Make sure you're in a git repository and the revision exists")
@@ -127,9 +162,9 @@ def run_viv(job_name: str, artifact_path: str) -> None:
             f"--job-name={job_name}",
             f"--artifact-path={artifact_path}"
         ], check=True)
-        
+
         print("Viv execution completed successfully!")
-        
+
     except subprocess.CalledProcessError as e:
         print(f"Error running viv: {e}")
         sys.exit(1)
@@ -163,6 +198,11 @@ def main() -> None:
     artifact_path = os.path.join(temp_dir, "artifacts.tar.gz")
 
     try:
+        # Show diff and get confirmation before proceeding
+        if not confirm_execution(selected_bug, artifact_path):
+            print("Operation cancelled by user")
+            return
+
         download_artifact(selected_bug.artifact_url, artifact_path)
         switch_git_branch(selected_bug.git_revision)
         run_viv(selected_bug.name, artifact_path)
