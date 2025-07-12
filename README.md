@@ -3,6 +3,15 @@
   <img src="https://ibex.reports.lowrisc.org/opentitan/latest/summary.svg">
 </a>
 
+# About This Fork
+
+This is [Silogy's](https://www.silogy.io) fork of the [Ibex RISC-V Core](https://github.com/lowRISC/ibex). Silogy
+maintains this fork to test Viv, its AI-powered verification engineer. For more information, please email
+contact@silogy.io.
+
+If you're here to evaluate our performance, you can start by looking at one of the test cases we've prepared by
+running `./viv-demo.py`.
+
 # Ibex RISC-V Core
 
 Ibex is a production-quality open source 32-bit RISC-V CPU core written in

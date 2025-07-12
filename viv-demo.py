@@ -66,7 +66,7 @@ def get_user_selection() -> Bug:
     """Get user's bug selection."""
     while True:
         try:
-            choice = input(f"Select a bug (1-{len(BUGS)}): ").strip()
+            choice = input(f"Please select a bug for Viv to debug. (1-{len(BUGS)}) ").strip()
             if not choice:
                 continue
             
