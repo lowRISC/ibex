@@ -12,7 +12,12 @@ import subprocess
 import tempfile
 import urllib.request
 import shutil
+import textwrap
 from dataclasses import dataclass
+
+SHELL_WHITE_BOLD = "\033[1;37m"
+SHELL_BOLD = "\033[1m"
+SHELL_END = "\033[0m"
 
 
 @dataclass
@@ -27,19 +32,20 @@ class Bug:
 BUGS = [
     Bug(
         name="dside_accesses_shift",
-        description="Error in pending data accesses shifting",
+        description="Error in pending data accesses shifting.",
         git_revision="bug/dside-accesses-shift",
         artifact_url="https://silogy-demo-bug-artifacts.s3.us-east-1.amazonaws.com/dside-accesses-shift.tar.gz"
     ),
     Bug(
         name="handle_misaligned",
-        description=" An erroneous grant signal in the cache causes byte enables for cache lines to be incorrect, causing some data to be unwritten to memory",
+        description="An erroneous grant signal in the cache causes byte enables for cache lines to be incorrect, "
+                    "causing some data to be unwritten to memory.",
         git_revision="bug/handle-misaligned",
         artifact_url="https://silogy-demo-bug-artifacts.s3.us-east-1.amazonaws.com/handle-misaligned.tar.gz"
     ),
     Bug(
         name="opcode_decode",
-        description="The decoder's opcode logic is shifted by a bit, causing erroneous instructions to appear",
+        description="The decoder's opcode logic is shifted by a bit, causing erroneous instructions to appear.",
         git_revision="bug/opcode-decode",
         artifact_url="https://silogy-demo-bug-artifacts.s3.us-east-1.amazonaws.com/opcode-decode.tar.gz"
     ),
@@ -50,9 +56,9 @@ def display_bugs() -> None:
     """Display available bugs for selection."""
     print("Available bugs for demonstration:")
     for i, bug in enumerate(BUGS, 1):
-        print(f"{i}. {bug.name}")
-        print(f"   Description: {bug.description}")
-        print(f"   Git revision: {bug.git_revision}")
+        print(f"{i}. {SHELL_BOLD}{bug.name}{SHELL_END} (branch: {bug.git_revision})")
+        wrapped_description = textwrap.fill(bug.description, width=90, initial_indent="   ", subsequent_indent="   ")
+        print(wrapped_description)
         print()
 
 
@@ -143,7 +149,7 @@ def cleanup_temp_files(temp_dir: str) -> None:
 
 def main() -> None:
     """Main function."""
-    print("\033[1;37mViv Demo Tool\033[0m")
+    print(f"{SHELL_WHITE_BOLD}Viv Demo Tool{SHELL_END}")
     print()
 
     display_bugs()
