@@ -129,7 +129,7 @@
 
 ############################################################
 - tool: dsim
-  env_var: DSIM,DSIM_LIB_PATH
+  env_var: DSIM,DSIM_LIB_PATH,IBEX_ROOT
   compile:
     cmd:
       - >-
@@ -142,11 +142,21 @@
           $UVM_HOME/src/uvm_pkg.sv
           +define+UVM
           +define+DSIM
+          +define+UVM_REGEX_NO_DPI
           +acc+rwb
           -f <core_ibex>/ibex_dv_defines.f
           -f <core_ibex>/ibex_dv.f
           -l <tb_build_log>
-          -suppress EnumMustBePositive"
+          -suppress EnumMustBePositive
+          <cmp_opts>
+          <cosim_opts>
+      # dsim does not link image.so with ISS_LDFLAGS and ISS_LIBS, so symbols are missing
+      # so we need to re-link image.so with the linker flags and libraries
+      - gcc -shared -Bsymbolic -o <tb_dir>/image.so @<tb_dir>/obj/objfiles <ISS_LDFLAGS> <ISS_LIBS> -lstdc++
+    cosim_opts: >-
+      -f <core_ibex>/ibex_dv_cosim_dpi.f
+      -ld-opts '<ISS_LDFLAGS> <ISS_LIBS> -lstdc++'
+      -c-opts '<ISS_CFLAGS> <ISS_LIBS> -lstdc++ -I<IBEX_ROOT>/dv/cosim'
   sim:
     cmd:
       - >-
