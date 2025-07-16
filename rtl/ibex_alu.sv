@@ -458,7 +458,7 @@ module ibex_alu #(
     always_comb begin
       unique case (1'b1)
         zbe_op:      bitcnt_bits = operand_b_i;
-        bitcnt_cz:   bitcnt_bits = bitcnt_bit_mask & ~bitcnt_mask_op; // clz / ctz
+        bitcnt_cz:   bitcnt_bits = bitcnt_bit_mask; // clz / ctz
         default:     bitcnt_bits = operand_a_i; // cpop
       endcase
     end
