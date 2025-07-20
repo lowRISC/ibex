@@ -16,7 +16,6 @@ import textwrap
 from dataclasses import dataclass
 
 SHELL_WHITE_BOLD = "\033[1;37m"
-SHELL_BOLD = "\033[1m"
 SHELL_END = "\033[0m"
 
 
@@ -56,7 +55,7 @@ def display_bugs() -> None:
     """Display available bugs for selection."""
     print("Available bugs for demonstration:")
     for i, bug in enumerate(BUGS, 1):
-        print(f"{i}. {SHELL_BOLD}{bug.name}{SHELL_END} (branch: {bug.git_revision})")
+        print(f"{i}. {SHELL_WHITE_BOLD}{bug.name}{SHELL_END} (branch: {bug.git_revision})")
         wrapped_description = textwrap.fill(bug.description, width=90, initial_indent="   ", subsequent_indent="   ")
         print(wrapped_description)
         print()
@@ -96,9 +95,12 @@ def download_artifact(url: str, dest_path: str) -> None:
 def get_git_diff(revision: str) -> str:
     """Get git diff for the specified revision."""
     try:
+        # Fetch all remote branches first
+        subprocess.run(["git", "fetch", "origin"], capture_output=True, check=True)
+
         # Get the diff from the revision's HEAD
         result = subprocess.run(
-            ["git", "show", "--no-merges", revision],
+            ["git", "show", "--no-merges", f"origin/{revision}"],
             capture_output=True,
             text=True,
             check=True
@@ -111,15 +113,15 @@ def get_git_diff(revision: str) -> str:
 
 def confirm_execution(bug: Bug, artifact_path: str) -> bool:
     """Display diff and command, then ask for confirmation."""
-    print(f"\n{SHELL_BOLD}=== Git Diff for {bug.git_revision} ==={SHELL_END}")
+    print(f"\n{SHELL_WHITE_BOLD}=== Git Diff for {bug.git_revision} ==={SHELL_END}")
     diff = get_git_diff(bug.git_revision)
     print(diff)
 
-    print(f"\n{SHELL_BOLD}=== Command to be executed ==={SHELL_END}")
+    print(f"\n{SHELL_WHITE_BOLD}=== Command to be executed ==={SHELL_END}")
     viv_command = f"viv submit --job-name={bug.name} --artifact-path={artifact_path}"
     print(viv_command)
 
-    print(f"\n{SHELL_BOLD}Continue with execution? (Y/n):{SHELL_END} ", end="")
+    print(f"\n{SHELL_WHITE_BOLD}Continue with execution? (Y/n):{SHELL_END} ", end="")
 
     try:
         response = input().strip().lower()
@@ -141,10 +143,10 @@ def switch_git_branch(revision: str) -> None:
         )
 
         # Fetch latest changes
-        subprocess.run(["git", "fetch"], check=True)
+        subprocess.run(["git", "fetch", "origin"], check=True)
 
         # Switch to the revision
-        subprocess.run(["git", "checkout", revision], check=True)
+        subprocess.run(["git", "checkout", f"origin/{revision}"], check=True)
         print(f"Successfully switched to {revision}")
 
     except subprocess.CalledProcessError as e:
