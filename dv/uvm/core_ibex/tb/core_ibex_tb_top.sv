@@ -2,6 +2,8 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
+`include "uvm_macros.svh"
+`include "dv_macros.svh"
 `include "prim_assert.sv"
 
 module core_ibex_tb_top;
@@ -190,11 +192,13 @@ module core_ibex_tb_top;
       `IBEX_LOCKSTEP_PATH.u_shadow_core.NoMemResponseWithoutPendingAccess)
   end
 
+`ifndef DV_FCOV_DISABLE
   assign dut.u_ibex_top.u_ibex_core.u_fcov_bind.rf_we_glitch_err =
     dut.u_ibex_top.rf_alert_major_internal;
 
   assign dut.u_ibex_top.u_ibex_core.u_fcov_bind.lockstep_glitch_err =
     dut.u_ibex_top.lockstep_alert_major_internal;
+`endif
 
   // Data load/store vif connection
   assign data_mem_vif.reset = ~rst_n;
