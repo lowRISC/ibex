@@ -1591,9 +1591,28 @@ module ibex_core import ibex_pkg::*; #(
         rvfi_ext_stage_debug_req[i+1]      <= '0;
         rvfi_ext_stage_debug_mode[i]       <= '0;
         rvfi_ext_stage_mcycle[i]           <= '0;
-        rvfi_ext_stage_mhpmcounters[i]     <= '{10{'0}};
-        rvfi_ext_stage_mhpmcountersh[i]    <= '{10{'0}};
         rvfi_ext_stage_ic_scr_key_valid[i] <= '0;
+        // DSim does not properly support array assignment in for loop, so unroll
+        rvfi_ext_stage_mhpmcounters[i][0]  <= '0;
+        rvfi_ext_stage_mhpmcountersh[i][0] <= '0;
+        rvfi_ext_stage_mhpmcounters[i][1]  <= '0;
+        rvfi_ext_stage_mhpmcountersh[i][1] <= '0;
+        rvfi_ext_stage_mhpmcounters[i][2]  <= '0;
+        rvfi_ext_stage_mhpmcountersh[i][2] <= '0;
+        rvfi_ext_stage_mhpmcounters[i][3]  <= '0;
+        rvfi_ext_stage_mhpmcountersh[i][3] <= '0;
+        rvfi_ext_stage_mhpmcounters[i][4]  <= '0;
+        rvfi_ext_stage_mhpmcountersh[i][4] <= '0;
+        rvfi_ext_stage_mhpmcounters[i][5]  <= '0;
+        rvfi_ext_stage_mhpmcountersh[i][5] <= '0;
+        rvfi_ext_stage_mhpmcounters[i][6]  <= '0;
+        rvfi_ext_stage_mhpmcountersh[i][6] <= '0;
+        rvfi_ext_stage_mhpmcounters[i][7]  <= '0;
+        rvfi_ext_stage_mhpmcountersh[i][7] <= '0;
+        rvfi_ext_stage_mhpmcounters[i][8]  <= '0;
+        rvfi_ext_stage_mhpmcountersh[i][8] <= '0;
+        rvfi_ext_stage_mhpmcounters[i][9]  <= '0;
+        rvfi_ext_stage_mhpmcountersh[i][9] <= '0;
       end else begin
         rvfi_stage_valid[i] <= rvfi_stage_valid_d[i];
 
@@ -1624,12 +1643,27 @@ module ibex_core import ibex_pkg::*; #(
             rvfi_ext_stage_debug_mode[i]       <= debug_mode;
             rvfi_ext_stage_mcycle[i]           <= cs_registers_i.mcycle_counter_i.counter_val_o;
             rvfi_ext_stage_ic_scr_key_valid[i] <= cs_registers_i.cpuctrlsts_ic_scr_key_valid_q;
-            // This is done this way because SystemVerilog does not support looping through
-            // gen_cntrs[k] within a for loop.
-            for (int k=0; k < 10; k++) begin
-              rvfi_ext_stage_mhpmcounters[i][k]  <= cs_registers_i.mhpmcounter[k+3][31:0];
-              rvfi_ext_stage_mhpmcountersh[i][k] <= cs_registers_i.mhpmcounter[k+3][63:32];
-            end
+            // DSim does not properly support array assignment in for loop, so unroll
+            rvfi_ext_stage_mhpmcounters[i][0]  <= cs_registers_i.mhpmcounter[3][31:0];
+            rvfi_ext_stage_mhpmcountersh[i][0] <= cs_registers_i.mhpmcounter[3][63:32];
+            rvfi_ext_stage_mhpmcounters[i][1]  <= cs_registers_i.mhpmcounter[4][31:0];
+            rvfi_ext_stage_mhpmcountersh[i][1] <= cs_registers_i.mhpmcounter[4][63:32];
+            rvfi_ext_stage_mhpmcounters[i][2]  <= cs_registers_i.mhpmcounter[5][31:0];
+            rvfi_ext_stage_mhpmcountersh[i][2] <= cs_registers_i.mhpmcounter[5][63:32];
+            rvfi_ext_stage_mhpmcounters[i][3]  <= cs_registers_i.mhpmcounter[6][31:0];
+            rvfi_ext_stage_mhpmcountersh[i][3] <= cs_registers_i.mhpmcounter[6][63:32];
+            rvfi_ext_stage_mhpmcounters[i][4]  <= cs_registers_i.mhpmcounter[7][31:0];
+            rvfi_ext_stage_mhpmcountersh[i][4] <= cs_registers_i.mhpmcounter[7][63:32];
+            rvfi_ext_stage_mhpmcounters[i][5]  <= cs_registers_i.mhpmcounter[8][31:0];
+            rvfi_ext_stage_mhpmcountersh[i][5] <= cs_registers_i.mhpmcounter[8][63:32];
+            rvfi_ext_stage_mhpmcounters[i][6]  <= cs_registers_i.mhpmcounter[9][31:0];
+            rvfi_ext_stage_mhpmcountersh[i][6] <= cs_registers_i.mhpmcounter[9][63:32];
+            rvfi_ext_stage_mhpmcounters[i][7]  <= cs_registers_i.mhpmcounter[10][31:0];
+            rvfi_ext_stage_mhpmcountersh[i][7] <= cs_registers_i.mhpmcounter[10][63:32];
+            rvfi_ext_stage_mhpmcounters[i][8]  <= cs_registers_i.mhpmcounter[11][31:0];
+            rvfi_ext_stage_mhpmcountersh[i][8] <= cs_registers_i.mhpmcounter[11][63:32];
+            rvfi_ext_stage_mhpmcounters[i][9]  <= cs_registers_i.mhpmcounter[12][31:0];
+            rvfi_ext_stage_mhpmcountersh[i][9] <= cs_registers_i.mhpmcounter[12][63:32];
           end
 
           // Some of the rvfi_ext_* signals are used to provide an interrupt notification (signalled
