@@ -1125,7 +1125,7 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
     // we are blocking the current instruction until the instruction from WB stage is ready.
     wait (dut_vif.dut_cb.ctrl_fsm_cs == FLUSH);
     clk_vif.wait_clks(2);
-    check_priv_mode(PRIV_LVL_M);
+    check_priv_mode(init_operating_mode);
     wait_ret("mret", 15000);
   endtask
 
@@ -1657,7 +1657,7 @@ class core_ibex_dret_test extends core_ibex_directed_test;
 
   virtual task check_stimulus();
     forever begin
-      wait (dut_vif.dut_cb.dret === 1'b1);
+      @(negedge dut_vif.dut_cb.dret);
       check_illegal_insn("Core did not treat dret like illegal instruction");
     end
   endtask
