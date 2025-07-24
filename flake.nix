@@ -66,12 +66,6 @@
           src = inputs.lowrisc_sail;
         };
 
-        # Sail RISC-V model with changes for Ibex
-        lowrisc_sail_riscv.src = (import ./nix/lowrisc_sail_riscv.nix {
-          inherit pkgs;
-          src = inputs.lowrisc_sail_riscv;
-        }).src;
-
         # Create a python package set suitable for the formal flow
         # - The file dv/formal/pyproject.toml defines the package set for this environment
         # - Using the fusesoc .core files in this repo requires a lowrisc-fork of fusesoc, so this
@@ -121,7 +115,7 @@
                 # of the external source-file dependencies.
                 # The can be re-exported manually for development (see .#formal-dev)
                 export LOWRISC_SAIL_SRC=${lowrisc_sail.src}
-                export LOWRISC_SAIL_RISCV_SRC=${lowrisc_sail_riscv.src}
+                export LOWRISC_SAIL_RISCV_SRC=${inputs.lowrisc_sail_riscv}
               '';
             };
 
