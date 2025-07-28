@@ -5,14 +5,25 @@
   description = "Nix Flake for Ibex development and testing.";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     flake-utils.url = "github:numtide/flake-utils";
 
-    poetry2nix = {
-      url = "github:nix-community/poetry2nix";
+    pyproject-nix = {
+      url = "github:pyproject-nix/pyproject.nix";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
     };
+    uv2nix = {
+      url = "github:pyproject-nix/uv2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+    };
+    pyproject-build-systems = {
+      url = "github:pyproject-nix/build-system-pkgs";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.uv2nix.follows = "uv2nix";
+    };
+
     mkshell-minimal.url = "github:viperML/mkshell-minimal";
 
     lowrisc-nix = {
@@ -72,16 +83,24 @@
         #   file specifies the forked repository. Most other python package dependencies are in
         #   support of fusesoc.
         formal_python_env = let
-          poetry2nix = inputs.poetry2nix.lib.mkPoetry2Nix {inherit pkgs;};
-          lowriscPoetryOverrides = inputs.lowrisc-nix.lib.poetryOverrides {inherit pkgs;};
+            workspace = inputs.uv2nix.lib.workspace.loadWorkspace {
+              workspaceRoot = ./dv/formal;
+            };
+            overlay = workspace.mkPyprojectOverlay {
+              sourcePreference = "sdist";
+            };
+            pythonSet =
+              (pkgs.callPackage inputs.pyproject-nix.build.packages {
+                python = pkgs.python3;
+              }).overrideScope (
+                lib.composeManyExtensions [
+                  inputs.pyproject-build-systems.overlays.default
+                  overlay
+                  (inputs.lowrisc-nix.lib.pyprojectOverrides {inherit pkgs;})
+               ]
+            );
         in
-          poetry2nix.mkPoetryEnv {
-            projectDir = ./dv/formal;
-            overrides = [
-              poetry2nix.defaultPoetryOverrides
-              lowriscPoetryOverrides
-            ];
-          };
+            pythonSet.mkVirtualEnv "ibex-env" workspace.deps.default;
 
         in {
           packages = {
