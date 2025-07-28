@@ -71,11 +71,11 @@
     "lowrisc_sail": {
       "flake": false,
       "locked": {
-        "lastModified": 1745587367,
-        "narHash": "sha256-VbUampJQcjgnCi/9rRSC0V13i/MLBS75sfRrrc/HLpc=",
+        "lastModified": 1753700698,
+        "narHash": "sha256-VNUm1BbUVNVASHUkd5gaPli+3xUqPruoycsws4fWrhw=",
         "owner": "lowrisc",
         "repo": "sail",
-        "rev": "4832414fca03b3103121a15a021939654050159b",
+        "rev": "50746d7db3e2a417e21fa1b8ea6d633d11d47195",
         "type": "github"
       },
       "original": {
