@@ -1,9 +1,10 @@
 ROOT_DIR            :=  $(shell git rev-parse --show-toplevel)
 mkfile_path         :=  $(ROOT_DIR)/vendor/isolde-soc
 
+REDMULE_TARGET        ?= redmule_hwpe 
 VLT_TOP_MODULE        ?= tb_isolde_addr_shim
 IMEM_LATENCY          := 0
-common_targs += -t u_test
+common_targs += -t u_test -t $(REDMULE_TARGET)
 
 
 .PHONY: ibex_sim.flist

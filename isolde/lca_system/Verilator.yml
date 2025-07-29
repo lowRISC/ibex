@@ -1,0 +1,3 @@
+sources:
+  vanilla:
+    - sim/core/tb_top_verilator.cpp

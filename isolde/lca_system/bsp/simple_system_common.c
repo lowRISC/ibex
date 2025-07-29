@@ -8,7 +8,7 @@
 
 
 // see tb/core/mm_ram.sv
-void _Exit(int exit_code){
+void _exit(int exit_code){
 #ifndef WFI_LOOP
 DEV_WRITE(MMADDR_EXIT, (uint32_t)exit_code); 
 #endif
@@ -167,7 +167,7 @@ void printPerfCnt(){
    int perfcnt_cycles =  *(volatile int *) (MMADDR_PERF_COUNTERS+4);
    printf("Terminated test  %d in %d cycles\n",perfcnt_id,perfcnt_cycles);
    //
-   int perfcnt_imem_wr =  *(volatile int *) (MMADDR_PERF_COUNTERS+0x8);
+   //int perfcnt_imem_wr =  *(volatile int *) (MMADDR_PERF_COUNTERS+0x8);
    int perfcnt_imem_rd =  *(volatile int *) (MMADDR_PERF_COUNTERS+0xC);
    int perfcnt_dmem_wr =  *(volatile int *) (MMADDR_PERF_COUNTERS+0x10);
    int perfcnt_dmem_rd =  *(volatile int *) (MMADDR_PERF_COUNTERS+0x14);

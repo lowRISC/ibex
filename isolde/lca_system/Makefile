@@ -40,13 +40,27 @@ endif
 VLT_TOP_MODULE        ?= tb_lca_system
 IMEM_LATENCY          ?= 0
 VLT_TOP_MODULE_PARAMS := -GIMEM_LATENCY=$(IMEM_LATENCY)
+
+###
+# Static configurations (can be overridden by command-line)
+###
+DBG_MODULE   ?= 0
+ENABLE_SPM   ?= 0
+
+
+verilator_target := vanilla
+# Select testbench target based on priority:
+# DBG_MODULE > ENABLE_SPM > default HWPE test
 ifeq ($(DBG_MODULE), 1)
-	common_targs += -t tb_dm
-else	
-	common_targs += -t redmule_test_hwpe
-endif 
-##
-#TEST_CFLAGS += -DWFI_LOOP
+    tb_target = tb_dm
+else ifeq ($(ENABLE_SPM), 1)
+    tb_target = spm
+else
+    tb_target = vanilla_lca
+endif
+
+common_targs += -t $(tb_target)
+
 
 
 

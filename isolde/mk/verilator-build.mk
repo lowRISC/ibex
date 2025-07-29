@@ -1,26 +1,24 @@
 ###############################################################################
 #
 # Copyleft  2024 ISOLDE
-
-
-
-ifeq ($(NO_TEE),1)
-  TEE_CMD := 
-else
-  TEE_CMD := | tee $(VERI_LOG_DIR)/$(TEST).log
-endif
-
+#
 
 #############
 # Verilator #
 #############
-
 
 #####
 VERI_LOG_DIR      ?= $(mkfile_path)/log/$(VLT_TOP_MODULE)/$(IMEM_LATENCY)
 SIM_TEST_INPUTS   ?= $(mkfile_path)/vsim
 BIN_DIR           = $(mkfile_path)/bin/$(VLT_TOP_MODULE)/$(IMEM_LATENCY)
 VERI_FLAGS        +=
+NO_TEE		      ?= 1
+#####
+ifeq ($(NO_TEE),1)
+  TEE_CMD := 
+else
+  TEE_CMD := | tee $(VERI_LOG_DIR)/$(TEST).log
+endif
 
 
 
@@ -62,6 +60,9 @@ ibex_sim.flist:  $(CORE_FILES)
 										       $(FUSESOC_BUILD_ROOT)/sim-verilator  \
 	                                           $(FUSESOC_BUILD_ROOT)/sim-verilator/$(FUSESOC_PROJECT)_$(FUSESOC_CORE)_$(FUSESOC_SYSTEM)_0.vc \
 											   $@
+	python $(ROOT_DIR)/util/verilator_manifest.py  Verilator.yml \
+											    -t  $(verilator_target)       \
+											    -o $@	
 	touch $@
 ##
 
@@ -111,7 +112,7 @@ veri-run-u-test: $(BIN_DIR)/verilator_executable
 	@echo "*                            logfile: $(VERI_LOG_DIR)/$(TEST).log"
 	@echo "*                    rtl debug trace: $(VERI_LOG_DIR)/rtl_debug_trace.log"
 	@echo "*                              *.vcd: $(VERI_LOG_DIR)"
-	@echo "$(BANNER)"
+	@echo "$(shell pwd)"
 	mkdir -p $(VERI_LOG_DIR)
 	rm -f $(VERI_LOG_DIR)/verilator_tb.vcd
 	$(BIN_DIR)/verilator_executable  \
@@ -128,9 +129,15 @@ help:
 	@echo veri-clean                               -- gets a clean slate for simulation
 	@echo verilate VLT_TOP_MODULE=tb_top_verilator
 	
-bender-clean:
-	rm -fr ./.bender
-	rm Bender.lock
 
-redmule-update:	bender-clean
+.PHONY: bender-clean
+bender-clean:
+	@echo "Cleaning Bender project..."
+	rm -rf .bender
+	rm -rf  Bender.lock
+	@echo "Bender project cleaned."
+
+.PHONY: rtl-update
+rtl-update:	bender-clean
 	git submodule update --init
+	bender update

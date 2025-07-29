@@ -75,6 +75,7 @@ $(VERI_OBJ_DIR)/V$(VLT_TOP_MODULE).mk:  $(TBSRC_VERI)
 		$(VERI_TRACE) \
 		$(VLT_FLAGS)   \
 		--Wno-lint --Wno-UNOPTFLAT \
+		--timescale-override 1ns/1ps \
 		--Wno-MODDUP  \
 		 $(TBSRC_VERI) \
 		-f $(CV_CORE_MANIFEST) \

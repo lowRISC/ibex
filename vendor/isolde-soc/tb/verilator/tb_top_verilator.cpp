@@ -92,5 +92,5 @@ int main(int argc, char **argv, char **env){
   dut->final();
   tfp->close();
   //delete dut;
-  exit(EXIT_SUCCESS);
+  Verilated::gotFinish() ? exit(EXIT_SUCCESS):exit(EXIT_FAILURE);
     }

@@ -7,27 +7,41 @@ package:
     - daro <daro@tsr>
 
 dependencies:
-  common_cells:       { git: "https://github.com/pulp-platform/common_cells.git"      , version: 1.38.0  }
-  axi:                { git: "https://github.com/pulp-platform/axi.git"               , version: 0.39.6  }
+  redmule:            {path: ../../vendor/redmule }
+  axi:                { git: "https://github.com/pulp-platform/axi.git"               , version: 0.39.6    }
 
 export_include_dirs:
-  - tb/include
 #  - rtl/include
+  - tb/include 
 
 sources:
   files:   
+    - rtl/common/isolde_tcdm_pkg.sv
     - rtl/isolde_tcdm_if.sv
     - rtl/isolde_tcdm_to_axi.sv
     - rtl/isolde_addr_shim.sv
     - rtl/isolde_demux_tcdm.sv
     - rtl/isolde_mux_tcdm.sv   
+    - rtl/isolde_hci_interconnect.sv
+    - rtl/isolde_tcdm_interconnect.sv
+    - rtl/isolde_log_interconnect.sv
+    ##level 2
+    - rtl/hwe/isolde_redmule_top.sv
+    - rtl/noc/isolde_router.sv
     - target: any(tb_dm,redmule_test_hwpe)
       files:
         - tb/tb_tcdm_mem.sv
         - tb/monitor/perfCounters.sv
-#        - tb/tb_axi_mem.sv
+        - tb/monitor/isolde_hci_monitor.sv
+        - tb/tb_sram_mem.sv
+        - tb/tb_axi_mem.sv
     - target: u_test
       files:
+        - tb/tb_tcdm_mem.sv
+        - tb/tb_sram_mem.sv
         - tb/tb_isolde_addr_shim.sv
         - tb/tb_isolde_mux_tcdm.sv
         - tb/tb_isolde_template.sv
+        - tb/tb_isolde_log_interconnect.sv
+        - tb/tb_isolde_hci_interconnect.sv
+        - tb/tb_isolde_tcdm_interconnect.sv

@@ -9,8 +9,8 @@ filesets:
     depend:
       - isolde:ibex:lca_system_core
       - isolde:dv_verilator:debug_module_verilator
-      - isolde:dv_verilator:verilator_main
-#      - isolde:dv_verilator:verilator_main_withTimeout
+#     - isolde:dv_verilator:verilator_main
+#     - isolde:dv_verilator:verilator_main_withTimeout
       
 
 parameters:

@@ -15,7 +15,7 @@ ISA_SIM_MOD_INSTALL_DIR ?= ${INSTALL_DIR}/riscv-isa-sim-mod
 OPENOCD_INSTALL_DIR     ?= ${INSTALL_DIR}/openocd
 VERIL_SRC_ROOT          ?= $(prj_path)/vendor
 VERIL_INSTALL_DIR       ?= ${INSTALL_DIR}/verilator
-VERIL_VERSION           ?= v5.030
+VERIL_VERSION           ?= v5.036
 BENDER_DOWNLOAD_LINK    ?= https://github.com/pulp-platform/bender/releases/download/v0.28.0/bender-0.28.0-x86_64-linux-gnu-ubuntu22.04.tar.gz
 BENDER_ARCH_FILE        ?= $(shell basename $(BENDER_DOWNLOAD_LINK))
 

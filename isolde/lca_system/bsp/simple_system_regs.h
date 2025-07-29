@@ -12,8 +12,8 @@
 #define MMADDR_CYCLE_COUNTER       MMADDR_EXIT
 #define MMADDR_PERF_TTY            0x80000008
 #define MMADDR_PERF_COUNTERS       0x8000000C
-
-                                   
+#define SPM_NARROW_ADDR            0x80001000
+#define SPM_NARROW_SIZE            0x00001000;  //64kB                                   
 
 
 

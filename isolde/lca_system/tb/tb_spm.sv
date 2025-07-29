@@ -41,7 +41,7 @@ class MyCallback extends MemStatisticsCallback;
     /**
   ** avoid spaces in the string
   **/
-    return "LCA";
+    return "LCA_SPM";
   endfunction
 endclass
 
@@ -83,7 +83,7 @@ module tb_lca_system (
   localparam int unsigned PULP_XPULP = 1;
   localparam int unsigned FPU = 0;
   localparam int unsigned PULP_ZFINX = 0;
-
+  localparam int unsigned N_TCDM_BANKS = HCI_DW / 32;
 
 
 
@@ -117,7 +117,9 @@ MEMORY
   //debugger module
   localparam rule_addr_t DEBUG_ADDR = 32'h1A11_0000;
   localparam int unsigned DEBUG_SIZE = 32'h0000_1000;
-
+  //spm narrow port start
+  localparam rule_addr_t SPM_NARROW_ADDR = 32'h8000_1000;
+  localparam int unsigned SPM_NARROW_SIZE = 32'h0000_1000;  //64kB
 
   /********************************************************/
   /**          Router configuratiion                     **/
@@ -129,6 +131,7 @@ MEMORY
     DATA_IDX,
     STACK_IDX,
     MMIO_IDX,
+    SPM_IDX,
     LAST_IDX
   } data_map_idx_t;
 
@@ -138,18 +141,22 @@ MEMORY
       '{start_addr: PERIPH_ADDR, end_addr: IMEM_ADDR},
       '{start_addr: DMEM_ADDR, end_addr: DMEM_ADDR + DMEM_SIZE},
       '{start_addr: SMEM_ADDR, end_addr: SMEM_ADDR + SMEM_SIZE},
-      '{start_addr: MMIO_ADDR, end_addr: MMIO_ADDR_END}
+      '{start_addr: MMIO_ADDR, end_addr: MMIO_ADDR_END},
+      '{start_addr: SPM_NARROW_ADDR, end_addr: SPM_NARROW_ADDR + SPM_NARROW_SIZE}
   };
 
 
   // global signals
   string stim_instr, stim_data;
-  logic test_mode;
+  logic                               test_mode;
   //
-  logic redmule_busy;
+  logic                               redmule_busy;
 
-  logic sim_exit;
-  MemStatisticsCallback mem_stats_cb;
+  logic                               sim_exit;
+  MemStatisticsCallback               mem_stats_cb;
+
+  logic                 [NC-1:0][1:0] evt;
+  logic                               core_sleep;
 
   /********************************************************/
   /**           VERILATOR BUG                            **/
@@ -178,29 +185,36 @@ MEMORY
   hci_core_intf #(.DW(HCI_DW)) redmule_hci (.clk(clk_i));
 
 
-  // === Multi-port Memory connections ===
-  isolde_tcdm_pkg::req_t mem_req[MP:0];
-  isolde_tcdm_pkg::rsp_t mem_rsp[MP:0];
+  // ===  Memory banks  connections ===
+  isolde_tcdm_pkg::req_t mem_req[N_TCDM_BANKS-1:0];
+  isolde_tcdm_pkg::rsp_t mem_rsp[N_TCDM_BANKS-1:0];
 
-  // === SoC connections ===
+  // === Data port ===
   isolde_tcdm_if tcdm_core_data ();
-  
+  isolde_tcdm_if tcdm_dmemory ();
+  isolde_tcdm_if tcdm_dmemory_shim ();
   isolde_tcdm_if tcdm_spm_narrow ();  // narrow scratchpad memory interface
+
+  // === hardware accelerator HWE port ===
+
   isolde_tcdm_if redmule_ctrl ();  // HWE peripheral  interface
 
+  // === stack memory port ===
   isolde_tcdm_if tcdm_stack ();
   isolde_tcdm_if tcdm_stack_shim ();
 
+  // === instruction memory port ===
   isolde_tcdm_if tcdm_core_inst ();
   isolde_tcdm_if tcdm_imem_shim ();
 
-  //
+  // === Performermance counters & simulation control===
   isolde_tcdm_if tcdm_perfCountersSim ();
+
+  // === Network on Chio NoC interfaces ===
   isolde_tcdm_pkg::req_t noc_reqs[LAST_IDX];
   isolde_tcdm_pkg::rsp_t noc_rsps[LAST_IDX];
 
-  assign tcdm_perfCountersSim.req = noc_reqs[MMIO_IDX];
-  assign noc_rsps[MMIO_IDX] = tcdm_perfCountersSim.rsp;
+
 
   /********************************************************/
   /**           Router                                  **/
@@ -221,6 +235,9 @@ MEMORY
   /**           Performance counters                     **/
   /*******************************************************/
 
+  assign tcdm_perfCountersSim.req = noc_reqs[MMIO_IDX];
+  assign noc_rsps[MMIO_IDX] = tcdm_perfCountersSim.rsp;
+
   perfCounters #(
       .MMIO_ADDR(MMIO_ADDR)
   ) i_perfcnt (
@@ -238,40 +255,74 @@ MEMORY
     end
   end
 
-  logic [NC-1:0][1:0] evt;
 
+  /********************************************************/
+  /**     TCDM                                           **/
+  /*******************************************************/
 
-  logic               core_sleep;
+  assign tcdm_spm_narrow.req = noc_reqs[SPM_IDX];
+  assign noc_rsps[SPM_IDX]   = tcdm_spm_narrow.rsp;
 
+  isolde_tcdm_if tcdm_inter_dma ();
 
-  assign tcdm_spm_narrow.req = noc_reqs[DATA_IDX];
-  assign noc_rsps[DATA_IDX]  = tcdm_spm_narrow.rsp;
+  // === Memory banks ===
+  generate
+    for (genvar i = 0; i < N_TCDM_BANKS; i++) begin : gen_mem
+      // Instantiate memory bank
+      tb_sram_mem #(
+          .ID(i)
+      ) i_bank (
+          .clk_i,
+          .rst_ni,
+          .req_i(mem_req[i:i]),
+          .rsp_o(mem_rsp[i:i])
+      );
+    end
+  endgenerate
 
-  isolde_hci_interconnect #(
+  isolde_addr_shim #(
+      .START_ADDR(SPM_NARROW_ADDR),  // Set start address
+      .END_ADDR(SPM_NARROW_ADDR + SPM_NARROW_SIZE)  // Set end address
+  ) i_tcdm_inter_dma_shim (
+      .tcdm_slave_i (tcdm_spm_narrow),
+      .tcdm_master_o(tcdm_inter_dma)
+  );
+
+  isolde_tcdm_interconnect #(
+      .ALIGN(1'b0),
       .HCI_DW(HCI_DW)
-  ) i_hci_interconnect (
+  ) i_tcdm_interconnect (
       .clk_i,
       .rst_ni,
       .s_hci_core (redmule_hci),
-      .s_tcdm_core(tcdm_spm_narrow),
+      .s_tcdm_core(tcdm_inter_dma),
       .mem_req_o  (mem_req),
       .mem_rsp_i  (mem_rsp)
-
   );
 
   /********************************************************/
   /**     Data memory                                    **/
   /*******************************************************/
-  tb_sram_mem #(
-      .ID(0),
-      .N_PORTS(MP + 1),
+
+  assign tcdm_dmemory.req   = noc_reqs[DATA_IDX];
+  assign noc_rsps[DATA_IDX] = tcdm_dmemory.rsp;
+
+  //   isolde_addr_shim #(
+  //       .START_ADDR(DMEM_ADDR),  // Set start address
+  //       .END_ADDR(DMEM_ADDR + DMEM_SIZE)  // Set end address
+  //   ) i_dmem_shim (
+  //       .tcdm_slave_i (tcdm_dmemory),
+  //       .tcdm_master_o(tcdm_dmemory_shim)
+  //   );
+
+  tb_tcdm_mem #(
       .MEMORY_SIZE(GMEM_SIZE),
-      .BASE_ADDR(IMEM_ADDR)
+      .BASE_ADDR  (IMEM_ADDR)
   ) i_dummy_dmemory (
-      .clk_i (clk_i),
-      .rst_ni(rst_ni),
-      .req_i (mem_req),
-      .rsp_o (mem_rsp)
+      .clk_i,
+      .rst_ni,
+      //.tcdm_slave_i(tcdm_dmemory_shim)
+      .tcdm_slave_i(tcdm_dmemory)
   );
 
   /********************************************************/
@@ -437,7 +488,7 @@ MEMORY
   isolde_redmule_top #(
       .ID_WIDTH (ID),
       .N_CORES  (NC),
-      .DW       (HCI_DW),  // TCDM port dimension (in bits)
+      .DW       (HCI_DW),  // TCDM port dimension (in bits
       .AddrWidth(HCI_AW)
   ) i_redmule_top (
       .clk_i         (clk_i),
@@ -448,11 +499,10 @@ MEMORY
       .m_hci_core    (redmule_hci),
       .s_tcdm_ctrl   (redmule_ctrl)
   );
-
   isolde_hci_monitor #(
     .AW(HCI_AW),
     .DW(HCI_DW),
-      .NAME("tb_lca_hci_monitor")
+      .NAME("spm_hci_monitor")
   ) i_hci_monitor (
       .clk_i,
       .rst_ni,

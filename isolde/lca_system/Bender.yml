@@ -7,10 +7,9 @@ package:
     - daro <daro@tsr>
 
 dependencies:
-  common_cells:       { git: "https://github.com/pulp-platform/common_cells.git"      , version: 1.38.0                               }
-  redmule:            {path: ../../vendor/redmule }
+  isolde-soc:         {path: ../../vendor/isolde-soc}  
   isolde-dm:          {path: ../../vendor/isolde-dm}
-  isolde-soc:         {path: ../../vendor/isolde-soc}
+  
 
 # *                matches any target
 # name             matches the target "name"
@@ -22,7 +21,9 @@ sources:
    - target: all(tb_dm ,redmule_hwpe ,rtl ,redmule_test_hwpe)
      files:
         - tb/tb_dm.sv
-   - target: redmule_test_hwpe
+   - target: all(vanilla_lca,redmule_test_hwpe, rtl, redmule_hwpe)
      files:
        - tb/tb_lca_system.sv 
-  
+   - target: all (spm, redmule_hwpe, rtl, redmule_test_hwpe)
+     files:
+       - tb/tb_spm.sv
