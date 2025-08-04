@@ -111,7 +111,7 @@ def get_git_diff(revision: str) -> str:
         return f"Could not retrieve diff for {revision}"
 
 
-def confirm_execution(bug: Bug, artifact_path: str) -> bool:
+def confirm_execution(bug: Bug, artifact_path: str) -> tuple[bool, bool]:
     """Display diff and command, then ask for confirmation."""
     print(f"\n{SHELL_WHITE_BOLD}=== Git Diff for {bug.git_revision} ==={SHELL_END}")
     diff = get_git_diff(bug.git_revision)
@@ -125,9 +125,16 @@ def confirm_execution(bug: Bug, artifact_path: str) -> bool:
 
     try:
         response = input().strip().lower()
-        return response in ("", "y", "yes")
+        if not (response in ("", "y", "yes")):
+            return False, False
+
+        print(f"{SHELL_WHITE_BOLD}Run with verbose output? (y/N):{SHELL_END} ", end="")
+        verbose_response = input().strip().lower()
+        verbose = verbose_response in ("y", "yes")
+
+        return True, verbose
     except KeyboardInterrupt:
-        return False
+        return False, False
 
 
 def switch_git_branch(revision: str) -> None:
@@ -155,15 +162,20 @@ def switch_git_branch(revision: str) -> None:
         sys.exit(1)
 
 
-def run_viv(job_name: str, artifact_path: str) -> None:
+def run_viv(job_name: str, artifact_path: str, verbose: bool) -> None:
     """Run the viv tool with the specified parameters."""
-    print(f"Running viv submit --artifact-path={artifact_path}")
+    command = [
+        "viv",
+        "submit",
+        f"--job-name={job_name}",
+        f"--artifact-path={artifact_path}"
+    ]
+    if verbose:
+        command.append("--verbose")
+
+    print(f"Running {' '.join(command)}")
     try:
-        subprocess.run([
-            "viv", "submit",
-            f"--job-name={job_name}",
-            f"--artifact-path={artifact_path}"
-        ], check=True)
+        subprocess.run(command, check=True)
 
         print("Viv execution completed successfully!")
 
@@ -201,17 +213,19 @@ def main() -> None:
 
     try:
         # Show diff and get confirmation before proceeding
-        if not confirm_execution(selected_bug, artifact_path):
+        continue_execution, verbose = confirm_execution(selected_bug, artifact_path)
+        if not continue_execution:
             print("Operation cancelled by user")
             return
 
         download_artifact(selected_bug.artifact_url, artifact_path)
         switch_git_branch(selected_bug.git_revision)
-        run_viv(selected_bug.name, artifact_path)
+        run_viv(selected_bug.name, artifact_path, verbose)
     except KeyboardInterrupt:
         print("\nOperation cancelled by user")
         sys.exit(0)
-    finally:
+    else:
+        print("Operation completed successfully.")
         cleanup_temp_files(temp_dir)
 
 
