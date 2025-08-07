@@ -36,17 +36,32 @@ BUGS = [
         artifact_url="https://silogy-demo-bug-artifacts.s3.us-east-1.amazonaws.com/dside-accesses-shift.tar.gz"
     ),
     Bug(
-        name="handle_misaligned",
-        description="An erroneous grant signal in the cache causes byte enables for cache lines to be incorrect, "
-                    "causing some data to be unwritten to memory.",
-        git_revision="bug/handle-misaligned",
-        artifact_url="https://silogy-demo-bug-artifacts.s3.us-east-1.amazonaws.com/handle-misaligned.tar.gz"
+        name="multdiv_neg",
+        description="A bitwise not operator was added to the division result output -- this caused a register write "
+                    "mismatch in the scoreboard, when computing the result of a division instruction.",
+        git_revision="bug/multdiv_neg",
+        artifact_url="FILL_ME_IN",
     ),
     Bug(
-        name="opcode_decode",
-        description="The decoder's opcode logic is shifted by a bit, causing erroneous instructions to appear.",
-        git_revision="bug/opcode-decode",
-        artifact_url="https://silogy-demo-bug-artifacts.s3.us-east-1.amazonaws.com/opcode-decode.tar.gz"
+        name="invert_rem_logic",
+        description="The remainder logic was inverted, causing a register write mismatch in the scoreboard, when "
+                    "computing the result of a division instruction.",
+        git_revision="bug/invert_rem_logic",
+        artifact_url="https://silogy-demo-bug-artifacts.s3.us-east-1.amazonaws.com/invert-rem-logic.tar.gz",
+    ),
+    Bug(
+        name="inv_equal_mult",
+        description="A conditional inversion was added to mult2_op_a when op_a == op_b, corrupting the partial product "
+                    "used by MULH and producing incorrect multiplication results.",
+        git_revision="bug/inv_equal_mult",
+        artifact_url="https://silogy-demo-bug-artifacts.s3.us-east-1.amazonaws.com/inv-equal-mult.tar.gz",
+    ),
+    Bug(
+        name="corrupt_msb",
+        description="During word assembly the code XORs 0x80000000 each byte shift, forcing the MSB high and "
+                    "corrupting every 32-bit value returned from memory.",
+        git_revision="bug/corrupt_msb",
+        artifact_url="https://silogy-demo-bug-artifacts.s3.us-east-1.amazonaws.com/corrupt-msb.tar.gz",
     ),
 ]
 
