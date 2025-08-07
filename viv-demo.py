@@ -40,7 +40,7 @@ BUGS = [
         description="A bitwise not operator was added to the division result output -- this caused a register write "
                     "mismatch in the scoreboard, when computing the result of a division instruction.",
         git_revision="bug/multdiv_neg",
-        artifact_url="FILL_ME_IN",
+        artifact_url="https://silogy-demo-bug-artifacts.s3.us-east-1.amazonaws.com/multdiv-neg.tar.gz",
     ),
     Bug(
         name="invert_rem_logic",
