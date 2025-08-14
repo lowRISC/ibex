@@ -59,6 +59,14 @@ ifeq ($(PE), onnx)
 	TEST_FILES         = $(TEST).c
 endif
 
+## debuger module config
+ifeq ($(DBG_MODULE), 1)
+    RV_DM_C_FLAGS += -DRV_DM_TEST
+else
+    RV_DM_C_FLAGS += 
+endif
+
+
 CORE_V_VERIF  := $(mkfile_path)
 
 
@@ -71,7 +79,7 @@ RISCV_EXE_PREFIX = $(CV_SW_TOOLCHAIN)/bin/$(RISCV_PREFIX)
 
 RISCV_MARCH      =  $(CV_SW_MARCH)
 RISCV_CC_SUFFIX  =  $(CV_SW_CC_SUFFIX)
-RISCV_CFLAGS     += 
+RISCV_CFLAGS     += $(RV_DM_C_FLAGS)
 
 
 TEST_FILES        ?= $(filter %.c %.S,$(wildcard  $(TEST_SRC_DIR)/*))
@@ -167,9 +175,18 @@ clean-test-programs: clean-bsp
 	find  $(CORE_V_VERIF)/../sw -name "*.itb" -delete	
 
 ###ISOLDE specific
+ifneq ($(filter redmule_%,$(TEST)),)
 
 golden:
 	make -C $(REDMULE_ROOT_DIR) $@
+	make -C $(TEST_SRC_DIR) $@
+
+else
+
+golden:
+	@echo "Skipped, redmule unrelated"
+
+endif
 
 
 

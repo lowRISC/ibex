@@ -34,3 +34,7 @@ copy_headers: $(DST_DIR)  $(DST_FILES)
 .PHONY:  clean	
 clean:
 	rm -rf $(DST_DIR) 
+
+.PHONY:  golden
+golden: copy_headers
+	

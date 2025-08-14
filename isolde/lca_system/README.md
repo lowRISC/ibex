@@ -3,60 +3,41 @@
 Details about the accelerator are [here](https://github.com/ISOLDE-Project/redmule?tab=readme-ov-file#redmule)
 ## Prerequisites
 in folder **isolde/lca_system**:  
-```
+```sh
 . ./eth.sh
 ```
 ## Building Simulation
 in folder **isolde/lca_system**:  
 * get a clean slate:
-```
-make redmule-update veri-clean verilate
-```
-or
-```
-make IMEM_LATENCY=1  redmule-update veri-clean verilate
-```
-
-## build the simulation and run the a test application
 ```sh
-make veri-clean verilate
-``` 
-
-### **gcc** toolchain
+make rtl-update
+```
+### Build scratchpad memory simulation (SPM)
 ```sh
-make golden
-make  COMPILER=gcc PE=redmule TEST=redmule test-clean test-build veri-run
+make ENABLE_SPM=1 veri-clean verilate
+make TEST=redmule_test golden
+make TEST=redmule_test test-clean test-build veri-run
 ```
-Output should be similar to this
-```
-PRINT @                 764 id=         1,cycles =       229
-
-[TB LCA] @ t=764 - reads [imemory] =         28
-[TB LCA] @ t=764 - writes[dmemory] =        459
-[TB LCA] @ t=764 - reads [dmemory] =        360
-[TB LCA] @ t=764 - writes[stack] =          0
-[TB LCA] @ t=764 - reads [stack] =          0
-[APP LCA ] Terminated test  1 in 229 cycles
-[LCA] Terminated test with 0 errors. See you!
-```
-### **llvm** toolchain
+### Build simple system(no scratchpad memory)
 ```sh
-make golden
+make  veri-clean verilate
+make TEST=redmule_test golden
 make PE=redmule TEST=redmule test-clean test-build veri-run
 ```
-Output should be similar to this
+or, with code memory latency
+```sh
+make IMEM_LATENCY=1  rtl-update veri-clean verilate
 ```
-PRINT @                 754 id=         1,cycles =       223
 
-[TB LCA] @ t=754 - reads [imemory] =         22
-[TB LCA] @ t=754 - writes[dmemory] =        459
-[TB LCA] @ t=754 - reads [dmemory] =        360
-[TB LCA] @ t=754 - writes[stack] =          0
-[TB LCA] @ t=754 - reads [stack] =          0
-[APP LCA ] Terminated test  1 in 223 cycles
-[LCA] Terminated test with 0 errors. See you!
-```    
----
+### Toolchain
+LLVM is the default toolchain   
+for **gcc** you specify:
+
+```sh
+make  COMPILER=gcc PE=redmule TEST=redmule test-clean test-build veri-run
+```
+
+
 # other tests
 ## llvm
 
@@ -93,7 +74,8 @@ Assuming working directory *isolde/lca_system* and each command from bellow in a
 1. start simulation
 ```sh
 . ./eth.sh
-make  DBG_MODULE=1 TEST=hello_test NO_TEE=1 test-clean test-build  veri-clean verilate veri-run
+make DBG_MODULE=1 veri-clean verilate
+make DBG_MODULE=1 TEST=hello_test test-clean test-build  veri-run
 ```
 **Note**: Application( in this example *hello_test*) has to be an endless loop.   
 
