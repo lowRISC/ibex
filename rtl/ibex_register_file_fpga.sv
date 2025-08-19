@@ -48,82 +48,38 @@ module ibex_register_file_fpga #(
   logic [DataWidth-1:0] mem[NUM_WORDS];
   logic we; // write enable if writing to any register other than R0
 
-  logic [DataWidth-1:0] mem_o_a, mem_o_b;
+  // Encode we_a/raddr_a/raddr_b into one-hot encoded signals
+  logic [NUM_WORDS-1:0] raddr_onehot_a, raddr_onehot_b, we_onehot_a;
 
   // WE strobe and one-hot encoded raddr alert.
   logic oh_raddr_a_err, oh_raddr_b_err, oh_we_err;
-  assign err_o = oh_raddr_a_err || oh_raddr_b_err || oh_we_err;
+
+  logic [DataWidth-1:0] mem_o_a, mem_o_b;
+
+  // Common security functionality
+  ibex_register_file_common #(
+    .FPGA(1),
+    .AddrWidth(ADDR_WIDTH),
+    .NumWords(NUM_WORDS),
+    .WrenCheck(WrenCheck),
+    .RdataMuxCheck(RdataMuxCheck)
+  ) security_module (
+    .clk_i,
+    .rst_ni,
+    .raddr_a_i,
+    .raddr_onehot_a,
+    .oh_raddr_a_err,
+    .raddr_b_i,
+    .raddr_onehot_b,
+    .oh_raddr_b_err,
+    .waddr_a_i,
+    .we_a_i,
+    .we_onehot_a,
+    .oh_we_err,
+    .err_o
+  );
 
   if (RdataMuxCheck) begin : gen_rdata_mux_check
-    // Encode raddr_a/b into one-hot encoded signals.
-    logic [NUM_WORDS-1:0] raddr_onehot_a, raddr_onehot_b;
-    logic [NUM_WORDS-1:0] raddr_onehot_a_buf, raddr_onehot_b_buf;
-    prim_onehot_enc #(
-      .OneHotWidth(NUM_WORDS)
-    ) u_prim_onehot_enc_raddr_a (
-      .in_i  (raddr_a_i),
-      .en_i  (1'b1),
-      .out_o (raddr_onehot_a)
-    );
-
-    prim_onehot_enc #(
-      .OneHotWidth(NUM_WORDS)
-    ) u_prim_onehot_enc_raddr_b (
-      .in_i  (raddr_b_i),
-      .en_i  (1'b1),
-      .out_o (raddr_onehot_b)
-    );
-
-    // Buffer the one-hot encoded signals so that the checkers
-    // are not optimized.
-    prim_buf #(
-      .Width(NUM_WORDS)
-    ) u_prim_buf_raddr_a (
-      .in_i (raddr_onehot_a),
-      .out_o(raddr_onehot_a_buf)
-    );
-
-    prim_buf #(
-      .Width(NUM_WORDS)
-    ) u_prim_buf_raddr_b (
-      .in_i (raddr_onehot_b),
-      .out_o(raddr_onehot_b_buf)
-    );
-
-    // SEC_CM: DATA_REG_SW.GLITCH_DETECT
-    // Check the one-hot encoded signals for glitches.
-    prim_onehot_check #(
-      .AddrWidth(ADDR_WIDTH),
-      .OneHotWidth(NUM_WORDS),
-      .AddrCheck(1),
-      // When AddrCheck=1 also EnableCheck needs to be 1.
-      .EnableCheck(1)
-    ) u_prim_onehot_check_raddr_a (
-      .clk_i,
-      .rst_ni,
-      .oh_i   (raddr_onehot_a_buf),
-      .addr_i (raddr_a_i),
-      // Set enable=1 as address is always valid.
-      .en_i   (1'b1),
-      .err_o  (oh_raddr_a_err)
-    );
-
-    prim_onehot_check #(
-      .AddrWidth(ADDR_WIDTH),
-      .OneHotWidth(NUM_WORDS),
-      .AddrCheck(1),
-      // When AddrCheck=1 also EnableCheck needs to be 1.
-      .EnableCheck(1)
-    ) u_prim_onehot_check_raddr_b (
-      .clk_i,
-      .rst_ni,
-      .oh_i   (raddr_onehot_b_buf),
-      .addr_i (raddr_b_i),
-      // Set enable=1 as address is always valid.
-      .en_i   (1'b1),
-      .err_o  (oh_raddr_b_err)
-    );
-
     // MUX register to rdata_a/b_o according to raddr_a/b_onehot.
     prim_onehot_mux  #(
       .Width(DataWidth),
@@ -153,21 +109,13 @@ module ibex_register_file_fpga #(
     assign rdata_a_o = (raddr_a_i == '0) ? WordZeroVal : mem[raddr_a_i];
     assign rdata_b_o = (raddr_b_i == '0) ? WordZeroVal : mem[raddr_b_i];
 
-    assign oh_raddr_a_err = 1'b0;
-    assign oh_raddr_b_err = 1'b0;
+    logic unused_raddr_onehot, unused_oh_raddr_err;
+    assign unused_raddr_onehot = ^{raddr_onehot_a, raddr_onehot_b};
+    assign unused_oh_raddr_err = ^{oh_raddr_a_err, oh_raddr_b_err};
   end
 
   // we select
-  assign we = (waddr_a_i == '0) ? 1'b0 : we_a_i;
-
-  // SEC_CM: DATA_REG_SW.GLITCH_DETECT
-  // This checks for spurious WE strobes on the regfile.
-  if (WrenCheck) begin : gen_wren_check
-    // Since the FPGA uses a memory macro, there is only one write-enable strobe to check.
-    assign oh_we_err = we && !we_a_i;
-  end else begin : gen_no_wren_check
-    assign oh_we_err = 1'b0;
-  end
+  assign we = (waddr_a_i == '0) ? 1'b0 : we_onehot_a[0];
 
   // Note that the SystemVerilog LRM requires variables on the LHS of assignments within
   // "always_ff" to not be written to by any other process. However, to enable the initialization
@@ -197,5 +145,11 @@ module ibex_register_file_fpga #(
   // Test enable signal not used in FPGA implementation
   logic unused_test_en;
   assign unused_test_en = test_en_i;
+
+  if (WrenCheck) begin : gen_wren_check
+  end else begin : gen_no_wren_check
+    logic unused_oh_we_err;
+    assign unused_oh_we_err = oh_we_err;  // this is never read from in this case
+  end
 
 endmodule
