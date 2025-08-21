@@ -179,6 +179,7 @@ WFIStart: assume property (`IDC.ctrl_fsm_cs == SLEEP |-> (
 
 // Pre state is the architectural state of Ibex at the start of the cycle
 logic [31:0] pre_regs[32];
+logic [31:0] pre_regs_cut[31:1];
 logic [31:0] pre_nextpc;
 logic [31:0] pre_mip;
 
@@ -312,17 +313,6 @@ logic wbexc_handling_irq; // Check the results of handling an IRQ
 `undef X
 
 ////////////////////// Spec Post //////////////////////
-
-// These cause combinational cycles, but not severe ones. The problem is fixed in CherIoT-Ibex
-logic spec_rx_a_en;
-logic [4:0] spec_rx_a_addr;
-logic [31:0] spec_rx_a;
-assign spec_rx_a = pre_regs[spec_rx_a_addr];
-
-logic spec_rx_b_en;
-logic [4:0] spec_rx_b_addr;
-logic [31:0] spec_rx_b;
-assign spec_rx_b = pre_regs[spec_rx_b_addr];
 
 logic [31:0] spec_post_wX;
 logic [4:0] spec_post_wX_addr;
