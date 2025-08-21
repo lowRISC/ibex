@@ -1,3 +1,8 @@
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# Original author: Louis-Emile Ploix
+# SPDX-License-Identifier: Apache-2.0
+
 # This is the exact configuration used in Makefile to build the Sail specification module
 
 SAIL_XLEN := riscv_xlen32.sail

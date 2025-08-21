@@ -13,12 +13,12 @@ dependencies = [
   "anytree == 2.8.0",
   "hjson == 3.1.0",
   "mako == 1.1.6",
-  "pyyaml == 6.0",
+  "pyyaml == 6.0.2",
   "edalize @ git+https://github.com/lowRISC/edalize.git@v0.4.0",
   "fusesoc @ git+https://github.com/lowRISC/fusesoc.git@ot-0.4",
+  "psutil>=7.0.0",
 ]
 
 [tool.setuptools]
 # This is actually not a python project, we just use pyproject.toml to manage dependencies.
 py-modules = []
-

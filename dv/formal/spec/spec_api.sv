@@ -23,7 +23,7 @@ module spec_api #(
 ) (
     input t_MainMode main_mode,
 
-    input [31:0] regs_i [31:1],
+    input [31:0] regs_i [1:31],
 
     output logic wx_en_o,
     output logic [31:0] wx_o,
@@ -182,8 +182,8 @@ sail_ibexspec spec_i(
     .mcounteren_out,
     .mcountinhibit_in(),
     .mcountinhibit_out(),
-    .mcycle_in(mcycle_i),
-    .mcycle_out(mcycle_o),
+    .mcycle_in(),
+    .mcycle_out(),
     .medeleg_in('{bits: 32'h0}),
     .medeleg_out(),
     .menvcfg_in('{bits: 32'h0}),
@@ -321,7 +321,7 @@ sail_ibexspec spec_i(
     .x30_out(),
     .x31_in(regs_i[31]),
     .x31_out(),
-    
+
     .wX_sail_invoke,
     .wX_sail_invoke_ret(),
     .wX_sail_invoke_arg_0,
