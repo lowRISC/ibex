@@ -4,7 +4,7 @@ SAIL=sail
 
 SAIL_RISCV_MODEL_DIR=${LOWRISC_SAIL_RISCV_SRC}/model
 
-include Sources.mk
+include sail-sources.mk
 
 PSGEN_SRCS=thm/btype.proof thm/ibex.proof thm/mem.proof thm/riscv.proof
 PSGEN_FLAGS=-root riscv -task

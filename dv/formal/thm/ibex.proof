@@ -87,7 +87,7 @@ lemma ibex
   DoneFin: have (`WBG.wb_done & `WBG.wb_valid_q & ~wbexc_err |-> wbexc_finishing)
   ValidExists: have (`WBG.wb_valid_q |-> wbexc_exists)
 
-  UnCheckableNoPresent: have (wbexc_exists & `ISS_CSR & ~wbexc_is_checkable_csr |-> ~has_spec_past)
+  UnCheckableNoPresent: have (wbexc_exists & `IS_CSR & ~wbexc_is_checkable_csr |-> ~has_spec_past)
 
   MemInstrWbWrite: have (
     wbexc_exists & wbexc_is_store_instr & ~wbexc_err |->
@@ -241,22 +241,22 @@ lemma ibex
   StallNoChangeLsuWData: have ((data_we_o && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(`LSU.lsu_wdata_i)))
 
   # These properties take some time to prove, but do prove with low proof effort. Just run them with individual Hp instances.
-  SpecStableLoad: have (ex_is_pres_load_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_read))
-  SpecStableLoadSnd: have (ex_is_pres_load_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_read_snd))
-  SpecStableLoadAddr: have (ex_is_pres_load_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_read_fst_addr))
-  SpecStableLoadSndAddr: have (ex_is_pres_load_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_read_snd_addr))
+  SpecStableLoad: have (ex_is_load_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_read))
+  SpecStableLoadSnd: have (ex_is_load_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_read_snd))
+  SpecStableLoadAddr: have (ex_is_load_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_read_fst_addr))
+  SpecStableLoadSndAddr: have (ex_is_load_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_read_snd_addr))
 
-  SpecStableStore: have (ex_is_pres_store_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_write))
-  SpecStableStoreSnd: have (ex_is_pres_store_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_write_snd))
-  SpecStableStoreAddr: have (ex_is_pres_store_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_write_fst_addr))
-  SpecStableStoreSndAddr: have (ex_is_pres_store_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_write_snd_addr))
-  SpecStableStoreData: have (ex_is_pres_store_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_write_fst_wdata))
-  SpecStableStoreSndData: have (ex_is_pres_store_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_write_snd_wdata))
+  SpecStableStore: have (ex_is_store_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_write))
+  SpecStableStoreSnd: have (ex_is_store_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_write_snd))
+  SpecStableStoreAddr: have (ex_is_store_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_write_fst_addr))
+  SpecStableStoreSndAddr: have (ex_is_store_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_write_snd_addr))
+  SpecStableStoreData: have (ex_is_store_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_write_fst_wdata))
+  SpecStableStoreSndData: have (ex_is_store_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_write_snd_wdata))
 
   FetchErrRoot: have (`ID.instr_valid_i && (`IDC.ctrl_fsm_cs == `IDC.FLUSH -> ~$past(`IDC.csr_pipe_flush)) |-> spec_fetch_err == `ID.instr_fetch_err_i)
 
-  LoadNotSpecWrite: have (`ID.instr_valid_i & ex_is_pres_load_instr |-> ~spec_mem_write)
-  StoreNotSpecRead: have (`ID.instr_valid_i & ex_is_pres_store_instr |-> ~spec_mem_read)
+  LoadNotSpecWrite: have (`ID.instr_valid_i & ex_is_load_instr |-> ~spec_mem_write)
+  StoreNotSpecRead: have (`ID.instr_valid_i & ex_is_store_instr |-> ~spec_mem_read)
 
   FirstCycleNoGnt: have (`ID.instr_first_cycle |-> ~mem_gnt_fst_q)
   MemStartFirstCycle: have (`LSU.ls_fsm_cs == `LSU.IDLE && `CR.lsu_req |-> `ID.instr_first_cycle)

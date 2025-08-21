@@ -196,10 +196,9 @@ logic [31:0] pre_mip;
 //  - ex_P is 1 if P is true for the instruction in the ID/EX stage.
 //  - wbexc_P is 1 if P is true for the instruction in the WB/EXC (exception) stage.
 
-logic ex_is_wfi, ex_is_rtype, ex_is_div;
-logic ex_is_pres_btype, ex_is_pres_jump;
+logic ex_is_wfi, ex_is_rtype, ex_is_div, ex_is_mtype;
+logic ex_is_btype, ex_is_jump;
 logic ex_is_mem_instr, ex_is_load_instr, ex_is_store_instr;
-logic ex_is_pres_mem_instr, ex_is_pres_load_instr, ex_is_pres_store_instr;
 
 // Have we branched, or are we branching in this cycle?
 logic ex_has_branched_d, ex_has_branched_q;
@@ -221,9 +220,7 @@ logic has_two_resp_waiting_q, has_two_resp_waiting_d;
 assign has_two_resp_waiting_q = data_mem_assume.outstanding_reqs_q == 8'h2;
 assign has_two_resp_waiting_d = data_mem_assume.outstanding_reqs == 8'h2;
 
-logic wbexc_is_pres_load_instr, wbexc_is_pres_store_instr;
-logic wbexc_is_load_instr, wbexc_is_store_instr;
-logic wbexc_is_pres_mem_instr, wbexc_is_mem_instr;
+logic wbexc_is_load_instr, wbexc_is_store_instr, wbexc_is_mem_instr;
 logic wbexc_is_wfi;
 
 logic [31:0] ex_compressed_instr;
@@ -233,7 +230,7 @@ logic ex_has_compressed_instr;
 logic wbexc_post_int_err; // Spec had an internal error
 
 logic [31:0] wbexc_post_wX;
-logic [5:0] wbexc_post_wX_addr;
+logic [4:0] wbexc_post_wX_addr;
 logic wbexc_post_wX_en;
 
 `define X(n) wbexc_post_``n
@@ -431,13 +428,6 @@ assign ex_is_checkable_csr = ~(
   (`CSR_ADDR == CSR_MINSTRET) | (`CSR_ADDR == CSR_MINSTRETH) |
   (`CSR_ADDR == CSR_MCOUNTINHIBIT)
 );
-
-`undef INSTR
-`define INSTR wbexc_decompressed_instr
-
-// Illegal instructions aren't checkable unless the relevant specifications are present.
-logic can_check_illegal;
-assign can_check_illegal = `SPEC_ILLEGAL & `SPEC_CSR & `SPEC_MRET & `SPEC_WFI;
 
 `undef INSTR
 
