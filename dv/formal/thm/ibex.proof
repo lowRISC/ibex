@@ -39,7 +39,7 @@ lemma ibex
   NonCompressedMatch: have (wbexc_finishing && wbexc_instr[1:0] == 2'b11 |-> wbexc_instr == wbexc_decompressed_instr)
   CompressedMatch: have (ex_has_compressed_instr |-> ex_compressed_instr[15:0] == `CR.instr_rdata_c_id)
 
-  PostFlushNoInstr: have (`IDC.ctrl_fsm_cs == `IDC.FLUSH |=> ~`CR.instr_valid_id)
+  PostFlushNoInstr: have (`IDC.ctrl_fsm_cs == FLUSH |=> ~`CR.instr_valid_id)
 
   DecompressionIllegalIdEx: have (ex_has_compressed_instr |-> decompressed_instr_illegal == `CR.illegal_c_insn_id)
   DecompressionMatchIdEx: have (ex_has_compressed_instr & ~`CR.illegal_insn_id & ~`CR.illegal_c_insn_id |-> decompressed_instr == `CR.instr_rdata_id)
@@ -69,13 +69,13 @@ lemma ibex
 
   RfWriteWb: have (`CR.rf_write_wb & wbexc_finishing |-> `WB.rf_we_wb_o)
 
-  CtrlWbexc: have (wbexc_exists |-> `IDC.ctrl_fsm_cs == `IDC.DECODE || `IDC.ctrl_fsm_cs == `IDC.FLUSH)
-  ProgressDecode: have (instr_will_progress |-> `IDC.ctrl_fsm_cs == `IDC.DECODE)
+  CtrlWbexc: have (wbexc_exists |-> `IDC.ctrl_fsm_cs == DECODE || `IDC.ctrl_fsm_cs == FLUSH)
+  ProgressDecode: have (instr_will_progress |-> `IDC.ctrl_fsm_cs == DECODE)
 
   BranchedProg: have (ex_has_branched_d & ~instr_will_progress |=> ex_has_branched_d | `IDC.wb_exception_o)
 
-  IDCFsmAny: have (`IDC.ctrl_fsm_cs inside {`IDC.RESET, `IDC.BOOT_SET, `IDC.WAIT_SLEEP, `IDC.SLEEP, `IDC.FIRST_FETCH, `IDC.DECODE, `IDC.IRQ_TAKEN, `IDC.FLUSH})
-  IDCFsmNotBoot: have (##3 ~(`IDC.ctrl_fsm_cs inside {`IDC.RESET, `IDC.BOOT_SET}))
+  IDCFsmAny: have (`IDC.ctrl_fsm_cs inside {RESET, BOOT_SET, WAIT_SLEEP, SLEEP, FIRST_FETCH, DECODE, IRQ_TAKEN, FLUSH})
+  IDCFsmNotBoot: have (##3 ~(`IDC.ctrl_fsm_cs inside {RESET, BOOT_SET}))
 
   MemInstrEx: have (`LSU.ls_fsm_cs != `LSU.IDLE |-> ex_is_mem_instr)
   MemInstrWbLoad: have (`WB.outstanding_load_wb_o |-> wbexc_is_load_instr)
@@ -207,13 +207,13 @@ lemma ibex
   StallNoChangeA: have (`LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(`ID.rf_rdata_a_fwd))
   StallNoChangeB: have (data_we_o && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(`ID.rf_rdata_b_fwd))
 
-  BecameDecodeIsInstrStart: have (`IDC.ctrl_fsm_cs == `IDC.DECODE && !$stable(`IDC.ctrl_fsm_cs) |-> ~`ID.instr_valid_i | `CR.instr_new_id)
-  BecameDecodeIsEmptyWbexc: have (`IDC.ctrl_fsm_cs == `IDC.DECODE && !$stable(`IDC.ctrl_fsm_cs) |-> ~wbexc_exists)
+  BecameDecodeIsInstrStart: have (`IDC.ctrl_fsm_cs == DECODE && !$stable(`IDC.ctrl_fsm_cs) |-> ~`ID.instr_valid_i | `CR.instr_new_id)
+  BecameDecodeIsEmptyWbexc: have (`IDC.ctrl_fsm_cs == DECODE && !$stable(`IDC.ctrl_fsm_cs) |-> ~wbexc_exists)
   FetchErrIsErr: have (wbexc_fetch_err & wbexc_exists |-> wbexc_err & `IDC.instr_fetch_err)
 
   # If control FSM is in `FIRST_FETCH`, then there shouldn't be an instruction that is already fetched by IF but not consumed by ID.
   # This helps to prove FetchErrRoot.
-  FirstFetchNoInstr: have (`IDC.ctrl_fsm_ns == `IDC.FIRST_FETCH |-> ~`IF.instr_valid_id_q)
+  FirstFetchNoInstr: have (`IDC.ctrl_fsm_ns == FIRST_FETCH |-> ~`IF.instr_valid_id_q)
 
   MemOpRequiresValid: have (`LSU.ls_fsm_cs != `LSU.IDLE || `CR.lsu_req |-> `ID.instr_valid_i)
 
@@ -253,7 +253,7 @@ lemma ibex
   SpecStableStoreData: have (ex_is_store_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_write_fst_wdata))
   SpecStableStoreSndData: have (ex_is_store_instr && `LSU.ls_fsm_cs != `LSU.IDLE && ($past(`LSU.ls_fsm_cs) != `LSU.IDLE || $past(`LSU.lsu_req_i)) |-> $stable(spec_mem_write_snd_wdata))
 
-  FetchErrRoot: have (`ID.instr_valid_i && (`IDC.ctrl_fsm_cs == `IDC.FLUSH -> ~$past(`IDC.csr_pipe_flush)) |-> spec_fetch_err == `ID.instr_fetch_err_i)
+  FetchErrRoot: have (`ID.instr_valid_i && (`IDC.ctrl_fsm_cs == FLUSH -> ~$past(`IDC.csr_pipe_flush)) |-> spec_fetch_err == `ID.instr_fetch_err_i)
 
   LoadNotSpecWrite: have (`ID.instr_valid_i & ex_is_load_instr |-> ~spec_mem_write)
   StoreNotSpecRead: have (`ID.instr_valid_i & ex_is_store_instr |-> ~spec_mem_read)
@@ -301,9 +301,9 @@ lemma live
   DivMiddle: have (`MULT.div_counter_q == 5'd31 && `MULT.md_state_q == `MULT.MD_COMP |-> ##30 `MULT.div_counter_q == 5'd1 && `MULT.md_state_q == `MULT.MD_COMP)
   DivEnd: have (`MULT.div_counter_q == 5'd1 && `MULT.md_state_q == `MULT.MD_COMP |-> ##3 instr_will_progress)
 
-  WFIStart: have (instr_will_progress & ex_is_wfi & ~ex_err |-> ##[0:5] `IDC.ctrl_fsm_cs == `IDC.SLEEP)
-  WFIMiddle: have (`IDC.ctrl_fsm_cs == `IDC.SLEEP |-> ##[0:20] `IDC.ctrl_fsm_cs == `IDC.SLEEP && `IDC.ctrl_fsm_ns == `IDC.FIRST_FETCH)
-  WFIEnd: have (`IDC.ctrl_fsm_cs == `IDC.SLEEP && `IDC.ctrl_fsm_ns == `IDC.FIRST_FETCH |-> ##[0:5] `IF.id_in_ready_i)
+  WFIStart: have (instr_will_progress & ex_is_wfi & ~ex_err |-> ##[0:5] `IDC.ctrl_fsm_cs == SLEEP)
+  WFIMiddle: have (`IDC.ctrl_fsm_cs == SLEEP |-> ##[0:20] `IDC.ctrl_fsm_cs == SLEEP && `IDC.ctrl_fsm_ns == FIRST_FETCH)
+  WFIEnd: have (`IDC.ctrl_fsm_cs == SLEEP && `IDC.ctrl_fsm_ns == FIRST_FETCH |-> ##[0:5] `IF.id_in_ready_i)
 
   NewProgNormal: have (`CR.instr_new_id & `CR.instr_valid_id & ~ex_is_div & ~ex_is_mem_instr |-> ##[0:5] (instr_will_progress | (ex_kill & `CR.instr_valid_id)))
   NewProgMem: have (`CR.instr_new_id & `CR.instr_valid_id & ex_is_mem_instr |-> ##[0:10] (instr_will_progress | (ex_kill & `CR.instr_valid_id)))
