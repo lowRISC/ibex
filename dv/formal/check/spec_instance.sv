@@ -34,7 +34,8 @@ assign reg_driven[0] = 1'b0;
 
 for (genvar i = 1; i < 32; i++) begin: g_regs_cut
     logic [31:0] free; // Undriven
-    assign reg_driven[i] = (`CR.rf_raddr_a == i && `CR.rf_ren_a) || (`CR.rf_raddr_b == i && `CR.rf_ren_b);
+    assign reg_driven[i] =
+        (`CR.rf_raddr_a == i && `CR.rf_ren_a) || (`CR.rf_raddr_b == i && `CR.rf_ren_b);
     assign pre_regs_cut[i] = reg_driven[i] ? pre_regs[i] : free;
 end
 

@@ -85,7 +85,7 @@ lemma ibex
   ClockEn: have (instr_will_progress |-> ibex_top_i.clock_en)
   EnWbProgress: have (`WB.en_wb_i |-> instr_will_progress)
   DoneFin: have (`WBG.wb_done & `WBG.wb_valid_q & ~wbexc_err |-> wbexc_finishing)
-  ValidExists: have (`WBG.wb_valid_q |-> wbexc_exists)
+  ValidExists: have ((~wbexc_exists && ~`WBG.wb_valid_q) || (wbexc_exists && (`WBG.wb_valid_q || wbexc_err)))
 
   UnCheckableNoPresent: have (wbexc_exists & `IS_CSR & ~wbexc_is_checkable_csr |-> ~has_spec_past)
 
@@ -95,26 +95,27 @@ lemma ibex
   )
   ValidToBranch: have (ex_has_branched_d |-> `CR.instr_valid_id)
 
-  LsuWeq: block
-    Ex: have (`LSU.ls_fsm_cs != `LSU.IDLE && mem_gnt_fst_q |-> ex_is_store_instr == `LSU.data_we_q)
-    /
-    Wb: have (outstanding_mem |-> wbexc_is_store_instr == `LSU.data_we_q)
+  NoEarlyLSUErrq: have (`LSU.ls_fsm_cs == `LSU.WAIT_GNT_MIS || `LSU.ls_fsm_cs == `LSU.WAIT_RVALID_MIS |-> !`LSU.lsu_err_q)
+  InstrValidDuringLSU: have (`LSU.ls_fsm_cs != `LSU.IDLE |-> `IF.instr_valid_id_q)
+  NoInstrInNonDecode: have (`IDC.ctrl_fsm_cs inside {IRQ_TAKEN, FIRST_FETCH, SLEEP, WAIT_SLEEP} |-> ~`ID.instr_valid_i)
 
-  block
-    LSUEmpty: have (`LSU.ls_fsm_cs != `LSU.IDLE |-> ~wbexc_exists & ~ex_kill)
-    /
-    LSUEnd: have (`LSU.lsu_req_done_o |-> instr_will_progress)
+  LsuWeq_Ex: have (`LSU.ls_fsm_cs != `LSU.IDLE && mem_gnt_fst_q |-> ex_is_store_instr == `LSU.data_we_q)
+  LSUEmpty: have (`LSU.ls_fsm_cs != `LSU.IDLE |-> ~wbexc_exists & ~ex_kill)
+  NoFinishingIRQ: have (wbexc_exists |-> ~wbexc_handling_irq)
 
-  block
-    NoFinishingIRQ: have (wbexc_exists |-> ~wbexc_handling_irq)
-    /
-    SpecPastReg: have (wbexc_exists & wbexc_post_wX_en |-> spec_past_regs[wbexc_post_wX_addr] == wbexc_post_wX)
-    SpecPastWbexc:
-    each X Priv:(priv) Mstatus:(mstatus) Mie:(mie) Mcause:(mcause) Mtval:(mtval) Mtvec:(mtvec) \
-          Mscratch:(mscratch) Mepc:(mepc) Mcounteren:(mcounteren) \
-          Pmp_cfg:(pmp_cfg) Pmp_addr:(pmp_addr) Mseccfg:(mseccfg) \
-          Pc:(pc)
-      have (wbexc_exists |-> spec_past_``X == wbexc_post_``X)
+  /
+
+  LsuWeq_Wb: have (outstanding_mem |-> wbexc_is_store_instr == `LSU.data_we_q)
+  MultDivStates: have ((~`MULT.mult_en_i -> `MULTG.mult_state_q == `MULTG.ALBL) && (~`MULT.div_en_i -> `MULT.md_state_q == `MULT.MD_IDLE))
+  LSUEnd: have (`LSU.lsu_req_done_o |-> instr_will_progress)
+
+  SpecPastReg: have (wbexc_exists & wbexc_post_wX_en |-> spec_past_regs[wbexc_post_wX_addr] == wbexc_post_wX)
+  SpecPastWbexc:
+  each X Priv:(priv) Mstatus:(mstatus) Mie:(mie) Mcause:(mcause) Mtval:(mtval) Mtvec:(mtvec) \
+        Mscratch:(mscratch) Mepc:(mepc) Mcounteren:(mcounteren) \
+        Pmp_cfg:(pmp_cfg) Pmp_addr:(pmp_addr) Mseccfg:(mseccfg) \
+        Pc:(pc)
+    have (wbexc_exists |-> spec_past_``X == wbexc_post_``X)
 
   /
 
@@ -123,7 +124,7 @@ lemma ibex
   # of waiting responses to the outstanding_mem signal.
   # It includes all LSU states and a couple of extra states for
   # once the instruction moves/has moved to writeback.
-  Memory: graph_induction +rev
+  Memory: graph_induction
     inv idle (
       ~`LSU.handle_misaligned_q &&
       `CR.lsu_resp_valid == outstanding_mem &&
@@ -135,16 +136,17 @@ lemma ibex
       `CR.lsu_resp_valid == outstanding_mem
     )
     inv wait_gnt_mis (
-      $stable(data_addr_o) && ~has_resp_waiting_q && ~`LSU.lsu_err_q &&
+      $stable(data_addr_o) &&
+      ~has_resp_waiting_q &&
       (data_req_o == ~`LSU.pmp_err_q) && (`LSU.pmp_err_q == `CR.pmp_req_err[2])
     )
     inv wait_gnt (
-      $stable(data_addr_o) && ~has_resp_waiting_q &&
+      $stable(data_addr_o) &&
+      ~has_resp_waiting_q &&
       (data_req_o == ~`LSU.pmp_err_q) && (`LSU.pmp_err_q == `CR.pmp_req_err[2])
     )
     inv wait_rvalid_mis (
       ($stable(`LSU.ls_fsm_cs) -> $stable(data_addr_o)) &&
-      ~`LSU.lsu_err_q &&
       ((~`LSU.pmp_err_q && has_one_resp_waiting_q) || (`LSU.pmp_err_q && ~has_resp_waiting_q))
     )
     inv wait_rvalid_mis_gnts_done (
@@ -224,6 +226,11 @@ lemma ibex
   # When there is an instruction is finished in EX but is blocked from moving to WB then there must be a valid instruction in the WB stage. This is a helper property for DivInstrStable
   InstrInWbStage: have (wbexc_exists & ~wbexc_finishing -> `WBG.wb_valid_q)
 
+  NoInstrFirstCycle: have (~`ID.instr_valid_i |-> `ID.id_fsm_d == `ID.FIRST_CYCLE)
+  NoInstrNoGnt: have (~`ID.instr_valid_i |-> ~mem_gnt_fst_q)
+
+  PcMatch: have (`ID.instr_valid_i & ~ex_has_branched_d & ~`IDC.instr_fetch_err & ~ex_kill |-> pre_nextpc == `IF.pc_if_o)
+
   /
 
   MemErrKind: have (finishing_executed && wbexc_is_mem_instr && ~wbexc_illegal && wbexc_err |-> `IDC.store_err_q | `IDC.load_err_q)
@@ -268,6 +275,9 @@ lemma ibex
     (instr_mem_assume.outstanding_reqs_q == 1) == (~`IFP.rdata_outstanding_q[1] && `IFP.rdata_outstanding_q[0]) &&
     (instr_mem_assume.outstanding_reqs_q == 0) == (~`IFP.rdata_outstanding_q[1] && ~`IFP.rdata_outstanding_q[0])
   )
+
+  NoMemThroughout: have (~ex_is_mem_instr & `ID.instr_valid_i |-> ~mem_gnt_fst_d)
+  MTypePCThroughout: have (ex_is_mtype & `ID.instr_valid_i & ~`ID.instr_fetch_err_i & ~ex_kill |-> spec_post_pc == post_pc)
 
   /
 

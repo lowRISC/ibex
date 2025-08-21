@@ -83,41 +83,40 @@ proc prove_no_liveness {} {
 	prove -wait
 	prove -bg -task Step3
 	prove -bg -task Step4
+	prove -wait
+	prove -bg -property {Step5::*SpecStable*} -engine_mode Hp
+	prove -bg -property {Step5::top.Ibex_FetchErrRoot} -engine_mode Hp
+	prove -bg -property {Step5::top.Ibex_PreNextPcMatch}
+	prove -wait
 	prove -bg -task Step5
-	prove -wait
-	prove -bg -property {Step6::*SpecStable*} -engine_mode Hp
-	prove -bg -property {Step6::top.Ibex_FetchErrRoot} -engine_mode Hp
-	prove -bg -property {Step6::top.Ibex_PreNextPcMatch}
-	prove -wait
 	prove -bg -task Step6
 	prove -bg -task Step7
-	prove -bg -task Step8
 	prove -wait
-	prove_hps Step9 *MemSpec*
-	prove_hps Step9 *CapFsm*
+	prove_hps Step8 *MemSpec*
+	prove_hps Step8 *CapFsm*
+	prove -property {Step8::*.Mem_*}
+	prove -task Step8
+	prove -property {Step9::*.BType_* Step9::*.JType_*}
 	prove -property {Step9::*.Mem_*}
-	prove -task Step9
-	prove -property {Step10::*.BType_* Step10::*.JType_*}
-	prove -property {Step10::*.Mem_*}
-	prove -property {Step10::top.MType_Div*_Addr Step10::top.MType_Div*_CSR Step10::top.MType_Div*_PC Step10::top.MType_Rem*_Addr Step10::top.MType_Rem*_CSR Step10::top.MType_Rem*_PC}
+	prove -property {Step9::top.MType_Div*_Addr Step9::top.MType_Div*_CSR Step9::top.MType_Div*_PC Step9::top.MType_Rem*_Addr Step9::top.MType_Rem*_CSR Step9::top.MType_Rem*_PC}
+	prove_hps Step9 *
+	prove -property {Step10::*.BType_* Step10::*.JType_* Step10::*.Mem_*}
 	prove_hps Step10 *
-	prove -property {Step11::*.BType_* Step11::*.JType_* Step11::*.Mem_*}
-	prove_hps Step11 *
+	prove -task Step11
 	prove -task Step12
+	prove_hps Step13 *BType*
 	prove -task Step13
-	prove_hps Step14 *BType*
+	prove_hps Step14 *JType*
 	prove -task Step14
-	prove_hps Step15 *JType*
-	prove -task Step15
+	prove -bg -task Step15
 	prove -bg -task Step16
 	prove -bg -task Step17
-	prove -bg -task Step18
 	prove -wait
-	prove_hps Step19 *
-	prove -task Step20
-	prove_hps Step21 *
+	prove_hps Step18 *
+	prove -task Step19
+	prove_hps Step20 *
+	prove -bg -task Step21
 	prove -bg -task Step22
-	prove -bg -task Step23
 	prove -wait
 }
 
