@@ -225,12 +225,12 @@ class ProcessRunner:
     MAX_RUNNING = (psutil.cpu_count() or 8) - 2 # Number of CPUs, with a couple spares
 
     def __init__(self):
-        log(f"Process runner will have a maximum of {ProcessRunner.MAX_RUNNING} processes, and currently sees {global_memory_free():.3f}GB free.")
-
         self.pending = []
         self.running = []
         self.first_start = time.time()
         self.debug_count = 0
+
+        log(f"Process runner will have a maximum of {ProcessRunner.MAX_RUNNING} processes, and currently sees {self.mem_avail():.3f}GB free.")
 
     def append(self, proc):
         self.pending.insert(0, proc)
@@ -244,7 +244,7 @@ class ProcessRunner:
     def mem_avail(self):
         if args.max_mem == 0:
             return global_memory_free()
-        return max(args.max_mem - self.children_used_mem(), 0)
+        return min(global_memory_free(), max(args.max_mem - self.children_used_mem(), 0))
 
     def poll(self):
         # Kill recently started processes until memory is OK, unless there is just one, then there's no point(?)
@@ -279,9 +279,10 @@ class ProcessRunner:
 
         asyncio.get_running_loop().call_later(ProcessRunner.POLL_DELAY, lambda: self.poll())
 
-process_runner = ProcessRunner()
+process_runner: ProcessRunner | None = None
 '''Run a shell command in the global process runner'''
 async def shell(cmd, expected_memory = 0.0, timeout = None, debug_slow = None):
+    assert process_runner is not None
     proc = Process(cmd, expected_memory=expected_memory, timeout=timeout, debug_slow=debug_slow)
     process_runner.append(proc)
     return await proc.future
@@ -720,6 +721,8 @@ async def explore_mode(by_step: list[list[str]]):
             log(f"Skipping proof run for step {step}, since it has just one step", c=white)
 
 async def main():
+    global process_runner
+
     def preproc_name(name: str) -> tuple[int, str]:
         first = name.split("$")[1][5:]
         assert first.startswith("Step")
@@ -738,6 +741,7 @@ async def main():
                 by_step.append([])
         return by_step
 
+    process_runner = ProcessRunner()
     process_runner.start_loop()
 
     log("Reading property list", c=white)

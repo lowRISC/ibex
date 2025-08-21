@@ -1,0 +1,48 @@
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+# GitHub Actions CI build configuration
+
+name: Ibex OSS Formal CI
+
+on:
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  fv:
+    name: Run the Open-Source FV flow
+    runs-on: nixos
+    concurrency:
+      group: oss-fv
+      cancel-in-progress: false # Only do one oss-fv job at a time, since we will use a huge amount of memory
+    steps:
+      - name: Setup env
+        run: |
+          echo "MAX_MEM_GB=100" >> $GITHUB_ENV # Maximum memory available to conductor.py, which is inversely proportional to time. 200GB -> 40 mins
+          echo "NIX_CONFIG=accept-flake-config = true" >> $GITHUB_ENV
+
+      - name: Notify about queued execution
+        run: |
+          echo "Warning: This job will block other oss-fv jobs until it finishes, since it uses a lot of memory."
+
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          extra_nix_config: |
+            substituters = https://nix-cache.lowrisc.org/public/ https://cache.nixos.org/
+            trusted-public-keys = nix-cache.lowrisc.org-public-1:O6JLD0yXzaJDPiQW1meVu32JIDViuaPtGDfjlOopU7o= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+
+      - name: Run OSS Env
+        run: |
+          source <(nix print-dev-env .#oss-dev)
+
+          cd dv/formal
+          make build/aig-manip
+          make build/all.aig SHELL=bash
+          python3 conductor.py prove --check-complete --max-mem $MAX_MEM_GB
+
