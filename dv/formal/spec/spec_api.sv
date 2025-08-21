@@ -57,8 +57,6 @@ module spec_api #(
     output mstatus_t mstatus_o,
     input logic [31:0] mcause_i,
     output logic [31:0] mcause_o,
-    input logic [63:0] mcycle_i,
-    output logic [63:0] mcycle_o,
     input logic [31:0] mtval_i,
     output logic [31:0] mtval_o,
     input logic [31:0] mtvec_i,
@@ -67,10 +65,6 @@ module spec_api #(
     output logic [31:0] mscratch_o,
     input logic [31:0] mepc_i,
     output logic [31:0] mepc_o,
-    input logic [31:0] mshwmb_i,
-    output logic [31:0] mshwmb_o,
-    input logic [31:0] mshwm_i,
-    output logic [31:0] mshwm_o,
     input logic [31:0] mcounteren_i,
     output logic [31:0] mcounteren_o,
 
@@ -166,7 +160,12 @@ end
 t_Mseccfg_ent mseccfg_out;
 assign mseccfg_o = mseccfg_out.bits;
 
+logic sail_reached_unreachable;
+logic [31:0] sail_reached_unreachable_loc;
+
 sail_ibexspec spec_i(
+    .sail_reached_unreachable,
+    .sail_reached_unreachable_loc,
     .cur_inst_in(insn_bits),
     .cur_inst_out(),
     .cur_privilege_in(priv_i),
@@ -345,7 +344,7 @@ sail_ibexspec spec_i(
     .mode(main_mode)
 );
 
-assign int_err_o = spec_i.sail_reached_unreachable |
+assign int_err_o = sail_reached_unreachable |
                    spec_i.sail_have_exception |
                    (main_result != MAINRES_OK);
 

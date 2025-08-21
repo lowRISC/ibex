@@ -153,7 +153,7 @@ lemma riscv
          Pmp_cfg:(pmp_cfg) Pmp_addr:(pmp_addr) Mseccfg:(mseccfg)
       have (spec_past_``X == pre_``X)
 
-  SleepSpecPastPC: have (has_spec_past & (`IDC.ctrl_fsm_cs == `IDC.WAIT_SLEEP || `IDC.ctrl_fsm_cs == `IDC.SLEEP) |-> spec_past_pc == `CR.pc_if)
+  SleepSpecPastPC: have (has_spec_past & (`IDC.ctrl_fsm_cs == WAIT_SLEEP || `IDC.ctrl_fsm_cs == SLEEP) |-> spec_past_pc == `CR.pc_if)
 
   /
 
