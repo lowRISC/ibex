@@ -11,12 +11,19 @@ PSGEN_FLAGS=-root riscv -task
 
 SAIL_EXTRA_SRCS=../spec/main.sail
 
-SAIL_SV_FLAGS=-sv -sv-comb -sv-inregs -sv-outregs -sv-nostrings -sv-nopacked -sv-nomem -Oconstant_fold -memo-z3 \
-	-sv-unreachable translate -sv-unreachable lookup_TLB -sv-unreachable translate_tlb_miss -sv-unreachable translate_tlb_hit -sv-unreachable pt_walk \
-	-sv-fun2wires 2:read_ram \
-	-sv-fun2wires 2:write_ram \
-	-sv-fun2wires wX \
-	-sv-fun2wires 2:rX \
+# -sv, use the SystemVerilog backend
+# --sv-comb, generate a always_comb instead of an initial block
+# --sv-inregs --sv-outregs, produce inputs and outputs for every Sail register
+# --sv-nostrings, --sv-nopacked, --sv-nomem, avoid generating some things Jasper doesn't like (FIXME: --sv-nopacked might be better removed?)
+# -Oconstrant_fold, do basic optimisation
+# -memo-z3, resolving types requires a sat solver, this helps speed up those queries
+# --sv-unreachable, remove the implementations of functions to either make the design smaller or avoid recursion loops (FIXME: Still necessary?)
+# --sv-fun2wires (n:)?f, transform a function into ports, with n (or 1) slots
+SAIL_SV_FLAGS=-sv --sv-comb --sv-inregs --sv-outregs --sv-nostrings --sv-nopacked --sv-nomem -Oconstant_fold -memo-z3 \
+	--sv-unreachable translate --sv-unreachable lookup_TLB --sv-unreachable translate_tlb_miss --sv-unreachable translate_tlb_hit --sv-unreachable pt_walk \
+	--sv-fun2wires 2:read_ram \
+	--sv-fun2wires 2:write_ram \
+	--sv-fun2wires wX 
 
 # Use fusesoc to resolve the tree of components, copy all resolved source files into the build/ directory,
 # and then generate a filelist for jasper to ingest.
