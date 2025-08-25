@@ -114,9 +114,6 @@ module ibex_simple_system (
   logic [31:0] instr_rdata;
   logic instr_err;
 
-  assign instr_gnt = instr_req;
-  assign instr_err = '0;
-
   `ifdef VERILATOR
     assign clk_sys = IO_CLK;
     assign rst_sys_n = IO_RST_N;
@@ -261,6 +258,10 @@ module ibex_simple_system (
       .alert_major_bus_o      (),
       .core_sleep_o           ()
     );
+
+  assign instr_gnt = instr_req;
+  assign instr_err = (instr_addr & cfg_device_addr_mask[Ram]) !=
+                      cfg_device_addr_base[Ram];
 
   // SRAM block for instruction and data storage
   ram_2p #(
