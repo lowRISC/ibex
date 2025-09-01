@@ -11,7 +11,7 @@ help:
 	@echo "or how to set-up the different environments."
 
 # Use a parallel run (make -j N) for a faster build
-build-all: build-riscv-compliance build-simple-system build-arty-100 \
+build-all: build-riscv-compliance build-simple-system \
       build-csr-test
 
 
@@ -50,34 +50,6 @@ $(Vibex_simple_system):
 run-simple-system: sw-simple-hello | $(Vibex_simple_system)
 	build/lowrisc_ibex_ibex_simple_system_0/sim-verilator/Vibex_simple_system \
 		--raminit=$(simple-system-program)
-
-
-# Arty A7 FPGA example
-# Use the following targets (depending on your hardware):
-# - "build-arty-35"
-# - "build-arty-100"
-# - "program-arty"
-arty-sw-program = examples/sw/led/led.vmem
-sw-led: $(arty-sw-program)
-
-.PHONY: $(arty-sw-program)
-$(arty-sw-program):
-	cd examples/sw/led && $(MAKE)
-
-.PHONY: build-arty-35
-build-arty-35: sw-led
-	fusesoc --cores-root=. run --target=synth --setup --build \
-		lowrisc:ibex:top_artya7 --part xc7a35ticsg324-1L
-
-.PHONY: build-arty-100
-build-arty-100: sw-led
-	fusesoc --cores-root=. run --target=synth --setup --build \
-		lowrisc:ibex:top_artya7 --part xc7a100tcsg324-1
-
-.PHONY: program-arty
-program-arty:
-	fusesoc --cores-root=. run --target=synth --run \
-		lowrisc:ibex:top_artya7
 
 
 # Lint check
