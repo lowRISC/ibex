@@ -3,15 +3,19 @@
 module isolde_mux_tcdm (
     input logic                 clk_i,          // Clock input, positive edge triggered
     input logic                 rst_ni,         // Asynchronous reset, active low
-          isolde_tcdm_if.slave  tcdm_slave_i1,  // Input1 
-          isolde_tcdm_if.slave  tcdm_slave_i2,  // Input2 higher priority
+            // Input1 
+            input isolde_tcdm_pkg::req_t req_1_i,
+            output isolde_tcdm_pkg::rsp_t rsp_1_o,
+            // Input2 higher priority
+            input isolde_tcdm_pkg::req_t req_2_i,
+            output isolde_tcdm_pkg::rsp_t rsp_2_o,
           isolde_tcdm_if.master tcdm_master_o   // Output
 
 );
 
   logic [1:0] slv_req, slv_rsp;
-  assign slv_req[0] = tcdm_slave_i1.req.req;
-  assign slv_req[1] = tcdm_slave_i2.req.req;
+  assign slv_req[0] = req_1_i.req;
+  assign slv_req[1] = req_2_i.req;
 
   fifo_v3 #(
       .DATA_WIDTH(2),
@@ -35,42 +39,42 @@ module isolde_mux_tcdm (
     tcdm_master_o.req.req = 1'b0;
     if (slv_req[1]) begin
       tcdm_master_o.req.req  = 1'b1;
-      tcdm_master_o.req.addr = tcdm_slave_i2.req.addr;
-      tcdm_master_o.req.we   = tcdm_slave_i2.req.we;
-      tcdm_master_o.req.be   = tcdm_slave_i2.req.be;
-      tcdm_master_o.req.data = tcdm_slave_i2.req.data;
+      tcdm_master_o.req.addr = req_2_i.addr;
+      tcdm_master_o.req.we   = req_2_i.we;
+      tcdm_master_o.req.be   = req_2_i.be;
+      tcdm_master_o.req.data = req_2_i.data;
 
     end else if (slv_req[0]) begin
       tcdm_master_o.req.req  = 1'b1;
-      tcdm_master_o.req.addr = tcdm_slave_i1.req.addr;
-      tcdm_master_o.req.we   = tcdm_slave_i1.req.we;
-      tcdm_master_o.req.be   = tcdm_slave_i1.req.be;
-      tcdm_master_o.req.data = tcdm_slave_i1.req.data;
+      tcdm_master_o.req.addr = req_1_i.addr;
+      tcdm_master_o.req.we   = req_1_i.we;
+      tcdm_master_o.req.be   = req_1_i.be;
+      tcdm_master_o.req.data = req_1_i.data;
     end
   end
 
 
   always_comb begin
-    tcdm_slave_i1.rsp.gnt = '0;
-    tcdm_slave_i2.rsp.gnt = '0;
+    rsp_1_o.gnt = '0;
+    rsp_2_o.gnt = '0;
     if (slv_req[1]) begin
-      tcdm_slave_i2.rsp.gnt = tcdm_master_o.rsp.gnt;
+      rsp_2_o.gnt = tcdm_master_o.rsp.gnt;
     end else if (slv_req[0]) begin
-      tcdm_slave_i1.rsp.gnt = tcdm_master_o.rsp.gnt;
+      rsp_1_o.gnt = tcdm_master_o.rsp.gnt;
     end
   end
 
   always_comb begin
-    tcdm_slave_i1.rsp.valid = '0;
-    tcdm_slave_i2.rsp.valid = '0;
-    tcdm_slave_i1.rsp.data  = 32'hDEADBEAF;
-    tcdm_slave_i2.rsp.data  = 32'hDEADBEAF;
+    rsp_1_o.valid = '0;
+    rsp_2_o.valid = '0;
+    rsp_1_o.data  = 32'hDEADBEAF;
+    rsp_2_o.data  = 32'hDEADBEAF;
     if (slv_rsp[1]) begin
-      tcdm_slave_i2.rsp.valid = tcdm_master_o.rsp.valid;
-      tcdm_slave_i2.rsp.data  = tcdm_master_o.rsp.data;
+      rsp_2_o.valid = tcdm_master_o.rsp.valid;
+      rsp_2_o.data  = tcdm_master_o.rsp.data;
     end else if (slv_rsp[0]) begin
-      tcdm_slave_i1.rsp.valid = tcdm_master_o.rsp.valid;
-      tcdm_slave_i1.rsp.data  = tcdm_master_o.rsp.data;
+      rsp_1_o.valid = tcdm_master_o.rsp.valid;
+      rsp_1_o.data  = tcdm_master_o.rsp.data;
     end
   end
 

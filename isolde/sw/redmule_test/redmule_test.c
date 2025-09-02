@@ -110,11 +110,7 @@ int main(int argc, char *argv[]) {
 
   errors = test_hwe(x_spm_addr, w_spm_addr, y_spm_addr);
   
-#ifdef RV_DM_TEST
-  while (1) {
-    asm volatile("wfi");
-  }
-#else
+
   return errors ?  0xBADC0FFE :0x0;
-#endif
+
 }

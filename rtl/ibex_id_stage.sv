@@ -603,8 +603,8 @@ module ibex_id_stage
   );
 
 
-assign illegal_insn_dec = illegal_std_instr & illegal_custom_instr;
-assign isolde_stall_fetch = ~fetch_exec_conn.isolde_decoder_stalled;
+  assign illegal_insn_dec   = illegal_std_instr & illegal_custom_instr;
+  assign isolde_stall_fetch = ~fetch_exec_conn.isolde_decoder_stalled;
   ///////////////////////////
   // ISOLDE  execute block //
   ///////////////////////////
@@ -616,12 +616,12 @@ assign isolde_stall_fetch = ~fetch_exec_conn.isolde_decoder_stalled;
       .isolde_exec_from_decoder(fetch_exec_conn),
       .isolde_exec_busy_o      (isolde_exec_busy),
       // eXtension interface
-      .xif_compressed_if       (core_xif.cpu_compressed),
-      .xif_issue_if            (core_xif.cpu_issue),
-      .xif_commit_if           (core_xif.cpu_commit),
-      .xif_mem_if              (core_xif.cpu_mem),
-      .xif_mem_result_if       (core_xif.cpu_mem_result),
-      .xif_result_if           (core_xif.cpu_result)
+      .xif_compressed_if,
+      .xif_issue_if,
+      .xif_commit_if,
+      .xif_mem_if,
+      .xif_mem_result_if,
+      .xif_result_if
   );
 
 

@@ -18,9 +18,9 @@ module rv_dm
                          // here, not the system reset
     input logic [31:0] next_dm_addr_i,  // static word address of the next debug module.
     /// DMI slave port 
-    isolde_tcdm_if.slave s_dmi,
+    isolde_tcdm_if.slave s_periph,
     /// System Bus master port
-    isolde_tcdm_if.master m_sbus,
+    isolde_tcdm_if.master m_sba,
     /// JTAG
     input jtag_pkg::jtag_req_t jtag_in,
     output jtag_pkg::jtag_rsp_t jtag_out,
@@ -150,8 +150,8 @@ module rv_dm
 
   isolde_tcdm_if dm_top_dgb_req ();
 
-  assign dm_top_dgb_req.req = s_dmi.req;
-  assign s_dmi.rsp          = dm_top_dgb_req.rsp;
+  assign dm_top_dgb_req.req = s_periph.req;
+  assign s_periph.rsp          = dm_top_dgb_req.rsp;
   
 
   //logic [31:0]   slave_rdata_test;
@@ -190,16 +190,16 @@ module rv_dm
 
 
       // System Bus access
-      .master_req_o    (m_sbus.req.req),
-      .master_add_o    (m_sbus.req.addr),
-      .master_we_o     (m_sbus.req.we),
-      .master_wdata_o  (m_sbus.req.data),
-      .master_be_o     (m_sbus.req.be),
-      .master_gnt_i    (m_sbus.rsp.gnt),
-      .master_r_valid_i(m_sbus.rsp.valid),
-      .master_r_err_i  (m_sbus.rsp.err),
+      .master_req_o    (m_sba.req.req),
+      .master_add_o    (m_sba.req.addr),
+      .master_we_o     (m_sba.req.we),
+      .master_wdata_o  (m_sba.req.data),
+      .master_be_o     (m_sba.req.be),
+      .master_gnt_i    (m_sba.rsp.gnt),
+      .master_r_valid_i(m_sba.rsp.valid),
+      .master_r_err_i  (m_sba.rsp.err),
       //.master_r_other_err_i  (host_r_other_err    ),
-      .master_r_rdata_i(m_sbus.rsp.data),
+      .master_r_rdata_i(m_sba.rsp.data),
       //  DMI -> DM
       .dmi_rst_ni      (dmi_rst_n),
       .dmi_req_valid_i (dmi_req_valid),

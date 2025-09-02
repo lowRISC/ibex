@@ -18,7 +18,9 @@ module isolde_addr_shim #(
     parameter int START_ADDR = 32'h00100000,  // Start address for valid address range
     parameter int END_ADDR   = 32'h00108000   // End address for valid address range
 ) (
-    isolde_tcdm_if.slave  tcdm_slave_i,  // Interface for CPU requests
+    // Interface for CPU requests
+    input isolde_tcdm_pkg::req_t req_i,
+    output isolde_tcdm_pkg::rsp_t rsp_o,
     isolde_tcdm_if.master tcdm_master_o  // Interface for memory response
 );
 
@@ -34,32 +36,50 @@ module isolde_addr_shim #(
   assign null_dev.req = '{req: 1'b0, we: 1'b0, be: 4'b0000, addr: 32'b0, data: 32'b0};
 
   // Validate if the address is within the valid range [START_ADDR, END_ADDR]
-  assign addr_valid = (tcdm_slave_i.req.addr >= START_ADDR) && (tcdm_slave_i.req.addr <= END_ADDR);
+  assign addr_valid = (req_i.addr >= START_ADDR) && (req_i.addr <= END_ADDR);
 
   // Perform address translation only if the address is valid
-  assign translated_addr = addr_valid ? (tcdm_slave_i.req.addr - START_ADDR) : 32'hDEADBEEF;  // Invalid address return
+  assign translated_addr = addr_valid ? (req_i.addr - START_ADDR) : 32'hDEADBEEF;  // Invalid address return
 
   // Single always_comb block for both request forwarding and response handling
   always_comb begin
     if (addr_valid) begin
       // Forward request to slave when address is valid
       tcdm_master_o.req = '{  // Assign each field individually
-          req: tcdm_slave_i.req.req,
-          we: tcdm_slave_i.req.we,
-          be: tcdm_slave_i.req.be,
+          req: req_i.req,
+          we: req_i.we,
+          be: req_i.be,
           addr: translated_addr,  // Assign the translated address
-          data: tcdm_slave_i.req.data
+          data: req_i.data
       };
-      tcdm_slave_i.rsp = tcdm_master_o.rsp;
+      rsp_o = tcdm_master_o.rsp;
     end else begin
       // Do not forward request to slave when address is invalid
       tcdm_master_o.req = null_dev.req;
 
       // Provide invalid response to master when address is invalid
-      tcdm_slave_i.rsp  = null_dev.rsp;
+      rsp_o = null_dev.rsp;
     end
   end
 
 endmodule
 
 
+
+module isolde_addr_shim_wrp #(
+    parameter int START_ADDR = 32'h00100000,  // Start address for valid address range
+    parameter int END_ADDR   = 32'h00108000   // End address for valid address range
+) (
+    isolde_tcdm_if.slave  tcdm_slave_i,  // Interface for CPU requests
+    isolde_tcdm_if.master tcdm_master_o  // Interface for memory response
+);
+  isolde_addr_shim #(
+      .START_ADDR,
+      .END_ADDR
+  ) i_isolde_addr_shim (
+      .req_i(tcdm_slave_i.req),
+      .rsp_o(tcdm_slave_i.rsp),
+      .tcdm_master_o
+  );
+
+endmodule

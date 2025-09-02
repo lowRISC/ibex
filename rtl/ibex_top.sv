@@ -434,12 +434,12 @@ module ibex_top
       .alert_major_bus_o     (core_alert_major_bus),
       .core_busy_o           (core_busy_d),
       // eXtension interface
-      .xif_compressed_if     (core_xif.cpu_compressed),
-      .xif_issue_if          (core_xif.cpu_issue),
-      .xif_commit_if         (core_xif.cpu_commit),
-      .xif_mem_if            (core_xif.cpu_mem),
-      .xif_mem_result_if     (core_xif.cpu_mem_result),
-      .xif_result_if         (core_xif.cpu_result)
+      .xif_compressed_if,
+      .xif_issue_if,
+      .xif_commit_if,
+      .xif_mem_if,
+      .xif_mem_result_if,
+      .xif_result_if
   );
 
   /////////////////////////////////

@@ -9,5 +9,6 @@ tmp/
 *.gtkw
 *.log
 *.back/
+*.back
 *.hex
 

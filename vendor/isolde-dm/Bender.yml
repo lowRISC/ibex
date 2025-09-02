@@ -8,7 +8,6 @@ package:
 
 dependencies:
   riscv-dbg:          { path: ../riscv-dbg }
-  isolde-soc:         { path: ../isolde-soc }
 #  axi:                { git: "https://github.com/pulp-platform/axi.git", version: 0.39.6 }
 
 export_include_dirs:

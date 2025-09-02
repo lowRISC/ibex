@@ -16,12 +16,8 @@ int main(int argc, char *argv[]) {
     printf("***  \n");
     printf("***  Hello World from ISOLDE!\n");
     printf("***  \n");
-    #ifdef RV_DM_TEST
-    while (1) {
-        asm volatile ("wfi");
-    }
-    #else
+
     return 0xBADC0FFE;
-    #endif
+    
 
 }

@@ -17,8 +17,10 @@ dependencies:
 # any(T1, ..., TN) matches if any of the targets T1 to TN match (boolean OR)
 # not(T)           matches if target T does not match (boolean NOT)
 sources:
-  files:   
-   - target: all(tb_dm ,redmule_hwpe ,rtl ,redmule_test_hwpe)
+  files:
+   - rtl/soc/aida_lca_package.sv
+   - rtl/soc/aida_lca.sv   
+   - target: all(not(spm), all(tb_dm ,redmule_hwpe ,rtl ,redmule_test_hwpe))
      files:
         - tb/tb_dm.sv
    - target: all(vanilla_lca,redmule_test_hwpe, rtl, redmule_hwpe)

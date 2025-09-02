@@ -9,6 +9,7 @@ module perfCounters #(
     input logic rst_ni,
     isolde_tcdm_if.slave tcdm_slave_i,
     output logic sim_exit_o,
+    output logic [31:0] sim_exit_code_o,
     MemStatisticsCallback mem_statistics_cb
 );
 
@@ -118,7 +119,8 @@ module perfCounters #(
           $fwrite(fh_csv, "%d,", perfcnt_q.dmem.cnt_rd);
           $fwrite(fh_csv, "%d,", perfcnt_q.stack_mem.cnt_wr);
           $fwrite(fh_csv, "%d,", perfcnt_q.stack_mem.cnt_rd);
-          $fwrite(fh_csv, "%d,%s\n", mem_statistics_cb.instrMemLatency(), mem_statistics_cb.strInfo());
+          $fwrite(fh_csv, "%d,%s\n", mem_statistics_cb.instrMemLatency(),
+                  mem_statistics_cb.strInfo());
         end
       endcase
     end
@@ -185,14 +187,16 @@ read performance counters implementation
       cycle_counter <= '0;
       mmio_rvalid <= 0;
       sim_exit_o <= 0;
+      sim_exit_code_o <= 32'hbad_c0de;  // default exit code
     end else cycle_counter <= cycle_counter + 1;
 
     if (mmio_gnt) begin
       case (tcdm_slave_i.req.addr)
         MMADDR_EXIT: begin
           if (tcdm_slave_i.req.we) begin
-            sim_exit_o  <= 1;
-            mmio_rdata  <= tcdm_slave_i.req.data;
+            sim_exit_o <= 1;
+            sim_exit_code_o <= tcdm_slave_i.req.data;
+            mmio_rdata <= tcdm_slave_i.req.data;
             mmio_rvalid <= 1;
           end else begin
             mmio_rdata  <= cycle_counter + 1;

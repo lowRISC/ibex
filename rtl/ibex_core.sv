@@ -719,12 +719,12 @@ module ibex_core
       .perf_div_wait_o  (perf_div_wait),
       .instr_id_done_o  (instr_id_done),
       // eXtension interface
-      .xif_compressed_if(core_xif.cpu_compressed),
-      .xif_issue_if     (core_xif.cpu_issue),
-      .xif_commit_if    (core_xif.cpu_commit),
-      .xif_mem_if       (core_xif.cpu_mem),
-      .xif_mem_result_if(core_xif.cpu_mem_result),
-      .xif_result_if    (core_xif.cpu_result)
+      .xif_compressed_if,
+      .xif_issue_if,
+      .xif_commit_if,
+      .xif_mem_if,
+      .xif_mem_result_if,
+      .xif_result_if
   );
 
   // for RVFI only
