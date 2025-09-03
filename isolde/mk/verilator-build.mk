@@ -53,24 +53,36 @@ $(ROOT_DIR)/vendor/redmule/FUSESOC_IGNORE:
 
 
 
-ibex_sim.flist:  $(CORE_FILES)
+ibex_sim.flist:  $(CORE_FILES) vcs.flist
 	@echo $(CORE_FILE_NAMES)
-	fusesoc --cores-root=$(ROOT_DIR) run --target=sim --setup --no-export $(FUSESOC_PARAMS)  --build-root=$(FUSESOC_BUILD_ROOT) $(FUSESOC_PKG_NAME) $(FUSESOC_CONFIG_OPTS) 
-	python $(ROOT_DIR)/util/transform_paths.py  \
-										       $(FUSESOC_BUILD_ROOT)/sim-verilator  \
-	                                           $(FUSESOC_BUILD_ROOT)/sim-verilator/$(FUSESOC_PROJECT)_$(FUSESOC_CORE)_$(FUSESOC_SYSTEM)_0.vc \
-											   $@
-	python $(ROOT_DIR)/util/verilator_manifest.py  Verilator.yml \
-											    -t  $(verilator_target)       \
-											    -o $@	
-	touch $@
+	
+	fusesoc --cores-root=$(ROOT_DIR) run --target=sim --tool=vcs --setup --no-export $(FUSESOC_PARAMS)  --build-root=$(FUSESOC_BUILD_ROOT) $(FUSESOC_PKG_NAME) $(FUSESOC_CONFIG_OPTS) 
+	
+	@FUSESOC_BUILD_ROOT=$(FUSESOC_BUILD_ROOT) \
+	python3 $(ROOT_DIR)/util/ch_path.py 
+	
+	cat ibex_fusesoc.flist vcs.flist > combined.f
+
+#	python $(ROOT_DIR)/util/transform_paths.py  \
+#										       $(FUSESOC_BUILD_ROOT)/sim-verilator  \
+#	                                           $(FUSESOC_BUILD_ROOT)/sim-verilator/$(FUSESOC_PROJECT)_$(FUSESOC_CORE)_$(FUSESOC_SYSTEM)_0.vc \
+#											   $@
+#	python $(ROOT_DIR)/util/verilator_manifest.py  Verilator.yml \
+#											    -t  $(verilator_target)       \
+#											    -o $@	
+#	touch $@
 ##
+
 
 manifest.flist: Bender.yml
 	@echo 'INFO:  bender script verilator $(common_targs) $(VLT_BENDER)'
 	@$(BENDER) script verilator $(common_targs) $(VLT_BENDER)  >$@
 	touch $@
 
+vcs.flist: Bender.yml
+	@echo 'INFO:  bender script flist $(common_targs) $(VLT_BENDER)'
+	@$(BENDER) script flist $(common_targs) $(VLT_BENDER)  >$@
+	touch $@
 
 verilate:  ibex_sim.flist manifest.flist
 #	mkdir -p $(dir $@)
