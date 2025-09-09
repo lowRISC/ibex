@@ -71,7 +71,7 @@ module ibex_if_stage import ibex_pkg::*; #(
                                                                 // instr_is_compressed_id_o = 1'b1
   output logic                        instr_is_compressed_id_o, // compressed decoder thinks this
                                                                 // is a compressed instr
-  output logic                        instr_gets_expanded_id_o,
+  output instr_exp_e                  instr_gets_expanded_id_o,
   output logic                        instr_bp_taken_o,         // instruction was predicted to be
                                                                 // a taken branch
   output logic                        instr_fetch_err_o,        // bus error on fetch
@@ -146,7 +146,7 @@ module ibex_if_stage import ibex_pkg::*; #(
   logic [31:0]       instr_decompressed;
   logic              illegal_c_insn;
   logic              instr_is_compressed;
-  logic              instr_gets_expanded;
+  instr_exp_e        instr_gets_expanded;
 
   logic              if_instr_valid;
   logic       [31:0] if_instr_rdata;
@@ -164,7 +164,7 @@ module ibex_if_stage import ibex_pkg::*; #(
   logic              stall_dummy_instr;
   logic [31:0]       instr_out;
   logic              instr_is_compressed_out;
-  logic              instr_gets_expanded_out;
+  instr_exp_e        instr_gets_expanded_out;
   logic              illegal_c_instr_out;
   logic              instr_err_out;
 
@@ -444,7 +444,7 @@ module ibex_if_stage import ibex_pkg::*; #(
     // Mux between actual instructions and dummy instructions
     assign instr_out               = insert_dummy_instr ? dummy_instr_data : instr_decompressed;
     assign instr_is_compressed_out = insert_dummy_instr ? 1'b0 : instr_is_compressed;
-    assign instr_gets_expanded_out = insert_dummy_instr ? 1'b0 : instr_gets_expanded;
+    assign instr_gets_expanded_out = insert_dummy_instr ? INSTR_NOT_EXPANDED : instr_gets_expanded;
     assign illegal_c_instr_out     = insert_dummy_instr ? 1'b0 : illegal_c_insn;
     assign instr_err_out           = insert_dummy_instr ? 1'b0 : if_instr_err;
 
@@ -556,7 +556,7 @@ module ibex_if_stage import ibex_pkg::*; #(
     // request, all of which will set branch_req. Also do not check after reset or for dummy
     // instructions.
     assign prev_instr_seq_d = (prev_instr_seq_q | instr_new_id_d) &
-        ~branch_req & ~if_instr_err & ~stall_dummy_instr & ~instr_gets_expanded;
+        ~branch_req & ~if_instr_err & ~stall_dummy_instr & !(instr_gets_expanded == INSTR_EXPANDED);
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
@@ -618,8 +618,8 @@ module ibex_if_stage import ibex_pkg::*; #(
 
     assign instr_skid_en = predict_branch_taken & ~pc_set_i & ~id_in_ready_i & ~instr_skid_valid_q;
 
-    assign instr_skid_valid_d = (instr_skid_valid_q & ~id_in_ready_i & ~stall_dummy_instr & ~instr_gets_expanded) |
-                                instr_skid_en;
+    assign instr_skid_valid_d = (instr_skid_valid_q & ~id_in_ready_i & ~stall_dummy_instr &
+                                 !(instr_gets_expanded == INSTR_EXPANDED)) | instr_skid_en;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
@@ -677,7 +677,8 @@ module ibex_if_stage import ibex_pkg::*; #(
     assign if_instr_bus_err = ~instr_skid_valid_q & fetch_err;
     assign instr_bp_taken_d = instr_skid_valid_q ? instr_skid_bp_taken_q : predict_branch_taken;
 
-    assign fetch_ready = id_in_ready_i & ~stall_dummy_instr & ~instr_gets_expanded & ~instr_skid_valid_q;
+    assign fetch_ready = id_in_ready_i & ~stall_dummy_instr &
+                         !(instr_gets_expanded == INSTR_EXPANDED) & ~instr_skid_valid_q;
 
     assign instr_bp_taken_o = instr_bp_taken_q;
 
@@ -692,7 +693,8 @@ module ibex_if_stage import ibex_pkg::*; #(
     assign if_instr_rdata = fetch_rdata;
     assign if_instr_addr  = fetch_addr;
     assign if_instr_bus_err = fetch_err;
-    assign fetch_ready = id_in_ready_i & ~stall_dummy_instr & ~instr_gets_expanded;
+    assign fetch_ready = id_in_ready_i & ~stall_dummy_instr &
+                         !(instr_gets_expanded == INSTR_EXPANDED);
   end
 
   //////////
