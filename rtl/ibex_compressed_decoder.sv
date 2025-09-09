@@ -16,15 +16,15 @@
 module ibex_compressed_decoder #(
   parameter ibex_pkg::rv32zc_e RV32ZC = ibex_pkg::RV32ZcaZcbZcmp
 ) (
-  input  logic        clk_i,
-  input  logic        rst_ni,
-  input  logic        valid_i,
-  input  logic        id_in_ready_i,
-  input  logic [31:0] instr_i,
-  output logic [31:0] instr_o,
-  output logic        is_compressed_o,
-  output logic        gets_expanded_o,
-  output logic        illegal_instr_o
+  input  logic                 clk_i,
+  input  logic                 rst_ni,
+  input  logic                 valid_i,
+  input  logic                 id_in_ready_i,
+  input  logic [31:0]          instr_i,
+  output logic [31:0]          instr_o,
+  output logic                 is_compressed_o,
+  output ibex_pkg::instr_exp_e gets_expanded_o,
+  output logic                 illegal_instr_o
 );
   import ibex_pkg::*;
 
@@ -183,7 +183,7 @@ module ibex_compressed_decoder #(
     // By default, forward incoming instruction, mark it as legal, and don't expand.
     instr_o         = instr_i;
     illegal_instr_o = 1'b0;
-    gets_expanded_o = 1'b0;
+    gets_expanded_o = INSTR_NOT_EXPANDED;
 
     // Maintain state of CM FSM.
     cm_rlist_d     = cm_rlist_q;
@@ -524,7 +524,7 @@ module ibex_compressed_decoder #(
                 // cm.push
                 5'b11000: begin
                   // This compressed instruction gets expanded into multiple instructions.
-                  gets_expanded_o = 1'b1;
+                  gets_expanded_o = INSTR_EXPANDED;
                   unique case (cm_state_q)
                     CmIdle: begin
                       // No cm.push instruction is active yet; start a new one.
@@ -573,7 +573,7 @@ module ibex_compressed_decoder #(
                       instr_o = cm_sp_addi(.rlist(instr_i[7:4]), .spimm(instr_i[3:2]), .decr(1'b1));
                       if (id_in_ready_i) begin
                         // This is the final operation, so stop expanding and return to idle.
-                        gets_expanded_o = 1'b0;
+                        gets_expanded_o = INSTR_EXPANDED_LAST;
                         cm_state_d = CmIdle;
                       end
                     end
@@ -586,7 +586,7 @@ module ibex_compressed_decoder #(
                 5'b11100,
                 5'b11110: begin
                   // This compressed instruction gets expanded into multiple instructions.
-                  gets_expanded_o = 1'b1;
+                  gets_expanded_o = INSTR_EXPANDED;
                   unique case (cm_state_q)
                     CmIdle: begin
                       // No cm.pop instruction is active yet; start a new one.
@@ -643,7 +643,7 @@ module ibex_compressed_decoder #(
                           5'b11110: cm_state_d = CmPopRetRa;  // cm.popret
                           default: begin // cm.pop
                             // This is the final operation, so stop expanding and return to idle.
-                            gets_expanded_o = 1'b0;
+                            gets_expanded_o = INSTR_EXPANDED_LAST;
                             cm_state_d = CmIdle;
                           end
                         endcase
@@ -659,7 +659,7 @@ module ibex_compressed_decoder #(
                       instr_o = cm_ret_ra();
                       if (id_in_ready_i) begin
                         // This is the final operation, so stop expanding and return to idle.
-                        gets_expanded_o = 1'b0;
+                        gets_expanded_o = INSTR_EXPANDED_LAST;
                         cm_state_d = CmIdle;
                       end
                     end
@@ -673,7 +673,7 @@ module ibex_compressed_decoder #(
                     // cm.mvsa01
                     2'b01: begin
                       // This compressed instruction gets expanded into multiple instructions.
-                      gets_expanded_o = 1'b1;
+                      gets_expanded_o = INSTR_EXPANDED;
                       unique case (cm_state_q)
                         CmIdle: begin
                           // No cm.mvsa01 instruction is active yet; start a new one.
@@ -688,7 +688,7 @@ module ibex_compressed_decoder #(
                           instr_o = cm_mvsa01(.a01(1'b1), .rs(instr_i[4:2]));
                           if (id_in_ready_i) begin
                             // This is the final operation, so stop expanding and return to idle.
-                            gets_expanded_o = 1'b0;
+                            gets_expanded_o = INSTR_EXPANDED_LAST;
                             cm_state_d = CmIdle;
                           end
                         end
@@ -699,7 +699,7 @@ module ibex_compressed_decoder #(
                     // cm.mva01s
                     2'b11: begin
                       // This compressed instruction gets expanded into multiple instructions.
-                      gets_expanded_o = 1'b1;
+                      gets_expanded_o = INSTR_EXPANDED;
                       unique case (cm_state_q)
                         CmIdle: begin
                           // No cm.mva01s instruction is active yet; start a new one.
@@ -714,7 +714,7 @@ module ibex_compressed_decoder #(
                           instr_o = cm_mva01s(.rs(instr_i[4:2]), .a01(1'b1));
                           if (id_in_ready_i) begin
                             // This is the final operation, so stop expanding and return to idle.
-                            gets_expanded_o = 1'b0;
+                            gets_expanded_o = INSTR_EXPANDED_LAST;
                             cm_state_d = CmIdle;
                           end
                         end
