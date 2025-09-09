@@ -307,6 +307,13 @@ package ibex_pkg;
     PC_BP
   } pc_sel_e;
 
+  // Compressed instruction expansion
+  typedef enum logic [1:0] {
+    INSTR_NOT_EXPANDED,
+    INSTR_EXPANDED,
+    INSTR_EXPANDED_LAST
+  } instr_exp_e;
+
   // Exception PC mux selection
   typedef enum logic [1:0] {
     EXC_PC_EXC,
