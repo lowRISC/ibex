@@ -170,7 +170,8 @@ bool SpikeCosim::backdoor_read_mem(uint32_t addr, size_t len,
 //   processor, and when we call step() again we start executing in the new
 //   context of the trap (trap handler, new MSTATUS, debug rom, etc. etc.)
 bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
-                      bool sync_trap, bool suppress_reg_write) {
+                      bool sync_trap, bool suppress_reg_write,
+                      uint32_t expanded_insn) {
   assert(write_reg < 32);
 
   // The DUT has just produced an RVFI item
@@ -320,7 +321,8 @@ bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
 
 bool SpikeCosim::check_retired_instr(uint32_t write_reg,
                                      uint32_t write_reg_data, uint32_t dut_pc,
-                                     bool suppress_reg_write) {
+                                     bool suppress_reg_write,
+                                     uint32_t expanded_insn) {
   // Check the retired instruction and all of its side-effects match those from
   // the DUT
 
@@ -355,7 +357,8 @@ bool SpikeCosim::check_retired_instr(uint32_t write_reg,
       assert(!gpr_write_seen);
 
       if (!suppress_reg_write &&
-          !check_gpr_write(reg_change, write_reg, write_reg_data)) {
+          !check_gpr_write(reg_change, write_reg, write_reg_data,
+                           expanded_insn)) {
         return false;
       }
 
@@ -433,7 +436,8 @@ bool SpikeCosim::check_sync_trap(uint32_t write_reg, uint32_t dut_pc,
 }
 
 bool SpikeCosim::check_gpr_write(const commit_log_reg_t::value_type &reg_change,
-                                 uint32_t write_reg, uint32_t write_reg_data) {
+                                 uint32_t write_reg, uint32_t write_reg_data,
+                                 uint32_t expanded_insn) {
   uint32_t cosim_write_reg = (reg_change.first >> 4) & 0x1f;
 
   if (write_reg == 0) {
