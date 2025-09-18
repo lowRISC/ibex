@@ -120,7 +120,8 @@ class SpikeCosim : public simif_t, public Cosim {
                           const uint8_t *data_in) override;
   bool backdoor_read_mem(uint32_t addr, size_t len, uint8_t *data_out) override;
   bool step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
-            bool sync_trap, bool suppress_reg_write) override;
+            bool sync_trap, bool suppress_reg_write, bool expanded_insn_valid,
+            uint32_t expanded_insn, bool expanded_insn_last) override;
 
   bool check_retired_instr(uint32_t write_reg, uint32_t write_reg_data,
                            uint32_t dut_pc, bool suppress_reg_write);

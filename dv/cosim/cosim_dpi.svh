@@ -11,7 +11,8 @@
 `define COSIM_DPI_SVH
 
 import "DPI-C" function int riscv_cosim_step(chandle cosim_handle, bit [4:0] write_reg,
-  bit [31:0] write_reg_data, bit [31:0] pc, bit sync_trap, bit suppress_reg_write);
+  bit [31:0] write_reg_data, bit [31:0] pc, bit sync_trap, bit suppress_reg_write,
+  bit expanded_insn_valid, bit [15:0] expanded_insn, bit expanded_insn_last);
 import "DPI-C" function void riscv_cosim_set_mip(chandle cosim_handle, bit [31:0] pre_mip,
   bit [31:0] post_mip);
 import "DPI-C" function void riscv_cosim_set_nmi(chandle cosim_handle, bit nmi);

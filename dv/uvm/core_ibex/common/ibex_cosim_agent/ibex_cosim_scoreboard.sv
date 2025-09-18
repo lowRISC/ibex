@@ -163,7 +163,9 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
       riscv_cosim_set_ic_scr_key_valid(cosim_handle, rvfi_instr.ic_scr_key_valid);
 
       if (!riscv_cosim_step(cosim_handle, rvfi_instr.rd_addr, rvfi_instr.rd_wdata, rvfi_instr.pc,
-                            rvfi_instr.trap, rvfi_instr.rf_wr_suppress)) begin
+                            rvfi_instr.trap, rvfi_instr.rf_wr_suppress,
+                            rvfi_instr.expanded_insn_valid, rvfi_instr.expanded_insn,
+                            rvfi_instr.expanded_insn_last)) begin
         // cosim instruction step doesn't match rvfi captured instruction, report a fatal error
         // with the details
         if (cfg.relax_cosim_check) begin

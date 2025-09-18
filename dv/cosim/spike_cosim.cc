@@ -170,7 +170,9 @@ bool SpikeCosim::backdoor_read_mem(uint32_t addr, size_t len,
 //   processor, and when we call step() again we start executing in the new
 //   context of the trap (trap handler, new MSTATUS, debug rom, etc. etc.)
 bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
-                      bool sync_trap, bool suppress_reg_write) {
+                      bool sync_trap, bool suppress_reg_write,
+                      bool expanded_insn_valid, uint32_t expanded_insn,
+                      bool expanded_insn_last) {
   assert(write_reg < 32);
 
   // The DUT has just produced an RVFI item
