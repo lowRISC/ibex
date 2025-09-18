@@ -144,6 +144,7 @@ module ibex_top import ibex_pkg::*; #(
   output logic [31:0]                  rvfi_ext_mhpmcountersh [10],
   output logic                         rvfi_ext_ic_scr_key_valid,
   output logic                         rvfi_ext_irq_valid,
+  output logic [15:0]                  rvfi_ext_expanded_insn,
 `endif
 
   // CPU Control Signals
@@ -426,6 +427,7 @@ module ibex_top import ibex_pkg::*; #(
     .rvfi_ext_mhpmcountersh,
     .rvfi_ext_ic_scr_key_valid,
     .rvfi_ext_irq_valid,
+    .rvfi_ext_expanded_insn,
 `endif
 
     .fetch_enable_i        (fetch_enable_buf),

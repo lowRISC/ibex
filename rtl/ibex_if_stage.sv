@@ -71,7 +71,11 @@ module ibex_if_stage import ibex_pkg::*; #(
                                                                 // instr_is_compressed_id_o = 1'b1
   output logic                        instr_is_compressed_id_o, // compressed decoder thinks this
                                                                 // is a compressed instr
-  output instr_exp_e                  instr_gets_expanded_id_o,
+  output instr_exp_e                  instr_gets_expanded_id_o, // this instruction comes from one
+                                                                // that gets expanded by the
+                                                                // compressed decoder
+  output logic [15:0]                 instr_expanded_id_o,      // the instruction that is currently
+                                                                // getting expanded
   output logic                        instr_bp_taken_o,         // instruction was predicted to be
                                                                 // a taken branch
   output logic                        instr_fetch_err_o,        // bus error on fetch
@@ -514,6 +518,8 @@ module ibex_if_stage import ibex_pkg::*; #(
         instr_fetch_err_plus2_o  <= '0;
         instr_rdata_c_id_o       <= '0;
         instr_is_compressed_id_o <= '0;
+        instr_gets_expanded_id_o <= INSTR_NOT_EXPANDED;
+        instr_expanded_id_o      <= '0;
         illegal_c_insn_id_o      <= '0;
         pc_id_o                  <= '0;
       end else if (if_id_pipe_reg_we) begin
@@ -525,6 +531,7 @@ module ibex_if_stage import ibex_pkg::*; #(
         instr_rdata_c_id_o       <= if_instr_rdata[15:0];
         instr_is_compressed_id_o <= instr_is_compressed_out;
         instr_gets_expanded_id_o <= instr_gets_expanded_out;
+        instr_expanded_id_o      <= if_instr_rdata[15:0];
         illegal_c_insn_id_o      <= illegal_c_instr_out;
         pc_id_o                  <= pc_if_o;
       end
@@ -540,6 +547,7 @@ module ibex_if_stage import ibex_pkg::*; #(
         instr_rdata_c_id_o       <= if_instr_rdata[15:0];
         instr_is_compressed_id_o <= instr_is_compressed_out;
         instr_gets_expanded_id_o <= instr_gets_expanded_out;
+        instr_expanded_id_o      <= if_instr_rdata[15:0];
         illegal_c_insn_id_o      <= illegal_c_instr_out;
         pc_id_o                  <= pc_if_o;
       end
