@@ -114,8 +114,9 @@ def get_isas_for_config(cfg: Config) -> Tuple[str, str]:
 
     has_bitmanip = cfg.rv32b != 'ibex_pkg::RV32BNone'
     toolchain_isa = base_isa + ('b' if has_bitmanip else '')
+    toolchain_isa = toolchain_isa + ('_zicsr_zifencei_zcb_zcmp')
 
-    return (toolchain_isa, '_'.join([base_isa] + bitmanip_isa))
+    return (toolchain_isa, '_'.join([base_isa] + ['Zicsr','Zifencei','Zcb','Zcmp'] + bitmanip_isa))
 
 
 _TestEntry = Dict[str, object]
