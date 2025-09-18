@@ -140,6 +140,9 @@ module ibex_top_tracing import ibex_pkg::*; #(
   logic [31:0] rvfi_ext_mhpmcountersh [10];
   logic        rvfi_ext_ic_scr_key_valid;
   logic        rvfi_ext_irq_valid;
+  logic        rvfi_ext_expanded_insn_valid;
+  logic [15:0] rvfi_ext_expanded_insn;
+  logic        rvfi_ext_expanded_insn_last;
 
   logic [31:0] unused_perf_regs [10];
   logic [31:0] unused_perf_regsh [10];
@@ -155,6 +158,9 @@ module ibex_top_tracing import ibex_pkg::*; #(
   logic [63:0] unused_rvfi_ext_mcycle;
   logic        unused_rvfi_ext_ic_scr_key_valid;
   logic        unused_rvfi_ext_irq_valid;
+  logic        unused_rvfi_ext_expanded_insn_valid;
+  logic [15:0] unused_rvfi_ext_expanded_insn;
+  logic        unused_rvfi_ext_expanded_insn_last;
 
   // Tracer doesn't use these signals, though other modules may probe down into tracer to observe
   // them.
@@ -170,6 +176,9 @@ module ibex_top_tracing import ibex_pkg::*; #(
   assign unused_perf_regsh = rvfi_ext_mhpmcountersh;
   assign unused_rvfi_ext_ic_scr_key_valid = rvfi_ext_ic_scr_key_valid;
   assign unused_rvfi_ext_irq_valid = rvfi_ext_irq_valid;
+  assign unused_rvfi_ext_expanded_insn_valid = rvfi_ext_expanded_insn_valid;
+  assign unused_rvfi_ext_expanded_insn = rvfi_ext_expanded_insn;
+  assign unused_rvfi_ext_expanded_insn_last = rvfi_ext_expanded_insn_last;
 
   ibex_top #(
     .PMPEnable        ( PMPEnable        ),
@@ -281,6 +290,9 @@ module ibex_top_tracing import ibex_pkg::*; #(
     .rvfi_ext_mhpmcountersh,
     .rvfi_ext_ic_scr_key_valid,
     .rvfi_ext_irq_valid,
+    .rvfi_ext_expanded_insn_valid,
+    .rvfi_ext_expanded_insn,
+    .rvfi_ext_expanded_insn_last,
 
     .fetch_enable_i,
     .alert_minor_o,
