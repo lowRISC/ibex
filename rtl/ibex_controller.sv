@@ -536,7 +536,7 @@ module ibex_controller #(
       FIRST_FETCH: begin
         // Stall because of IF miss
         if (id_in_ready_o) begin
-          ctrl_fsm_ns = DECODE;
+          ctrl_fsm_ns = RESET;
         end
 
         // handle interrupts

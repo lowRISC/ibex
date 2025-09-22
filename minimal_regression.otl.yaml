@@ -3,10 +3,10 @@
   rule_args:
     cmds:
       - pip3 install -r python-requirements.txt
-- name: riscv_jump_stress_test
+- name: riscv_nested_interrupt_test
   rule: raw_bash
   rule_args:
     cmds:
-      - "./run_test.sh riscv_jump_stress_test"
+      - "./run_test.sh riscv_nested_interrupt_test"
     deps:
       - pip_install_requirements

@@ -411,7 +411,7 @@ module ibex_core import ibex_pkg::*; #(
     end
   end else begin : g_core_busy_non_secure
     // For non secure Ibex, synthesis is allowed to optimize core_busy_o.
-    assign core_busy_o = (ctrl_busy || if_busy || lsu_busy) ? IbexMuBiOn : IbexMuBiOff;
+    assign core_busy_o = IbexMuBiOn;
   end
 
   //////////////
