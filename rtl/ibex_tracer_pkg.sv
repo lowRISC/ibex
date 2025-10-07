@@ -344,5 +344,12 @@ package ibex_tracer_pkg;
   parameter logic [15:0] INSN_CEBREAK    = { 3'b100, 1'b1,        5'h0,  5'h0,       {OPCODE_C2} };
   parameter logic [15:0] INSN_CJR        = { 3'b100, 1'b0,        5'h0,  5'h0,       {OPCODE_C2} };
   parameter logic [15:0] INSN_CJALR      = { 3'b100, 1'b1,        5'h?,  5'h0,       {OPCODE_C2} };
+  // Zc extension Cc
+  parameter logic [15:0] INSN_CMPUSH     = { 3'b101, 3'b110, 2'b00, 4'h?, 2'b?,      {OPCODE_C2} };
+  parameter logic [15:0] INSN_CMPOP      = { 3'b101, 3'b110, 2'b10, 4'h?, 2'b?,      {OPCODE_C2} };
+  parameter logic [15:0] INSN_CMPOPRETZ  = { 3'b101, 3'b111, 2'b00, 4'h?, 2'b?,      {OPCODE_C2} };
+  parameter logic [15:0] INSN_CMPOPRET   = { 3'b101, 3'b111, 2'b10, 4'h?, 2'b?,      {OPCODE_C2} };
+  parameter logic [15:0] INSN_CMMVSA01   = { 3'b101, 3'b011, 3'h?, 2'b01, 3'h?,      {OPCODE_C2} };
+  parameter logic [15:0] INSN_CMMVA01S   = { 3'b101, 3'b011, 3'h?, 2'b11, 3'h?,      {OPCODE_C2} };
 
 endpackage

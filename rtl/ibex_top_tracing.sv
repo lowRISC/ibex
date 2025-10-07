@@ -314,7 +314,8 @@ module ibex_top_tracing import ibex_pkg::*; #(
     .rvfi_mem_rmask,
     .rvfi_mem_wmask,
     .rvfi_mem_rdata,
-    .rvfi_mem_wdata
+    .rvfi_mem_wdata,
+    .rvfi_ext_expanded_insn
   );
 
 endmodule
