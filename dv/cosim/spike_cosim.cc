@@ -39,7 +39,10 @@ SpikeCosim::SpikeCosim(const std::string &isa_string, uint32_t start_pc,
                        uint32_t pmp_num_regions, uint32_t pmp_granularity,
                        uint32_t mhpm_counter_num, uint32_t dm_start_addr,
                        uint32_t dm_end_addr)
-    : nmi_mode(false), pending_iside_error(false), insn_cnt(0) {
+    : nmi_mode(false),
+      pending_iside_error(false),
+      insn_cnt(0),
+      pending_expanded_insn(0) {
   FILE *log_file = nullptr;
   if (trace_log_path.length() != 0) {
     log = std::make_unique<log_file_t>(trace_log_path.c_str());
@@ -216,7 +219,13 @@ bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
   // (If the current step causes a synchronous trap, it will be
   //  recorded against the current pc)
   initial_spike_pc = (processor->get_state()->pc & 0xffffffff);
-  processor->step(1);
+  // Only step Spike if the current instruction is not an expanded one. Spike
+  // does not expand instructions, so we have to consume a single Spike step
+  // over multiple steps of Ibex. In the last Ibex step of the expanded
+  // instruction, we step Spike.
+  if (!expanded_insn_valid) {
+    processor->step(1);
+  }
 
   // ISS
   // - If encountered an async trap,
@@ -311,12 +320,96 @@ bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
                                       suppressed_write_reg_data);
   }
 
-  if (!check_retired_instr(write_reg, write_reg_data, pc, suppress_reg_write)) {
-    return false;
+  if (expanded_insn_valid) {
+    if (!check_expanded_instr(write_reg, write_reg_data, pc, suppress_reg_write,
+                              expanded_insn, expanded_insn_last)) {
+      return false;
+    }
+  } else {
+    if (!check_retired_instr(write_reg, write_reg_data, pc,
+                             suppress_reg_write)) {
+      return false;
+    }
   }
 
   // Only increment insn_cnt and return true if there are no errors
   insn_cnt++;
+  return true;
+}
+
+bool SpikeCosim::check_expanded_instr(uint32_t write_reg,
+                                      uint32_t write_reg_data, uint32_t dut_pc,
+                                      bool suppress_reg_write,
+                                      uint32_t expanded_insn) {
+  // If this is the first step of an expanded instruction, set up our
+  // expectations.
+  if (!pending_expanded_insn) {
+    pending_expanded_insn = expanded_insn;
+    expanded_insn_pc = dut_pc;
+    expanded_reg_changes.clear();
+
+    // The ISS has just stepped once for the entire expanded instruction.
+    // We now collect all the GPR changes it produced and store them in a map
+    auto &reg_changes = processor->get_state()->log_reg_write;
+    for (auto reg_change : reg_changes) {
+      // Check if it's a GPR write (type 0)
+      if ((reg_change.first & 0xf) == 0) {
+        uint32_t iss_write_reg = (reg_change.first >> 4) & 0x1f;
+        // Ignore writes to x0
+        if (iss_write_reg == 0) {
+          continue;
+        }
+        uint32_t iss_write_data = reg_change.second.v[0];
+        expanded_reg_changes[iss_write_reg] = iss_write_data;
+      }
+    }
+  }
+
+  // TODO: We have to deal with suppressed writes here too
+  if (suppress_reg_write) {
+    return true;
+  }
+
+  // If the DUT did not write a register, this is a valid micro-op (e.g., a
+  // memory access or intermediate calculation). There is nothing to check.
+  if (write_reg == 0) {
+    return true;
+  }
+
+  // The DUT wrote a register. Check if it matches one of our expectations.
+  auto reg_change = expanded_reg_changes.find(write_reg);
+
+  // DUT wrote, but ISS didn't
+  if (reg_change == expanded_reg_changes.end()) {
+    std::stringstream err_str;
+    err_str << "Expanded instruction at PC 0x" << std::hex << expanded_insn_pc
+            << ": DUT wrote to x" << std::dec << write_reg
+            << ", which was not an expected register write for this sequence.";
+    errors.emplace_back(err_str.str());
+    return false;
+  }
+
+  // The register index matches. Now check if the data matches.
+  uint32_t expected_data = reg_change->second;
+  if (write_reg_data != expected_data) {
+    std::stringstream err_str;
+    err_str << "Expanded instruction at PC 0x" << std::hex << expanded_insn_pc
+            << ": Data mismatch for register x" << std::dec << write_reg
+            << ". DUT wrote: 0x" << std::hex << write_reg_data
+            << ", but ISS expected: 0x" << expected_data;
+    errors.emplace_back(err_str.str());
+    return false;
+  }
+
+  // Match is perfect. Remove this from our set of expectations.
+  expanded_reg_changes.erase(reg_change);
+
+  if (expanded_reg_changes.empty()) {
+    // All expected register writes have been matched. Clear the pending state.
+    pending_expanded_insn = 0;
+    expanded_insn_pc = 0;
+  }
+
   return true;
 }
 
@@ -335,6 +428,11 @@ bool SpikeCosim::check_retired_instr(uint32_t write_reg,
             << " , but the ISS retired: " << std::hex
             << (processor->get_state()->last_inst_pc & 0xffffffff);
     errors.emplace_back(err_str.str());
+    if (pending_expanded_insn) {
+      err_str << " (while processing expanded instruction at PC 0x" << std::hex
+              << expanded_insn_pc << ")";
+      errors.emplace_back(err_str.str());
+    }
     return false;
   }
 

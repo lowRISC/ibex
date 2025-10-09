@@ -99,6 +99,11 @@ class SpikeCosim : public simif_t, public Cosim {
 
   unsigned int insn_cnt;
 
+  // Handle expanded insn
+  uint32_t pending_expanded_insn;
+  uint32_t expanded_insn_pc;
+  std::map<uint32_t, uint32_t> expanded_reg_changes;
+
  public:
   SpikeCosim(const std::string &isa_string, uint32_t start_pc,
              uint32_t start_mtvec, const std::string &trace_log_path,
@@ -125,6 +130,9 @@ class SpikeCosim : public simif_t, public Cosim {
 
   bool check_retired_instr(uint32_t write_reg, uint32_t write_reg_data,
                            uint32_t dut_pc, bool suppress_reg_write);
+  bool check_expanded_instr(uint32_t write_reg, uint32_t write_reg_data,
+                            uint32_t dut_pc, bool suppress_reg_write,
+                            uint32_t expanded_insn, bool expanded_insn_last);
   bool check_sync_trap(uint32_t write_reg, uint32_t pc,
                        uint32_t initial_spike_pc);
   void set_mip(uint32_t pre_mip, uint32_t post_mip) override;
