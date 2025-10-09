@@ -415,7 +415,7 @@ module ibex_if_stage import ibex_pkg::*; #(
     .clk_i          (clk_i),
     .rst_ni         (rst_ni),
     .valid_i        (fetch_valid & ~fetch_err),
-    .id_in_ready_i  (id_in_ready_i),
+    .id_in_ready_i  (id_in_ready_i & ~pc_set_i),
     .instr_i        (if_instr_rdata),
     .instr_o        (instr_decompressed),
     .is_compressed_o(instr_is_compressed),
@@ -490,7 +490,7 @@ module ibex_if_stage import ibex_pkg::*; #(
   // Valid is held until it is explicitly cleared (due to an instruction completing or an exception)
   assign instr_valid_id_d = (if_instr_valid & id_in_ready_i & ~pc_set_i) |
                             (instr_valid_id_q & ~instr_valid_clear_i);
-  assign instr_new_id_d   = if_instr_valid & id_in_ready_i;
+  assign instr_new_id_d   = if_instr_valid & id_in_ready_i & ~pc_set_i;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
