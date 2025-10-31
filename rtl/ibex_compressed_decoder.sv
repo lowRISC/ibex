@@ -161,9 +161,9 @@ module ibex_compressed_decoder #(
   endfunction
 
   // Combined FSM state register for Zcmp operations.
-  // This single 4-bit enum represents 4 independent "virtual" FSMs
-  // that share the CmIdle state.
-  typedef enum logic [3:0] {
+  // This single 3-bit enum represents 3 independent FSMs that share the CmIdle state and the
+  // resources.
+  typedef enum logic [2:0] {
     CmIdle,
     // cm.push
     CmPushStoreReg,
@@ -173,10 +173,8 @@ module ibex_compressed_decoder #(
     CmPopIncrSp,
     CmPopZeroA0,
     CmPopRetRa,
-    // cm.mvsa01
-    CmMvSA1,
-    // cm.mva01s
-    CmMvA1S
+    // cm.mvsa01, cm.mva01s
+    CmMvSecondReg
   } cm_state_e;
   logic [4:0] cm_rlist_d, cm_rlist_q;
   logic [4:0] cm_sp_offset_d, cm_sp_offset_q;
@@ -691,10 +689,10 @@ module ibex_compressed_decoder #(
                           // Move a0 to register indicated by r1s'.
                           instr_o = cm_mvsa01(.a01(1'b0), .rs(instr_i[9:7]));
                           if (id_in_ready_i) begin
-                            cm_state_d = CmMvSA1;
+                            cm_state_d = CmMvSecondReg;
                           end
                         end
-                        CmMvSA1: begin
+                        CmMvSecondReg: begin
                           // Move a1 to register indicated by r2s'.
                           instr_o = cm_mvsa01(.a01(1'b1), .rs(instr_i[4:2]));
                           if (id_in_ready_i) begin
@@ -717,10 +715,10 @@ module ibex_compressed_decoder #(
                           // Move register indicated by r1s' into a0.
                           instr_o = cm_mva01s(.rs(instr_i[9:7]), .a01(1'b0));
                           if (id_in_ready_i) begin
-                            cm_state_d = CmMvA1S;
+                            cm_state_d = CmMvSecondReg;
                           end
                         end
-                        CmMvA1S: begin
+                        CmMvSecondReg: begin
                           // Move register indicated by r2s' into a1.
                           instr_o = cm_mva01s(.rs(instr_i[4:2]), .a01(1'b1));
                           if (id_in_ready_i) begin
