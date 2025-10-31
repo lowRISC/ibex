@@ -160,15 +160,22 @@ module ibex_compressed_decoder #(
     return rlist;
   endfunction
 
+  // Combined FSM state register for Zcmp operations.
+  // This single 4-bit enum represents 4 independent "virtual" FSMs
+  // that share the CmIdle state.
   typedef enum logic [3:0] {
     CmIdle,
+    // cm.push
     CmPushStoreReg,
     CmPushDecrSp,
+    // cm.pop, cm.popret, cm.popretz
     CmPopLoadReg,
     CmPopIncrSp,
     CmPopZeroA0,
     CmPopRetRa,
+    // cm.mvsa01
     CmMvSA1,
+    // cm.mva01s
     CmMvA1S
   } cm_state_e;
   logic [4:0] cm_rlist_d, cm_rlist_q;
@@ -530,7 +537,8 @@ module ibex_compressed_decoder #(
                       // No cm.push instruction is active yet; start a new one.
                       // Initialize `rlist` to the value provided by the instruction.
                       cm_rlist_d = cm_rlist_init(instr_i[7:4]);
-                      // Store the register at the top of `rlist`.
+                      // Store the register at the top of `rlist`, which is the highest register in
+                      // the list. Then work our way down by decrementing `rlist` each cycle.
                       instr_o = cm_push_store_reg(.rlist(cm_rlist_d), .sp_offset(5'd1));
                       if (cm_rlist_d <= 5'd3) begin
                         // Reserved --> illegal instruction.
@@ -546,6 +554,8 @@ module ibex_compressed_decoder #(
                         // Remove the current register from `rlist`.
                         cm_rlist_d -= 5'd1;
                         // Initialize SP offset to 2.
+                        // We just stored at offset 1 this cycle and will start incrementing the
+                        // offset from 2 onwards in CmPushStoreReg next cycle.
                         cm_sp_offset_d = 5'd2;
                         // Proceed with storing registers.
                         if (id_in_ready_i) begin
@@ -595,7 +605,8 @@ module ibex_compressed_decoder #(
                       // Initialize SP offset.
                       cm_sp_offset_d = cm_stack_adj_word(.rlist(instr_i[7:4]),
                                                         .spimm(instr_i[3:2])) - 5'd1;
-                      // Load the register at the top of `rlist`.
+                      // Load the register at the top of `rlist`, which is the highest register in
+                      // the list. Then work our way down by decrementing `rlist` each cycle.
                       instr_o = cm_pop_load_reg(.rlist(cm_rlist_d), .sp_offset(cm_sp_offset_d));
                       if (cm_rlist_d <= 5'd3) begin
                         // Reserved --> illegal instruction.
