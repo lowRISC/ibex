@@ -14,44 +14,44 @@
  * Top level module of the ibex RISC-V core
  */
 module ibex_core import ibex_pkg::*; #(
-  parameter bit                     PMPEnable        = 1'b0,
-  parameter int unsigned            PMPGranularity   = 0,
-  parameter int unsigned            PMPNumRegions    = 4,
-  parameter ibex_pkg::pmp_cfg_t     PMPRstCfg[16]    = ibex_pkg::PmpCfgRst,
-  parameter logic [33:0]            PMPRstAddr[16]   = ibex_pkg::PmpAddrRst,
-  parameter ibex_pkg::pmp_mseccfg_t PMPRstMsecCfg    = ibex_pkg::PmpMseccfgRst,
-  parameter int unsigned            MHPMCounterNum   = 0,
-  parameter int unsigned            MHPMCounterWidth = 40,
-  parameter bit                     RV32E            = 1'b0,
-  parameter rv32m_e                 RV32M            = RV32MFast,
-  parameter rv32b_e                 RV32B            = RV32BNone,
-  parameter bit                     BranchTargetALU  = 1'b0,
-  parameter bit                     WritebackStage   = 1'b0,
-  parameter bit                     ICache           = 1'b0,
-  parameter bit                     ICacheECC        = 1'b0,
-  parameter int unsigned            BusSizeECC       = BUS_SIZE,
-  parameter int unsigned            TagSizeECC       = IC_TAG_SIZE,
-  parameter int unsigned            LineSizeECC      = IC_LINE_SIZE,
-  parameter bit                     BranchPredictor  = 1'b0,
-  parameter bit                     DbgTriggerEn     = 1'b0,
-  parameter int unsigned            DbgHwBreakNum    = 1,
-  parameter bit                     ResetAll         = 1'b0,
-  parameter lfsr_seed_t             RndCnstLfsrSeed  = RndCnstLfsrSeedDefault,
-  parameter lfsr_perm_t             RndCnstLfsrPerm  = RndCnstLfsrPermDefault,
-  parameter bit                     SecureIbex       = 1'b0,
-  parameter bit                     DummyInstructions= 1'b0,
-  parameter bit                     RegFileECC       = 1'b0,
-  parameter int unsigned            RegFileDataWidth = 32,
-  parameter bit                     MemECC           = 1'b0,
-  parameter int unsigned            MemDataWidth     = MemECC ? 32 + 7 : 32,
-  parameter int unsigned            DmBaseAddr       = 32'h1A110000,
-  parameter int unsigned            DmAddrMask       = 32'h00000FFF,
-  parameter int unsigned            DmHaltAddr       = 32'h1A110800,
-  parameter int unsigned            DmExceptionAddr  = 32'h1A110808,
+  parameter bit                     PMPEnable                   = 1'b0,
+  parameter int unsigned            PMPGranularity              = 0,
+  parameter int unsigned            PMPNumRegions               = 4,
+  parameter ibex_pkg::pmp_cfg_t     PMPRstCfg[PMP_MAX_REGIONS]  = ibex_pkg::PmpCfgRst,
+  parameter logic [PMP_ADDR_MSB:0]  PMPRstAddr[PMP_MAX_REGIONS] = ibex_pkg::PmpAddrRst,
+  parameter ibex_pkg::pmp_mseccfg_t PMPRstMsecCfg               = ibex_pkg::PmpMseccfgRst,
+  parameter int unsigned            MHPMCounterNum              = 0,
+  parameter int unsigned            MHPMCounterWidth            = 40,
+  parameter bit                     RV32E                       = 1'b0,
+  parameter rv32m_e                 RV32M                       = RV32MFast,
+  parameter rv32b_e                 RV32B                       = RV32BNone,
+  parameter bit                     BranchTargetALU             = 1'b0,
+  parameter bit                     WritebackStage              = 1'b0,
+  parameter bit                     ICache                      = 1'b0,
+  parameter bit                     ICacheECC                   = 1'b0,
+  parameter int unsigned            BusSizeECC                  = BUS_SIZE,
+  parameter int unsigned            TagSizeECC                  = IC_TAG_SIZE,
+  parameter int unsigned            LineSizeECC                 = IC_LINE_SIZE,
+  parameter bit                     BranchPredictor             = 1'b0,
+  parameter bit                     DbgTriggerEn                = 1'b0,
+  parameter int unsigned            DbgHwBreakNum               = 1,
+  parameter bit                     ResetAll                    = 1'b0,
+  parameter lfsr_seed_t             RndCnstLfsrSeed             = RndCnstLfsrSeedDefault,
+  parameter lfsr_perm_t             RndCnstLfsrPerm             = RndCnstLfsrPermDefault,
+  parameter bit                     SecureIbex                  = 1'b0,
+  parameter bit                     DummyInstructions           = 1'b0,
+  parameter bit                     RegFileECC                  = 1'b0,
+  parameter int unsigned            RegFileDataWidth            = 32,
+  parameter bit                     MemECC                      = 1'b0,
+  parameter int unsigned            MemDataWidth                = MemECC ? 32 + 7 : 32,
+  parameter int unsigned            DmBaseAddr                  = 32'h1A110000,
+  parameter int unsigned            DmAddrMask                  = 32'h00000FFF,
+  parameter int unsigned            DmHaltAddr                  = 32'h1A110800,
+  parameter int unsigned            DmExceptionAddr             = 32'h1A110808,
   // mvendorid: encoding of manufacturer/provider
-  parameter logic [31:0]            CsrMvendorId     = 32'b0,
+  parameter logic [31:0]            CsrMvendorId                = 32'b0,
   // marchid: encoding of base microarchitecture
-  parameter logic [31:0]            CsrMimpId        = 32'b0
+  parameter logic [31:0]            CsrMimpId                   = 32'b0
 ) (
   // Clock and Reset
   input  logic                         clk_i,
@@ -331,11 +331,11 @@ module ibex_core import ibex_pkg::*; #(
   logic [31:0] csr_mepc, csr_depc;
 
   // PMP signals
-  logic [33:0]  csr_pmp_addr [PMPNumRegions];
-  pmp_cfg_t     csr_pmp_cfg  [PMPNumRegions];
-  pmp_mseccfg_t csr_pmp_mseccfg;
-  logic         pmp_req_err  [PMPNumChan];
-  logic         data_req_out;
+  logic [PMP_ADDR_MSB:0]  csr_pmp_addr [PMPNumRegions];
+  pmp_cfg_t               csr_pmp_cfg  [PMPNumRegions];
+  pmp_mseccfg_t           csr_pmp_mseccfg;
+  logic                   pmp_req_err  [PMPNumChan];
+  logic                   data_req_out;
 
   logic        csr_save_if;
   logic        csr_save_id;
@@ -1170,10 +1170,10 @@ module ibex_core import ibex_pkg::*; #(
   `ASSERT_KNOWN_IF(IbexCsrWdataIntKnown, cs_registers_i.csr_wdata_int, csr_op_en)
 
   if (PMPEnable) begin : g_pmp
-    logic [31:0] pc_if_inc;
-    logic [33:0] pmp_req_addr [PMPNumChan];
-    pmp_req_e    pmp_req_type [PMPNumChan];
-    priv_lvl_e   pmp_priv_lvl [PMPNumChan];
+    logic [31:0]           pc_if_inc;
+    logic [PMP_ADDR_MSB:0] pmp_req_addr [PMPNumChan];
+    pmp_req_e              pmp_req_type [PMPNumChan];
+    priv_lvl_e             pmp_priv_lvl [PMPNumChan];
 
     assign pc_if_inc            = pc_if + 32'd2;
     assign pmp_req_addr[PMP_I]  = {2'b00, pc_if};
@@ -1206,10 +1206,10 @@ module ibex_core import ibex_pkg::*; #(
     );
   end else begin : g_no_pmp
     // Unused signal tieoff
-    priv_lvl_e unused_priv_lvl_ls;
-    logic [33:0] unused_csr_pmp_addr [PMPNumRegions];
-    pmp_cfg_t    unused_csr_pmp_cfg  [PMPNumRegions];
-    pmp_mseccfg_t unused_csr_pmp_mseccfg;
+    priv_lvl_e             unused_priv_lvl_ls;
+    logic [PMP_ADDR_MSB:0] unused_csr_pmp_addr [PMPNumRegions];
+    pmp_cfg_t              unused_csr_pmp_cfg  [PMPNumRegions];
+    pmp_mseccfg_t          unused_csr_pmp_mseccfg;
     assign unused_priv_lvl_ls = priv_mode_lsu;
     assign unused_csr_pmp_addr = csr_pmp_addr;
     assign unused_csr_pmp_cfg = csr_pmp_cfg;
