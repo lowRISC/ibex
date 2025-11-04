@@ -1157,3 +1157,12 @@
   rtl_test: core_ibex_base_test
   rtl_params:
     RV32B: ["ibex_pkg::RV32BFull", "ibex_pkg::RV32BOTEarlGrey", "ibex_pkg::RV32BBalanced"]
+
+- test: riscv_zcb_balanced_test
+  desc: >
+    Random instruction test with zcb instructions in balanced configuration
+  iterations: 10
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +enable_zcb_extension=1
+  rtl_test: core_ibex_base_test

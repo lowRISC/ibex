@@ -45,6 +45,7 @@ class ibex_rvfi_monitor extends uvm_monitor;
       trans_collected.rf_wr_suppress   = vif.monitor_cb.ext_rf_wr_suppress;
       trans_collected.mcycle           = vif.monitor_cb.ext_mcycle;
       trans_collected.ic_scr_key_valid = vif.monitor_cb.ext_ic_scr_key_valid;
+      trans_collected.expanded_insn    = vif.monitor_cb.ext_expanded_insn;
 
       for (int i=0; i < 10; i++) begin
        trans_collected.mhpmcounters[i]  = vif.monitor_cb.ext_mhpmcounters[i];

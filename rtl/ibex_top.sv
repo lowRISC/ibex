@@ -24,6 +24,7 @@ module ibex_top import ibex_pkg::*; #(
   parameter bit                     RV32E                        = 1'b0,
   parameter rv32m_e                 RV32M                        = RV32MFast,
   parameter rv32b_e                 RV32B                        = RV32BNone,
+  parameter rv32zc_e                RV32ZC                       = RV32ZcbZcmp,
   parameter regfile_e               RegFile                      = RegFileFF,
   parameter bit                     BranchTargetALU              = 1'b0,
   parameter bit                     WritebackStage               = 1'b0,
@@ -143,6 +144,7 @@ module ibex_top import ibex_pkg::*; #(
   output logic [31:0]                  rvfi_ext_mhpmcountersh [10],
   output logic                         rvfi_ext_ic_scr_key_valid,
   output logic                         rvfi_ext_irq_valid,
+  output logic [15:0]                  rvfi_ext_expanded_insn,
 `endif
 
   // CPU Control Signals
@@ -305,6 +307,7 @@ module ibex_top import ibex_pkg::*; #(
     .RV32E            (RV32E),
     .RV32M            (RV32M),
     .RV32B            (RV32B),
+    .RV32ZC           (RV32ZC),
     .BranchTargetALU  (BranchTargetALU),
     .ICache           (ICache),
     .ICacheECC        (ICacheECC),
@@ -424,6 +427,7 @@ module ibex_top import ibex_pkg::*; #(
     .rvfi_ext_mhpmcountersh,
     .rvfi_ext_ic_scr_key_valid,
     .rvfi_ext_irq_valid,
+    .rvfi_ext_expanded_insn,
 `endif
 
     .fetch_enable_i        (fetch_enable_buf),
@@ -1013,6 +1017,7 @@ module ibex_top import ibex_pkg::*; #(
       .RV32E            (RV32E),
       .RV32M            (RV32M),
       .RV32B            (RV32B),
+      .RV32ZC           (RV32ZC),
       .BranchTargetALU  (BranchTargetALU),
       .ICache           (ICache),
       .ICacheECC        (ICacheECC),

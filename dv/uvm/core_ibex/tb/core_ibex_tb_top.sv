@@ -239,6 +239,7 @@ module core_ibex_tb_top;
   assign rvfi_if.ext_mhpmcountersh    = dut.rvfi_ext_mhpmcountersh;
   assign rvfi_if.ext_ic_scr_key_valid = dut.rvfi_ext_ic_scr_key_valid;
   assign rvfi_if.ext_irq_valid        = dut.rvfi_ext_irq_valid;
+  assign rvfi_if.ext_expanded_insn    = dut.rvfi_ext_expanded_insn;
   // Irq interface connections
   assign irq_vif.reset = ~rst_n;
   // Dut_if interface connections

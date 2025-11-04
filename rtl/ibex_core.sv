@@ -25,6 +25,7 @@ module ibex_core import ibex_pkg::*; #(
   parameter bit                     RV32E            = 1'b0,
   parameter rv32m_e                 RV32M            = RV32MFast,
   parameter rv32b_e                 RV32B            = RV32BNone,
+  parameter rv32zc_e                RV32ZC           = RV32ZcbZcmp,
   parameter bit                     BranchTargetALU  = 1'b0,
   parameter bit                     WritebackStage   = 1'b0,
   parameter bit                     ICache           = 1'b0,
@@ -158,6 +159,7 @@ module ibex_core import ibex_pkg::*; #(
   output logic [31:0]                  rvfi_ext_mhpmcountersh [10],
   output logic                         rvfi_ext_ic_scr_key_valid,
   output logic                         rvfi_ext_irq_valid,
+  output logic [15:0]                  rvfi_ext_expanded_insn,
   `endif
 
   // CPU Control Signals
@@ -184,6 +186,8 @@ module ibex_core import ibex_pkg::*; #(
                                                // ease fan-out)
   logic [15:0] instr_rdata_c_id;               // Compressed instruction sampled inside IF stage
   logic        instr_is_compressed_id;
+  instr_exp_e  instr_gets_expanded_id;
+  logic [15:0] instr_expanded_id;
   logic        instr_perf_count_id;
   logic        instr_bp_taken_id;
   logic        instr_fetch_err;                // Bus error on instr fetch
@@ -423,6 +427,7 @@ module ibex_core import ibex_pkg::*; #(
     .DmExceptionAddr  (DmExceptionAddr),
     .DummyInstructions(DummyInstructions),
     .ICache           (ICache),
+    .RV32ZC           (RV32ZC),
     .ICacheECC        (ICacheECC),
     .BusSizeECC       (BusSizeECC),
     .TagSizeECC       (TagSizeECC),
@@ -470,6 +475,8 @@ module ibex_core import ibex_pkg::*; #(
     .instr_rdata_alu_id_o    (instr_rdata_alu_id),
     .instr_rdata_c_id_o      (instr_rdata_c_id),
     .instr_is_compressed_id_o(instr_is_compressed_id),
+    .instr_gets_expanded_id_o(instr_gets_expanded_id),
+    .instr_expanded_id_o     (instr_expanded_id),
     .instr_bp_taken_o        (instr_bp_taken_id),
     .instr_fetch_err_o       (instr_fetch_err),
     .instr_fetch_err_plus2_o (instr_fetch_err_plus2),
@@ -1314,6 +1321,9 @@ module ibex_core import ibex_pkg::*; #(
   logic [31:0]     rvfi_ext_stage_mhpmcountersh    [RVFI_STAGES][10];
   logic            rvfi_ext_stage_ic_scr_key_valid [RVFI_STAGES];
   logic            rvfi_ext_stage_irq_valid        [RVFI_STAGES+1];
+  logic [15:0]     rvfi_ext_stage_expanded_insn    [RVFI_STAGES];
+
+  logic [15:0]     rvfi_expanded_insn;
 
 
   logic        rvfi_stage_valid_d   [RVFI_STAGES];
@@ -1375,6 +1385,7 @@ module ibex_core import ibex_pkg::*; #(
   assign rvfi_ext_mhpmcountersh    = rvfi_ext_stage_mhpmcountersh    [RVFI_STAGES-1];
   assign rvfi_ext_ic_scr_key_valid = rvfi_ext_stage_ic_scr_key_valid [RVFI_STAGES-1];
   assign rvfi_ext_irq_valid        = rvfi_ext_stage_irq_valid        [RVFI_STAGES];
+  assign rvfi_ext_expanded_insn    = rvfi_ext_stage_expanded_insn    [RVFI_STAGES-1];
 
   // When an instruction takes a trap the `rvfi_trap` signal will be set. Instructions that take
   // traps flush the pipeline so ordinarily wouldn't be seen to be retire. The RVFI tracking
@@ -1592,6 +1603,7 @@ module ibex_core import ibex_pkg::*; #(
         rvfi_ext_stage_debug_mode[i]       <= '0;
         rvfi_ext_stage_mcycle[i]           <= '0;
         rvfi_ext_stage_ic_scr_key_valid[i] <= '0;
+        rvfi_ext_stage_expanded_insn[i]    <= '0;
         // DSim does not properly support array assignment in for loop, so unroll
         rvfi_ext_stage_mhpmcounters[i][0]  <= '0;
         rvfi_ext_stage_mhpmcountersh[i][0] <= '0;
@@ -1643,6 +1655,7 @@ module ibex_core import ibex_pkg::*; #(
             rvfi_ext_stage_debug_mode[i]       <= debug_mode;
             rvfi_ext_stage_mcycle[i]           <= cs_registers_i.mcycle_counter_i.counter_val_o;
             rvfi_ext_stage_ic_scr_key_valid[i] <= cs_registers_i.cpuctrlsts_ic_scr_key_valid_q;
+            rvfi_ext_stage_expanded_insn[i]    <= rvfi_expanded_insn;
             // DSim does not properly support array assignment in for loop, so unroll
             rvfi_ext_stage_mhpmcounters[i][0]  <= cs_registers_i.mhpmcounter[3][31:0];
             rvfi_ext_stage_mhpmcountersh[i][0] <= cs_registers_i.mhpmcounter[3][63:32];
@@ -1712,6 +1725,7 @@ module ibex_core import ibex_pkg::*; #(
             rvfi_ext_stage_ic_scr_key_valid[i] <= rvfi_ext_stage_ic_scr_key_valid[i-1];
             rvfi_ext_stage_mhpmcounters[i]     <= rvfi_ext_stage_mhpmcounters[i-1];
             rvfi_ext_stage_mhpmcountersh[i]    <= rvfi_ext_stage_mhpmcountersh[i-1];
+            rvfi_ext_stage_expanded_insn[i]    <= rvfi_ext_stage_expanded_insn[i-1];
           end
 
           // Some of the rvfi_ext_* signals are used to provide an interrupt notification (signalled
@@ -1773,10 +1787,18 @@ module ibex_core import ibex_pkg::*; #(
   end
 
   always_comb begin
-    if (instr_is_compressed_id) begin
+    if (instr_is_compressed_id && (instr_gets_expanded_id == INSTR_NOT_EXPANDED)) begin
       rvfi_insn_id = {16'b0, instr_rdata_c_id};
     end else begin
       rvfi_insn_id = instr_rdata_id;
+    end
+  end
+
+  always_comb begin
+    if (instr_gets_expanded_id == INSTR_NOT_EXPANDED) begin
+      rvfi_expanded_insn = '0;
+    end else begin
+      rvfi_expanded_insn = instr_expanded_id;
     end
   end
 

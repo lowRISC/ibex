@@ -77,7 +77,8 @@ class SpikeCosim : public simif_t, public Cosim {
   bool check_debug_ebreak(uint32_t write_reg, uint32_t pc, bool sync_trap);
 
   bool check_gpr_write(const commit_log_reg_t::value_type &reg_change,
-                       uint32_t write_reg, uint32_t write_reg_data);
+                       uint32_t write_reg, uint32_t write_reg_data,
+                       uint32_t expanded_insn);
 
   bool check_suppress_reg_write(uint32_t write_reg, uint32_t pc,
                                 uint32_t &suppressed_write_reg);
@@ -98,6 +99,11 @@ class SpikeCosim : public simif_t, public Cosim {
   void misaligned_pmp_fixup();
 
   unsigned int insn_cnt;
+
+  // Handle expanded insn
+  uint32_t pending_expanded_insn;
+  uint32_t expanded_insn_pc;
+  std::map<uint32_t, uint32_t> expanded_reg_changes;
 
  public:
   SpikeCosim(const std::string &isa_string, uint32_t start_pc,
@@ -120,10 +126,15 @@ class SpikeCosim : public simif_t, public Cosim {
                           const uint8_t *data_in) override;
   bool backdoor_read_mem(uint32_t addr, size_t len, uint8_t *data_out) override;
   bool step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
-            bool sync_trap, bool suppress_reg_write) override;
+            bool sync_trap, bool suppress_reg_write,
+            uint32_t expanded_insn) override;
 
   bool check_retired_instr(uint32_t write_reg, uint32_t write_reg_data,
-                           uint32_t dut_pc, bool suppress_reg_write);
+                           uint32_t dut_pc, bool suppress_reg_write,
+                           uint32_t expanded_insn);
+  bool check_expanded_instr(uint32_t write_reg, uint32_t write_reg_data,
+                            uint32_t dut_pc, bool suppress_reg_write,
+                            uint32_t expanded_insn);
   bool check_sync_trap(uint32_t write_reg, uint32_t pc,
                        uint32_t initial_spike_pc);
   void set_mip(uint32_t pre_mip, uint32_t post_mip) override;
