@@ -100,10 +100,16 @@ class SpikeCosim : public simif_t, public Cosim {
 
   unsigned int insn_cnt;
 
-  // Handle expanded insn
+  // Handle expanded instructions
+  // Set to one once we start processing an expanded instruction. Used to track
+  // the start of a new expanded instruction.
   uint32_t pending_expanded_insn;
+  // Keep track of the PC of an expanded instruction to ensure it doesn't change
+  // without completing the expansion and getting a `expanded_insn_last` signal.
   uint32_t expanded_insn_pc;
-  std::map<uint32_t, uint32_t> expanded_reg_changes;
+  // Keep track of register writes during an expanded instruction to compare
+  // with the ISS's register changes in the `expanded_insn_last` step.
+  std::map<uint32_t, uint32_t> dut_reg_changes;
 
  public:
   SpikeCosim(const std::string &isa_string, uint32_t start_pc,
