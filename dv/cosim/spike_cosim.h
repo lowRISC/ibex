@@ -38,6 +38,7 @@ class SpikeCosim : public simif_t, public Cosim {
   bus_t bus;
   std::vector<std::unique_ptr<mem_t>> mems;
   std::vector<std::string> errors;
+  std::vector<std::string> dbg;
   bool nmi_mode;
 
   typedef struct {
@@ -151,6 +152,8 @@ class SpikeCosim : public simif_t, public Cosim {
   void set_iside_error(uint32_t addr) override;
   const std::vector<std::string> &get_errors() override;
   void clear_errors() override;
+  const std::vector<std::string> &get_dbg() override;
+  void clear_dbg() override;
   unsigned int get_insn_cnt() override;
 };
 

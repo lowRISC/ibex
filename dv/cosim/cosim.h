@@ -164,6 +164,12 @@ class Cosim {
   // Clear internal vector of error descriptions
   virtual void clear_errors() = 0;
 
+  // Get a vector of strings describing dbg that have occurred during `step`
+  virtual const std::vector<std::string> &get_dbg() = 0;
+
+  // Clear internal vector of dbg descriptions
+  virtual void clear_dbg() = 0;
+
   // Returns a count of instructions executed by co-simulator and DUT without
   // failures.
   virtual unsigned int get_insn_cnt() = 0;

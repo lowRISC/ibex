@@ -118,6 +118,28 @@ void riscv_cosim_clear_errors(Cosim *cosim) {
   cosim->clear_errors();
 }
 
+int riscv_cosim_get_num_dbg(Cosim *cosim) {
+  assert(cosim);
+
+  return cosim->get_dbg().size();
+}
+
+const char *riscv_cosim_get_dbg(Cosim *cosim, int index) {
+  assert(cosim);
+
+  if (index >= cosim->get_dbg().size()) {
+    return nullptr;
+  }
+
+  return cosim->get_dbg()[index].c_str();
+}
+
+void riscv_cosim_clear_dbg(Cosim *cosim) {
+  assert(cosim);
+
+  cosim->clear_dbg();
+}
+
 void riscv_cosim_write_mem_byte(Cosim *cosim, const svBitVecVal *addr,
                                 const svBitVecVal *d) {
   assert(cosim);

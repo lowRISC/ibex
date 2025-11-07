@@ -29,6 +29,9 @@ import "DPI-C" function int riscv_cosim_set_iside_error(chandle cosim_handle, bi
 import "DPI-C" function int riscv_cosim_get_num_errors(chandle cosim_handle);
 import "DPI-C" function string riscv_cosim_get_error(chandle cosim_handle, int index);
 import "DPI-C" function void riscv_cosim_clear_errors(chandle cosim_handle);
+import "DPI-C" function int riscv_cosim_get_num_dbg(chandle cosim_handle);
+import "DPI-C" function string riscv_cosim_get_dbg(chandle cosim_handle, int index);
+import "DPI-C" function void riscv_cosim_clear_dbg(chandle cosim_handle);
 import "DPI-C" function void riscv_cosim_write_mem_byte(chandle cosim_handle, bit [31:0] addr,
   bit [7:0] d);
 import "DPI-C" function int unsigned riscv_cosim_get_insn_cnt(chandle cosim_handle);

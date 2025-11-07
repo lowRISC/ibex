@@ -40,6 +40,9 @@ void riscv_cosim_set_iside_error(Cosim *cosim, svBitVecVal *addr);
 int riscv_cosim_get_num_errors(Cosim *cosim);
 const char *riscv_cosim_get_error(Cosim *cosim, int index);
 void riscv_cosim_clear_errors(Cosim *cosim);
+int riscv_cosim_get_num_dbg(Cosim *cosim);
+const char *riscv_cosim_get_dbg(Cosim *cosim, int index);
+void riscv_cosim_clear_dbg(Cosim *cosim);
 void riscv_cosim_write_mem_byte(Cosim *cosim, const svBitVecVal *addr,
                                 const svBitVecVal *d);
 unsigned int riscv_cosim_get_insn_cnt(Cosim *cosim);

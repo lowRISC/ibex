@@ -881,6 +881,10 @@ const std::vector<std::string> &SpikeCosim::get_errors() { return errors; }
 
 void SpikeCosim::clear_errors() { errors.clear(); }
 
+const std::vector<std::string> &SpikeCosim::get_dbg() { return dbg; }
+
+void SpikeCosim::clear_dbg() { dbg.clear(); }
+
 void SpikeCosim::fixup_csr(int csr_num, uint32_t csr_val) {
   switch (csr_num) {
     case CSR_MSTATUS: {
