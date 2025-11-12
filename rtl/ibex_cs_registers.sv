@@ -1183,7 +1183,7 @@ module ibex_cs_registers import ibex_pkg::*; #(
       // When MSECCFG.MML is set cannot add new regions allowing M mode execution unless MSECCFG.RLB
       // is set
       assign pmp_cfg_wr_suppress[i] = pmp_mseccfg_q.mml                   &
-                                      ~pmp_mseccfg.rlb                    &
+                                      ~pmp_mseccfg_q.rlb                  &
                                       is_mml_m_exec_cfg(pmp_cfg_wdata[i]);
 
       // --------------------------
