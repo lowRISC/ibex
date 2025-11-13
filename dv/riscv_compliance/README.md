@@ -19,55 +19,36 @@ How to run RISC-V Compliance on Ibex
    - Verilator
    - fusesoc
    - srecord (for `srec_cat`)
-   - A RV32 compiler
+   - RISC-V Compiler toolchain (RV64)
+   - RISC-V SAIL Model
 
    On Ubuntu/Debian, install the required tools like this:
 
    ```sh
-   sudo apt-get install srecord python3-pip
+   sudo apt-get install -y srecord python3-pip gcc-riscv64-unknown-elf
    pip3 install --user -U fusesoc
+   pip3 install -U riscof
    ```
 
    We recommend installing Verilator from source as versions from Linux
-   distributions are often outdated. See
-   https://www.veripool.org/projects/verilator/wiki/Installing for installation
-   instructions.
+   distributions are often outdated. Follow [this](https://www.veripool.org/projects/verilator/wiki/Installing) link for installation instructions. Pre-build SAIL RISCV model is available in [bin](/dv/riscv_compliance/bin/) directory, along with the instructions.
 
-1. Build a simulation of Ibex
+:warning: Run the following commands from base of the Ibex repo.
+
+1. Get the RISC-V Architecture Compatibility test
+
+   ```
+   git clone https://github.com/riscv-non-isa/riscv-arch-test
+   ```
+
+2. Run the test suite
+
+   The following commnad will run all tests of `rv32i_m` for supported ISA extensions of ibex. To run the tests for specific extensio (`I`, `M`, `C`, `Zifencei`, `privilege`), provide the path of respective extension test directory to the `--suite` flag.
 
    ```sh
-   cd $IBEX_REPO_BASE
-   fusesoc --cores-root=. run --target=sim --setup --build lowrisc:ibex:ibex_riscv_compliance --RV32E=0 --RV32M=ibex_pkg::RV32MNone
-   ```
-
-   You can use the two compile-time options `--RV32M` and `--RV32E` to
-   enable/disable the M and E ISA extensions, respectively.
-
-   You can now find the compiled simulation at `build/lowrisc_ibex_ibex_riscv_compliance_0.1/sim-verilator/Vibex_riscv_compliance`.
-
-2. Get the RISC-V Compliance test suite
-
-   The upstream RISC-V compliance test suite supports Ibex out of the box.
-
-   ```
-   git clone https://github.com/riscv/riscv-compliance.git
-   cd riscv-compliance
-   ```
-
-3. Run the test suite
-   ```sh
-   cd $RISCV_COMPLIANCE_REPO_BASE
-   # adjust to match your compiler name
-   export RISCV_PREFIX=riscv32-unknown-elf-
-   # give the absolute path to the simulation binary compiled in step 1
-   export TARGET_SIM=/path/to/your/Vibex_riscv_compliance
-
-   export RISCV_DEVICE=rv32imc
-   export RISCV_TARGET=ibex
-
-   # Note: rv32imc does not include the I and M extension tests
-   make RISCV_ISA=rv32i && make RISCV_ISA=rv32im && make RISCV_ISA=rv32imc && \
-      make RISCV_ISA=rv32Zicsr && make RISCV_ISA=rv32Zifencei
+   riscof run --config=config.ini \
+   --suite=riscv-arch-test/riscv-test-suite/rv32i_m/ \
+   --env=riscv-arch-test/riscv-test-suite/env
    ```
 
 Compliance test suite system
@@ -81,7 +62,7 @@ suite. The system consists of
 - a single-port memory for data and instructions,
 - a bus-attached test utility.
 
-The CPU core boots from SRAM at address 0x0.
+The CPU core boots from SRAM at address 0x80000080.
 
 The test utility is used by the software to end the simulation, and to inform
 the simulator of the memory region where the test signature is stored.
@@ -89,10 +70,10 @@ The bus host reads the test signature from memory.
 
 The memory map of the whole system is as follows:
 
-| Start   | End     | Size  | Device                         |
-|---------|---------|-------|--------------------------------|
-| 0x0     | 0xFFFF  | 64 kB | shared instruction/data memory |
-| 0x20000 | 0x203FF | 1 kB  | test utility                   |
+| Start      | End        | Size   | Device                         |
+|------------|------------|--------|--------------------------------|
+| 0x80000000 | 0x801FFFFF | 2 MB   | shared instruction/data memory |
+| 0x82000000 | 0x820003FF | 1 kB   | test utility                   |
 
 
 The test utility provides the following registers relative to the base address.
