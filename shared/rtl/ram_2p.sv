@@ -73,7 +73,6 @@ module ram_2p #(
   ) u_ram (
     .clk_a_i   (clk_i),
     .clk_b_i   (clk_i),
-    .cfg_i     ('0),
     .a_req_i   (a_req_i),
     .a_write_i (a_we_i),
     .a_addr_i  (a_addr_idx),
@@ -82,10 +81,12 @@ module ram_2p #(
     .a_rdata_o (a_rdata_o),
     .b_req_i   (b_req_i),
     .b_write_i (b_we_i),
-    .b_wmask_i (b_wmask),
     .b_addr_i  (b_addr_idx),
     .b_wdata_i (b_wdata_i),
-    .b_rdata_o (b_rdata_o)
+    .b_wmask_i (b_wmask),
+    .b_rdata_o (b_rdata_o),
+    .cfg_i     ('0),
+    .cfg_rsp_o ()
   );
 
 endmodule
