@@ -6,7 +6,7 @@
 // wrappers around the prim_* modules to instantiate the prim_generic_* ones,
 // see https://github.com/lowRISC/ibex/issues/893.
 +incdir+${LOWRISC_IP_DIR}/ip/prim/rtl
-${PRJ_DIR}/dv/uvm/core_ibex/common/prim/prim_pkg.sv
+${LOWRISC_IP_DIR}/ip/prim_generic/rtl/prim_pkg.sv
 ${LOWRISC_IP_DIR}/ip/prim/rtl/prim_assert.sv
 ${LOWRISC_IP_DIR}/ip/prim/rtl/prim_util_pkg.sv
 ${LOWRISC_IP_DIR}/ip/prim/rtl/prim_count_pkg.sv
@@ -23,21 +23,15 @@ ${LOWRISC_IP_DIR}/ip/prim/rtl/prim_secded_hamming_39_32_enc.sv
 ${LOWRISC_IP_DIR}/ip/prim/rtl/prim_secded_hamming_72_64_dec.sv
 ${LOWRISC_IP_DIR}/ip/prim/rtl/prim_secded_hamming_72_64_enc.sv
 ${LOWRISC_IP_DIR}/ip/prim/rtl/prim_mubi_pkg.sv
-${LOWRISC_IP_DIR}/ip/prim/rtl/prim_ram_1p_pkg.sv
+${LOWRISC_IP_DIR}/ip/prim_generic/rtl/prim_ram_1p_pkg.sv
 ${LOWRISC_IP_DIR}/ip/prim/rtl/prim_ram_1p_adv.sv
 ${LOWRISC_IP_DIR}/ip/prim/rtl/prim_ram_1p_scr.sv
-${LOWRISC_IP_DIR}/ip/prim_generic/rtl/prim_generic_ram_1p.sv
-${PRJ_DIR}/dv/uvm/core_ibex/common/prim/prim_ram_1p.sv
-${LOWRISC_IP_DIR}/ip/prim_generic/rtl/prim_generic_clock_gating.sv
-${PRJ_DIR}/dv/uvm/core_ibex/common/prim/prim_clock_gating.sv
-${LOWRISC_IP_DIR}/ip/prim_generic/rtl/prim_generic_buf.sv
-${PRJ_DIR}/dv/uvm/core_ibex/common/prim/prim_buf.sv
-${LOWRISC_IP_DIR}/ip/prim_generic/rtl/prim_generic_clock_mux2.sv
-${PRJ_DIR}/dv/uvm/core_ibex/common/prim/prim_clock_mux2.sv
-${LOWRISC_IP_DIR}/ip/prim_generic/rtl/prim_generic_flop.sv
-${PRJ_DIR}/dv/uvm/core_ibex/common/prim/prim_flop.sv
-${LOWRISC_IP_DIR}/ip/prim_generic/rtl/prim_generic_and2.sv
-${PRJ_DIR}/dv/uvm/core_ibex/common/prim/prim_and2.sv
+${LOWRISC_IP_DIR}/ip/prim_generic/rtl/prim_ram_1p.sv
+${LOWRISC_IP_DIR}/ip/prim_generic/rtl/prim_clock_gating.sv
+${LOWRISC_IP_DIR}/ip/prim_generic/rtl/prim_buf.sv
+${LOWRISC_IP_DIR}/ip/prim_generic/rtl/prim_clock_mux2.sv
+${LOWRISC_IP_DIR}/ip/prim_generic/rtl/prim_flop.sv
+${LOWRISC_IP_DIR}/ip/prim_generic/rtl/prim_and2.sv
 
 // Shared lowRISC code
 ${LOWRISC_IP_DIR}/ip/prim/rtl/prim_cipher_pkg.sv

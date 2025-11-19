@@ -84,8 +84,7 @@ void create_cosim(svBit secure_ibex, svBit icache_en,
 
 int main(int argc, char **argv) {
   simple_system_cosim = new SimpleSystemCosim(
-      "TOP.ibex_simple_system.u_ram.u_ram.gen_generic.u_impl_generic",
-      (1024 * 1024) / 4);
+      "TOP.ibex_simple_system.u_ram.u_ram", (1024 * 1024) / 4);
 
   int ret_code = simple_system_cosim->Main(argc, argv);
 

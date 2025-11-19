@@ -267,7 +267,7 @@
     wave_opts: >
       -access rwc -linedebug
     cosim_opts: >
-      -f ibex_dv_cosim_dpi.f
+      -f <core_ibex>/ibex_dv_cosim_dpi.f
       -I<IBEX_ROOT>/dv/cosim
       <ISS_LIBS>
       <ISS_CFLAGS>
