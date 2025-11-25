@@ -2,7 +2,7 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
-// Write enable and data arbitration logic for register slice conforming to Comportibility guide.
+// Write enable and data arbitration logic for register slice conforming to Comportability guide.
 
 module prim_subreg_arb
   import prim_subreg_pkg::*;
@@ -29,7 +29,7 @@ module prim_subreg_arb
 );
   import prim_mubi_pkg::*;
 
-  if (SwAccess inside {SwAccessRW, SwAccessWO}) begin : gen_w
+  if ((SwAccess == SwAccessRW) || (SwAccess == SwAccessWO)) begin : gen_w
     assign wr_en   = we | de;
     assign wr_data = (we == 1'b1) ? wd : d; // SW higher priority
     // Unused q - Prevent lint errors.
