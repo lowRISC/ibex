@@ -9,6 +9,7 @@ filesets:
   files_rtl:
     depend:
       - lowrisc:prim:assert
+      - lowrisc:prim:leading_one_ppc
     files:
       - rtl/prim_arbiter_fixed.sv
       - rtl/prim_arbiter_ppc.sv

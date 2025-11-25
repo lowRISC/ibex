@@ -22,10 +22,6 @@ class Mode:
             log.error("Key \"name\" missing in mode %s", mdict)
             sys.exit(1)
 
-        if not hasattr(self, "type"):
-            log.fatal("Key \"type\" is missing or invalid")
-            sys.exit(1)
-
         for key in keys:
             if key not in attrs:
                 log.error(f"Key {key} in {mdict} is invalid. Supported "
@@ -33,11 +29,13 @@ class Mode:
                 sys.exit(1)
             setattr(self, key, mdict[key])
 
-    def get_sub_modes(self):
-        return getattr(self, "en_" + self.type + "_modes", [])
+    def get_sub_modes(self) -> List[str]:
+        # Default behaviour is not to have sub-modes
+        return []
 
-    def set_sub_modes(self, sub_modes):
-        setattr(self, "en_" + self.type + "_modes", sub_modes)
+    def set_sub_modes(self, sub_modes: List[str]) -> None:
+        # Default behaviour is not to have sub-modes
+        return None
 
     def merge_mode(self, mode: 'Mode') -> None:
         '''Update this object by merging it with mode.'''
@@ -61,52 +59,58 @@ class Mode:
             if is_sub_mode and attr == 'name':
                 continue
 
-            # If mode's value is None, then nothing to do here.
+            # If the incoming  value is None, then nothing to do here.
             if mode_attr_val is None:
                 continue
 
-            # If self value is None, then replace with mode's value.
+            # If the current value is None, then replace with the incoming value.
             if self_attr_val is None:
                 setattr(self, attr, mode_attr_val)
                 continue
 
-            # If they are equal, then nothing to do here.
+            # If both values are equal, there is nothing to do.
             if self_attr_val == mode_attr_val:
                 continue
 
-            # Extend if they are both lists.
+            # If we have genuine types (because neither value is None), check
+            # that the values are compatible.
+            if not isinstance(mode_attr_val, type(self_attr_val)):
+                log.error(f"Cannot merge {self.name} with mode {mode.name}: "
+                          f"the incoming values for attribute {attr} are not "
+                          f"of the same type.")
+                sys.exit(1)
+
+            # If the current value is a list, the incoming one must be as well.
+            # Append that to the current list.
             if isinstance(self_attr_val, list):
                 assert isinstance(mode_attr_val, list)
                 self_attr_val.extend(mode_attr_val)
                 continue
 
-            # If the current val is default, replace with new.
+            # The types that we support other than lists are "scalar" types,
+            # which each have a default value. The idea is that a default value
+            # gets overridden by anything else.
             scalar_types = {str: "", int: -1}
             default_val = scalar_types.get(type(self_attr_val))
 
-            if type(self_attr_val) in scalar_types.keys(
-            ) and self_attr_val == default_val:
+            # If the incoming value is the type's default value, it will have
+            # no effect.
+            if mode_attr_val == default_val:
+                continue
+
+            # If the existing value is the type's default value, it will be
+            # overridden by the incoming value.
+            if self_attr_val == default_val:
                 setattr(self, attr, mode_attr_val)
                 continue
 
-            # Check if their types are compatible.
-            if type(self_attr_val) != type(mode_attr_val):
-                log.error(
-                    "Mode %s cannot be merged into %s due to a conflict "
-                    "(type mismatch): %s: {%s(%s), %s(%s)}", mode.name,
-                    self.name, attr, str(self_attr_val),
-                    str(type(self_attr_val)), str(mode_attr_val),
-                    str(type(mode_attr_val)))
-                sys.exit(1)
-
-            # Check if they are different non-default values.
-            if self_attr_val != default_val and mode_attr_val != default_val:
-                log.error(
-                    "Mode %s cannot be merged into %s due to a conflict "
-                    "(unable to pick one from different values): "
-                    "%s: {%s, %s}", mode.name, self.name, attr,
-                    str(self_attr_val), str(mode_attr_val))
-                sys.exit(1)
+            # If we get to here then neither value is the default value and
+            # they are not equal. Raise an error because we don't know how to
+            # merge them.
+            log.error(f"Cannot merge mode {mode.name} into {self.name} "
+                      f"because they have conflicting values for attribute "
+                      f"{attr}: {mode_attr_val} and {self_attr_val}.")
+            sys.exit(1)
 
         # Check newly appended sub_modes, remove 'self' and duplicates
         sub_modes = self.get_sub_modes()
@@ -207,22 +211,19 @@ def find_mode(mode_name: str, modes: List[Mode]) -> Optional[Mode]:
     return None
 
 
-def find_and_merge_modes(mode: Mode,
-                         mode_names: List[str],
-                         modes: List[Mode],
-                         merge_modes: bool = True):
-    found_mode_objs = []
+def find_mode_list(mode_names: List[str], modes: List[Mode]) -> List[Mode]:
+    '''Find modes matching a list of names.'''
+    found_list = []
     for mode_name in mode_names:
-        sub_mode = find_mode(mode_name, modes)
-        if sub_mode is not None:
-            found_mode_objs.append(sub_mode)
-            if merge_modes is True:
-                mode.merge_mode(sub_mode)
-        else:
-            log.error("Mode \"%s\" enabled within mode \"%s\" not found!",
-                      mode_name, mode.name)
+        mode = find_mode(mode_name, modes)
+        if mode is None:
+            log.error("Cannot find requested mode ({}) in list. Known names: {}"
+                      .format(mode_name, [m.name for m in modes]))
             sys.exit(1)
-    return found_mode_objs
+
+        found_list.append(mode)
+
+    return found_list
 
 
 class BuildMode(Mode):
@@ -235,7 +236,6 @@ class BuildMode(Mode):
 
     def __init__(self, bdict):
         self.name = ""
-        self.type = "build"
         self.is_sim_mode = 0
         self.pre_build_cmds = []
         self.post_build_cmds = []
@@ -251,6 +251,12 @@ class BuildMode(Mode):
         super().__init__("build mode", bdict)
         self.en_build_modes = list(set(self.en_build_modes))
 
+    def get_sub_modes(self) -> List[str]:
+        return self.en_build_modes
+
+    def set_sub_modes(self, sub_modes: List[str]) -> None:
+        self.en_build_modes = sub_modes
+
     @staticmethod
     def get_default_mode():
         return BuildMode({"name": "default"})
@@ -264,7 +270,6 @@ class RunMode(Mode):
 
     def __init__(self, rdict):
         self.name = ""
-        self.type = "run"
         self.reseed = None
         self.pre_run_cmds = []
         self.post_run_cmds = []
@@ -281,6 +286,12 @@ class RunMode(Mode):
 
         super().__init__("run mode", rdict)
         self.en_run_modes = list(set(self.en_run_modes))
+
+    def get_sub_modes(self) -> List[str]:
+        return self.en_run_modes
+
+    def set_sub_modes(self, sub_modes: List[str]) -> None:
+        self.en_run_modes = sub_modes
 
     @staticmethod
     def get_default_mode():

@@ -267,8 +267,7 @@ module prim_fifo_async_sram_adapter #(
   //    - r_rptr_inc: Can request more
   //    - !r_rptr_inc: Can't request
   always_comb begin : r_sram_req
-    r_sram_req_o = 1'b 0;
-    // Karnough Map (!empty): sram_req
+    // Karnaugh Map (!empty): sram_req
     // {sram_rv, rfifo_ack} | 00 | 01          | 11 | 10
     // ----------------------------------------------------------
     // stored          | 0  |  1 |  impossible |  1 |  0
@@ -311,7 +310,7 @@ module prim_fifo_async_sram_adapter #(
   // read clock domain rdata storage
   logic store_en;
 
-  // Karnough Map (r_sram_rvalid_i):
+  // Karnaugh Map (r_sram_rvalid_i):
   // rfifo_ack   | 0 | 1 |
   // ---------------------
   // stored    0 | 1 | 0 |
@@ -404,11 +403,14 @@ module prim_fifo_async_sram_adapter #(
   `ASSERT(NoWAckInFull_A, w_wptr_inc |-> !w_full,
           clk_wr_i, !rst_wr_ni)
 
+  // If a valid/ready handshake happens for the write pointer, that pointer should increment by one
   `ASSERT(WptrIncrease_A,
-          w_wptr_inc |=> w_wptr_v == PtrVW'($past(w_wptr_v,2) + 1),
+          w_wptr_inc |=> w_wptr_q == $past(w_wptr_q) + PtrW'(1),
           clk_wr_i, !rst_wr_ni)
+  // Check that the Gray coding works correctly, so the increment to w_wptr_gray_q changes exactly
+  // one bit.
   `ASSERT(WptrGrayOneBitAtATime_A,
-          w_wptr_inc |=> $countones(w_wptr_gray_q ^ $past(w_wptr_gray_q,2)) == 1,
+          w_wptr_inc |=> $countones(w_wptr_gray_q ^ $past(w_wptr_gray_q)) == 1,
           clk_wr_i, !rst_wr_ni)
 
   `ASSERT(NoRAckInEmpty_A, r_rptr_inc |-> !r_empty,

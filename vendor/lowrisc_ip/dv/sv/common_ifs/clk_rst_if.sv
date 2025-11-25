@@ -73,7 +73,7 @@ interface clk_rst_if #(
   // Maximum jitter applied to each period of the clock - this is expected to be about 20% or less
   // than the clock period.
   // The jitter is divided to two values - plus-jitter and minus-jitter.
-  // Plus jitter is the possible time can be added to the clock period, while the minus jittter is
+  // Plus jitter is the possible time can be added to the clock period, while the minus jitter is
   // the possible time can be subtracted from the clock period.
   //         _________
   // _____:_| :     : |_:_______
@@ -122,10 +122,13 @@ interface clk_rst_if #(
 
   // Wait for 'num_clks' clocks based on the positive clock edge or reset, whichever comes first.
   task automatic wait_clks_or_rst(int num_clks);
-    fork
-      wait_clks(num_clks);
-      wait_for_reset(.wait_negedge(1'b1), .wait_posedge(1'b0));
-    join_any
+    fork begin : isolation_fork
+      fork
+        wait_clks(num_clks);
+        wait_for_reset(.wait_negedge(1'b1), .wait_posedge(1'b0));
+      join_any
+      disable fork;
+    end join
   endtask
 
   // wait for rst_n to assert and then deassert
@@ -257,15 +260,12 @@ interface clk_rst_if #(
   endtask
 
   // apply reset with specified scheme
-  // Note: for power on reset, please ensure pre_reset_dly_clks is set to 0
-  task automatic apply_reset(int pre_reset_dly_clks   = 0,
-                             int reset_width_clks = $urandom_range(50, 100),
+  task automatic apply_reset(int reset_width_clks = $urandom_range(50, 100),
                              int post_reset_dly_clks  = 0,
                              rst_scheme_e rst_n_scheme  = RstAssertAsyncDeassertSync);
     if (drive_rst_n) begin
       int dly_ps;
       dly_ps = $urandom_range(0, clk_period_ps);
-      wait_clks(pre_reset_dly_clks);
       case (rst_n_scheme)
         RstAssertSyncDeassertSync: begin
           o_rst_n <= 1'b0;

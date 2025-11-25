@@ -111,6 +111,24 @@ module prim_reg_cdc #(
   // This is the current destination value
   logic [DataWidth-1:0] dst_qs;
   logic src_update;
+
+  // The dst_to_src signal (on the src clock) means that data should be moving from the dst clock
+  // domain to the src clock domain on this cycle.
+  //
+  // This either means that an operation from the src side is being acknowledged or (if it's
+  // possible for the value to change on the dst side) it means that a register read response is
+  // coming from the dst clock domain. The register value may have changed from last time so should
+  // be copied back.
+  logic dst_to_src;
+  if (DstWrReq) begin : gen_wr_req
+    assign dst_to_src = src_busy_q && src_ack || src_update && !busy;
+  end else begin : gen_passthru
+    assign dst_to_src = src_busy_q && src_ack;
+
+    logic unused_dst_wr;
+    assign unused_dst_wr = src_update ^ busy;
+  end
+
   always_ff @(posedge clk_src_i or negedge rst_src_ni) begin
     if (!rst_src_ni) begin
       src_q <= ResetVal;
@@ -122,7 +140,7 @@ module prim_reg_cdc #(
       // change for the duration of the synchronization operation.
       src_q <= src_wd_i & BitMask;
       txn_bits_q <= {src_we_i, src_re_i, src_regwen_i};
-    end else if (src_busy_q && src_ack || src_update && !busy) begin
+    end else if (dst_to_src) begin
       // sample data whenever a busy transaction finishes OR
       // when an update pulse is seen.
       // TODO: We should add a cover group to test different sync timings
@@ -202,9 +220,21 @@ module prim_reg_cdc #(
   `ASSERT_KNOWN(SrcBusyKnown_A, src_busy_o, clk_src_i, !rst_src_ni)
   `ASSERT_KNOWN(DstReqKnown_A, dst_req, clk_dst_i, !rst_dst_ni)
 
-  // If busy goes high, we must eventually see an ack
+  // If busy goes high, we must eventually see an ack.
+  //
+  // This is fundamentally a liveness property and only really useful in a formal setting (since a
+  // simulation can never give a counterexample). Unfortunately, proving liveness properties can be
+  // intractable for formal tools. This assertion bounds the time, making it a safety property that
+  // the tool can handle more easily.
+  //
+  // The required bound depends on the ratio between the two clocks. If there are N edges of
+  // clk_dst_i for each edge of clk_src_i, we can expect a bound of 4*N to suffice (because there is
+  // a 2-flop synchroniser in each direction).
+  //
+  // The possible clock ratios rely on tool configuration, but we set N=10 (which matches the
+  // configuration for the main clock and the slow aon clock in our FPV tool setup).
   `ifdef FPV_ON
-    `ASSERT(HungHandShake_A, $rose(src_req) |-> strong(##[0:$] src_ack), clk_src_i, !rst_src_ni)
+  `ASSERT(HungHandShake_A, $rose(src_req) |-> ##[0:40] src_ack, clk_src_i, !rst_src_ni)
     // TODO: #14913 check if we can add additional sim assertions.
   `endif
 endmodule // prim_subreg_cdc

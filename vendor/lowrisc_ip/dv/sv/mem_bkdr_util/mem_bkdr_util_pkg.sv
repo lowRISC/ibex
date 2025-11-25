@@ -7,11 +7,7 @@ package mem_bkdr_util_pkg;
   import bus_params_pkg::BUS_AW;
   import dv_utils_pkg::uint32_t, dv_utils_pkg::addr_range_t;
   import lc_ctrl_state_pkg::*;
-  import otp_ctrl_part_pkg::*;
-  import otp_ctrl_reg_pkg::*;
-  import otp_scrambler_pkg::*;
   import prim_secded_pkg::*;
-  import sram_scrambler_pkg::*;
   import uvm_pkg::*;
 
   // Represents the various forms of error detection / correction supported.
@@ -39,13 +35,11 @@ package mem_bkdr_util_pkg;
     ParityOdd
   } err_detection_e;
 
-  parameter int ROM_DIGEST_SIZE = 256;
-  parameter int ROM_DIGEST_BYTES = ROM_DIGEST_SIZE / 8;
   // macro includes
   `include "uvm_macros.svh"
   `include "dv_macros.svh"
 
   // sources
+  `include "mem_bkdr_util_row_adapter.sv"
   `include "mem_bkdr_util.sv"
-
 endpackage

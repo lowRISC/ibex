@@ -5,14 +5,17 @@ CAPI=2:
 
 name: "lowrisc:prim_generic:ram_2p"
 description: "prim"
+virtual:
+  - lowrisc:prim:ram_2p
+
 filesets:
   files_rtl:
     depend:
       - lowrisc:prim:assert
-      - lowrisc:prim:ram_2p_pkg
+      - lowrisc:prim_generic:ram_2p_pkg
       - lowrisc:prim:util_memload
     files:
-      - rtl/prim_generic_ram_2p.sv
+      - rtl/prim_ram_2p.sv
     file_type: systemVerilogSource
 
   files_verilator_waiver:
