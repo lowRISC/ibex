@@ -100,7 +100,8 @@ module ibex_top import ibex_pkg::*; #(
   output logic                         scramble_req_o,
 
   // Debug Interface
-  input  logic                         debug_req_i,
+  input  logic                         debug_req_i,   // Request to Core to enter debug mode
+  output logic                         debug_mode_o,  // Indicates that the core has entered debug mode
   output crash_dump_t                  crash_dump_o,
   output logic                         double_fault_seen_o,
 
@@ -385,6 +386,7 @@ module ibex_top import ibex_pkg::*; #(
     .irq_pending_o(irq_pending),
 
     .debug_req_i,
+    .debug_mode_o(debug_mode_o),
     .crash_dump_o,
     .double_fault_seen_o,
 
