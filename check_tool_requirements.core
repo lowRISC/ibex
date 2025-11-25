@@ -7,9 +7,10 @@ description: "Check tool requirements"
 
 filesets:
   files_check_tool_requirements:
+    file_type: user
     files:
-      - ./util/check_tool_requirements.py : { copyto: util/check_tool_requirements.py }
-      - ./tool_requirements.py : { copyto: tool_requirements.py }
+      - util/check_tool_requirements.py : { copyto: util/check_tool_requirements.py }
+      - util/tool_requirements.py : { copyto: util/tool_requirements.py }
 
 scripts:
   check_tool_requirements:

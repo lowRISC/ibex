@@ -117,6 +117,12 @@
                 (inputs.lowrisc-nix.lib.pyprojectOverrides {
                   inherit pkgs;
                 })
+                (final: prev: {
+                  jsonschema2md = prev.jsonschema2md.overrideAttrs (old: {
+                    # Manually add babel to the build inputs
+                    nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ final.babel ];
+                  });
+                })
               ]
           );
         in

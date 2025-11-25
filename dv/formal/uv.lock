@@ -15,6 +15,15 @@ wheels = [
 ]
 
 [[package]]
+name = "argcomplete"
+version = "3.6.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/38/61/0b9ae6399dd4a58d8c1b1dc5a27d6f2808023d0b5dd3104bb99f45a33ff6/argcomplete-3.6.3.tar.gz", hash = "sha256:62e8ed4fd6a45864acc8235409461b72c9a28ee785a2011cc5eb78318786c89c", size = 73754, upload-time = "2025-10-20T03:33:34.741Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/74/f5/9373290775639cb67a2fce7f629a1c240dce9f12fe927bc32b2736e16dfc/argcomplete-3.6.3-py3-none-any.whl", hash = "sha256:f5007b3a600ccac5d25bbce33089211dfd49eab4a7718da3f10e3082525a92ce", size = 43846, upload-time = "2025-10-20T03:33:33.021Z" },
+]
+
+[[package]]
 name = "attrs"
 version = "25.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -24,22 +33,51 @@ wheels = [
 ]
 
 [[package]]
+name = "babel"
+version = "2.17.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/6b/d52e42361e1aa00709585ecc30b3f9684b3ab62530771402248b1b1d6240/babel-2.17.0.tar.gz", hash = "sha256:0c54cffb19f690cdcc52a3b50bcbf71e07a808d1c80d549f2459b9d2cf0afb9d", size = 9951852, upload-time = "2025-02-01T15:17:41.026Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b7/b8/3fe70c75fe32afc4bb507f75563d39bc5642255d1d94f1f23604725780bf/babel-2.17.0-py3-none-any.whl", hash = "sha256:4d0b53093fdfb4b21c92b5213dba5a1b23885afa8383709427046b21c366e5f2", size = 10182537, upload-time = "2025-02-01T15:17:37.39Z" },
+]
+
+[[package]]
 name = "edalize"
-version = "0.4.0"
-source = { git = "https://github.com/lowRISC/edalize.git?rev=v0.4.0#2a70c4421db186b4ec91c770addc89ec83f3818b" }
+version = "0.6.1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fc/d6/0a8e42893985ea3477b556068db112586bfe17a0406a1da8d6bc13d1ea5c/edalize-0.6.1.tar.gz", hash = "sha256:6617b6b817d0445a7eaa003f2e7906f910b4ee659f9330ec6faeee633238536b", size = 384538, upload-time = "2025-04-15T04:23:36.678Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a3/16/47dc8bbbefb395c275c4ba8b2e46a0b54f8c37ba6ca0757478f8139aedc8/edalize-0.6.1-py3-none-any.whl", hash = "sha256:2773339a404310b3b076ac8bcc68cadec8c937eba5a76c0a9b941064cd5ff9d7", size = 170024, upload-time = "2025-04-15T04:23:43.064Z" },
+]
+
+[[package]]
+name = "fastjsonschema"
+version = "2.21.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/20/b5/23b216d9d985a956623b6bd12d4086b60f0059b27799f23016af04a74ea1/fastjsonschema-2.21.2.tar.gz", hash = "sha256:b1eb43748041c880796cd077f1a07c3d94e93ae84bba5ed36800a33554ae05de", size = 374130, upload-time = "2025-08-14T18:49:36.666Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cb/a8/20d0723294217e47de6d9e2e40fd4a9d2f7c4b6ef974babd482a59743694/fastjsonschema-2.21.2-py3-none-any.whl", hash = "sha256:1c797122d0a86c5cace2e54bf4e819c36223b552017172f32c5c024a6b77e463", size = 24024, upload-time = "2025-08-14T18:49:34.776Z" },
 ]
 
 [[package]]
 name = "fusesoc"
-version = "0.4"
-source = { git = "https://github.com/lowRISC/fusesoc.git?rev=ot-0.4#e20b92898f6d14574cca8d636a841845b0817585" }
+version = "2.4.3"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "argcomplete" },
     { name = "edalize" },
+    { name = "fastjsonschema" },
+    { name = "jsonschema2md" },
     { name = "pyparsing" },
     { name = "pyyaml" },
     { name = "simplesat" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b4/c6/32532ef324c628f41628070dfb4b63c4cbb7a28b0ad72c618d79bcaba952/fusesoc-2.4.3.tar.gz", hash = "sha256:fc25b06cb52f516cd00c6d04c9f638205e46f3e35e840fc3f8ec00bb3a6405d5", size = 179652, upload-time = "2025-04-18T20:22:19.493Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cb/a8/10f62458dda2ca07c49477448e643b10f30825b7741fdb6ec3e6188b6999/fusesoc-2.4.3-py3-none-any.whl", hash = "sha256:9ab4a82a5b7d4decbeb8f76049673a1b0806732ab8f807fee285bbc0452b3dc3", size = 60947, upload-time = "2025-04-18T20:22:17.505Z" },
 ]
 
 [[package]]
@@ -69,8 +107,8 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "anytree", specifier = "==2.8.0" },
-    { name = "edalize", git = "https://github.com/lowRISC/edalize.git?rev=v0.4.0" },
-    { name = "fusesoc", git = "https://github.com/lowRISC/fusesoc.git?rev=ot-0.4" },
+    { name = "edalize", specifier = "==0.6.1" },
+    { name = "fusesoc", specifier = "==2.4.3" },
     { name = "hjson", specifier = "==3.1.0" },
     { name = "mako", specifier = "==1.1.6" },
     { name = "packaging", specifier = "==24.2" },
@@ -91,6 +129,20 @@ wheels = [
 ]
 
 [[package]]
+name = "jsonschema2md"
+version = "1.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "babel" },
+    { name = "markdown" },
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/aa/c3/056bfe8d6360750ed4a13eeafd37d5ace8859b69c9fdb8d6aac82dad7d58/jsonschema2md-1.7.0.tar.gz", hash = "sha256:d69a5b011bf355c005e3c18be4515ae46d2689b38b593ced8d03c5ab66ddbaf3", size = 20017, upload-time = "2025-08-14T11:55:42.67Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/de/c5/0f9bd3ac958f8136e24e980ecd23e02de929eed9946fc4bf91e057142483/jsonschema2md-1.7.0-cp313-cp313-manylinux_2_39_x86_64.whl", hash = "sha256:06c327866a845827bc08b98cbea70ec96f46c0f8b67cb5a6d9833078a78764d3", size = 22991, upload-time = "2025-08-14T11:55:41.556Z" },
+]
+
+[[package]]
 name = "mako"
 version = "1.1.6"
 source = { registry = "https://pypi.org/simple" }
@@ -100,6 +152,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/af/b6/42cd322ae555aa770d49e31b8c5c28a243ba1bbb57ad927e1a5f5b064811/Mako-1.1.6.tar.gz", hash = "sha256:4e9e345a41924a954251b95b4b28e14a301145b544901332e658907a7464b6b2", size = 495132, upload-time = "2021-11-17T15:40:46.428Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b4/4d/e03d08f16ee10e688bde9016bc80af8b78c7f36a8b37c7194da48f72207e/Mako-1.1.6-py2.py3-none-any.whl", hash = "sha256:afaf8e515d075b22fad7d7b8b30e4a1c90624ff2f3733a06ec125f5a5f043a57", size = 75702, upload-time = "2021-11-17T15:40:48.625Z" },
+]
+
+[[package]]
+name = "markdown"
+version = "3.10"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/ab/7dd27d9d863b3376fcf23a5a13cb5d024aed1db46f963f1b5735ae43b3be/markdown-3.10.tar.gz", hash = "sha256:37062d4f2aa4b2b6b32aefb80faa300f82cc790cb949a35b8caede34f2b68c0e", size = 364931, upload-time = "2025-11-03T19:51:15.007Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/70/81/54e3ce63502cd085a0c556652a4e1b919c45a446bd1e5300e10c44c8c521/markdown-3.10-py3-none-any.whl", hash = "sha256:b5b99d6951e2e4948d939255596523444c0e677c669700b1d17aa4a8a464cb7c", size = 107678, upload-time = "2025-11-03T19:51:13.887Z" },
 ]
 
 [[package]]
