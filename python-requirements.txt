@@ -2,11 +2,7 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-# Development version of edalize until all our changes are upstream
-git+https://github.com/lowRISC/edalize.git@ot
-
-# Development version with OT-specific changes
-git+https://github.com/lowRISC/fusesoc.git@ot
+fusesoc == 2.4.3
 
 packaging
 pyyaml
