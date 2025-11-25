@@ -26,6 +26,12 @@ package prim_sha2_pkg;
                                  // set to all-1 for word-aligned input
   } sha_fifo64_t;
 
+  typedef enum logic [1:0] {
+    FifoIdle,
+    FifoLoadFromFifo,
+    FifoWait
+  } fifoctl_state_e;
+
   // one-hot encoded
   typedef enum logic [3:0] {
     SHA2_256  = 4'b0001,
@@ -113,14 +119,10 @@ package prim_sha2_pkg;
   };
 
   function automatic sha_word32_t conv_endian32(input sha_word32_t v, input logic swap);
-    sha_word32_t conv_data = {<<8{v}};
+    sha_word32_t conv_data;
+    conv_data = {<<8{v}};
     conv_endian32 = (swap) ? conv_data : v;
   endfunction : conv_endian32
-
-  function automatic sha_word64_t conv_endian64(input sha_word64_t v, input logic swap);
-    sha_word64_t conv_data = {<<8{v}};
-    conv_endian64 = (swap) ? conv_data : v;
-  endfunction : conv_endian64
 
   function automatic sha_word32_t rotr32(input sha_word32_t v, input integer amt);
     rotr32 = (v >> amt) | (v << (32-amt));

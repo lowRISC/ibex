@@ -2,8 +2,8 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-// CSR suite of sequences that do writes and reads to csrs
-// includes hw_reset, rw, bit_bash and aliasing tests for csrs, and mem_walk for uvm_mems
+// CSR suite of sequences that do writes and reads to CSRs
+// includes hw_reset, rw, bit_bash and aliasing tests for CSRs, and mem_walk for uvm_mems
 // The sequences perform csr writes and reads and follow the standard csr test suite. If external
 // checker is enabled, then the external entity is required to update the mirrored value on
 // writes. If not enabled, the sequences themselves call predict function to update the mirrored
@@ -12,10 +12,10 @@
 // register and field access policies. Also, we use csr_rd_check task instead of csr_mirror to take
 // field exclusions into account.
 //
-// Csrs to be tested is accumulated and shuffled from the supplied reg models.
-// What / how many csrs to test can be further controlled in 3 ways -
-// 1. Externally add specific csrs to test_csrs queue (highest prio)
-// 2. Set num_test_csrs test a randomly picked set of csrs from the supplied models
+// CSRs to be tested is accumulated and shuffled from the supplied reg models.
+// What / how many CSRs to test can be further controlled in 3 ways -
+// 1. Externally add specific CSRs to test_csrs queue (highest prio)
+// 2. Set num_test_csrs test a randomly picked set of CSRs from the supplied models
 // 3. Set / pass via plusarg, num_csr_chunks / test_csr_chunk
 //
 // Exclusions are to be provided using the csr_excl_item item (see class for more details).
@@ -33,7 +33,7 @@ class csr_base_seq extends uvm_reg_sequence #(uvm_sequence #(uvm_reg_item));
   // In either case, we should be able to do completely non-blocking writes and reads.
   bit external_checker = 1'b0;
 
-  // either use num_test_csrs or {test_csr_chunk, num_csr_chunks} to test slice of all csrs
+  // either use num_test_csrs or {test_csr_chunk, num_csr_chunks} to test slice of all CSRs
   int num_test_csrs = 0;
   int test_csr_chunk = 1;
   int num_csr_chunks = 1;
@@ -88,14 +88,14 @@ class csr_base_seq extends uvm_reg_sequence #(uvm_sequence #(uvm_reg_item));
     end_idx = test_csr_chunk * chunk_size;
     if (end_idx >= all_csrs.size()) end_idx = all_csrs.size() - 1;
 
-    `uvm_info(`gtn, $sformatf("Testing %0d csrs [%0d - %0d] in all supplied models.",
-                              test_csrs.size(), start_idx, end_idx), UVM_MEDIUM)
     test_csrs.delete();
     for (int i = start_idx; i <= end_idx; i++) begin
       test_csrs.push_back(all_csrs[i]);
       `uvm_info(`gtn, $sformatf("Testing CSR %0s, reset: 0x%0x.", all_csrs[i].get_full_name(),
                                 all_csrs[i].get_mirrored_value()), UVM_HIGH)
     end
+    `uvm_info(`gtn, $sformatf("Testing %0d csrs [%0d - %0d] in all supplied models.",
+                              test_csrs.size(), start_idx, end_idx), UVM_MEDIUM)
     test_csrs.shuffle();
   endfunction
 
@@ -350,78 +350,97 @@ class csr_bit_bash_seq extends csr_base_seq;
         continue;
       end
 
-      begin
-        uvm_reg_field   fields[$];
-        string          mode[`UVM_REG_DATA_WIDTH];
-        uvm_reg_data_t  dc_mask;  // dont write or read
-        uvm_reg_data_t  cmp_mask; // read but dont compare
-        int             n_bits;
-        string          field_access;
-        int             next_lsb;
-
-        n_bits = test_csrs[i].get_n_bytes() * 8;
-
-        // Let's see what kind of bits we have...
-        test_csrs[i].get_fields(fields);
-
-        next_lsb = 0;
-        dc_mask  = 0;
-        cmp_mask = 0;
-
-        foreach (fields[j]) begin
-          int lsb, w, dc, cmp;
-
-          field_access = fields[j].get_access(test_csrs[i].get_default_map());
-          cmp = (fields[j].get_compare() == UVM_NO_CHECK);
-          lsb = fields[j].get_lsb_pos();
-          w   = fields[j].get_n_bits();
-
-          // Exclude write-only fields from compare because you are not supposed to read them
-          case (field_access)
-            "WO", "WOC", "WOS", "WO1", "NOACCESS", "": cmp = 1;
-          endcase
-
-          // skip fields that are wr-excluded
-          if (is_excl(fields[j], CsrExclWrite, CsrBitBashTest)) begin
-            `uvm_info(`gtn, $sformatf("Skipping field %0s due to CsrExclWrite exclusion",
-                                      fields[j].get_full_name()), UVM_MEDIUM)
-            dc = 1;
-          end
-
-          // ignore fields that are init or rd-excluded
-          cmp = is_excl(fields[j], CsrExclInitCheck, CsrBitBashTest) ||
-                is_excl(fields[j], CsrExclWriteCheck, CsrBitBashTest) ;
-
-          // Any unused bits on the right side of the LSB?
-          while (next_lsb < lsb) mode[next_lsb++] = "RO";
-
-          repeat (w) begin
-            mode[next_lsb] = field_access;
-            dc_mask[next_lsb] = dc;
-            cmp_mask[next_lsb] = cmp;
-            next_lsb++;
-          end
-        end
-
-        // Any unused bits on the left side of the MSB?
-        while (next_lsb < `UVM_REG_DATA_WIDTH)
-          mode[next_lsb++] = "RO";
-
-        // Bash the kth bit
-        for (int k = 0; k < n_bits; k++) begin
-          // Cannot test unpredictable bit behavior
-          if (dc_mask[k]) continue;
-          bash_kth_bit(test_csrs[i], k, mode[k], cmp_mask);
-        end
-      end
+      bash_register(test_csrs[i]);
     end
 
   endtask
 
-  task bash_kth_bit(uvm_reg       rg,
-                   int            k,
-                   string         mode,
-                   uvm_reg_data_t mask);
+  // Run bit bash test on the given register.
+  //
+  // The basic idea is that we test each bit of the register with the bash_kth_bit task, checking
+  // that we can set and clear the register as expected. This task takes field exclusions and
+  // read/write masks into account when calculating how to run the bash_kth_bit task across the
+  // register.
+  virtual task bash_register(uvm_reg csr);
+    uvm_reg_field   fields[$];
+    string          mode[`UVM_REG_DATA_WIDTH];
+    uvm_reg_data_t  dc_mask;  // dont write or read
+    uvm_reg_data_t  no_cmp_mask; // read but dont compare
+    int             n_bits;
+    string          field_access;
+    int             next_lsb;
+
+    n_bits = csr.get_n_bytes() * 8;
+
+    // Let's see what kind of bits we have...
+    csr.get_fields(fields);
+
+    next_lsb    = 0;
+    dc_mask     = 0;
+    no_cmp_mask = 0;
+
+    foreach (fields[j]) begin
+      int lsb, w, dc, no_cmp;
+
+      field_access = fields[j].get_access(csr.get_default_map());
+      no_cmp = (fields[j].get_compare() == UVM_NO_CHECK);
+      lsb    = fields[j].get_lsb_pos();
+      w      = fields[j].get_n_bits();
+
+      // Exclude write-only fields from compare because you are not supposed to read them
+      case (field_access)
+        "WO", "WOC", "WOS", "WO1", "NOACCESS", "": no_cmp = 1;
+        default:                                   no_cmp = 0;
+      endcase
+
+      // skip fields that are wr-excluded
+      if (is_excl(fields[j], CsrExclWrite, CsrBitBashTest)) begin
+        `uvm_info(`gtn, $sformatf("Skipping field %0s due to CsrExclWrite exclusion",
+                                  fields[j].get_full_name()), UVM_MEDIUM)
+        dc = 1;
+      end
+
+      // ignore fields that are init or rd-excluded
+      no_cmp = is_excl(fields[j], CsrExclInitCheck, CsrBitBashTest) ||
+               is_excl(fields[j], CsrExclWriteCheck, CsrBitBashTest) ;
+
+      // Any unused bits below the LSB of this field?
+      while (next_lsb < lsb) mode[next_lsb++] = "RO";
+
+      repeat (w) begin
+        mode[next_lsb] = field_access;
+        dc_mask[next_lsb] = dc;
+        no_cmp_mask[next_lsb] = no_cmp;
+        next_lsb++;
+      end
+    end
+
+    // Any unused bits above the top field, but that we will still look at with bash_kth_bit?
+    while (next_lsb < n_bits) begin
+      mode[next_lsb++] = "RO";
+    end
+
+    // Bash the kth bit
+    for (int k = 0; k < n_bits; k++) begin
+      // Cannot test unpredictable bit behavior
+      if (dc_mask[k]) continue;
+      bash_kth_bit(csr, k, mode[k], no_cmp_mask);
+    end
+  endtask
+
+  // A bit bashing sequence for bit k of register rg.
+  //
+  // This works by writing the bit as one value and reading it back, then writing the other value
+  // and reading that back, checking that each write sets the value as expected.
+  //
+  // The mask argument gives bits that won't be compared when reading the value back. Note that this
+  // task is still worth running even if the k'th bit of mask is set: it might be that writes to
+  // that bit of the register mess up other bits/fields in the register, and this task will spot if
+  // that happens.
+  task bash_kth_bit(uvm_reg        rg,
+                    int            k,
+                    string         mode,
+                    uvm_reg_data_t mask);
 
     uvm_reg_data_t val;
     string          err_msg;
@@ -468,8 +487,10 @@ class csr_aliasing_seq extends csr_base_seq;
         continue;
       end
 
-      `uvm_info(`gtn, $sformatf("Verifying register aliasing for %0s",
-                                test_csrs[i].get_full_name()), UVM_MEDIUM)
+      `uvm_info(`gtn,
+                $sformatf("Verifying register aliasing for %0s (register %0d / %0d)",
+                          test_csrs[i].get_full_name(), i + 1, test_csrs.size()),
+                UVM_MEDIUM)
 
       `DV_CHECK_STD_RANDOMIZE_FATAL(wdata)
       wdata = get_csr_wdata_with_write_excl(test_csrs[i], wdata, CsrAliasingTest);
@@ -488,7 +509,7 @@ class csr_aliasing_seq extends csr_base_seq;
         if (is_excl(all_csrs[j], CsrExclInitCheck, CsrAliasingTest) ||
             is_excl(all_csrs[j], CsrExclWriteCheck, CsrAliasingTest)) begin
           `uvm_info(`gtn, $sformatf("Skipping register %0s due to CsrExclInit/WriteCheck exclusion",
-                                    all_csrs[j].get_full_name()), UVM_MEDIUM)
+                                    all_csrs[j].get_full_name()), UVM_HIGH)
           continue;
         end
 

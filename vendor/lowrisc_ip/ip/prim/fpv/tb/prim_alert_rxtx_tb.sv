@@ -34,6 +34,8 @@ module prim_alert_rxtx_tb
   localparam bit AsyncOn = 1'b0;
   localparam bit IsFatal = 1'b0;
 
+  localparam int unsigned SkewCycles = 1;
+
   alert_rx_t alert_rx_out, alert_rx_in;
   alert_tx_t alert_tx_out, alert_tx_in;
 
@@ -46,8 +48,9 @@ module prim_alert_rxtx_tb
   assign alert_tx_in.alert_n = alert_tx_out.alert_n ^ alert_err_ni;
 
   prim_alert_sender #(
-    .AsyncOn ( AsyncOn ),
-    .IsFatal ( IsFatal )
+    .AsyncOn    ( AsyncOn    ),
+    .SkewCycles ( SkewCycles ),
+    .IsFatal    ( IsFatal    )
   ) i_prim_alert_sender (
     .clk_i,
     .rst_ni,
