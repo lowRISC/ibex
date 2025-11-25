@@ -5,7 +5,7 @@
 
 # Parse and lower the Ibex and specification RTL. LOWRISC_SAIL_SRC is replaced in Makefile.
 read_slang --top top -DSYNTHESIS -DYOSYS \
-	-F build/fusesoc/default-vcs/lowrisc_ibex_ibex_formal_0.1.scr \
+	-F build/fusesoc/lowrisc_ibex_ibex_formal_0.1/default-vcs/lowrisc_ibex_ibex_formal_0.1.scr \
 	build/ibexspec.sv spec/stub.sv spec/spec_api.sv check/peek/alt_lsu.sv check/top.sv \
 	-I LOWRISC_SAIL_SRC/lib/sv/ --single-unit --no-proc
 setattr -set keep 1 n:\\* # Keep all named wires. FIXME: Is this still necessary?
