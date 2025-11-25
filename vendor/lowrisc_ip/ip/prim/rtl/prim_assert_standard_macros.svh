@@ -50,16 +50,24 @@
   end                                                                        \
 `endif
 
-`define ASSERT_AT_RESET(__name, __prop, __rst = `ASSERT_DEFAULT_RST)         \
-  // `__rst` is active-high for these macros, so trigger on its posedge.     \
-  // The values inside the property are sampled just before the trigger,     \
-  // which is necessary to make the evaluation of `__prop` on a reset edge   \
-  // meaningful.  On any reset posedge at the start of time, `__rst` itself  \
-  // is unknown, and at that time `__prop` is likely not initialized either, \
-  // so this assertion does not evaluate `__prop` when `__rst` is unknown.   \
-  __name: assert property (@(posedge __rst) $isunknown(__rst) || (__prop))   \
-    else begin                                                               \
-      `ASSERT_ERROR(__name)                                                  \
+`define ASSERT_AT_RESET(__name, __prop, __rst = `ASSERT_DEFAULT_RST)          \
+  // `__rst` is active-high for these macros, so trigger on its posedge.      \
+  // The values inside the property are sampled just before the trigger,      \
+  // which is necessary to make the evaluation of `__prop` on a reset edge    \
+  // meaningful.  On any reset posedge at the start of time, `__rst` itself   \
+  // is unknown, and at that time `__prop` is likely not initialized either,  \
+  // so this assertion does not evaluate `__prop` when `__rst` is unknown.    \
+  //                                                                          \
+  // This extra behaviour is not used for FPV, because Jasper doesn't support \
+  // it and instead prints the WNL038 warning. Avoid the check and warning    \
+  // message in this case.                                                    \
+`ifndef FPV_ON                                                                \
+  __name: assert property (@(posedge __rst) $isunknown(__rst) || (__prop))    \
+`else                                                                         \
+  __name: assert property (@(posedge __rst) (__prop))                         \
+`endif                                                                        \
+    else begin                                                                \
+      `ASSERT_ERROR(__name)                                                   \
     end
 
 `define ASSERT_AT_RESET_AND_FINAL(__name, __prop, __rst = `ASSERT_DEFAULT_RST) \
@@ -79,7 +87,9 @@
     end
 
 `define ASSERT_KNOWN(__name, __sig, __clk = `ASSERT_DEFAULT_CLK, __rst = `ASSERT_DEFAULT_RST) \
-  `ASSERT(__name, !$isunknown(__sig), __clk, __rst)
+`ifndef FPV_ON                                                                                \
+  `ASSERT(__name, !$isunknown(__sig), __clk, __rst)                                           \
+`endif
 
 `define COVER(__name, __prop, __clk = `ASSERT_DEFAULT_CLK, __rst = `ASSERT_DEFAULT_RST) \
   __name: cover property (@(posedge __clk) disable iff ((__rst) !== '0) (__prop));

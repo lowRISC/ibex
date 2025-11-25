@@ -160,8 +160,7 @@ class LsfLauncher(Launcher):
         # Update the shell's env vars with self.exports. Values in exports must
         # replace the values in the shell's env vars if the keys match.
         exports = os.environ.copy()
-        if self.deploy.exports:
-            exports.update(self.deploy.exports)
+        exports.update(self.deploy.exports)
 
         # Clear the magic MAKEFLAGS variable from exports if necessary. This
         # variable is used by recursive Make calls to pass variables from one
@@ -279,7 +278,7 @@ class LsfLauncher(Launcher):
         # so that we can report the status accurately.
         #
         # At this point, we could run bjobs or bhist to determine the status,
-        # but it has been found to be too slow, expecially when running 1000s
+        # but it has been found to be too slow, especially when running 1000s
         # of jobs. Plus, we have to read the job script output anyway to look
         # for those error messages.
         #

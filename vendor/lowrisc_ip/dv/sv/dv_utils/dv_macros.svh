@@ -61,7 +61,7 @@
 
 `ifndef uvm_component_new
   `define uvm_component_new \
-    function new (string name="", uvm_component parent=null); \
+    function new (string name, uvm_component parent); \
       super.new(name, parent); \
     endfunction : new
 `endif
@@ -293,19 +293,19 @@
   end
 `endif
 
-// print non-empty tlm fifos that were uncompared at end of test
+// print non-empty tlm FIFOs that were uncompared at end of test
 `ifndef DV_EOT_PRINT_TLM_FIFO_CONTENTS
-`define DV_EOT_PRINT_TLM_FIFO_CONTENTS(TYP_, FIFO_, SEV_=error, ID_=`gfn) \
-  begin \
-    while (!FIFO_.is_empty()) begin \
-      TYP_ item; \
-      void'(FIFO_.try_get(item)); \
-      `dv_``SEV_($sformatf("%s item uncompared:\n%s", `"FIFO_`", item.sprint()), ID_) \
-    end \
+`define DV_EOT_PRINT_TLM_FIFO_CONTENTS(TYP_, FIFO_, SEV_=error, ID_=`gfn)                          \
+  forever begin                                                                                    \
+    TYP_ item;                                                                                     \
+    int res = FIFO_.try_get(item);                                                                 \
+    if (res == 0) break;                                                                           \
+    if (res < 0) `dv_fatal($sformatf("Cannot read item from %s (type mismatch)", `"FIFO_`"), ID_)  \
+    `dv_``SEV_($sformatf("%s item uncompared:\n%s", `"FIFO_`", item.sprint()), ID_)                \
   end
 `endif
 
-// print non-empty tlm fifos that were uncompared at end of test
+// print non-empty tlm FIFOs that were uncompared at end of test
 `ifndef DV_EOT_PRINT_TLM_FIFO_ARR_CONTENTS
 `define DV_EOT_PRINT_TLM_FIFO_ARR_CONTENTS(TYP_, FIFO_, SEV_=error, ID_=`gfn) \
   begin \
@@ -319,7 +319,7 @@
   end
 `endif
 
-// print non-empty tlm fifos that were uncompared at end of test
+// print non-empty tlm FIFOs that were uncompared at end of test
 `ifndef DV_EOT_PRINT_Q_CONTENTS
 `define DV_EOT_PRINT_Q_CONTENTS(TYP_, Q_, SEV_=error, ID_=`gfn) \
   begin \
@@ -330,7 +330,7 @@
   end
 `endif
 
-// print non-empty tlm fifos that were uncompared at end of test
+// print non-empty tlm FIFOs that were uncompared at end of test
 `ifndef DV_EOT_PRINT_Q_ARR_CONTENTS
 `define DV_EOT_PRINT_Q_ARR_CONTENTS(TYP_, Q_, SEV_=error, ID_=`gfn) \
   begin \
@@ -387,26 +387,55 @@
   end
 `endif
 
+// Wait for one of two statements but stop early if the EXIT statement completes.
+//
+// Example usage:
+//
+//    `DV_SPINWAIT_EXIT_MULTI(do_something_time_consuming();,
+//                      do_something_else_time_consuming();,
+//                      wait(stop_now_flag);,
+//                      "The stop flag was set when we were working")
+`ifndef DV_SPINWAIT_EXIT_MULTI
+`define DV_SPINWAIT_EXIT_MULTI(WAIT_1_, WAIT_2_, EXIT_, MSG_ = "exit condition occurred!", ID_ =`gfn) \
+  `DV_SPINWAIT_EXIT(fork begin \
+                      fork \
+                        begin WAIT_1_ end \
+                        begin WAIT_2_ end \
+                      join_any \
+                      disable fork; \
+                    end join, \
+                    EXIT_, MSG_, ID_)
+`endif
+
 // macro that waits for a given delay and then reports an error
 `ifndef DV_WAIT_TIMEOUT
 `define DV_WAIT_TIMEOUT(TIMEOUT_NS_, ID_  = `gfn, ERROR_MSG_ = "timeout occurred!", REPORT_FATAL_ = 1) \
   begin \
     #(TIMEOUT_NS_ * 1ns); \
-    if (REPORT_FATAL_) `dv_fatal(ERROR_MSG_, ID_) \
-    else               `dv_error(ERROR_MSG_, ID_) \
+    if (REPORT_FATAL_) begin \
+      `dv_fatal(ERROR_MSG_, ID_) \
+    end else begin \
+      `dv_error(ERROR_MSG_, ID_) \
+    end \
   end
 `endif
 
 // Wait for a statement, but exit early after a timeout
 `ifndef DV_SPINWAIT
-`define DV_SPINWAIT(WAIT_, MSG_ = "timeout occurred!", TIMEOUT_NS_ = default_spinwait_timeout_ns, ID_ =`gfn) \
-  `DV_SPINWAIT_EXIT(WAIT_, `DV_WAIT_TIMEOUT(TIMEOUT_NS_, ID_, MSG_);, "", ID_)
+`define DV_SPINWAIT(WAIT_, MSG_ = "timeout occurred!", TIMEOUT_NS_ = default_spinwait_timeout_ns, ID_ =`gfn, REPORT_FATAL_ = 1) \
+  `DV_SPINWAIT_EXIT(WAIT_, `DV_WAIT_TIMEOUT(TIMEOUT_NS_, ID_, MSG_, REPORT_FATAL_);, "", ID_)
 `endif
 
 // a shorthand of `DV_SPINWAIT(wait(...))
 `ifndef DV_WAIT
-`define DV_WAIT(WAIT_COND_, MSG_ = "wait timeout occurred!", TIMEOUT_NS_ = default_spinwait_timeout_ns, ID_ =`gfn) \
-  `DV_SPINWAIT(wait (WAIT_COND_);, MSG_, TIMEOUT_NS_, ID_)
+`define DV_WAIT(WAIT_COND_, MSG_ = "wait timeout occurred!", TIMEOUT_NS_ = default_spinwait_timeout_ns, ID_ =`gfn, REPORT_FATAL_ = 1) \
+  `DV_SPINWAIT(wait (WAIT_COND_);, MSG_, TIMEOUT_NS_, ID_, REPORT_FATAL_)
+`endif
+
+// Wait for one of two statements, but exit early after a timeout
+`ifndef DV_WAIT_MULTI
+`define DV_WAIT_MULTI(WAIT_COND_1_, WAIT_COND_2_, MSG_ = "wait timeout occurred!", TIMEOUT_NS_ = default_spinwait_timeout_ns, ID_ =`gfn, REPORT_FATAL_ = 1) \
+  `DV_SPINWAIT_EXIT_MULTI(WAIT_COND_1_, WAIT_COND_2_, `DV_WAIT_TIMEOUT(TIMEOUT_NS_, ID_, MSG_, REPORT_FATAL_);, "", ID_)
 `endif
 
 // Control assertions in the DUT.
@@ -492,7 +521,7 @@
 // This goes in conjunction with `DV_ASSERT_CTRL() macro above, but is invoked in the entity that is
 // sending the req to turn on / off the assertions. Note that piece of code invoking this macro
 // does not have the information on the actual hierarchical path to the module or the levels - this
-// is 'wrapped' into the LABEL_ instead. DV user needs to uniquify the label sufficienly enough to
+// is 'wrapped' into the LABEL_ instead. DV user needs to uniquify the label sufficiently enough to
 // reflect it.
 //
 // LABEL_ : Name of the assertion control resource bit (string).
@@ -609,7 +638,7 @@
 //
 // If there is a need to sample / force an internal signal, then it must be done in the testbench,
 // or in an interface bound to the DUT. This macro creates a standardized signal probe function
-// meant to be invoked an interface. The generated function can then be invoked in test sequences
+// to be defined in an interface. The generated function can then be invoked in test sequences
 // or other UVM classes. The macro takes 2 arguments - name of the function and the hierarchical
 // path to the signal. If invoked in an interface which is bound to the DUT, the signal can be a
 // partial hierarchical path within the DUT. The generated function accepts 2 arguments - the first
@@ -636,7 +665,7 @@
 `endif
 
 // Usage:`OTDBG(( string ))
-// This macro has unque keyword 'OTDBG'and timestemp only.
+// This macro has unique keyword 'OTDBG' and timestamp only.
 // Use for the temporary print to distinguish from `uvm_info.
 // Do not leave this macro in other source files in the remote repo.
 `ifndef OTDBG

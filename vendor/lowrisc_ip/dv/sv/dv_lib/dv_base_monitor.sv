@@ -7,7 +7,7 @@ class dv_base_monitor #(type ITEM_T = uvm_sequence_item,
                         type RSP_ITEM_T = ITEM_T,
                         type CFG_T  = dv_base_agent_cfg,
                         type COV_T  = dv_base_agent_cov) extends uvm_monitor;
-  `uvm_component_param_utils(dv_base_monitor #(ITEM_T, CFG_T, COV_T))
+  `uvm_component_param_utils(dv_base_monitor #(ITEM_T, REQ_ITEM_T, RSP_ITEM_T, CFG_T, COV_T))
 
   CFG_T cfg;
   COV_T cov;
@@ -37,6 +37,7 @@ class dv_base_monitor #(type ITEM_T = uvm_sequence_item,
   endfunction
 
   virtual task run_phase(uvm_phase phase);
+    super.run_phase(phase);
     fork
       collect_trans();
     join
@@ -44,7 +45,7 @@ class dv_base_monitor #(type ITEM_T = uvm_sequence_item,
 
   // collect transactions forever
   virtual protected task collect_trans();
-    `uvm_fatal(`gfn, "this method is not supposed to be called directly!")
+    // Empty - to be overridden in the child class
   endtask
 
   // UVM callback which is invoked during phase sequencing.

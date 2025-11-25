@@ -19,6 +19,13 @@ class dv_base_reg extends uvm_reg;
   local string         update_err_alert_name;
   local string         storage_err_alert_name;
 
+  // This should be set if the register can be affected by a write even if that write also causes an
+  // error (because of an invalid mask, for example).
+  //
+  // TODO: This is really here as a workaround for a minor RTL bug, tracked in issue #24053. Once
+  //       that issue is closed, remove this flag again.
+  bit writes_ignore_errors;
+
   // This is used for get_alias_name
   string alias_name = "";
   // Lookup table for alias fields (used for get_field_by_name)
@@ -28,11 +35,25 @@ class dv_base_reg extends uvm_reg;
   // through the 1st/2nd (or both) writes
   semaphore            atomic_en_shadow_wr;
 
+  // A semaphore that's used to control processes that wish to write to the register (using
+  // uvm_reg::write). This was originally a workaround for a rather silly UVM bug that was only
+  // fixed in version 2020-2.0. It caused multiple processes to collide in a critical section if
+  // more than two are trying to write a register at once.
+  //
+  // Note that this semaphore controls reads as well as writes, because both operations use the
+  // m_is_busy flag.
+  //
+  // However, the lock is also useful if a process wishes to use predict(), in which case the
+  // m_is_busy flag should be false. To allow sequences to do that safely, the take_lock and
+  // release_lock methods that control this lock are not local.
+  local semaphore      access_lock;
+
   function new(string       name = "",
                int unsigned n_bits,
                int          has_coverage);
     super.new(name, n_bits, has_coverage);
     atomic_en_shadow_wr = new(1);
+    access_lock = new(1);
   endfunction : new
 
   // Create this register and its fields' IP-specific functional coverage.
@@ -64,6 +85,21 @@ class dv_base_reg extends uvm_reg;
 
   function dv_base_reg_block get_dv_base_reg_block();
     `downcast(get_dv_base_reg_block, get_parent())
+  endfunction
+
+  function uvm_reg_data_t get_predicted_mask();
+    uvm_reg_data_t mask = 0;
+    dv_base_reg_field fields_q[$];
+    this.get_dv_base_reg_fields(fields_q);
+
+    foreach (fields_q[i]) begin
+      if (fields_q[i].has_prediction) begin
+        for (int j = 0; j < fields_q[i].get_n_bits(); j++)
+          mask[j+fields_q[i].get_lsb_pos()] = 1'b1;
+      end
+    end
+
+    return mask;
   endfunction
 
   // get_n_bits will return number of all the bits in the csr
@@ -135,7 +171,7 @@ class dv_base_reg extends uvm_reg;
     end
   endfunction
 
-  // Wen reg/fld can lock specific groups of fields' write acces. The lockable fields are called
+  // Wen reg/fld can lock specific groups of fields' write access. The lockable fields are called
   // lockable flds.
   function void add_lockable_reg_or_fld(uvm_object lockable_obj);
     dv_base_reg_field wen_fld;
@@ -321,31 +357,64 @@ class dv_base_reg extends uvm_reg;
   // access policy. For register write via csr_wr(), this function is included in post_write().
   // For register write via tl_access(), user will need to call this function manually.
   virtual function void lock_lockable_flds(uvm_reg_data_t val, uvm_predict_e kind);
-    if (is_wen_reg()) begin
-      `uvm_info(`gfn, $sformatf("lock_lockable_flds %d val", val), UVM_LOW);
-      foreach (m_fields[i]) begin
-        dv_base_reg_field fld;
-        `downcast(fld, m_fields[i])
-        if (fld.is_wen_fld()) begin
-          uvm_reg_data_t field_val = val & fld.get_field_mask();
-          string field_access = fld.get_access();
-          case (field_access)
-            // discussed in issue #1922: enable register is standarized to W0C or RO (if HW has
-            // write access).
-            "W0C": begin
-              // This is the regular behavior with W0C access policy enabled (i.e., only
-              // clearing is possible).
-              if (kind == UVM_PREDICT_WRITE && field_val == 1'b0) begin
-                fld.set_lockable_flds_access(1);
-              // In this case we are using direct prediction where the access policy is not
-              // applied. I.e., a regwen bit that has been set to 0 can be set to 1 again.
-              end else if (kind == UVM_PREDICT_DIRECT) begin
-                fld.set_lockable_flds_access((~field_val) & fld.get_field_mask());
-              end
-            end
-            "RO": ; // if RO, it's updated by design, need to predict in scb
-            default:`uvm_fatal(`gfn, $sformatf("lock register invalid access %s", field_access))
+    if (!is_wen_reg()) return;
+
+    foreach (m_fields[i]) begin
+      dv_base_reg_field fld;
+      `downcast(fld, m_fields[i])
+
+      if (fld.is_wen_fld()) begin
+        uvm_reg_data_t field_val = val & fld.get_field_mask();
+        string field_access = fld.get_access();
+
+        // Check whether this field of the regwen is writeable at all (the regwen might not be
+        // writeable by software, in which case we can ignore it)
+        if (field_access == "RO")
+          continue;
+
+        if (fld.get_mubi_width() == 0) begin
+          // This field is not encoded with a mubi value, and the only access type that we support
+          // is W0C. Check that it has been set up properly.
+          if (field_access != "W0C") begin
+            `uvm_fatal(`gfn, $sformatf("Field has access %0s (not W0C) and is not a mubi type.",
+                                       field_access))
+          end
+
+          // Because this field is W0C, software is allowed to clear it (disabling the write-enable)
+          // by writing a zero. Writing any other value will have no effect.
+          //
+          // A UVM_PREDICT_DIRECT prediction is a way for DV code to directly inform the RAL of a
+          // write coming through (not necessarily from software). This works by setting each bit if
+          // that bit of the write value is zero.
+          if (kind == UVM_PREDICT_WRITE && field_val == 1'b0) begin
+            fld.set_lockable_flds_access(1);
+          end else if (kind == UVM_PREDICT_DIRECT) begin
+            fld.set_lockable_flds_access((~field_val) & fld.get_field_mask());
+          end
+        end else begin
+          // This field is encoded as a mubi value of the given width.
+          uvm_reg_data_t encoded_true;
+
+          // Mubi fields only support the RW access value in UVM (because the bitwise operation to
+          // clear a mubi will set some bits and clear others!)
+          if (field_access != "RW") begin
+            `uvm_fatal(`gfn, $sformatf("Field has access %0s (not RW) but is a mubi type.",
+                                       field_access))
+          end
+
+          case (fld.get_mubi_width())
+            4: encoded_true = prim_mubi_pkg::MuBi4True;
+            8: encoded_true = prim_mubi_pkg::MuBi8True;
+            16: encoded_true = prim_mubi_pkg::MuBi16True;
+            32: encoded_true = prim_mubi_pkg::MuBi32True;
+            default: `uvm_fatal(`gfn, $sformatf("Unknown mubi width: %0d", fld.get_mubi_width()))
           endcase
+
+          // Process the write as having locked the field if the value being written is anything
+          // other than encoded_true. A write of encoded_true is a nop.
+          if (field_val != encoded_true) begin
+            fld.set_lockable_flds_access(1);
+          end
         end
       end
     end
@@ -370,7 +439,9 @@ class dv_base_reg extends uvm_reg;
         backdoor_write_shadow_val = 1;
       end
     end
+    take_lock();
     super.poke(status, value, kind, parent, extension, fname, lineno);
+    release_lock();
     backdoor_write_shadow_val = 0;
   endtask
 
@@ -388,9 +459,9 @@ class dv_base_reg extends uvm_reg;
       shadow_update_err = 0;
       shadow_wr_staged  = 0;
       shadow_fatal_lock = 0;
-      // in case reset is issued during shadowed writes
-      void'(atomic_en_shadow_wr.try_get(1));
-      atomic_en_shadow_wr.put(1);
+      // Make a new copy of the shadow write semaphore, so that we don't need a shadowed write
+      // operation to complete if a reset happens in the middle of one.
+      atomic_en_shadow_wr = new(1);
     end
   endfunction
 
@@ -438,5 +509,83 @@ class dv_base_reg extends uvm_reg;
     end
     return retval;
   endfunction
+
+  // Take the register's lock (see the documentation above access_lock for more details)
+  //
+  // This is mostly used in the wrappers around read, write etc. (working around a UVM bug). But the
+  // task is not local, because another class might want to use the predict method, which musn't
+  // overlap with the m_is_busy flag in uvm_reg. Taking this lock ensures it won't.
+  task take_lock();
+    access_lock.get();
+  endtask
+
+  // Release the register's lock (see the documentation above access_lock for more details). This
+  // should only be called by a process that has already taken the lock with take_lock.
+  function void release_lock();
+    access_lock.put();
+  endfunction
+
+  // A thin wrapper around uvm_reg::write that takes access_lock. See notes above access_lock that
+  // explain why it's needed.
+  task write(output uvm_status_e      status,
+             input  uvm_reg_data_t    value,
+             input  uvm_path_e        path = UVM_DEFAULT_PATH,
+             input  uvm_reg_map       map = null,
+             input  uvm_sequence_base parent = null,
+             input  int               prior = -1,
+             input  uvm_object        extension = null,
+             input  string            fname = "",
+             input  int               lineno = 0);
+    take_lock();
+    super.write(status, value, path, map, parent, prior, extension, fname, lineno);
+    release_lock();
+  endtask
+
+  // A thin wrapper around uvm_reg::read that takes access_lock. See notes above access_lock that
+  // explain why it's needed.
+  task read(output uvm_status_e      status,
+            output uvm_reg_data_t    value,
+            input  uvm_path_e        path = UVM_DEFAULT_PATH,
+            input  uvm_reg_map       map = null,
+            input  uvm_sequence_base parent = null,
+            input  int               prior = -1,
+            input  uvm_object        extension = null,
+            input  string            fname = "",
+            input  int               lineno = 0);
+    take_lock();
+    super.read(status, value, path, map, parent, prior, extension, fname, lineno);
+    release_lock();
+  endtask
+
+  // A thin wrapper around uvm_reg::peek that takes access_lock. See notes above access_lock that
+  // explain why it's needed.
+  task peek(output uvm_status_e      status,
+            output uvm_reg_data_t    value,
+            input  string            kind = "",
+            input  uvm_sequence_base parent = null,
+            input  uvm_object        extension = null,
+            input  string            fname = "",
+            input  int               lineno = 0);
+    take_lock();
+    super.peek(status, value, kind, parent, extension, fname, lineno);
+    release_lock();
+  endtask
+
+  // A thin wrapper around uvm_reg::mirror that takes access_lock. See notes above access_lock that
+  // explain why it's needed.
+  task mirror(output uvm_status_e      status,
+              input uvm_check_e        check = UVM_NO_CHECK,
+              input uvm_path_e         path = UVM_DEFAULT_PATH,
+              input uvm_reg_map        map = null,
+              input uvm_sequence_base  parent = null,
+              input int                prior = -1,
+              input  uvm_object        extension = null,
+              input string             fname = "",
+              input int                lineno = 0);
+    take_lock();
+    super.mirror(status, check, path, map, parent, prior, extension, fname, lineno);
+    release_lock();
+  endtask
+
 
 endclass

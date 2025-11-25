@@ -137,7 +137,7 @@ class Deploy():
         """
         self._extract_attrs(self.sim_cfg.__dict__)
 
-        # Enable GUI mode.
+        # Enable GUI mode, also when GUI debug mode has been invoked.
         self.gui = self.sim_cfg.gui
 
         # Output directory where the artifacts go (used by the launcher).
@@ -188,7 +188,7 @@ class Deploy():
         """Recursively search and replace substitution variables.
 
         First pass: search within self dict. We ignore errors since some
-        substitions may be available in the second pass. Second pass: search
+        substitutions may be available in the second pass. Second pass: search
         the entire sim_cfg object."""
 
         self.__dict__ = find_and_substitute_wildcards(self.__dict__,
@@ -242,7 +242,7 @@ class Deploy():
         the final resolved 'cmd' & the exports. The 'name' field will be unique
         to 'item' and 'self', so we take that out of the comparison.
         """
-        if type(self) != type(item):
+        if not isinstance(item, Deploy):
             return False
 
         # Check if the cmd field is identical.
@@ -566,7 +566,7 @@ class RunTest(Deploy):
         # first. If --fixed-seed <val> is also passed, the subsequent tests
         # (once the custom seeds are consumed) will be run with the fixed seed.
         if not RunTest.seeds:
-            if RunTest.fixed_seed:
+            if RunTest.fixed_seed is not None:
                 return RunTest.fixed_seed
             for i in range(1000):
                 seed = random.getrandbits(256)
