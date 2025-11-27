@@ -172,21 +172,23 @@ module ibex_if_stage import ibex_pkg::*; #(
   ibex_pkg::pc_sel_e pc_mux_internal;
 
   logic        [7:0] unused_boot_addr;
-  logic        [7:0] unused_csr_mtvec;
+  logic        [5:0] unused_csr_mtvec;
   logic              unused_exc_cause;
 
   assign unused_boot_addr = boot_addr_i[7:0];
-  assign unused_csr_mtvec = csr_mtvec_i[7:0];
+  assign unused_csr_mtvec = csr_mtvec_i[7:2];
 
   assign unused_exc_cause = |{exc_cause.irq_ext, exc_cause.irq_int};
 
   // exception PC selection mux
   always_comb begin : exc_pc_mux
-    irq_vec = exc_cause.lower_cause;
-
-    if (exc_cause.irq_int) begin
+    // mtvec is vectored mode
+    if (csr_mtvec_i[1:0] == 2'b01) begin
       // All internal interrupts go to the NMI vector
-      irq_vec = ExcCauseIrqNm.lower_cause;
+      irq_vec = exc_cause.irq_int ? ExcCauseIrqNm.lower_cause : exc_cause.lower_cause;
+    end else begin
+      // mtvec is direct mode, so irq_vec is always 0
+      irq_vec = 5'b00000;
     end
 
     unique case (exc_pc_mux_i)
