@@ -9,6 +9,11 @@
  * This tracer takes execution information from the RISC-V Verification Interface (RVFI) and
  * produces a text file with a human-readable trace.
  *
+ * Two output formats are supported: a custom ad-hoc format originally created for Ibex,
+ * and RVVI-TEXT: https://github.com/riscv-verification/RVVI/blob/master/RVVI-TEXT/README.md
+ * The format can be selected with the "ibex_tracer_format" plusarg, either
+ * "+ibex_tracer_format=ibex" (default) or "+ibex_tracer_format=rvvi_text".
+ *
  * All traced instructions are written to a log file. By default, the log file is named
  * trace_core_<HARTID>.log, with <HARTID> being the 8 digit hart ID of the core being traced.
  *
@@ -20,7 +25,7 @@
  * This behaviour is controlled by the plusarg "ibex_tracer_enable". Use "ibex_tracer_enable=0" to
  * disable the tracer.
  *
- * The trace contains six columns, separated by tabs:
+ * The "ibex" trace format contains six columns, separated by tabs:
  * - The simulation time
  * - The clock cycle count since reset
  * - The program counter (PC)
@@ -73,10 +78,8 @@ module ibex_tracer (
   // these signals to unused_* signals marks them explicitly as unused, an annotation picked up by
   // linters, including Verilator lint.
   logic [63:0] unused_rvfi_order = rvfi_order;
-  logic        unused_rvfi_trap = rvfi_trap;
   logic        unused_rvfi_halt = rvfi_halt;
   logic        unused_rvfi_intr = rvfi_intr;
-  logic [ 1:0] unused_rvfi_mode = rvfi_mode;
   logic [ 1:0] unused_rvfi_ixl = rvfi_ixl;
 
   import ibex_tracer_pkg::*;
@@ -96,7 +99,13 @@ module ibex_tracer (
   localparam logic [4:0] MEM = (1 << 4);
   logic [4:0] data_accessed;
 
-  logic trace_log_enable;
+  bit trace_log_enable;
+
+  typedef enum { FormatIbex, FormatRvviText } format_e;
+
+  format_e trace_format;
+  string trace_format_str;
+
   initial begin
     if ($value$plusargs("ibex_tracer_enable=%b", trace_log_enable)) begin
       if (trace_log_enable == 1'b0) begin
@@ -105,9 +114,19 @@ module ibex_tracer (
     end else begin
       trace_log_enable = 1'b1;
     end
+
+    if ($value$plusargs("ibex_tracer_format=%s", trace_format_str)) begin
+      case (trace_format_str)
+        "ibex": trace_format = FormatIbex;
+        "rvvi_text": trace_format = FormatRvviText;
+        default: $fatal(1, "Invalid ibex_tracer_format plusarg: '%s'; valid values are 'ibex' or 'rvvi_text'", trace_format_str);
+      endcase
+    end else begin
+      trace_format = FormatIbex;
+    end
   end
 
-  function automatic void printbuffer_dumpline(int fh);
+  function automatic void printbuffer_dumpline_ibex(int fh);
     string rvfi_insn_str;
 
     // Write compressed instructions as four hex digits (16 bit word), and
@@ -147,6 +166,83 @@ module ibex_tracer (
     $fwrite(fh, "\n");
   endfunction
 
+
+  function automatic void printbuffer_dumpline_rvvi_text(int fh);
+    string rvfi_insn_str;
+
+    // Write compressed instructions as four hex digits (16 bit word), and
+    // uncompressed ones as 8 hex digits (32 bit words).
+    if (insn_is_compressed) begin
+      rvfi_insn_str = $sformatf("%x", rvfi_insn[15:0]);
+    end else begin
+      rvfi_insn_str = $sformatf("%x", rvfi_insn);
+    end
+
+    // Example output:
+
+    // '     293' MODE 3 RET 001003ec 0c050513 'addi	x10,x10,192' \
+    //                     X 10  001004a8
+    // '     295' MODE 3 RET 001003f0     3145 'c.jal	100090' \
+    //                     X  1  001003f2
+    // '     296' MODE 3 RET 00100090 00020737 'lui	x14,0x20' \
+    //                     X 14  00020000
+    // '     298' MODE 3 RET 00100094 00054783 'lbu	x15,0(x10)' \
+    //                     X 15  00000048 \
+    //                     LOAD  001004a8 00000048
+    // '     300' MODE 3 RET 00100098     e399 'c.bnez	x15,10009e'
+    // '     302' MODE 3 RET 0010009e     0505 'c.addi	x10,1' \
+    //                     X 10  001004a9
+
+    // Write the cycle count as a comment and the privilege.
+    // TODO: Rename MODE to PRIV. See https://github.com/riscv-verification/RVVI/issues/23
+    // TODO: Use `CYCLE` and/or `TIME` elements instead of a comment. See https://github.com/riscv-verification/RVVI/issues/26
+    $fwrite(fh, "'%8d' MODE %d", cycle, rvfi_mode);
+
+    // Trap or retire.
+    //
+    // The RVVI 'trap' and 'intr' signal names are very confusing.
+    //
+    // * 'trap': Actually only applies to exceptions. It is set on the
+    //           instruction that causes an exception.
+    // * 'intr': Actually applies to all traps (interrupts and exceptions).
+    //           It is set on the first instruction in the interrupt handler.
+    //
+    // RVVI-TEXT sensibly wants us to report traps on the instruction that caused
+    // them (or I guess no instruction for interrupts). However neither of
+    // the above signals actually do that. 'trap' at least gives us exceptions.
+    //
+    if (rvfi_trap) begin
+      $fwrite(fh, " TRAP");
+    end else begin
+      $fwrite(fh, " RET");
+    end
+
+    // PC, opcode and disassembly.
+    $fwrite(fh, " %x %8s '%s'",
+            rvfi_pc_rdata, rvfi_insn_str, decoded_str);
+
+    // Register writes. For some reason writes to x0 are reported so filter those out too.
+    if ((data_accessed & RD) != 0 && rvfi_rd_addr != 0) begin
+      $fwrite(fh, " \\\n                    X %2d  %x", rvfi_rd_addr, rvfi_rd_wdata);
+    end
+
+    // TODO: CSR writes.
+    // See https://github.com/lowRISC/ibex/issues/2335
+
+    // Memory accesses.
+    // TODO: This is not specified by RVVI-TEXT yet.
+    // See https://github.com/riscv-verification/RVVI/issues/22
+    if ((data_accessed & MEM) != 0) begin
+      if (rvfi_mem_wmask != '0) begin
+        $fwrite(fh, " \\\n                    STORE %x %x", rvfi_mem_addr, rvfi_mem_wdata);
+      end
+      if (rvfi_mem_rmask != '0) begin
+        $fwrite(fh, " \\\n                    LOAD  %x %x", rvfi_mem_addr, rvfi_mem_rdata);
+      end
+    end
+
+    $fwrite(fh, "\n");
+  endfunction
 
   // Format register address with "x" prefix, left-aligned to a fixed width of 3 characters.
   function automatic string reg_addr_to_str(input logic [4:0] addr);
@@ -758,10 +854,16 @@ module ibex_tracer (
         $display("%m: Writing execution trace to %s", file_name);
         fh = $fopen(file_name, "w");
         file_handle <= fh;
-        $fwrite(fh, "Time\tCycle\tPC\tInsn\tDecoded instruction\tRegister and memory contents\n");
+        case (trace_format)
+          FormatIbex: $fwrite(fh, "Time\tCycle\tPC\tInsn\tDecoded instruction\tRegister and memory contents\n");
+          FormatRvviText: $fwrite(fh, "VERSION 0 1 VENDOR Ibex 1 0 PARAMS 4 ILEN 32 XLEN 32 NHART 1 RETIRE 1\nHART %d\n", hart_id_i);
+        endcase
       end
 
-      printbuffer_dumpline(fh);
+      case (trace_format)
+        FormatIbex: printbuffer_dumpline_ibex(fh);
+        FormatRvviText: printbuffer_dumpline_rvvi_text(fh);
+      endcase
     end
   end
 
