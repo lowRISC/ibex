@@ -11,11 +11,11 @@ filesets:
       - lowrisc:prim:ram_1p
       - lowrisc:prim:ram_2p
     files:
-      - ./rtl/ram_1p.sv
-      - ./rtl/ram_2p.sv
-      - ./rtl/bus.sv
-      - ./rtl/sim/simulator_ctrl.sv
-      - ./rtl/timer.sv
+      - rtl/ram_1p.sv
+      - rtl/ram_2p.sv
+      - rtl/bus.sv
+      - rtl/sim/simulator_ctrl.sv
+      - rtl/timer.sv
     file_type: systemVerilogSource
 
 targets:
