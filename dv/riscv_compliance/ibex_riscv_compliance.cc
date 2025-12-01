@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
                  VerilatorSimCtrlFlags::ResetPolarityNegative);
 
   MemArea ram(
-      "TOP.ibex_riscv_compliance.u_ram.u_ram.gen_generic.u_impl_generic",
+      "TOP.ibex_riscv_compliance.u_ram.u_ram",
       64 * 1024 / 4, 4);
 
   memutil.RegisterMemoryArea("ram", 0x0, &ram);
