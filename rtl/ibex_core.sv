@@ -1630,7 +1630,7 @@ module ibex_core import ibex_pkg::*; #(
             rvfi_stage_rs3_addr[i]             <= rvfi_rs3_addr_d;
             rvfi_stage_pc_rdata[i]             <= pc_id;
             rvfi_stage_pc_wdata[i]             <= pc_set ? branch_target_ex : pc_if;
-            rvfi_stage_mem_rmask[i]            <= rvfi_mem_mask_int;
+            rvfi_stage_mem_rmask[i]            <= data_we_o ? 4'b0000 : rvfi_mem_mask_int;
             rvfi_stage_mem_wmask[i]            <= data_we_o ? rvfi_mem_mask_int : 4'b0000;
             rvfi_stage_rs1_rdata[i]            <= rvfi_rs1_data_d;
             rvfi_stage_rs2_rdata[i]            <= rvfi_rs2_data_d;
