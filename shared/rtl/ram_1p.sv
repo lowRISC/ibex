@@ -58,12 +58,14 @@ module ram_1p #(
       .MemInitFile(MemInitFile)
     ) u_ram (
       .clk_i     (clk_i),
-      .cfg_i     ('0),
+      .rst_ni    (rst_ni),
       .req_i     (req_i),
       .write_i   (we_i),
-      .wmask_i   (wmask),
       .addr_i    (addr_idx),
       .wdata_i   (wdata_i),
-      .rdata_o   (rdata_o)
+      .wmask_i   (wmask),
+      .rdata_o   (rdata_o),
+      .cfg_i     ('0),
+      .cfg_rsp_o ()
     );
 endmodule

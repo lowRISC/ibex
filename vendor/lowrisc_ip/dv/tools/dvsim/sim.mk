@@ -84,7 +84,11 @@ ifneq (${sw_images},)
 		flags=(`echo $$sw_image | cut -d: -f 4- --output-delimiter " "`); \
 		bazel_label="`echo $$sw_image | cut -d: -f 1-2`"; \
 		if [[ $${index} != 4 && $${index} != 5 ]]; then \
-			bazel_label="$${bazel_label}_$${sw_build_device}"; \
+			if [[ $${flags[@]} =~ "silicon_creator" ]]; then \
+				bazel_label="$${bazel_label}_silicon_creator"; \
+			else \
+				bazel_label="$${bazel_label}_$${sw_build_device}"; \
+			fi; \
 			bazel_cquery="labels(data, $${bazel_label}) union labels(srcs, $${bazel_label})"; \
 		else \
 			bazel_cquery="$${bazel_label}"; \
@@ -97,15 +101,10 @@ ifneq (${sw_images},)
 			echo "Building SW image \"$${bazel_label}\"."; \
 			bazel_airgapped_opts=""; \
 			bazel_opts="${sw_build_opts} --define DISABLE_VERILATOR_BUILD=true"; \
-			bazel_opts+=" --//hw/ip/otp_ctrl/data:img_seed=${seed}"; \
-			if [[ "${build_seed}" != "None" ]]; then \
-				bazel_opts+=" --//hw/ip/otp_ctrl/data:lc_seed=${build_seed}"; \
-				bazel_opts+=" --//hw/ip/otp_ctrl/data:otp_seed=${build_seed}"; \
-			fi; \
 			if [[ -n $${BAZEL_OTP_DATA_PERM_FLAG} ]]; then \
-				bazel_opts+=" --//hw/ip/otp_ctrl/data:data_perm=$${BAZEL_OTP_DATA_PERM_FLAG}"; \
+				bazel_opts+=" --//util/design/data:data_perm=$${BAZEL_OTP_DATA_PERM_FLAG}"; \
 			fi; \
-			if [[ -z $${BAZEL_PYTHON_WHEELS_REPO} ]]; then \
+			if [[ $${OT_AIRGAPPED} != true ]]; then \
 				echo "Building \"$${bazel_label}\" on network connected machine."; \
 				bazel_cmd="./bazelisk.sh"; \
 			else \
@@ -122,10 +121,8 @@ ifneq (${sw_images},)
 				--ui_event_filters=-info \
 				--noshow_progress \
 				--output=label_kind | cut -f1 -d' '); \
-			if [[ $${kind} == "opentitan_test" \
-					|| $${bazel_label} == "//sw/device/lib/testing/test_rom:test_rom_sim_dv" \
-					|| $${bazel_label} == "//sw/device/silicon_creator/rom:mask_rom_sim_dv" ]]; then \
-				for artifact in $$($${bazel_cmd} cquery $${bazel_airgapped_opts} \
+			if [[ $${kind} == "opentitan_test" ]]; then \
+				for artifact in $$($${bazel_cmd} cquery $${bazel_airgapped_opts} $${bazel_opts} \
 					$${bazel_label} \
 					--ui_event_filters=-info \
 					--noshow_progress \
@@ -139,8 +136,23 @@ ifneq (${sw_images},)
 								$${run_dir}/$$(basename -s .bin $${artifact}).elf; \
 						fi; \
 				done; \
+			elif [[ $${kind} == "alias" || $${kind} == "opentitan_binary" ]]; then \
+				for artifact in $$($${bazel_cmd} cquery $${bazel_airgapped_opts} $${bazel_opts} \
+					$${bazel_label} \
+					--ui_event_filters=-info \
+					--noshow_progress \
+					--output=starlark \
+					`# An opentitan_binary rule has all of its needed files in its runfiles.` \
+					--starlark:expr='"\n".join([f.path for f in target.files.to_list()])'); do \
+						cp -f $${artifact} $${run_dir}/$$(basename $${artifact}); \
+						if [[ $$artifact == *.bin && \
+							-f "$$(echo $${artifact} | cut -d. -f 1).elf" ]]; then \
+							cp -f "$$(echo $${artifact} | cut -d. -f 1).elf" \
+								$${run_dir}/$$(basename -s .bin $${artifact}).elf; \
+						fi; \
+				done; \
 			else \
-				for dep in $$($${bazel_cmd} cquery $${bazel_airgapped_opts} \
+				for dep in $$($${bazel_cmd} cquery $${bazel_airgapped_opts} $${bazel_opts} \
 					$${bazel_cquery} \
 					--ui_event_filters=-info \
 					--noshow_progress \
@@ -148,9 +160,9 @@ ifneq (${sw_images},)
 					`# Bazel 6 cquery outputs repository targets in canonical format (@//blabla) whereas bazel 5 does not, ` \
 					`# so we use a custom starlark printer to remove in leading @ when needed.` \
 					--starlark:expr='str(target.label)[1:] if str(target.label).startswith("@//") else target.label'); do \
-					if [[ $$dep == //hw/ip/otp_ctrl/data* ]] || \
+					if [[ $$dep == //hw/top_*/ip_autogen/otp_ctrl/data* ]] || \
 					  ([[ $$dep != //hw* ]] && [[ $$dep != //util* ]] && [[ $$dep != //sw/host* ]]); then \
-						for artifact in $$($${bazel_cmd} cquery $${bazel_airgapped_opts} $${dep} \
+						for artifact in $$($${bazel_cmd} cquery $${bazel_airgapped_opts} $${bazel_opts} $${dep} \
 							--ui_event_filters=-info \
 							--noshow_progress \
 							--output=starlark \

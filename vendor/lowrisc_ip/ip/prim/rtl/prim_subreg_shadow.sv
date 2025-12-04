@@ -2,7 +2,7 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
-// Shadowed register slice conforming to Comportibility guide.
+// Shadowed register slice conforming to Comportability guide.
 
 `include "prim_assert.sv"
 
@@ -77,7 +77,8 @@ module prim_subreg_shadow
 
   prim_subreg_arb #(
     .DW       ( DW       ),
-    .SwAccess ( SwAccess )
+    .SwAccess ( SwAccess ),
+    .Mubi     ( Mubi     )
   ) wr_en_data_arb (
     .we      ( we      ),
     .wd      ( wd      ),
@@ -115,7 +116,8 @@ module prim_subreg_shadow
   prim_subreg #(
     .DW       ( DW             ),
     .SwAccess ( StagedSwAccess ),
-    .RESVAL   ( ~RESVAL        )
+    .RESVAL   ( ~RESVAL        ),
+    .Mubi     ( Mubi           )
   ) staged_reg (
     .clk_i    ( clk_i     ),
     .rst_ni   ( rst_ni    ),
@@ -140,7 +142,8 @@ module prim_subreg_shadow
   prim_subreg #(
     .DW       ( DW               ),
     .SwAccess ( InvertedSwAccess ),
-    .RESVAL   ( ~RESVAL          )
+    .RESVAL   ( ~RESVAL          ),
+    .Mubi     ( Mubi             )
   ) shadow_reg (
     .clk_i    ( clk_i           ),
     .rst_ni   ( rst_shadowed_ni ),
@@ -162,7 +165,8 @@ module prim_subreg_shadow
   prim_subreg #(
     .DW       ( DW       ),
     .SwAccess ( SwAccess ),
-    .RESVAL   ( RESVAL   )
+    .RESVAL   ( RESVAL   ),
+    .Mubi     ( Mubi     )
   ) committed_reg (
     .clk_i    ( clk_i        ),
     .rst_ni   ( rst_ni       ),
@@ -187,10 +191,5 @@ module prim_subreg_shadow
   assign qe = committed_qe;
   assign q  = committed_q;
   assign qs = committed_qs;
-
-  // prim_subreg_shadow does not support multi-bit software access yet
-  `ASSERT_NEVER(MubiIsNotYetSupported_A, Mubi)
-  logic unused_mubi;
-  assign unused_mubi = Mubi;
 
 endmodule
