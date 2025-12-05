@@ -809,5 +809,6 @@ module ibex_compressed_decoder #(
       !$isunknown({instr_i[12], instr_i[6:5]}))
   `ASSERT(IbexC2Known1, (valid_i && (instr_i[1:0] == 2'b10)) |->
       !$isunknown(instr_i[15:13]))
+  `ASSERT(IbexPushPopFSMStable, !valid_i |-> cm_state_d == cm_state_q)
 
 endmodule
