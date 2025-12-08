@@ -746,7 +746,7 @@ module ibex_top import ibex_pkg::*; #(
 
   end else begin : gen_norams
 
-    prim_ram_1p_pkg::ram_1p_cfg_t unused_ram_cfg;
+    logic unused_ram_cfg;
     logic unused_ram_inputs;
 
     assign unused_ram_cfg    = |{ram_cfg_icache_tag_i, ram_cfg_icache_data_i};
