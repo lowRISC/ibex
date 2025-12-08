@@ -15,8 +15,10 @@ filesets:
       - lowrisc:prim:secded
       - lowrisc:prim:assert
       - lowrisc:prim:ram_1p_pkg
-      - lowrisc:prim_generic:buf
-      - lowrisc:prim_generic:clock_gating
+      # - lowrisc:prim_generic:buf
+      # - lowrisc:prim_generic:clock_gating
+      - "fileset_partner ? (partner:prim_generic:all)"
+      - "!fileset_partner ? (lowrisc:prim_generic:all)"
     files:
       - ../../rtl/ibex_register_file_ff.sv # generic FF-based
       - ../../rtl/ibex_register_file_fpga.sv # FPGA
