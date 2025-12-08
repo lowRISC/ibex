@@ -14,8 +14,8 @@ dependencies = [
   "hjson == 3.1.0",
   "mako == 1.1.6",
   "pyyaml == 6.0.2",
-  "edalize @ git+https://github.com/lowRISC/edalize.git@v0.4.0",
-  "fusesoc @ git+https://github.com/lowRISC/fusesoc.git@ot-0.4",
+  "edalize == 0.6.1",
+  "fusesoc == 2.4.3",
   "psutil>=7.0.0",
 ]
 
