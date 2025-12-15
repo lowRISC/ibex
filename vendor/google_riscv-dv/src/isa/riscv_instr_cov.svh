@@ -408,6 +408,38 @@
         // c.j imm
         get_val(operands[0], imm);
       end
+      CU_FORMAT: begin
+        rs1 = get_gpr(operands[0]);
+        rs1_value = get_gpr_state(operands[0]);
+      end
+      CLB_FORMAT, CLH_FORMAT: begin
+        get_val(operands[2], imm);
+        rs1 = get_gpr(operands[1]);
+        rs1_value = get_gpr_state(operands[1]);
+      end
+      CSB_FORMAT, CSH_FORMAT: begin
+        rs2 = get_gpr(operands[0]);
+        rs2_value = get_gpr_state(operands[0]);
+        get_val(operands[2], imm);
+        rs1 = get_gpr(operands[1]);
+        rs1_value = get_gpr_state(operands[1]);
+      end
+      CMMV_FORMAT: begin
+        // cm.mva01s rs1, rs2
+        // cm.mvsa01 r1s, r2s
+        rs1 = get_gpr(operands[0]);
+        rs1_value = get_gpr_state(operands[0]);
+        rs2 = get_gpr(operands[1]);
+        rs2_value = get_gpr_state(operands[1]);
+      end
+      CMPP_FORMAT: begin
+        // cm.push {reg_list}, -stack_adj
+        // cm.pop {reg_list}, stack_adj
+        // cm.popret {reg_list}, stack_adj
+        // cm.popretz {reg_list}, stack_adj
+        get_val(operands[0], rlist);
+        get_val(operands[1], stack_adj);
+      end
       default: `uvm_fatal(`gfn, $sformatf("Unsupported format %0s", format))
     endcase
   endfunction : update_src_regs

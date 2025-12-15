@@ -38,6 +38,8 @@
 `define SAMPLE_ZBB(cg, val) `SAMPLE_W_TYPE(cg, val, riscv_zbb_instr)
 `define SAMPLE_ZBC(cg, val) `SAMPLE_W_TYPE(cg, val, riscv_zbc_instr)
 `define SAMPLE_ZBS(cg, val) `SAMPLE_W_TYPE(cg, val, riscv_zbs_instr)
+`define SAMPLE_ZCB(cg, val) `SAMPLE_W_TYPE(cg, val, riscv_zcb_instr)
+`define SAMPLE_ZCMP(cg, val) `SAMPLE_W_TYPE(cg, val, riscv_zcmp_instr)
 
 `define INSTR_CG_BEGIN(INSTR_NAME, INSTR_CLASS = riscv_instr) \
   covergroup ``INSTR_NAME``_cg with function sample(INSTR_CLASS instr);
@@ -432,6 +434,20 @@
     cp_rs2         : coverpoint instr.rs2; \
     cp_rd          : coverpoint instr.rd;  \
     `DV(cp_gpr_hazard : coverpoint instr.gpr_hazard;) \
+
+`define ZCB_I_INSTR_CG_BEGIN(INSTR_NAME) \
+  `INSTR_CG_BEGIN(INSTR_NAME) \
+    cp_rs1      : coverpoint instr.rs1 { \
+      bins gpr[] = {S0, S1, A0, A1, A2, A3, A4, A5}; \
+    } \
+    `DV(cp_gpr_hazard : coverpoint instr.gpr_hazard;)
+
+`define ZCMP_I_INSTR_CG_BEGIN(INSTR_NAME) \
+  `INSTR_CG_BEGIN(INSTR_NAME) \
+    cp_rs1      : coverpoint instr.rs1 { \
+      bins gpr[] = {S0, S1, A0, A1, A2, A3, A4, A5}; \
+    } \
+    `DV(cp_gpr_hazard : coverpoint instr.gpr_hazard;)
 
 `define B_I_INSTR_CG_BEGIN(INSTR_NAME) \
   `INSTR_CG_BEGIN(INSTR_NAME, riscv_b_instr) \
@@ -1646,6 +1662,64 @@ class riscv_instr_cover_group;
   `CA_INSTR_CG_BEGIN(c_addw)
   `CG_END
 
+  // RV32ZCB
+  `CL_INSTR_CG_BEGIN(c_lbu)
+  `CG_END
+
+  `CL_INSTR_CG_BEGIN(c_lhu)
+  `CG_END
+
+  `CL_INSTR_CG_BEGIN(c_lh)
+  `CG_END
+
+  `CS_INSTR_CG_BEGIN(c_sb)
+  `CG_END
+
+  `CS_INSTR_CG_BEGIN(c_sh)
+  `CG_END
+
+  // Similar to zbb with the exception of which registers can be used
+  `ZCB_I_INSTR_CG_BEGIN(c_zext_b)
+  `CG_END
+
+  `ZCB_I_INSTR_CG_BEGIN(c_sext_b)
+  `CG_END
+
+  `ZCB_I_INSTR_CG_BEGIN(c_zext_h)
+  `CG_END
+
+  `ZCB_I_INSTR_CG_BEGIN(c_sext_h)
+  `CG_END
+
+  `ZCB_I_INSTR_CG_BEGIN(c_not)
+  `CG_END
+
+  `CA_INSTR_CG_BEGIN(c_mul)
+  `CG_END
+
+  // RV64ZCB
+  `ZCB_I_INSTR_CG_BEGIN(c_zext_w)
+  `CG_END
+
+  // TODO This needs more thought and probably different defines per type
+  `ZCMP_I_INSTR_CG_BEGIN(cm_push)
+  `CG_END
+
+  `ZCMP_I_INSTR_CG_BEGIN(cm_pop)
+  `CG_END
+
+  `ZCMP_I_INSTR_CG_BEGIN(cm_popretz)
+  `CG_END
+
+  `ZCMP_I_INSTR_CG_BEGIN(cm_popret)
+  `CG_END
+
+  `ZCMP_I_INSTR_CG_BEGIN(cm_mva01s)
+  `CG_END
+
+  `ZCMP_I_INSTR_CG_BEGIN(cm_mvsa01)
+  `CG_END
+
   `INSTR_CG_BEGIN(hint)
     cp_hint : coverpoint instr.binary[15:0] {
       wildcard bins addi    = {16'b0000_1xxx_x000_0001,
@@ -2071,6 +2145,29 @@ class riscv_instr_cover_group;
       bseti_cg  = new();
     `CG_SELECTOR_END
 
+    `CG_SELECTOR_BEGIN(RV32ZCB)
+      c_lbu_cg     = new();
+      c_lhu_cg     = new();
+      c_lh_cg      = new();
+      c_sb_cg      = new();
+      c_sh_cg      = new();
+      c_zext_b_cg  = new();
+      c_sext_b_cg  = new();
+      c_zext_h_cg  = new();
+      c_sext_h_cg  = new();
+      c_not_cg     = new();
+      c_mul_cg     = new();
+    `CG_SELECTOR_END
+
+    `CG_SELECTOR_BEGIN(RV32ZCMP)
+      cm_push_cg    = new();
+      cm_pop_cg     = new();
+      cm_popretz_cg = new();
+      cm_popret_cg  = new();
+      cm_mva01s_cg  = new();
+      cm_mvsa01_cg  = new();
+    `CG_SELECTOR_END
+
     `CG_SELECTOR_BEGIN(RV32B)
       pack_cg        = new();
       packh_cg       = new();
@@ -2116,6 +2213,10 @@ class riscv_instr_cover_group;
         rolw_cg           = new();
         rorw_cg           = new();
         roriw_cg          = new();
+    `CG_SELECTOR_END
+
+    `CG_SELECTOR_BEGIN(RV64ZCB)
+      c_zext_w_cg  = new();
     `CG_SELECTOR_END
 
     `CG_SELECTOR_BEGIN(RV64B)
@@ -2396,6 +2497,25 @@ class riscv_instr_cover_group;
       BINVI      : `SAMPLE_ZBS(binvi_cg, instr)
       BSET       : `SAMPLE_ZBS(bset_cg, instr)
       BSETI      : `SAMPLE_ZBS(bseti_cg, instr)
+      // RV32ZCB
+      C_LBU      : `SAMPLE_ZCB(c_lbu_cg, instr)
+      C_LHU      : `SAMPLE_ZCB(c_lhu_cg, instr)
+      C_LH       : `SAMPLE_ZCB(c_lh_cg, instr)
+      C_SB       : `SAMPLE_ZCB(c_sb_cg, instr)
+      C_SH       : `SAMPLE_ZCB(c_sh_cg, instr)
+      C_ZEXT_B   : `SAMPLE_ZCB(c_zext_b_cg, instr)
+      C_SEXT_B   : `SAMPLE_ZCB(c_sext_b_cg, instr)
+      C_ZEXT_H   : `SAMPLE_ZCB(c_zext_h_cg, instr)
+      C_SEXT_H   : `SAMPLE_ZCB(c_sext_h_cg, instr)
+      C_NOT      : `SAMPLE_ZCB(c_not_cg, instr)
+      C_MUL      : `SAMPLE_ZCB(c_mul_cg, instr)
+      // RV32ZCMP
+      CM_PUSH    : `SAMPLE_ZCMP(cm_push_cg, instr)
+      CM_POP     : `SAMPLE_ZCMP(cm_pop_cg, instr)
+      CM_POPRETZ : `SAMPLE_ZCMP(cm_popretz_cg, instr)
+      CM_POPRET  : `SAMPLE_ZCMP(cm_popret_cg, instr)
+      CM_MVA01S  : `SAMPLE_ZCMP(cm_mva01s_cg, instr)
+      CM_MVSA01  : `SAMPLE_ZCMP(cm_mvsa01_cg, instr)
       // RV32B
       PACK       : `SAMPLE_B(pack_cg, instr)
       PACKH      : `SAMPLE_B(packh_cg, instr)
@@ -2438,6 +2558,8 @@ class riscv_instr_cover_group;
       ROLW         : `SAMPLE_ZBB(rolw_cg, instr)
       RORW         : `SAMPLE_ZBB(rorw_cg, instr)
       RORIW        : `SAMPLE_ZBB(roriw_cg, instr)
+      // RV64ZCB
+      C_ZEXT_W     : `SAMPLE_ZCB(c_zext_w_cg, instr)
       // RV64B
       PACKW        : `SAMPLE_B(packw_cg, instr)
       PACKUW       : `SAMPLE_B(packuw_cg, instr)
@@ -2544,8 +2666,8 @@ class riscv_instr_cover_group;
         if ((instr.group inside {supported_isa}) &&
             (instr.group inside {RV32I, RV32M, RV64M, RV64I, RV32C, RV64C,
                                  RVV, RV64B, RV32B,
-                                 RV32ZBA, RV32ZBB, RV32ZBC, RV32ZBS,
-                                 RV64ZBA, RV64ZBB, RV64ZBC, RV64ZBS})) begin
+                                 RV32ZBA, RV32ZBB, RV32ZBC, RV32ZBS, RV32ZCB, RV32ZCMP,
+                                 RV64ZBA, RV64ZBB, RV64ZBC, RV64ZBS, RV64ZCB, RV64ZCMP})) begin
           if (((instr_name inside {URET}) && !support_umode_trap) ||
               ((instr_name inside {SRET, SFENCE_VMA}) &&
               !(SUPERVISOR_MODE inside {supported_privileged_mode})) ||

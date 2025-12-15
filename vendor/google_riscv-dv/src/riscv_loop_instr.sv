@@ -113,7 +113,10 @@ class riscv_loop_instr extends riscv_rand_instr_stream;
   `uvm_object_new
 
   function void post_randomize();
+    riscv_instr_name_t exclude_instr[];
     reserved_rd = {loop_cnt_reg, loop_limit_reg};
+    // Figure out which instructions we can no longer use after the loop regs are decided
+    update_excluded_instr(exclude_instr);
     // Generate instructions that mixed with the loop instructions
     initialize_instr_list(num_of_instr_in_loop);
     gen_instr(1'b1);
@@ -144,10 +147,11 @@ class riscv_loop_instr extends riscv_rand_instr_stream;
       // Branch target instruction, can be anything
       loop_branch_target_instr[i] = riscv_instr::get_rand_instr(
           .include_category({ARITHMETIC, LOGICAL, COMPARE}),
-          .exclude_instr({C_ADDI16SP}));
+          .exclude_instr(exclude_instr));
       `DV_CHECK_RANDOMIZE_WITH_FATAL(loop_branch_target_instr[i],
-                                     if (format == CB_FORMAT) {
+                                     if (instr_name == CM_MVSA01) {
                                        !(rs1 inside {reserved_rd, cfg.reserved_regs});
+                                       !(rs2 inside {reserved_rd, cfg.reserved_regs});
                                      }
                                      if (has_rd) {
                                        !(rd inside {reserved_rd, cfg.reserved_regs});

@@ -213,6 +213,53 @@ class riscv_illegal_instr extends uvm_object;
     }
   }
 
+  constraint zcb_extension_c {
+    // zcb adds instructions to the reserved funct6 space 6'b100111
+    // this constraint defines the subset of that op-code space which is still
+    // reserved. Only way to trigger this constraint should be with
+    // kReservedC0/C1 or by kIllegalCompressedOpcode. Since the reserved
+    // instructions at c_msb = 3'b100 && c_op = 2'b00 are not added to
+    // legal_c00_opcode this combination could occur.
+    if (RV32ZCB inside {supported_isa}) {
+      if (exception inside {kIllegalCompressedOpcode, kReservedCompressedInstr}
+          && c_msb == 3'b100) {
+        if (c_op == 2'b00) {
+          !(instr_bin[12:10] inside {3'b000, 3'b001, 3'b010, 3'b011}); //load/store
+        // bits 9:2 don't have any inavlid combinations, hence only bit 12:10
+        // can yield an op-code which is reserved.
+        } else if (c_op == 2'b01 && instr_bin[12:10] == 3'b111) {
+          // if funct2 = 2'b10 there are no reserved op-codes
+         !(instr_bin[6:5] inside {2'b10}); //funct2
+         if (instr_bin[6:5] == 2'b11) {
+           if (XLEN == 32){
+             // c.zext.w not allowed in 32-bit mode
+             (instr_bin[4:2] inside {3'b100, 3'b110, 3'b111});
+           } else {
+             // reserved opcodes
+             (instr_bin[4:2] inside {3'b110, 3'b111});
+           }
+         }
+        }
+      }
+    }
+  }
+
+  constraint zcmp_extension_c {
+    // zcmp adds instructions where funct3/c_msb = 3'b101 and c2/c_op = 2'b10
+    // Those codes are legal if they match a valid Zcmp instruction
+    if (RV32ZCMP inside {supported_isa}) {
+      if (exception inside {kIllegalCompressedOpcode, kReservedCompressedInstr}) {
+        if (c_op == 2'b10 && c_msb == 3'b101) {
+          !(instr_bin[12:8] inside {5'b11000, 5'b11010, 5'b11100, 5'b11110}); // push/pop
+          if (instr_bin[12:10] == 3'b011) {
+            // double move instructions
+            !(instr_bin[6:5] inside {2'b01, 2'b11});
+          }
+        }
+      }
+    }
+  }
+
   constraint illegal_compressed_op_c {
     if (exception == kIllegalCompressedOpcode) {
       c_op != 2'b01;

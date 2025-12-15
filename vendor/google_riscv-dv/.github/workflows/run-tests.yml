@@ -22,12 +22,14 @@ jobs:
         name: Prepare test types
         run: |
           python3 -m pip install pyyaml
-          echo "tests=$(python3 .github/scripts/parse_testlist.py $RISCV_TARGET)" | tee -a $GITHUB_OUTPUT
+          python3 .github/scripts/parse_testlist.py $RISCV_TARGET > tests.list
+          echo "tests=$(cat tests.list)" | tee -a $GITHUB_OUTPUT
       - id: hash
         name: Prepare files' hash
         run: |
-          echo "files-hash=$(sha256sum **/*.sv **/*.py **/*.yml **/*.yaml | cut -d\  -f1 | sha256sum | cut -d\  -f1)" | tee -a $GITHUB_OUTPUT
-          
+          sha256sum **/*.sv **/*.py **/*.yaml > file.hash
+          echo "files-hash=$(cat file.hash | cut -d\  -f1 | sha256sum | cut -d\  -f1)" | tee -a $GITHUB_OUTPUT
+
 
   generate-code:
     runs-on: [ self-hosted, Linux, X64, gcp-custom-runners ]
@@ -39,7 +41,7 @@ jobs:
         test: ${{ fromJSON(needs.generate-config.outputs.test-types) }}
         version: [ uvm ]
         include:
-          - test: riscv_arithmetic_basic_test 
+          - test: riscv_arithmetic_basic_test
             version: pyflow
     env:
       GHA_EXTERNAL_DISK: additional-tools
@@ -89,9 +91,10 @@ jobs:
             --isa $RISCV_TARGET --mabi ilp32 --steps gen -v -o test 2>&1 | tee test/generate.log
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
+          name: generate_code_${{ matrix.test }}_${{ matrix.version }}
           path: |
             test/asm_test/*.S
 
@@ -116,7 +119,14 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt-get -qqy update && sudo apt-get -qqy install gcc-riscv64-unknown-elf device-tree-compiler
+        run: sudo apt-get -qqy update && sudo apt-get -qqy install device-tree-compiler
+
+      - name: Install cross-compiler
+        shell: bash
+        run: |
+          echo "deb http://archive.ubuntu.com/ubuntu/ noble main universe" | sudo tee -a /etc/apt/sources.list > /dev/null
+          sudo apt -qqy update && sudo apt -qqy --no-install-recommends install gcc-riscv64-unknown-elf
+          riscv64-unknown-elf-gcc --version
 
       - name: Setup python
         # python dependencies cannot be properly downloaded with new versions of python
@@ -174,9 +184,10 @@ jobs:
             --isa $RISCV_TARGET --mabi ilp32 --steps gcc_compile,iss_sim -v -o test 2>&1 | tee -a test/generate.log
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
+          name: run_tests_log_${{ matrix.test }}_${{ matrix.version }}
           path: |
-            test/asm_test/*.log
             test/*.log
+            test/**/${{ matrix.test }}*.log

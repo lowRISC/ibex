@@ -474,7 +474,8 @@ class riscv_int_numeric_corner_stream extends riscv_directed_instr_stream;
     for (int i = 0; i < num_of_instr; i++) begin
       riscv_instr instr = riscv_instr::get_rand_instr(
         .include_category({ARITHMETIC}),
-        .exclude_group({RV32C, RV64C, RV32F, RV64F, RV32D, RV64D}));
+        .exclude_group({RV32C, RV64C, RV32ZCB, RV64ZCB, RV32ZCMP, RV64ZCMP,
+                        RV32F, RV64F, RV32D, RV64D}));
       randomize_gpr(instr);
       instr_list.push_back(instr);
     end

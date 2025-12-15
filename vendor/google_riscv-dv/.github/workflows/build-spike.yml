@@ -36,7 +36,7 @@ jobs:
           key: ${{ env.cache_name }}_${{ env.cache_date }}
           restore-keys: ${{ env.cache_name }}_
 
-      - name: Install prerequisities
+      - name: Install prerequisites
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
           sudo apt -qqy update && sudo apt -qqy --no-install-recommends install \
