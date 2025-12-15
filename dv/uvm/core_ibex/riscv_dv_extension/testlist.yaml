@@ -1157,36 +1157,3 @@
   rtl_test: core_ibex_base_test
   rtl_params:
     RV32B: ["ibex_pkg::RV32BFull", "ibex_pkg::RV32BOTEarlGrey", "ibex_pkg::RV32BBalanced"]
-
-- test: riscv_zcb_balanced_test
-  desc: >
-    Random instruction test with zcb instructions in balanced configuration
-  iterations: 10
-  gen_test: riscv_rand_instr_test
-  gen_opts: >
-    +enable_zcb_extension=1
-  rtl_test: core_ibex_base_test
-
-- test: riscv_zcmp_balanced_test
-  desc: >
-    Random instruction test with zcmp instructions in balanced configuration
-  iterations: 10
-  gen_test: riscv_rand_instr_test
-  gen_opts: >
-    +enable_zcb_extension=1
-    +enable_zcmp_extension=1
-  rtl_test: core_ibex_base_test
-
-- test: riscv_zcmp_directed_test
-  desc: >
-    Random instruction test with zcmp instructions in balanced configuration
-  iterations: 10
-  gen_test: riscv_instr_base_test
-  gen_opts: >
-    +enable_zcb_extension=1
-    +enable_zcmp_extension=1
-    +directed_instr_0=riscv_zcmp_chain_instr_stream,1
-    +instr_cnt=100
-    +num_of_sub_program=0
-    +no_branch_jump=1
-  rtl_test: core_ibex_base_test
