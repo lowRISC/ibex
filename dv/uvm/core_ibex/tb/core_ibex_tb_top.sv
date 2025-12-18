@@ -286,7 +286,7 @@ module core_ibex_tb_top;
   // Instruction monitor connections
   assign instr_monitor_if.reset        = ~rst_n;
   assign instr_monitor_if.valid_id     = dut.u_ibex_top.u_ibex_core.id_stage_i.instr_valid_i;
-  assign instr_monitor_if.instr_new_id = dut.u_ibex_top.u_ibex_core.instr_new_id;
+  assign instr_monitor_if.rvfi_id_done = dut.u_ibex_top.u_ibex_core.rvfi_id_done;
 
   assign instr_monitor_if.err_id =
     dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.instr_fetch_err;
