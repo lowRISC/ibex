@@ -197,8 +197,8 @@ module ibex_ex_block #(
   assign ex_valid_o = multdiv_sel ? multdiv_valid : ~(|alu_imd_val_we);
 
 `ifdef INC_ASSERT
-  // This is intended to be accessed via hierarchical references so isn't output from this module nor
-  // used in any logic in this module
+  // This is intended to be accessed via hierarchical references, so it is neither output from this
+  // module nor used in any logic in this module
   logic sva_multdiv_fsm_idle;
 
   if (RV32M == RV32MSlow) begin : gen_multdiv_sva_idle_slow
