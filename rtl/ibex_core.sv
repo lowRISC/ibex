@@ -113,7 +113,8 @@ module ibex_core import ibex_pkg::*; #(
   output logic                         irq_pending_o,
 
   // Debug Interface
-  input  logic                         debug_req_i,
+  input  logic                         debug_req_i,    // Request from Top to Core to enter debug mode
+  output logic                         debug_mode_o,   // Indicates that the Core has entered debug mode
   output crash_dump_t                  crash_dump_o,
   // SEC_CM: EXCEPTION.CTRL_FLOW.LOCAL_ESC
   // SEC_CM: EXCEPTION.CTRL_FLOW.GLOBAL_ESC
@@ -705,6 +706,9 @@ module ibex_core import ibex_pkg::*; #(
     .perf_div_wait_o  (perf_div_wait),
     .instr_id_done_o  (instr_id_done)
   );
+
+  // Debug Mode output
+  assign debug_mode_o = debug_mode;
 
   // for RVFI only
   assign unused_illegal_insn_id = illegal_insn_id;
