@@ -14,7 +14,8 @@
 `include "prim_assert.sv"
 
 module ibex_compressed_decoder #(
-  parameter ibex_pkg::rv32zc_e RV32ZC = ibex_pkg::RV32ZcaZcbZcmp
+  parameter ibex_pkg::rv32zc_e RV32ZC   = ibex_pkg::RV32ZcaZcbZcmp,
+  parameter bit                ResetAll = 1'b0
 ) (
   input  logic                 clk_i,
   input  logic                 rst_ni,
@@ -787,15 +788,29 @@ module ibex_compressed_decoder #(
 
   assign is_compressed_o = (instr_i[1:0] != 2'b11);
 
-  always_ff @(posedge clk_i, negedge rst_ni) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       cm_state_q <= CmIdle;
-      // The following regs don't need to be reset as they get assigned before first usage:
-      // cm_rlist_q, cm_sp_offset_q
     end else begin
+      cm_state_q <= cm_state_d;
+    end
+  end
+
+  if (ResetAll) begin : g_cm_meta_ra
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        cm_rlist_q     <= '0;
+        cm_sp_offset_q <= '0;
+      end else begin
+        cm_rlist_q     <= cm_rlist_d;
+        cm_sp_offset_q <= cm_sp_offset_d;
+      end
+    end
+  end else begin : g_cm_meta_nr
+    // The following regs don't need to be reset as they get assigned before first usage:
+    always_ff @(posedge clk_i) begin
       cm_rlist_q     <= cm_rlist_d;
       cm_sp_offset_q <= cm_sp_offset_d;
-      cm_state_q     <= cm_state_d;
     end
   end
 
