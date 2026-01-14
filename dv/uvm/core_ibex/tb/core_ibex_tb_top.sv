@@ -198,6 +198,8 @@ module core_ibex_tb_top;
   end
 
 `ifndef DV_FCOV_DISABLE
+  assign dut.u_ibex_top.u_ibex_core.u_fcov_bind.rf_glitch_err =
+    dut.u_ibex_top.alert_major_internal_o;
   assign dut.u_ibex_top.u_ibex_core.u_fcov_bind.lockstep_glitch_err =
     dut.u_ibex_top.lockstep_alert_major_internal;
 `endif
