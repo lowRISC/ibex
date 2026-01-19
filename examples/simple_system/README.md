@@ -32,9 +32,9 @@ with different configurations of Ibex, specified by parameters. To build the
 "small" configuration, run the following command from the Ibex repository root.
 
 
-```
-fusesoc --cores-root=. run --target=sim --setup --build \
-        lowrisc:ibex:ibex_simple_system $(util/ibex_config.py small fusesoc_opts)
+```sh
+util/ibex_config.py small fusesoc_opts | fusesoc --cores-root=. run --target=sim --setup \
+    --build lowrisc:ibex:ibex_simple_system
 ```
 
 To see performance counters other than the total number of instructions
