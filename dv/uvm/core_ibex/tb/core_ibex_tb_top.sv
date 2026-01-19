@@ -379,9 +379,10 @@ module core_ibex_tb_top;
   end
 
   // Manually set unused_assert_connected = 1 to disable the AssertConnected_A assertion for
-  // prim_count in case lockstep (set by SecureIbex) is enabled. If not disabled, DV fails.
-  if (SecureIbex) begin : gen_disable_count_check
-    assign dut.u_ibex_top.gen_lockstep.u_ibex_lockstep.u_rst_shadow_cnt.
+  // prim_count in case lockstep (set by SecureIbex) is enabled and the lockstep offset is
+  // larger than 1. If not disabled, DV fails.
+  if (SecureIbex && LockstepOffset > 1) begin : gen_disable_count_check
+    assign dut.u_ibex_top.gen_lockstep.u_ibex_lockstep.gen_reset_counter.u_rst_shadow_cnt.
           unused_assert_connected = 1;
   end
 
