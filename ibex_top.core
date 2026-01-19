@@ -18,6 +18,7 @@ filesets:
       - lowrisc:prim:ram_1p_scr
       - lowrisc:prim:onehot_check
       - lowrisc:prim:onehot
+      - lowrisc:prim:util
     files:
       - rtl/ibex_register_file_ff.sv # generic FF-based
       - rtl/ibex_register_file_fpga.sv # FPGA
