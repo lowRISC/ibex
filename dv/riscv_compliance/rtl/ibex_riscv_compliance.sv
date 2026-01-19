@@ -31,6 +31,7 @@ module ibex_riscv_compliance (
   parameter bit ICacheECC                 = 1'b0;
   parameter bit BranchPredictor           = 1'b0;
   parameter bit SecureIbex                = 1'b0;
+  parameter int unsigned LockstepOffset   = 1;
   parameter bit ICacheScramble            = 1'b0;
   parameter bit DbgTriggerEn              = 1'b0;
 
@@ -156,6 +157,7 @@ module ibex_riscv_compliance (
       .BranchPredictor  (BranchPredictor   ),
       .DbgTriggerEn     (DbgTriggerEn      ),
       .SecureIbex       (SecureIbex        ),
+      .LockstepOffset   (LockstepOffset    ),
       .ICacheScramble   (ICacheScramble    ),
       .DmBaseAddr       (32'h00000000      ),
       .DmAddrMask       (32'h00000003      ),
