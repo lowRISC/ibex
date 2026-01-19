@@ -44,6 +44,7 @@ module ibex_simple_system (
 );
 
   parameter bit                 SecureIbex               = 1'b0;
+  parameter int unsigned        LockstepOffset           = 1;
   parameter bit                 ICacheScramble           = 1'b0;
   parameter bit                 PMPEnable                = 1'b0;
   parameter int unsigned        PMPGranularity           = 0;
@@ -197,6 +198,7 @@ module ibex_simple_system (
 
   ibex_top_tracing #(
       .SecureIbex      ( SecureIbex       ),
+      .LockstepOffset  ( LockstepOffset   ),
       .ICacheScramble  ( ICacheScramble   ),
       .PMPEnable       ( PMPEnable        ),
       .PMPGranularity  ( PMPGranularity   ),
