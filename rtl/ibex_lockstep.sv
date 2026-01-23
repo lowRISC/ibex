@@ -157,9 +157,7 @@ module ibex_lockstep import ibex_pkg::*; #(
   );
 
   // When the LockstepOffset counter value is reached, activate the lockstep
-  // comparison. We do not explicitly check whether rst_shadow_set_q forms a valid
-  // multibit signal as this value is implicitly checked by the enable_cmp
-  // comparison below.
+  // comparison.
   assign rst_shadow_set_d =
     (rst_shadow_cnt >= LockstepOffsetW'(LockstepOffset - 1)) ? IbexMuBiOn : IbexMuBiOff;
 
@@ -504,8 +502,10 @@ module ibex_lockstep import ibex_pkg::*; #(
 
   logic outputs_mismatch;
 
+  // Any value except IbexMuBiOff will turn on the lockstep output comparison.
   assign outputs_mismatch =
     (enable_cmp_q != IbexMuBiOff) & (shadow_outputs_q != core_outputs_q[0]);
+
   assign alert_major_internal_o
     = outputs_mismatch | shadow_alert_major_internal | rst_shadow_cnt_err;
   assign alert_major_bus_o      = shadow_alert_major_bus;
