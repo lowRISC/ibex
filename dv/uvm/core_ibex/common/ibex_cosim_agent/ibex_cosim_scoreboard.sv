@@ -163,13 +163,21 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
       riscv_cosim_set_ic_scr_key_valid(cosim_handle, rvfi_instr.ic_scr_key_valid);
 
       if (!riscv_cosim_step(cosim_handle, rvfi_instr.rd_addr, rvfi_instr.rd_wdata, rvfi_instr.pc,
-                            rvfi_instr.trap, rvfi_instr.rf_wr_suppress)) begin
+                            rvfi_instr.trap, rvfi_instr.rf_wr_suppress,
+                            rvfi_instr.expanded_insn_valid, rvfi_instr.expanded_insn,
+                            rvfi_instr.expanded_insn_last)) begin
+        // Print the debug before the error to help with diagnosis
+        `uvm_info(`gfn, get_cosim_dbg_str(rvfi_instr.pc), UVM_LOW)
         // cosim instruction step doesn't match rvfi captured instruction, report a fatal error
         // with the details
         if (cfg.relax_cosim_check) begin
           `uvm_info(`gfn, get_cosim_error_str(), UVM_LOW)
         end else begin
           `uvm_fatal(`gfn, get_cosim_error_str())
+        end
+      end else begin
+        if (riscv_cosim_get_num_dbg(cosim_handle) > 0) begin
+          `uvm_info(`gfn, get_cosim_dbg_str(rvfi_instr.pc), UVM_LOW)
         end
       end
     end
@@ -268,8 +276,7 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
     bit [31:0] aligned_next_addr;
     forever begin
       // Wait for new instruction to appear in ID stage
-      wait (instr_vif.instr_cb.valid_id &&
-            instr_vif.instr_cb.instr_new_id &&
+      wait (instr_vif.instr_cb.rvfi_id_done &&
             latest_order != instr_vif.instr_cb.rvfi_order_id);
 
       latest_order = instr_vif.instr_cb.rvfi_order_id;
@@ -320,9 +327,9 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
       // Wait for a new instruction or a writeback exception. When a new instruction has entered the
       // ID stage and we haven't seen a writeback exception we know the instruction associated with the
       // error just added to the queue isn't getting flushed.
-      wait (instr_vif.instr_cb.instr_new_id || dut_vif.dut_cb.wb_exception);
+      wait (instr_vif.instr_cb.rvfi_id_done || dut_vif.dut_cb.wb_exception);
 
-      if (!instr_vif.instr_cb.instr_new_id && dut_vif.dut_cb.wb_exception) begin
+      if (!instr_vif.instr_cb.rvfi_id_done && dut_vif.dut_cb.wb_exception) begin
         // If we hit a writeback exception without seeing a new instruction then the newly added
         // error relates to an instruction just flushed from the ID stage so pop it from the
         // queue.
@@ -340,6 +347,16 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
 
       return error;
   endfunction : get_cosim_error_str
+
+  function string get_cosim_dbg_str(bit [31:0] pc);
+      string dbg = $sformatf("Cosim debug (DUT PC 0x%08x):\n", pc);
+      for (int i = 0; i < riscv_cosim_get_num_dbg(cosim_handle); ++i) begin
+        dbg = {dbg, riscv_cosim_get_dbg(cosim_handle, i), "\n"};
+      end
+      riscv_cosim_clear_dbg(cosim_handle);
+
+      return dbg;
+  endfunction : get_cosim_dbg_str
 
   function void final_phase(uvm_phase phase);
     super.final_phase(phase);

@@ -78,6 +78,10 @@ def process_renode_sim_log(log_name, csv_name):
             if not line:
                 continue
 
+            # We've hit ecall, quit
+            if line.startswith("ECALL:"):
+                break
+
             # Skip non-regdump
             if not line.startswith("REGDUMP:"):
                 continue
