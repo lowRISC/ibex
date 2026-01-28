@@ -14,6 +14,10 @@
   `define RV32B ibex_pkg::RV32BNone
 `endif
 
+`ifndef RV32ZC
+  `define RV32ZC ibex_pkg::RV32ZcaZcbZcmp
+`endif
+
 `ifndef RegFile
   `define RegFile ibex_pkg::RegFileFF
 `endif
@@ -45,6 +49,7 @@ module ibex_simple_system (
   parameter bit                 RV32E                    = 1'b0;
   parameter ibex_pkg::rv32m_e   RV32M                    = `RV32M;
   parameter ibex_pkg::rv32b_e   RV32B                    = `RV32B;
+  parameter ibex_pkg::rv32zc_e  RV32ZC                   = `RV32ZC;
   parameter ibex_pkg::regfile_e RegFile                  = `RegFile;
   parameter bit                 BranchTargetALU          = 1'b0;
   parameter bit                 WritebackStage           = 1'b0;
@@ -197,6 +202,7 @@ module ibex_simple_system (
       .RV32E           ( RV32E            ),
       .RV32M           ( RV32M            ),
       .RV32B           ( RV32B            ),
+      .RV32ZC          ( RV32ZC           ),
       .RegFile         ( RegFile          ),
       .BranchTargetALU ( BranchTargetALU  ),
       .ICache          ( ICache           ),
