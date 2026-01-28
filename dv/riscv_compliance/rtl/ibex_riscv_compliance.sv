@@ -23,6 +23,7 @@ module ibex_riscv_compliance (
   parameter bit RV32E                     = 1'b0;
   parameter ibex_pkg::rv32m_e RV32M       = ibex_pkg::RV32MFast;
   parameter ibex_pkg::rv32b_e RV32B       = ibex_pkg::RV32BNone;
+  parameter ibex_pkg::rv32zc_e RV32ZC     = ibex_pkg::RV32Zca;
   parameter ibex_pkg::regfile_e RegFile   = ibex_pkg::RegFileFF;
   parameter bit BranchTargetALU           = 1'b0;
   parameter bit WritebackStage            = 1'b0;
@@ -146,6 +147,7 @@ module ibex_riscv_compliance (
       .RV32E            (RV32E             ),
       .RV32M            (RV32M             ),
       .RV32B            (RV32B             ),
+      .RV32ZC           (RV32ZC            ),
       .RegFile          (RegFile           ),
       .BranchTargetALU  (BranchTargetALU   ),
       .WritebackStage   (WritebackStage    ),
