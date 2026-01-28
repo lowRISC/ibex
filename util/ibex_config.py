@@ -129,7 +129,7 @@ class FusesocOpts:
         fusesoc_cmd = []
         for fld, typ in Config.known_fields:
             val = config.params[fld]
-            fusesoc_cmd.append(shlex.quote(f'--{fld}={val}'))
+            fusesoc_cmd.append(f'--{fld} {val}')
 
         return ' '.join(fusesoc_cmd)
 
