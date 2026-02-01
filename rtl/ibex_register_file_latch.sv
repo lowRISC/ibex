@@ -51,6 +51,7 @@ module ibex_register_file_latch #(
 
   logic [NUM_WORDS-1:0] waddr_onehot_a;
 
+  // One-hot encoding error signals
   logic oh_raddr_a_err, oh_raddr_b_err, oh_we_err;
 
   logic [NUM_WORDS-1:1] mem_clocks;
@@ -58,6 +59,7 @@ module ibex_register_file_latch #(
 
   // internal addresses
   logic [ADDR_WIDTH-1:0] raddr_a_int, raddr_b_int, waddr_a_int;
+  logic [NUM_WORDS-1:0] raddr_onehot_a, raddr_onehot_b, we_onehot_a;
 
   assign raddr_a_int = raddr_a_i[ADDR_WIDTH-1:0];
   assign raddr_b_int = raddr_b_i[ADDR_WIDTH-1:0];
@@ -65,81 +67,32 @@ module ibex_register_file_latch #(
 
   logic clk_int;
 
-  assign err_o = oh_raddr_a_err || oh_raddr_b_err || oh_we_err;
+  // Common security functionality
+  ibex_register_file_common #(
+    .AddrWidth(ADDR_WIDTH),
+    .NumWords(NUM_WORDS),
+    .WrenCheck(WrenCheck),
+    .RdataMuxCheck(RdataMuxCheck)
+  ) security_module (
+    .clk_i,
+    .rst_ni,
+    .raddr_a_i(raddr_a_int),
+    .raddr_onehot_a,
+    .oh_raddr_a_err,
+    .raddr_b_i(raddr_b_int),
+    .raddr_onehot_b,
+    .oh_raddr_b_err,
+    .waddr_a_i(waddr_a_int),
+    .we_a_i,
+    .we_onehot_a,
+    .oh_we_err,
+    .err_o
+  );
 
   //////////
   // READ //
   //////////
   if (RdataMuxCheck) begin : gen_rdata_mux_check
-    // Encode raddr_a/b into one-hot encoded signals.
-    logic [NUM_WORDS-1:0] raddr_onehot_a, raddr_onehot_b;
-    logic [NUM_WORDS-1:0] raddr_onehot_a_buf, raddr_onehot_b_buf;
-    prim_onehot_enc #(
-      .OneHotWidth(NUM_WORDS)
-    ) u_prim_onehot_enc_raddr_a (
-      .in_i  (raddr_a_int),
-      .en_i  (1'b1),
-      .out_o (raddr_onehot_a)
-    );
-
-    prim_onehot_enc #(
-      .OneHotWidth(NUM_WORDS)
-    ) u_prim_onehot_enc_raddr_b (
-      .in_i  (raddr_b_int),
-      .en_i  (1'b1),
-      .out_o (raddr_onehot_b)
-    );
-
-    // Buffer the one-hot encoded signals so that the checkers
-    // are not optimized.
-    prim_buf #(
-      .Width(NUM_WORDS)
-    ) u_prim_buf_raddr_a (
-      .in_i(raddr_onehot_a),
-      .out_o(raddr_onehot_a_buf)
-    );
-
-    prim_buf #(
-      .Width(NUM_WORDS)
-    ) u_prim_buf_raddr_b (
-      .in_i(raddr_onehot_b),
-      .out_o(raddr_onehot_b_buf)
-    );
-
-    // SEC_CM: DATA_REG_SW.GLITCH_DETECT
-    // Check the one-hot encoded signals for glitches.
-    prim_onehot_check #(
-      .AddrWidth(ADDR_WIDTH),
-      .OneHotWidth(NUM_WORDS),
-      .AddrCheck(1),
-      // When AddrCheck=1 also EnableCheck needs to be 1.
-      .EnableCheck(1)
-    ) u_prim_onehot_check_raddr_a (
-      .clk_i,
-      .rst_ni,
-      .oh_i   (raddr_onehot_a_buf),
-      .addr_i (raddr_a_int),
-      // Set enable=1 as address is always valid.
-      .en_i   (1'b1),
-      .err_o  (oh_raddr_a_err)
-    );
-
-    prim_onehot_check #(
-      .AddrWidth(ADDR_WIDTH),
-      .OneHotWidth(NUM_WORDS),
-      .AddrCheck(1),
-      // When AddrCheck=1 also EnableCheck needs to be 1.
-      .EnableCheck(1)
-    ) u_prim_onehot_check_raddr_b (
-      .clk_i,
-      .rst_ni,
-      .oh_i   (raddr_onehot_b_buf),
-      .addr_i (raddr_b_int),
-      // Set enable=1 as address is always valid.
-      .en_i   (1'b1),
-      .err_o  (oh_raddr_b_err)
-    );
-
     // MUX register to rdata_a/b_o according to raddr_a/b_onehot.
     prim_onehot_mux  #(
       .Width(DataWidth),
@@ -165,8 +118,10 @@ module ibex_register_file_latch #(
   end else begin : gen_no_rdata_mux_check
     assign rdata_a_o = mem[raddr_a_int];
     assign rdata_b_o = mem[raddr_b_int];
-    assign oh_raddr_a_err = 1'b0;
-    assign oh_raddr_b_err = 1'b0;
+
+    logic unused_raddr_onehot, unused_oh_raddr_err;
+    assign unused_raddr_onehot = ^{raddr_onehot_a, raddr_onehot_b};
+    assign unused_oh_raddr_err = ^{oh_raddr_a_err, oh_raddr_b_err};
   end
 
   ///////////
@@ -192,55 +147,13 @@ module ibex_register_file_latch #(
     end
   end
 
-  // Write address decoding
-  always_comb begin : wad
-    for (int i = 0; i < NUM_WORDS; i++) begin : wad_word_iter
-      if (we_a_i && (waddr_a_int == 5'(i))) begin
-        waddr_onehot_a[i] = 1'b1;
-      end else begin
-        waddr_onehot_a[i] = 1'b0;
-      end
-    end
-  end
-
-  // SEC_CM: DATA_REG_SW.GLITCH_DETECT
-  // This checks for spurious WE strobes on the regfile.
-  if (WrenCheck) begin : gen_wren_check
-    // Buffer the decoded write enable bits so that the checker
-    // is not optimized into the address decoding logic.
-    logic [NUM_WORDS-1:0] waddr_onehot_a_buf;
-    prim_buf #(
-      .Width(NUM_WORDS)
-    ) u_prim_buf (
-      .in_i(waddr_onehot_a),
-      .out_o(waddr_onehot_a_buf)
-    );
-
-    prim_onehot_check #(
-      .AddrWidth(ADDR_WIDTH),
-      .AddrCheck(1),
-      .EnableCheck(1)
-    ) u_prim_onehot_check (
-      .clk_i,
-      .rst_ni,
-      .oh_i(waddr_onehot_a_buf),
-      .addr_i(waddr_a_i),
-      .en_i(we_a_i),
-      .err_o(oh_we_err)
-    );
-  end else begin : gen_no_wren_check
-    logic unused_strobe;
-    assign unused_strobe = waddr_onehot_a[0]; // this is never read from in this case
-    assign oh_we_err = 1'b0;
-  end
-
   // Individual clock gating (if integrated clock-gating cells are available)
   for (genvar x = 1; x < NUM_WORDS; x++) begin : gen_cg_word_iter
     prim_clock_gating cg_i (
-        .clk_i     ( clk_int           ),
-        .en_i      ( waddr_onehot_a[x] ),
-        .test_en_i ( test_en_i         ),
-        .clk_o     ( mem_clocks[x]     )
+        .clk_i     ( clk_int        ),
+        .en_i      ( we_onehot_a[x] ),
+        .test_en_i ( test_en_i      ),
+        .clk_o     ( mem_clocks[x]  )
     );
   end
 
@@ -288,6 +201,13 @@ module ibex_register_file_latch #(
     assign unused_dummy_instr = dummy_instr_id_i ^ dummy_instr_wb_i;
 
     assign mem[0] = WordZeroVal;
+  end
+
+  if (WrenCheck) begin : gen_wren_check
+  end else begin : gen_no_wren_check
+    logic unused_strobe, unused_oh_we_err;
+    assign unused_strobe = we_onehot_a[0];  // this is never read from in this case
+    assign unused_oh_we_err = oh_we_err;  // this is never read from in this case
   end
 
 `ifdef VERILATOR
