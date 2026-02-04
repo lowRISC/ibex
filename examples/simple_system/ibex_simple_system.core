@@ -43,6 +43,12 @@ parameters:
     paramtype: vlogdefine
     description: "Register file implementation parameter enum. See the ibex_pkg::regfile_e enum in ibex_pkg.sv for permitted values."
 
+  INSTR_CYCLE_DELAY:
+    datatype: int
+    default: 0
+    paramtype: vlogdefine
+    description: "Number of cycles to delay the instruction RAM access. This is on top of the single-cycle access that the RAM requires."
+
   ICache:
     datatype: int
     default: 0
@@ -137,6 +143,7 @@ targets:
       - RV32B
       - RV32ZC
       - RegFile
+      - INSTR_CYCLE_DELAY
       - ICache
       - ICacheScramble
       - ICacheECC

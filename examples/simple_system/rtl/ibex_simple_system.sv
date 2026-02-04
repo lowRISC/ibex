@@ -22,6 +22,10 @@
   `define RegFile ibex_pkg::RegFileFF
 `endif
 
+`ifndef INSTR_CYCLE_DELAY
+  `define INSTR_CYCLE_DELAY 0
+`endif
+
 /**
  * Ibex simple system
  *
@@ -274,6 +278,7 @@ module ibex_simple_system (
   // SRAM block for instruction and data storage
   ram_2p #(
       .Depth(1024*1024/4),
+      .BExtraDelay(`INSTR_CYCLE_DELAY),
       .MemInitFile(SRAMInitFile)
     ) u_ram (
       .clk_i       (clk_sys),
