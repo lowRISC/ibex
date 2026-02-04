@@ -4,12 +4,17 @@
 
 /**
  * Dual-port RAM with 1 cycle read/write delay, 32 bit words.
+ * Optionally an extra delay can be added to the B-side requests.
+ * This can be used to mimick an asymmetric memory delay like having the stack
+ * and heap live in fast SRAM and the intructions live in slow, non-volatile
+ * memory.
  */
 
 `include "prim_assert.sv"
 
 module ram_2p #(
     parameter int Depth       = 128,
+    parameter int BExtraDelay = 0,
     parameter     MemInitFile = ""
 ) (
     input               clk_i,
@@ -55,15 +60,33 @@ module ram_2p #(
     end
   end
 
+  logic        b_rvalid_d;
+  logic        b_rvalid_q[(BExtraDelay==0) ? 1 : BExtraDelay];
+  logic [31:0] b_rdata_d;
+  logic [31:0] b_rdata_q[(BExtraDelay==0) ? 1 : BExtraDelay];
+
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       a_rvalid_o <= '0;
       b_rvalid_o <= '0;
+      for (integer i = 0; i < BExtraDelay; i=i+1) begin
+        b_rvalid_q[i] <= '0;
+        b_rdata_q[i] <= '0;
+      end
     end else begin
       a_rvalid_o <= a_req_i;
-      b_rvalid_o <= b_req_i;
+      b_rvalid_o <= b_rvalid_d;
+      b_rvalid_q[0] <= b_req_i;
+      b_rdata_q[0] <= b_rdata_d;
+      for (integer i = BExtraDelay-1; i > 0; i=i-1) begin
+        b_rvalid_q[i] <= b_rvalid_q[i-1];
+        b_rdata_q[i] <= b_rdata_q[i-1];
+      end
     end
   end
+
+  assign b_rvalid_d = (BExtraDelay == 0) ? b_req_i : b_rvalid_q[BExtraDelay-1];
+  assign b_rdata_o = (BExtraDelay == 0) ? b_rdata_d : b_rdata_q[BExtraDelay-1];
 
   prim_ram_2p #(
     .Width(32),
@@ -84,7 +107,7 @@ module ram_2p #(
     .b_addr_i  (b_addr_idx),
     .b_wdata_i (b_wdata_i),
     .b_wmask_i (b_wmask),
-    .b_rdata_o (b_rdata_o),
+    .b_rdata_o (b_rdata_d),
     .cfg_i     ('0),
     .cfg_rsp_o ()
   );
