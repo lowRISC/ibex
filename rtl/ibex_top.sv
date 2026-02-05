@@ -800,7 +800,7 @@ module ibex_top import ibex_pkg::*; #(
       data_we_o,
       data_be_o,
       data_addr_o,
-      data_wdata_core,
+      data_wdata_o,
       data_rdata_core,
       data_err_i,
       rf_rdata_a,
@@ -846,7 +846,7 @@ module ibex_top import ibex_pkg::*; #(
     logic                         data_we_local;
     logic [3:0]                   data_be_local;
     logic [31:0]                  data_addr_local;
-    logic [MemDataWidth-1:0]      data_wdata_local;
+    logic [31:0]                  data_wdata_local;
     logic [MemDataWidth-1:0]      data_rdata_local;
     logic                         data_err_local;
 
@@ -893,7 +893,7 @@ module ibex_top import ibex_pkg::*; #(
       data_we_o,
       data_be_o,
       data_addr_o,
-      data_wdata_core,
+      data_wdata_o,
       data_rdata_core,
       data_err_i,
       rf_rdata_a,
