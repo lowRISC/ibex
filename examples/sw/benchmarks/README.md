@@ -7,7 +7,7 @@ build and run each benchmark and where benchmark code is located.
 
 ## Building Simulation
 
-All of these benchmarks run on Simple System. A verilator simulation suitable
+All of these benchmarks run on Simple System. A Verilator simulation suitable
 for running them can be built with:
 
 ```shell
@@ -19,7 +19,7 @@ It is one of several pre-defined ibex configurations, others can be used.
 These are specified in the `ibex_configs.yaml` file.
 
 You can also test how the instruction cache affects performance.
-To see this effect you must specify a delay on the instruction accesses becaus with single-cycle RAM access an isntruction cache does not help.
+To see this effect you must specify a delay on the instruction accesses because with single-cycle RAM access an instruction cache does not help.
 
 ```shell
 fusesoc --cores-root=. run --target=sim --setup --build lowrisc:ibex:ibex_simple_system `./util/ibex_config.py maxperf-pmp-bmfull-icache fusesoc_opts` --INSTR_CYCLE_DELAY=5
