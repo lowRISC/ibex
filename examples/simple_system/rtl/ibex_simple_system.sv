@@ -107,10 +107,13 @@ module ibex_simple_system (
   logic           device_err    [NrDevices];
 
   // Device address mapping
+  localparam int unsigned RAMBaseAddr = 32'h100000;
+  localparam int unsigned RAMCapacity = 32'h100000; // 1 MB
+
   logic [31:0] cfg_device_addr_base [NrDevices];
   logic [31:0] cfg_device_addr_mask [NrDevices];
-  assign cfg_device_addr_base[Ram] = 32'h100000;
-  assign cfg_device_addr_mask[Ram] = ~32'hFFFFF; // 1 MB
+  assign cfg_device_addr_base[Ram] = RAMBaseAddr;
+  assign cfg_device_addr_mask[Ram] = ~(RAMCapacity - 1);
   assign cfg_device_addr_base[SimCtrl] = 32'h20000;
   assign cfg_device_addr_mask[SimCtrl] = ~32'h3FF; // 1 kB
   assign cfg_device_addr_base[Timer] = 32'h30000;
@@ -123,9 +126,6 @@ module ibex_simple_system (
   logic [31:0] instr_addr;
   logic [31:0] instr_rdata;
   logic instr_err;
-
-  assign instr_gnt = instr_req;
-  assign instr_err = '0;
 
   `ifdef VERILATOR
     assign clk_sys = IO_CLK;
@@ -288,6 +288,10 @@ module ibex_simple_system (
       .instr_req_shadow_o        (),
       .instr_addr_shadow_o       ()
     );
+
+  assign instr_gnt = instr_req;
+  assign instr_err = (instr_addr & cfg_device_addr_mask[Ram]) !=
+                      cfg_device_addr_base[Ram];
 
   // SRAM block for instruction and data storage
   ram_2p #(
