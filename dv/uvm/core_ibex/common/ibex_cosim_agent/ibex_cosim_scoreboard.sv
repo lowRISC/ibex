@@ -163,13 +163,21 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
       riscv_cosim_set_ic_scr_key_valid(cosim_handle, rvfi_instr.ic_scr_key_valid);
 
       if (!riscv_cosim_step(cosim_handle, rvfi_instr.rd_addr, rvfi_instr.rd_wdata, rvfi_instr.pc,
-                            rvfi_instr.trap, rvfi_instr.rf_wr_suppress)) begin
+                            rvfi_instr.trap, rvfi_instr.rf_wr_suppress,
+                            rvfi_instr.expanded_insn_valid, rvfi_instr.expanded_insn,
+                            rvfi_instr.expanded_insn_last)) begin
+        // Print the debug before the error to help with diagnosis
+        `uvm_info(`gfn, get_cosim_dbg_str(rvfi_instr.pc), UVM_LOW)
         // cosim instruction step doesn't match rvfi captured instruction, report a fatal error
         // with the details
         if (cfg.relax_cosim_check) begin
           `uvm_info(`gfn, get_cosim_error_str(), UVM_LOW)
         end else begin
           `uvm_fatal(`gfn, get_cosim_error_str())
+        end
+      end else begin
+        if (riscv_cosim_get_num_dbg(cosim_handle) > 0) begin
+          `uvm_info(`gfn, get_cosim_dbg_str(rvfi_instr.pc), UVM_LOW)
         end
       end
     end
@@ -339,6 +347,16 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
 
       return error;
   endfunction : get_cosim_error_str
+
+  function string get_cosim_dbg_str(bit [31:0] pc);
+      string dbg = $sformatf("Cosim debug (DUT PC 0x%08x):\n", pc);
+      for (int i = 0; i < riscv_cosim_get_num_dbg(cosim_handle); ++i) begin
+        dbg = {dbg, riscv_cosim_get_dbg(cosim_handle, i), "\n"};
+      end
+      riscv_cosim_clear_dbg(cosim_handle);
+
+      return dbg;
+  endfunction : get_cosim_dbg_str
 
   function void final_phase(uvm_phase phase);
     super.final_phase(phase);

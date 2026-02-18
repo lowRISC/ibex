@@ -228,23 +228,35 @@ class riscv_rand_instr_stream extends riscv_instr_stream;
     end
   endfunction
 
+  function void update_excluded_instr(ref riscv_instr_name_t exclude_instr[],
+                                      input bit is_in_debug = 1'b0);
+    if ((SP inside {reserved_rd, cfg.reserved_regs}) ||
+        ((avail_regs.size() > 0) && !(SP inside {avail_regs}))) begin
+      exclude_instr = {exclude_instr, C_ADDI4SPN, C_ADDI16SP, C_LWSP, C_LDSP};
+    end
+    if ((A0 inside {reserved_rd, cfg.reserved_regs}) ||
+        (A1 inside {reserved_rd, cfg.reserved_regs}) ||
+        ((avail_regs.size() > 0) && (!(A0 inside {avail_regs}) || !(A1 inside {avail_regs})))) begin
+      // MVA01S instruction needs both A0 and A1 to be writable
+      exclude_instr = {exclude_instr, CM_MVA01S};
+    end
+    // Post-process the exclude_instr lists to handle adding ebreak instructions to the debug rom.
+    if (is_in_debug) begin
+      if (!cfg.no_ebreak && !cfg.enable_ebreak_in_debug_rom) begin
+        exclude_instr = {exclude_instr, EBREAK, C_EBREAK};
+      end
+    end
+  endfunction
+
   function void randomize_instr(output riscv_instr instr,
                                 input  bit is_in_debug = 1'b0,
                                 input  bit disable_dist = 1'b0,
                                 input  riscv_instr_group_t include_group[$] = {});
     riscv_instr_name_t exclude_instr[];
-    if ((SP inside {reserved_rd, cfg.reserved_regs}) ||
-        ((avail_regs.size() > 0) && !(SP inside {avail_regs}))) begin
-      exclude_instr = {C_ADDI4SPN, C_ADDI16SP, C_LWSP, C_LDSP};
-    end
-    // Post-process the allowed_instr and exclude_instr lists to handle
-    // adding ebreak instructions to the debug rom.
-    if (is_in_debug) begin
-      if (cfg.no_ebreak && cfg.enable_ebreak_in_debug_rom) begin
-        allowed_instr = {allowed_instr, EBREAK, C_EBREAK};
-      end else if (!cfg.no_ebreak && !cfg.enable_ebreak_in_debug_rom) begin
-        exclude_instr = {exclude_instr, EBREAK, C_EBREAK};
-      end
+    update_excluded_instr(exclude_instr, is_in_debug);
+    // Post-process the allowed_instr lists to handle adding ebreak instructions to the debug rom.
+    if (is_in_debug && cfg.no_ebreak && cfg.enable_ebreak_in_debug_rom) begin
+      allowed_instr = {allowed_instr, EBREAK, C_EBREAK};
     end
     instr = riscv_instr::get_rand_instr(.include_instr(allowed_instr),
                                         .exclude_instr(exclude_instr),
@@ -256,30 +268,48 @@ class riscv_rand_instr_stream extends riscv_instr_stream;
   function void randomize_gpr(riscv_instr instr);
     `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
       if (avail_regs.size() > 0) {
-        if (has_rs1) {
-          rs1 inside {avail_regs};
-        }
-        if (has_rs2) {
-          rs2 inside {avail_regs};
-        }
-        if (has_rd) {
-          rd  inside {avail_regs};
+        if (format == CMMV_FORMAT) {
+          if (has_rs1 && has_rs2) {
+            rs2 != rs1;
+          }
+          rs1 inside {S0, S1, [S2:S7]};
+          rs2 inside {S0, S1, [S2:S7]};
+        } else {
+          if (has_rs1) {
+            rs1 inside {avail_regs};
+          }
+          if (has_rs2) {
+            rs2 inside {avail_regs};
+          }
+          if (has_rd) {
+            rd  inside {avail_regs};
+          }
         }
       }
       foreach (reserved_rd[i]) {
         if (has_rd) {
           rd != reserved_rd[i];
         }
-        if (format == CB_FORMAT) {
+        if (instr_name == CM_MVSA01) {
           rs1 != reserved_rd[i];
+          rs2 != reserved_rd[i];
+        }
+        if (instr_name == CM_MVA01S) {
+          A0 != reserved_rd[i];
+          A1 != reserved_rd[i];
         }
       }
       foreach (cfg.reserved_regs[i]) {
         if (has_rd) {
           rd != cfg.reserved_regs[i];
         }
-        if (format == CB_FORMAT) {
+        if (instr_name == CM_MVSA01) {
           rs1 != cfg.reserved_regs[i];
+          rs2 != cfg.reserved_regs[i];
+        }
+        if (instr_name == CM_MVA01S) {
+          A0 != cfg.reserved_regs[i];
+          A1 != cfg.reserved_regs[i];
         }
       }
       // TODO: Add constraint for CSR, floating point register

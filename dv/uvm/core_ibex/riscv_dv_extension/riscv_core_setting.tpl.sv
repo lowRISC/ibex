@@ -53,7 +53,7 @@ bit support_unaligned_load_store = 1'b1;
 
 // ISA supported by the processor
 // TODO: Determine how Ibex RV32B types map to RISCV-DV ISA names
-riscv_instr_group_t supported_isa[$] = {RV32I, RV32M, RV32C
+riscv_instr_group_t supported_isa[$] = {RV32I, RV32M, RV32C, RV32ZCB, RV32ZCMP
 % if ibex_config['RV32B'] == 'ibex_pkg::RV32BNone':
     };
 % else:

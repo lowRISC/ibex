@@ -33,11 +33,18 @@ class riscv_compressed_instr extends riscv_instr;
     }
     // C_ADDI16SP is only valid when rd == SP
     if (instr_name == C_ADDI16SP) {
+      rs1 == SP;
       rd  == SP;
     }
     if (instr_name inside {C_JR, C_JALR}) {
       rs2 == ZERO;
       rs1 != ZERO;
+    }
+    // These formats potentially have rd == rs1
+    if (format inside {CA_FORMAT, CB_FORMAT, CI_FORMAT, CR_FORMAT}) {
+      if (has_rd && has_rs1) {
+        rd == rs1;
+      }
     }
   }
 
@@ -156,7 +163,13 @@ class riscv_compressed_instr extends riscv_instr;
         has_rs1 = 1'b0;
         has_imm = 1'b0;
       end
-      CI_FORMAT, CIW_FORMAT: begin
+      CI_FORMAT: begin
+        if (instr_name inside {C_LI, C_LUI, C_LWSP, C_NOP, C_EBREAK}) begin
+          has_rs1 = 1'b0;
+        end
+        has_rs2 = 1'b0;
+      end
+      CIW_FORMAT: begin
         has_rs1 = 1'b0;
         has_rs2 = 1'b0;
       end
@@ -166,7 +179,7 @@ class riscv_compressed_instr extends riscv_instr;
         has_rd  = 1'b0;
       end
       CB_FORMAT: begin
-        if (instr_name != C_ANDI) has_rd = 1'b0;
+        if (instr_name inside {C_BEQZ, C_BNEZ}) has_rd = 1'b0;
         has_rs2 = 1'b0;
       end
     endcase
