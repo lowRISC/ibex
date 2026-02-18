@@ -34,7 +34,7 @@ OBJS := ${C_SRCS:.c=.o} ${ASM_SRCS:.S=.o} ${CRT:.S=.o}
 DEPS = $(OBJS:%.o=%.d)
 
 ifdef PROGRAM
-OUTFILES := $(PROGRAM).elf $(PROGRAM).vmem $(PROGRAM).bin
+OUTFILES := $(PROGRAM).elf  $(PROGRAM).dis $(PROGRAM).vmem $(PROGRAM).bin
 else
 OUTFILES := $(OBJS)
 endif
@@ -52,12 +52,8 @@ endif
 %.dis: %.elf
 	$(OBJDUMP) -fhSD $^ > $@
 
-# Note: this target requires the srecord package to be installed.
-# XXX: This could be replaced by objcopy once
-# https://sourceware.org/bugzilla/show_bug.cgi?id=19921
-# is widely available.
 %.vmem: %.bin
-	srec_cat $^ -binary -offset 0x0000 -byte-swap 4 -o $@ -vmem
+	$(OBJCOPY) -S --verilog-data-width=4 --reverse-bytes=4 -O verilog -I binary $^ $@
 
 %.bin: %.elf
 	$(OBJCOPY) -O binary $^ $@
