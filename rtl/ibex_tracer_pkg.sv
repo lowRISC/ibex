@@ -123,6 +123,10 @@ package ibex_tracer_pkg;
   parameter logic [31:0] INSN_BINV = { 7'b0110100, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
   parameter logic [31:0] INSN_BEXT = { 7'b0100100, 10'h?, 3'b101, 5'h?, {OPCODE_OP} };
 
+  //ZiCond
+  parameter logic [31:0] INSN_CZERO_EQZ = { 7'b0000111, 10'h?, 3'b101, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_CZERO_NEZ = { 7'b0000111, 10'h?, 3'b111, 5'h?, {OPCODE_OP} };
+
   // ZBP
   // grevi
   // Only log2(XLEN) bits of the immediate are used. For RV32, this means only the bits in
