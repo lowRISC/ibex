@@ -1,3 +1,7 @@
+// Copyright Microsoft Corporation
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+
 // Copyright lowRISC contributors.
 // Copyright 2018 ETH Zurich and University of Bologna, see also CREDITS.md.
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
@@ -15,13 +19,15 @@
 
 module ibex_compressed_decoder #(
   parameter ibex_pkg::rv32zc_e RV32ZC   = ibex_pkg::RV32ZcaZcbZcmp,
-  parameter bit                ResetAll = 1'b0
+  parameter bit                ResetAll = 1'b0,
+  parameter bit                CHERIoTEn  = 1'b1
 ) (
   input  logic                 clk_i,
   input  logic                 rst_ni,
   input  logic                 valid_i,
   input  logic                 id_in_ready_i,
   input  logic [31:0]          instr_i,
+  input  logic                 cheri_pmode_i,
   output logic [31:0]          instr_o,
   output logic                 is_compressed_o,
   output ibex_pkg::instr_exp_e gets_expanded_o,
@@ -226,9 +232,14 @@ module ibex_compressed_decoder #(
       2'b00: begin
         unique case (instr_i[15:13])
           3'b000: begin
-            // c.addi4spn -> addi rd', x2, imm
-            instr_o = {2'b0, instr_i[10:7], instr_i[12:11], instr_i[5],
-                       instr_i[6], 2'b00, 5'h02, 3'b000, 2'b01, instr_i[4:2], {OPCODE_OP_IMM}};
+            if (CHERIoTEn & cheri_pmode_i)
+              // c.incaddr4cspn -> cincoffsetimm cd', csp, imm
+              instr_o = {2'b0, instr_i[10:7], instr_i[12:11], instr_i[5],
+                        instr_i[6], 2'b00, 5'h02, 3'b001, 2'b01, instr_i[4:2], {OPCODE_CHERI}};
+            else
+              // c.addi4spn -> addi rd', x2, imm
+              instr_o = {2'b0, instr_i[10:7], instr_i[12:11], instr_i[5],
+                         instr_i[6], 2'b00, 5'h02, 3'b000, 2'b01, instr_i[4:2], {OPCODE_OP_IMM}};
             if (instr_i[12:5] == 8'b0)  illegal_instr_o = 1'b1;
           end
 
@@ -236,6 +247,17 @@ module ibex_compressed_decoder #(
             // c.lw -> lw rd', imm(rs1')
             instr_o = {5'b0, instr_i[5], instr_i[12:10], instr_i[6],
                        2'b00, 2'b01, instr_i[9:7], 3'b010, 2'b01, instr_i[4:2], {OPCODE_LOAD}};
+          end
+
+          3'b011: begin
+            if (CHERIoTEn & cheri_pmode_i) begin
+              // CHERI: c.clc -> clc rd', imm(rs1'); reuse c.ld
+              instr_o = {4'b0, instr_i[6:5], instr_i[12:10],
+                         3'b000, 2'b01, instr_i[9:7], 3'b011, 2'b01, instr_i[4:2], {OPCODE_LOAD}};
+             end else begin
+              instr_o = instr_i;
+              illegal_instr_o = 1'b1;
+            end
           end
 
           3'b110: begin
@@ -308,12 +330,21 @@ module ibex_compressed_decoder #(
           end
 
           3'b001,
-          3'b011,
-          3'b101,
-          3'b111: begin
-            illegal_instr_o = 1'b1;
-          end
+3'b001,
+3'b101: begin
+  illegal_instr_o = 1'b1;
+end
 
+3'b111: begin
+  if (CHERIoTEn & cheri_pmode_i) begin
+    // CHERI: c.csc -> csc rs2', imm(rs1'); reuse c.sd
+    instr_o = {4'b0, instr_i[6:5], instr_i[12], 2'b01, instr_i[4:2],
+               2'b01, instr_i[9:7], 3'b011, instr_i[11:10], 3'b000, {OPCODE_STORE}};
+  end else begin
+    instr_o = instr_i;
+    illegal_instr_o = 1'b1;
+  end
+end
           default: begin
             illegal_instr_o = 1'b1;
           end
@@ -329,9 +360,13 @@ module ibex_compressed_decoder #(
         unique case (instr_i[15:13])
           3'b000: begin
             // c.addi -> addi rd, rd, nzimm
-            // c.nop
+            // c.hint now maps to NOP in CHERIoT mode
+            logic [4:0] rd_dec;
+            logic [5:0] nzimm;
+            nzimm   = {instr_i[12], instr_i[6:2]};
+            rd_dec  = (CHERIoTEn & cheri_pmode_i && (nzimm == 6'h0)) ? 5'h0 : instr_i[11:7];
             instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2],
-                       instr_i[11:7], 3'b0, instr_i[11:7], {OPCODE_OP_IMM}};
+                       instr_i[11:7], 3'b0, rd_dec, {OPCODE_OP_IMM}};
           end
 
           3'b001, 3'b101: begin
@@ -354,7 +389,11 @@ module ibex_compressed_decoder #(
             // (c.lui hints are translated into a lui hint)
             instr_o = {{15 {instr_i[12]}}, instr_i[6:2], instr_i[11:7], {OPCODE_LUI}};
 
-            if (instr_i[11:7] == 5'h02) begin
+            // c.incaddr16csp -> cincoffsetimm csp, csp, nzimm
+            if (CHERIoTEn & cheri_pmode_i &&  (instr_i[11:7] == 5'h02))  begin
+              instr_o = {{3 {instr_i[12]}}, instr_i[4:3], instr_i[5], instr_i[2],
+                         instr_i[6], 4'b0, 5'h02, 3'b001,  5'h02, {OPCODE_CHERI}};
+            end else if (instr_i[11:7] == 5'h02)  begin
               // c.addi16sp -> addi x2, x2, nzimm
               instr_o = {{3 {instr_i[12]}}, instr_i[4:3], instr_i[5], instr_i[2],
                          instr_i[6], 4'b0, 5'h02, 3'b000, 5'h02, {OPCODE_OP_IMM}};
@@ -518,6 +557,18 @@ module ibex_compressed_decoder #(
             instr_o = {4'b0, instr_i[3:2], instr_i[12], instr_i[6:4], 2'b00, 5'h02,
                        3'b010, instr_i[11:7], OPCODE_LOAD};
             if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
+          end
+
+          3'b011: begin
+            if (CHERIoTEn & cheri_pmode_i) begin
+              // c.clcsp -> clc cd, imm(c2),  reused c.ldsp
+              instr_o = {3'b0, instr_i[4:2], instr_i[12], instr_i[6:5], 3'b000, 5'h02,
+                         3'b011, instr_i[11:7], OPCODE_LOAD};
+              if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
+            end else begin
+              instr_o = instr_i;
+              illegal_instr_o = 1'b1;
+            end
           end
 
           3'b100: begin
@@ -784,8 +835,23 @@ module ibex_compressed_decoder #(
           3'b001,
           3'b011,
           3'b111: begin
-            illegal_instr_o = 1'b1;
+            if (CHERIoTEn & cheri_pmode_i) begin
+              // c.clcsp -> clc cd, imm(c2),  reused c.ldsp
+              if (instr_i[15:13] == 3'b011) begin
+                instr_o = {3'b0, instr_i[4:2], instr_i[12], instr_i[6:5], 3'b000, 5'h02,
+                           3'b011, instr_i[11:7], OPCODE_LOAD};
+              end else begin
+                // c.cscsp -> csc cs2, imm(c2),  reuse c.sdsp
+                instr_o = {3'b0, instr_i[9:7], instr_i[12], instr_i[6:2], 5'h02, 3'b011,
+                           instr_i[11:10], 3'b000, {OPCODE_STORE}};
+              end
+              if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
+            end else begin
+              instr_o = instr_i;
+              illegal_instr_o = 1'b1;
+            end
           end
+
 
           default: begin
             illegal_instr_o = 1'b1;

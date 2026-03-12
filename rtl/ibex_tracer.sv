@@ -1,3 +1,7 @@
+// Copyright Microsoft Corporation
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+
 // Copyright lowRISC contributors.
 // Copyright 2018 ETH Zurich and University of Bologna, see also CREDITS.md.
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
@@ -34,10 +38,15 @@
  * to the one produced by objdump. This simplifies the correlation between the static program
  * information from the objdump-generated disassembly, and the runtime information from this tracer.
  */
-module ibex_tracer (
+
+module ibex_tracer import cheri_pkg::*; # (
+  parameter bit          CheriCapIT8 = 1'b0
+) (
   input logic        clk_i,
   input logic        rst_ni,
 
+  input logic        cheri_pmode_i,
+  input logic        cheri_tsafe_en_i,
   input logic [31:0] hart_id_i,
 
   // RVFI as described at https://github.com/SymbioticEDA/riscv-formal/blob/master/docs/rvfi.md
@@ -55,10 +64,13 @@ module ibex_tracer (
   input logic [ 4:0] rvfi_rs2_addr,
   input logic [ 4:0] rvfi_rs3_addr,
   input logic [31:0] rvfi_rs1_rdata,
+  input reg_cap_t    rvfi_rs1_rcap,
   input logic [31:0] rvfi_rs2_rdata,
+  input reg_cap_t    rvfi_rs2_rcap,
   input logic [31:0] rvfi_rs3_rdata,
   input logic [ 4:0] rvfi_rd_addr,
   input logic [31:0] rvfi_rd_wdata,
+  input reg_cap_t    rvfi_rd_wcap,
   input logic [31:0] rvfi_pc_rdata,
   input logic [31:0] rvfi_pc_wdata,
   input logic [31:0] rvfi_mem_addr,
@@ -66,9 +78,14 @@ module ibex_tracer (
   input logic [ 3:0] rvfi_mem_wmask,
   input logic [31:0] rvfi_mem_rdata,
   input logic [31:0] rvfi_mem_wdata,
+  input logic        rvfi_mem_is_cap,
+  input reg_cap_t    rvfi_mem_rcap,
+  input reg_cap_t    rvfi_mem_wcap,
   input logic        rvfi_ext_expanded_insn_valid,
   input logic [15:0] rvfi_ext_expanded_insn
 );
+
+// synthesis translate_off
 
   // These signals are part of RVFI, but not used in this module currently.
   // Keep them as part of the interface to change the tracer more easily in the future. Assigning
@@ -91,12 +108,17 @@ module ibex_tracer (
   logic        insn_is_compressed;
 
   // Data items accessed during this instruction
-  localparam logic [4:0] RS1 = (1 << 0);
-  localparam logic [4:0] RS2 = (1 << 1);
-  localparam logic [4:0] RS3 = (1 << 2);
-  localparam logic [4:0] RD  = (1 << 3);
-  localparam logic [4:0] MEM = (1 << 4);
-  logic [4:0] data_accessed;
+  localparam logic [9:0] RS1 = (1 << 0);
+  localparam logic [9:0] RS2 = (1 << 1);
+  localparam logic [9:0] RS3 = (1 << 2);
+  localparam logic [9:0] RD  = (1 << 3);
+  localparam logic [9:0] MEM = (1 << 4);
+  localparam logic [9:0] CS1 = (1 << 5);
+  localparam logic [9:0] CS2 = (1 << 6);
+  localparam logic [9:0] CD  = (1 << 7);
+  localparam logic [9:0] MEMC = (1 << 8);
+  localparam logic [9:0] MEM2 = (1 << 9);
+  logic [9:0] data_accessed;
 
   logic trace_log_enable;
   initial begin
@@ -111,23 +133,37 @@ module ibex_tracer (
 
   function automatic void printbuffer_dumpline(int fh);
     string rvfi_insn_str;
+    string disp_str;
+    logic [32:0] tmp33;
 
     // Write compressed instructions as four hex digits (16 bit word), and
     // uncompressed ones as 8 hex digits (32 bit words).
     if (insn_is_compressed) begin
-      rvfi_insn_str = $sformatf("%h", rvfi_insn[15:0]);
+      rvfi_insn_str = $sformatf("    %4h", rvfi_insn[15:0]);
     end else begin
-      rvfi_insn_str = $sformatf("%h", rvfi_insn);
+      rvfi_insn_str = $sformatf("%8h", rvfi_insn);
     end
 
+    if (rvfi_trap) disp_str = $sformatf("-->%s", decoded_str);
+    else if (rvfi_intr) disp_str = $sformatf("==>%s", decoded_str);
+    else disp_str = decoded_str;
+
     $fwrite(fh, "%15t\t%d\t%h\t%s\t%s\t",
-            $time, cycle, rvfi_pc_rdata, rvfi_insn_str, decoded_str);
+            $time, cycle, rvfi_pc_rdata, rvfi_insn_str, disp_str);
 
     if ((data_accessed & RS1) != 0) begin
       $fwrite(fh, " %s:0x%08x", reg_addr_to_str(rvfi_rs1_addr), rvfi_rs1_rdata);
     end
+    if ((data_accessed & CS1) != 0) begin
+      tmp33 = CheriCapIT8 ? reg2memcap_it8_fmt0(rvfi_rs1_rcap) : reg2memcap_fmt0(rvfi_rs1_rcap);
+      $fwrite(fh, " %s:0x%08x+0x%09x", reg_addr_to_str(rvfi_rs1_addr), rvfi_rs1_rdata, tmp33);
+    end
     if ((data_accessed & RS2) != 0) begin
       $fwrite(fh, " %s:0x%08x", reg_addr_to_str(rvfi_rs2_addr), rvfi_rs2_rdata);
+    end
+    if ((data_accessed & CS2) != 0) begin
+      tmp33 = CheriCapIT8 ?  reg2memcap_it8_fmt0(rvfi_rs2_rcap) :  reg2memcap_fmt0(rvfi_rs2_rcap);
+      $fwrite(fh, " %s:0x%08x+0x%09x", reg_addr_to_str(rvfi_rs2_addr), rvfi_rs2_rdata, tmp33);
     end
     if ((data_accessed & RS3) != 0) begin
       $fwrite(fh, " %s:0x%08x", reg_addr_to_str(rvfi_rs3_addr), rvfi_rs3_rdata);
@@ -135,14 +171,35 @@ module ibex_tracer (
     if ((data_accessed & RD) != 0) begin
       $fwrite(fh, " %s=0x%08x", reg_addr_to_str(rvfi_rd_addr), rvfi_rd_wdata);
     end
+
+    if ((data_accessed & CD) != 0) begin
+      tmp33 = CheriCapIT8 ? reg2memcap_it8_fmt0(rvfi_rd_wcap) : reg2memcap_fmt0(rvfi_rd_wcap);
+      $fwrite(fh, " %s=0x%08x+0x%09x", reg_addr_to_str(rvfi_rd_addr), rvfi_rd_wdata, tmp33);
+    end
+
     if ((data_accessed & MEM) != 0) begin
       $fwrite(fh, " PA:0x%08x", rvfi_mem_addr);
 
-      if (rvfi_mem_wmask != 4'b0000) begin
+      if (rvfi_mem_wmask == 4'b0001)
+        $fwrite(fh, " store:0x??????%02x", rvfi_mem_wdata[7:0]);
+      else if (rvfi_mem_wmask == 4'b0011)
+        $fwrite(fh, " store:0x????%04x",  rvfi_mem_wdata[15:0]);
+      else if (rvfi_mem_wmask != 4'b0000)
         $fwrite(fh, " store:0x%08x", rvfi_mem_wdata);
-      end
-      if (rvfi_mem_rmask != 4'b0000) begin
+
+      if (rvfi_mem_rmask != 4'b0000)
         $fwrite(fh, " load:0x%08x", rvfi_mem_rdata);
+    end
+
+    if ((data_accessed & MEMC) != 0) begin
+      $fwrite(fh, " PA:0x%08x", rvfi_mem_addr);
+
+      if (rvfi_mem_wmask != 0) begin
+        tmp33 = CheriCapIT8 ? reg2memcap_it8_fmt0(rvfi_mem_wcap) : reg2memcap_fmt0(rvfi_mem_wcap);
+        $fwrite(fh, " store:0x%08x+0x%09x", rvfi_mem_wdata, tmp33);
+      end else begin
+        tmp33 = CheriCapIT8 ? reg2memcap_it8_fmt0(rvfi_mem_rcap) : reg2memcap_fmt0(rvfi_mem_rcap);
+        $fwrite(fh, " load:0x%08x+0x%09x", rvfi_mem_rdata, tmp33);
       end
     end
     if (rvfi_ext_expanded_insn_valid) begin
@@ -185,6 +242,18 @@ module ibex_tracer (
       // Temporary Registers
       5'd28, 5'd29, 5'd30, 5'd31: return $sformatf("t%0d", addr - 25);
       default: return $sformatf("x%0d", addr);
+    endcase
+  endfunction
+
+  // Get a SCR name for a CHERI SCR address.
+  function automatic string get_scr_name(input logic [4:0] scr_addr);
+    unique case (scr_addr)
+      5'd27:   return "ztopc";
+      5'd28:   return "mtcc";
+      5'd29:   return "mtdc";
+      5'd30:   return "mscratchc";
+      5'd31:   return "mepcc";
+      default: return $sformatf("scr%d", scr_addr);
     endcase
   endfunction
 
@@ -429,6 +498,9 @@ module ibex_tracer (
       12'd900: return "mdbase";
       12'd901: return "mdbound";
       12'd800: return "mcountinhibit";
+      12'd3009: return "mshwm";
+      12'd3010: return "mshwmb";
+      12'd3012: return "cdbgctrl";
       default: return $sformatf("0x%x", csr_addr);
     endcase
   endfunction
@@ -485,9 +557,17 @@ module ibex_tracer (
 
   function automatic void decode_i_jalr_insn(input string mnemonic);
     // JALR
-    data_accessed = RS1 | RD;
-    decoded_str = $sformatf("%s\tx%0d,%0d(x%0d)", mnemonic, rvfi_rd_addr,
-        $signed({{20 {rvfi_insn[31]}}, rvfi_insn[31:20]}), rvfi_rs1_addr);
+    if (cheri_pmode_i) begin
+      data_accessed = CS1 | CD;
+      // CH.cjalr
+      decoded_str = $sformatf("CH.c%s\tc%0d,%0d(c%0d)", mnemonic, rvfi_rd_addr,
+          $signed({{20 {rvfi_insn[31]}}, rvfi_insn[31:20]}), rvfi_rs1_addr);
+    end else begin
+      // jalr
+      data_accessed = RS1 | RD;
+      decoded_str = $sformatf("%s\tx%0d,%0d(x%0d)", mnemonic, rvfi_rd_addr,
+          $signed({{20 {rvfi_insn[31]}}, rvfi_insn[31:20]}), rvfi_rs1_addr);
+    end
   endfunction
 
   function automatic void decode_u_insn(input string mnemonic);
@@ -497,8 +577,13 @@ module ibex_tracer (
 
   function automatic void decode_j_insn(input string mnemonic);
     // JAL
-    data_accessed = RD;
-    decoded_str = $sformatf("%s\tx%0d,%0x", mnemonic, rvfi_rd_addr, rvfi_pc_wdata);
+    if (cheri_pmode_i) begin
+      data_accessed = CD;
+      decoded_str = $sformatf("%s\tc%0d,%0x", "CH.cjal", rvfi_rd_addr, rvfi_pc_wdata);
+    end else begin
+      data_accessed = RD;
+      decoded_str = $sformatf("%s\tx%0d,%0x", mnemonic, rvfi_rd_addr, rvfi_pc_wdata);
+    end
   endfunction
 
   function automatic void decode_b_insn(input string mnemonic);
@@ -535,14 +620,23 @@ module ibex_tracer (
 
   function automatic void decode_cr_insn(input string mnemonic);
     if (rvfi_rs2_addr == 5'b0) begin
-      if (rvfi_insn[12] == 1'b1) begin
+      if ((rvfi_insn[12] == 1'b1) && cheri_pmode_i) begin
+        // C.CH.JALR
+        data_accessed = CS1 | CD;
+        decoded_str = $sformatf("%s\tc%0d", "c.CH.cjalr", rvfi_rs1_addr);
+      end else if (rvfi_insn[12] == 1'b1) begin
         // C.JALR
         data_accessed = RS1 | RD;
+        decoded_str = $sformatf("%s\tx%0d", mnemonic, rvfi_rs1_addr);
+      end else if (cheri_pmode_i) begin
+        // C.CH.JR
+        data_accessed = CS1;
+        decoded_str = $sformatf("%s\tc%0d", "c.CH.cjr" , rvfi_rs1_addr);
       end else begin
         // C.JR
         data_accessed = RS1;
+        decoded_str = $sformatf("%s\tx%0d", mnemonic, rvfi_rs1_addr);
       end
-      decoded_str = $sformatf("%s\tx%0d", mnemonic, rvfi_rs1_addr);
     end else begin
       data_accessed = RS1 | RS2 | RD; // RS1 == RD
       decoded_str = $sformatf("%s\tx%0d,x%0d", mnemonic, rvfi_rd_addr, rvfi_rs2_addr);
@@ -566,8 +660,13 @@ module ibex_tracer (
   function automatic void decode_ci_caddi16sp_insn(input string mnemonic);
     logic [9:0] nzimm;
     nzimm = {rvfi_insn[12], rvfi_insn[4:3], rvfi_insn[5], rvfi_insn[2], rvfi_insn[6], 4'b0};
-    data_accessed = RS1 | RD;
-    decoded_str = $sformatf("%s\tx%0d,%0d", mnemonic, rvfi_rd_addr, $signed(nzimm));
+    if (cheri_pmode_i) begin
+      data_accessed = CS1 | CD;
+      decoded_str = $sformatf("%s\tc%0d,%0d", "c.CH.cinc16csp", rvfi_rd_addr, $signed(nzimm));
+    end else begin
+      data_accessed = RS1 | RD;
+      decoded_str = $sformatf("%s\tx%0d,%0d", mnemonic, rvfi_rd_addr, $signed(nzimm));
+    end
   endfunction
 
   function automatic void decode_ci_clui_insn(input string mnemonic);
@@ -588,8 +687,15 @@ module ibex_tracer (
     // C.ADDI4SPN
     logic [9:0] nzuimm;
     nzuimm = {rvfi_insn[10:7], rvfi_insn[12:11], rvfi_insn[5], rvfi_insn[6], 2'b00};
-    data_accessed = RD;
-    decoded_str = $sformatf("%s\tx%0d,x2,%0d", mnemonic, rvfi_rd_addr, nzuimm);
+    if (cheri_pmode_i) begin
+      // c.CH.incaddr4spn
+      data_accessed = CD | CS1;
+      decoded_str = $sformatf("%s\tc%0d,csp,%0d", mnemonic, rvfi_rd_addr, nzuimm);
+    end else begin
+      // c.addi4spn
+      data_accessed = RD;
+      decoded_str = $sformatf("%s\tx%0d,x2,%0d", mnemonic, rvfi_rd_addr, nzuimm);
+    end
   endfunction
 
   function automatic void decode_cb_sr_insn(input string mnemonic);
@@ -629,9 +735,20 @@ module ibex_tracer (
   function automatic void decode_cj_insn(input string mnemonic);
     if (rvfi_insn[15:13] == 3'b001) begin
       // C.JAL
-      data_accessed = RD;
+      if (cheri_pmode_i) begin
+        data_accessed = CD;
+        decoded_str = $sformatf("%s\t%0x", "c.CH.cjal", rvfi_pc_wdata);
+      end else begin
+        data_accessed = RD;
+        decoded_str = $sformatf("%s\t%0x", mnemonic, rvfi_pc_wdata);
+      end
+    end else begin
+      // C.J
+      if (cheri_pmode_i)
+        decoded_str = $sformatf("%s\t%0x", "c.CH.cj", rvfi_pc_wdata);
+      else
+        decoded_str = $sformatf("%s\t%0x", mnemonic, rvfi_pc_wdata);
     end
-    decoded_str = $sformatf("%s\t%0x", mnemonic, rvfi_pc_wdata);
   endfunction
 
   function automatic void decode_Zc_cu_insn(input string mnemonic);
@@ -642,15 +759,32 @@ module ibex_tracer (
   function automatic void decode_compressed_load_insn(input string mnemonic);
     logic [7:0] imm;
 
-    if (rvfi_insn[1:0] == OPCODE_C0) begin
-      // C.LW
-      imm = {1'b0, rvfi_insn[5], rvfi_insn[12:10], rvfi_insn[6], 2'b00};
+    if ((rvfi_insn[15:13] == 3'b011) && (rvfi_insn[1:0] == OPCODE_C0))  begin
+      // CHERI: c.clc, use RV64 c.ld encoding
+      imm = {rvfi_insn[6:5], rvfi_insn[12:10], 3'b000};
+      data_accessed = CS1 | CD | MEMC;
+      decoded_str = $sformatf("%s\tc%0d,%0d(c%0d)", mnemonic, rvfi_rd_addr, imm, rvfi_rs1_addr);
+    end else if ((rvfi_insn[15:13] == 3'b011) && (rvfi_insn[1:0] == OPCODE_C2))  begin
+      // CHERI: c.clcsp, RV32: c.ldsp
+      imm = {rvfi_insn[4:2], rvfi_insn[12], rvfi_insn[6:5], 3'b000};
+      data_accessed = CS1 | CD | MEMC;
+      decoded_str = $sformatf("%s\tc%0d,%0d(c%0d)", mnemonic, rvfi_rd_addr, imm, rvfi_rs1_addr);
     end else begin
-      // C.LWSP
-      imm = {rvfi_insn[3:2], rvfi_insn[12], rvfi_insn[6:4], 2'b00};
+      if (rvfi_insn[1:0] == OPCODE_C0) begin
+        // C.LW
+        imm = {1'b0, rvfi_insn[5], rvfi_insn[12:10], rvfi_insn[6], 2'b00};
+      end else begin
+        // C.LWSP
+        imm = {rvfi_insn[3:2], rvfi_insn[12], rvfi_insn[6:4], 2'b00};
+      end
+      if (cheri_pmode_i) begin
+        data_accessed = CS1 | RD | MEM;
+        decoded_str = $sformatf("%s\tx%0d,%0d(c%0d)", mnemonic, rvfi_rd_addr, imm, rvfi_rs1_addr);
+      end else begin
+        data_accessed = RS1 | RD | MEM;
+        decoded_str = $sformatf("%s\tx%0d,%0d(x%0d)", mnemonic, rvfi_rd_addr, imm, rvfi_rs1_addr);
+      end
     end
-    data_accessed = RS1 | RD | MEM;
-    decoded_str = $sformatf("%s\tx%0d,%0d(x%0d)", mnemonic, rvfi_rd_addr, imm, rvfi_rs1_addr);
   endfunction
 
   function automatic void decode_Zc_load_insn(input string mnemonic);
@@ -669,15 +803,34 @@ module ibex_tracer (
 
   function automatic void decode_compressed_store_insn(input string mnemonic);
     logic [7:0] imm;
-    if (rvfi_insn[1:0] == OPCODE_C0) begin
-      // C.SW
-      imm = {1'b0, rvfi_insn[5], rvfi_insn[12:10], rvfi_insn[6], 2'b00};
+
+
+    if ((rvfi_insn[15:13] == 3'b111) && (rvfi_insn[1:0] == OPCODE_C0)) begin
+      // CHERI: c.csc, use RV64 c.sd encoding
+      imm = {rvfi_insn[6:5], rvfi_insn[12:10], 3'b000};
+      data_accessed = CS1 | CS2 | MEMC;
+      decoded_str = $sformatf("%s\tc%0d,%0d(c%0d)", mnemonic, rvfi_rs2_addr, imm, rvfi_rs1_addr);
+    end else if ((rvfi_insn[15:13] == 3'b111) && (rvfi_insn[1:0] == OPCODE_C2)) begin
+      // CHERI: c.cscsp, RV32: c.sdsp
+      imm = {rvfi_insn[9:7], rvfi_insn[12:10], 3'b000};
+      data_accessed = CS1 | CS2 | MEMC;
+      decoded_str = $sformatf("%s\tc%0d,%0d(c%0d)", mnemonic, rvfi_rs2_addr, imm, rvfi_rs1_addr);
     end else begin
-      // C.SWSP
-      imm = {rvfi_insn[8:7], rvfi_insn[12:9], 2'b00};
+      if (rvfi_insn[1:0] == OPCODE_C0) begin
+        // C.SW
+        imm = {1'b0, rvfi_insn[5], rvfi_insn[12:10], rvfi_insn[6], 2'b00};
+      end else begin
+        // C.SWSP
+        imm = {rvfi_insn[8:7], rvfi_insn[12:9], 2'b00};
+      end
+      if (cheri_pmode_i) begin
+        data_accessed = CS1 | RS2 | MEM;
+        decoded_str = $sformatf("%s\tx%0d,%0d(c%0d)", mnemonic, rvfi_rs2_addr, imm, rvfi_rs1_addr);
+      end else begin
+        data_accessed = RS1 | RS2 | MEM;
+        decoded_str = $sformatf("%s\tx%0d,%0d(x%0d)", mnemonic, rvfi_rs2_addr, imm, rvfi_rs1_addr);
+      end
     end
-    data_accessed = RS1 | RS2 | MEM;
-    decoded_str = $sformatf("%s\tx%0d,%0d(x%0d)", mnemonic, rvfi_rs2_addr, imm, rvfi_rs1_addr);
   endfunction
 
   function automatic void decode_Zc_store_insn(input string mnemonic);
@@ -744,7 +897,8 @@ module ibex_tracer (
   endfunction
 
   function automatic void decode_load_insn();
-    string      mnemonic;
+    string       mnemonic;
+    logic [13:0] imm;
 
     /*
     Gives wrong results in Verilator < 4.020.
@@ -764,49 +918,92 @@ module ibex_tracer (
     endcase
     */
     logic [2:0] size;
+    logic is_cap;
+
     size = rvfi_insn[14:12];
+    is_cap = 1'b0;
+
     if (size == 3'b000) begin
-      mnemonic = "lb";
+      mnemonic = cheri_pmode_i ? "clb" : "lb";
     end else if (size == 3'b001) begin
-      mnemonic = "lh";
+      mnemonic = cheri_pmode_i ? "clh" :"lh";
     end else if (size == 3'b010) begin
-      mnemonic = "lw";
+      mnemonic = cheri_pmode_i ? "clw" :"lw";
     end else if (size == 3'b100) begin
-      mnemonic = "lbu";
+      mnemonic = cheri_pmode_i ? "clbu" :"lbu";
     end else if (size == 3'b101) begin
-      mnemonic = "lhu";
+      mnemonic = cheri_pmode_i ? "clhu" :"lhu";
+    end else if (size == 3'b011) begin
+      mnemonic = "CH.clc";
+      is_cap = 1'b1;
     end else begin
       decode_mnemonic("INVALID");
       return;
     end
 
+    imm = {{3{rvfi_insn[31]}},rvfi_insn[30:20]};
 
-    data_accessed = RD | RS1 | MEM;
-    decoded_str = $sformatf("%s\tx%0d,%0d(x%0d)", mnemonic, rvfi_rd_addr,
-                    $signed({{20 {rvfi_insn[31]}}, rvfi_insn[31:20]}), rvfi_rs1_addr);
+    if (is_cap) begin
+      data_accessed = CD | CS1 | MEMC;
+      decoded_str = $sformatf("%s\tc%0d,%0d(c%0d)", mnemonic, rvfi_rd_addr,
+                      $signed(imm), rvfi_rs1_addr);
+    end else if (cheri_pmode_i) begin
+      data_accessed = RD | CS1 | MEM;
+      decoded_str = $sformatf("%s\tx%0d,%0d(c%0d)", mnemonic, rvfi_rd_addr,
+                      $signed(imm), rvfi_rs1_addr);
+    end else begin
+      data_accessed = RD | RS1 | MEM;
+      decoded_str = $sformatf("%s\tx%0d,%0d(x%0d)", mnemonic, rvfi_rd_addr,
+                      $signed(imm), rvfi_rs1_addr);
+    end
   endfunction
 
   function automatic void decode_store_insn();
     string    mnemonic;
+    logic     is_cap;
+    logic [13:0] imm;
 
+    is_cap = 1'b0;
     unique case (rvfi_insn[13:12])
-      2'b00:  mnemonic = "sb";
-      2'b01:  mnemonic = "sh";
-      2'b10:  mnemonic = "sw";
+      2'b00:  mnemonic = cheri_pmode_i ? "csb" : "sb";
+      2'b01:  mnemonic = cheri_pmode_i ? "csh" : "sh";
+      2'b10:  mnemonic = cheri_pmode_i ? "csw" : "sw";
+      2'b11:  begin
+        mnemonic = "CH.csc";
+        is_cap = 1'b1;
+      end
       default: begin
         decode_mnemonic("INVALID");
         return;
       end
     endcase
 
+    imm = {{3{rvfi_insn[31]}},rvfi_insn[30:25], rvfi_insn[11:7]};
+
     if (!rvfi_insn[14]) begin
       // regular store
-      data_accessed = RS1 | RS2 | MEM;
-      decoded_str = $sformatf("%s\tx%0d,%0d(x%0d)",
-                              mnemonic,
-                              rvfi_rs2_addr,
-                              $signed({{20{rvfi_insn[31]}}, rvfi_insn[31:25], rvfi_insn[11:7]}),
-                              rvfi_rs1_addr);
+      if (is_cap) begin
+        data_accessed = CS1 | CS2 | MEMC;
+        decoded_str = $sformatf("%s\tc%0d,%0d(c%0d)",
+                                mnemonic,
+                                rvfi_rs2_addr,
+                                $signed(imm),
+                                rvfi_rs1_addr);
+      end else if (cheri_pmode_i) begin
+        data_accessed = CS1 | RS2 | MEM;
+        decoded_str = $sformatf("%s\tx%0d,%0d(c%0d)",
+                                mnemonic,
+                                rvfi_rs2_addr,
+                                $signed(imm),
+                                rvfi_rs1_addr);
+      end else begin
+        data_accessed = RS1 | RS2 | MEM;
+        decoded_str = $sformatf("%s\tx%0d,%0d(x%0d)",
+                                mnemonic,
+                                rvfi_rs2_addr,
+                                $signed(imm),
+                                rvfi_rs1_addr);
+      end
     end else begin
       decode_mnemonic("INVALID");
     end
@@ -837,6 +1034,99 @@ module ibex_tracer (
     decoded_str = $sformatf("fence\t%s,%s", predecessor, successor);
   endfunction
 
+  function automatic void decode_cheri_rd_rs1_insn(input string mnemonic);
+    data_accessed = RS1 | RD;
+    decoded_str = $sformatf("%s\tx%0d,x%0d", mnemonic, rvfi_rd_addr, rvfi_rs1_addr);
+  endfunction
+
+  function automatic void decode_cheri_rd_cs1_insn(input string mnemonic);
+    data_accessed = CS1 | RD;
+    decoded_str = $sformatf("%s\tx%0d,c%0d", mnemonic, rvfi_rd_addr, rvfi_rs1_addr);
+  endfunction
+
+  function automatic void decode_cheri_cd_cs1_insn(input string mnemonic);
+    data_accessed = CS1 | CD;
+    decoded_str = $sformatf("%s\tc%0d,c%0d", mnemonic, rvfi_rd_addr, rvfi_rs1_addr);
+  endfunction
+
+  function automatic void decode_cheri_rd_cs1_cs2_insn(input string mnemonic);
+    data_accessed = CS2 | CS1 | RD;
+    decoded_str = $sformatf("%s\tx%0d,c%0d,c%0d", mnemonic, rvfi_rd_addr, rvfi_rs1_addr, rvfi_rs2_addr);
+  endfunction
+
+  function automatic void decode_cheri_cd_cs1_cs2_insn(input string mnemonic);
+    data_accessed = CS2 | CS1 | CD;
+    decoded_str = $sformatf("%s\tc%0d,c%0d,c%0d", mnemonic, rvfi_rd_addr, rvfi_rs1_addr, rvfi_rs2_addr);
+  endfunction
+
+  function automatic void decode_cheri_cd_cs1_rs2_insn(input string mnemonic);
+    data_accessed = RS2 | CS1 | CD;
+    decoded_str = $sformatf("%s\tc%0d,c%0d,x%0d", mnemonic, rvfi_rd_addr, rvfi_rs1_addr, rvfi_rs2_addr);
+  endfunction
+
+  function automatic void decode_cheri_cd_cs1_imm_insn(input string mnemonic);
+    logic [13:0] imm;
+
+    data_accessed =  CS1 | CD;
+
+    // cincaddrimm and csetboundsimm
+    imm = {{3{rvfi_insn[31]}}, rvfi_insn[30:20]};  // imm not extended
+
+    if (rvfi_insn[14:12] == 3'b001) // cincaddrimm
+      decoded_str = $sformatf("%s\tc%0d,c%0d,%0d", mnemonic, rvfi_rd_addr, rvfi_rs1_addr, $signed(imm));
+    else                            // csetboundsimm
+      decoded_str = $sformatf("%s\tc%0d,c%0d,%0d", mnemonic, rvfi_rd_addr, rvfi_rs1_addr, imm);
+
+  endfunction
+
+  function automatic void decode_cheri_auipcc_insn();
+    logic [31:0] imm;
+
+    // We cannot use rvfi_pc_wdata for conditional jumps.
+    imm = rvfi_insn[31:12];
+    data_accessed =  CD;
+    if (cheri_pmode_i) begin
+      decoded_str = $sformatf("%s\tc%0d,0x%0x", "CH.auipcc", rvfi_rd_addr, imm);
+    end else begin
+      decoded_str = $sformatf("%s\tx%0d,0x%0x", "auipc", rvfi_rd_addr, imm);
+    end
+
+  endfunction
+
+
+  function automatic void decode_cheri_auicgp_insn();
+    logic [31:0] imm;
+
+    // We cannot use rvfi_pc_wdata for conditional jumps.
+    imm = rvfi_insn[31:12];
+    data_accessed =  CD | CS1;
+    decoded_str = $sformatf("%s\tc%0d,0x%0x", "CH.auicgp", rvfi_rd_addr, imm);
+  endfunction
+
+
+  function automatic void decode_cheri_cs1_cs2_insn(input string mnemonic);
+    data_accessed = CS2 | CS1;
+    decoded_str = $sformatf("%s\tc%0d,c%0d", mnemonic, rvfi_rs1_addr, rvfi_rs2_addr);
+  endfunction
+
+  function automatic void decode_cheri_scrrw_insn();
+    string mnemonic, scr_name;
+
+    scr_name = get_scr_name(rvfi_insn[24:20]);
+    data_accessed = CS1 | CD;
+
+    if (rvfi_rd_addr == 0) begin
+      mnemonic = "CH.cspecialw";
+      decoded_str = $sformatf("%s\t%s,c%0d", mnemonic, scr_name, rvfi_rs1_addr);
+    end else if (rvfi_rs1_addr == 0) begin
+      mnemonic = "CH.cspecialr";
+      decoded_str = $sformatf("%s\tc%0d,%s", mnemonic, rvfi_rd_addr, scr_name);
+    end else begin
+      mnemonic = "CH.cspecialrw";
+      decoded_str = $sformatf("%s\tc%0d,%s,c%0d", mnemonic, rvfi_rd_addr, scr_name, rvfi_rs1_addr);
+    end
+  endfunction
+
   // cycle counter
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
@@ -858,7 +1148,6 @@ module ibex_tracer (
       $fclose(fh);
     end
   end
-
   // log execution
   always @(posedge clk_i) begin
     if (rvfi_valid && trace_log_enable) begin
@@ -882,7 +1171,9 @@ module ibex_tracer (
     end
   end
 
-  always_comb begin
+  //always_comb begin
+  // change to always @* to get rid of VCS warnings about dynamic type and sensitivity list
+  always @* begin
     decoded_str = "";
     data_accessed = 5'h0;
     insn_is_compressed = 0;
@@ -920,6 +1211,8 @@ module ibex_tracer (
           end
           INSN_CLW:        decode_compressed_load_insn("c.lw");
           INSN_CSW:        decode_compressed_store_insn("c.sw");
+          INSN_CCLC:       decode_compressed_load_insn("c.CH.clc");
+          INSN_CCSC:       decode_compressed_store_insn("c.CH.csc");
           // Zc extension C0
           INSN_CLBU:        decode_Zc_load_insn("c.lbu");
           INSN_CLHU:        decode_Zc_load_insn("c.lhu");
@@ -961,6 +1254,8 @@ module ibex_tracer (
           INSN_CSLLI:      decode_ci_cslli_insn("c.slli");
           INSN_CLWSP:      decode_compressed_load_insn("c.lwsp");
           INSN_SWSP:       decode_compressed_store_insn("c.swsp");
+          INSN_CCLCSP:     decode_compressed_load_insn("c.CH.clcsp");
+          INSN_CCSCSP:     decode_compressed_store_insn("c.CH.cscsp");
           // Zc extension C2: We should never see those on the rvfi_insn interface since they must
           // get expanded into other instructions. They will be annotated through the
           // `decode_expanded_insn` function instead and the `rvfi_ext_expanded_insn` signal.
@@ -971,7 +1266,7 @@ module ibex_tracer (
       unique casez (rvfi_insn)
         // Regular opcodes
         INSN_LUI:        decode_u_insn("lui");
-        INSN_AUIPC:      decode_u_insn("auipc");
+        // INSN_AUIPC:      decode_u_insn("auipc");
         INSN_JAL:        decode_j_insn("jal");
         INSN_JALR:       decode_i_jalr_insn("jalr");
         // BRANCH
@@ -1204,9 +1499,46 @@ module ibex_tracer (
         INSN_CRC32C_H:   decode_r1_insn("crc32c.h");
         INSN_CRC32C_W:   decode_r1_insn("crc32c.w");
 
+        // CHERI, get fields
+        INSN_CHGETPERM:    decode_cheri_rd_cs1_insn("CH.cgetperm");
+        INSN_CHGETTYPE:    decode_cheri_rd_cs1_insn("CH.cgettype");
+        INSN_CHGETBASE:    decode_cheri_rd_cs1_insn("CH.cgetbase");
+        INSN_CHGETTOP:     decode_cheri_rd_cs1_insn("CH.cgettop");
+        INSN_CHGETLEN:     decode_cheri_rd_cs1_insn("CH.cgetlen");
+        INSN_CHGETTAG:     decode_cheri_rd_cs1_insn("CH.cgettag");
+        INSN_CHGETSEALED:  decode_cheri_rd_cs1_insn("CH.cgetseald");
+        INSN_CHGETADDR:    decode_cheri_rd_cs1_insn("CH.cgetaddr");
+        INSN_CHGETHIGH:     decode_cheri_rd_cs1_insn("CH.cgethigh");
+
+        INSN_CHSEAL:       decode_cheri_cd_cs1_cs2_insn("CH.cseal");
+        INSN_CHUNSEAL:     decode_cheri_cd_cs1_cs2_insn("CH.cunseal");
+        INSN_CHANDPERM:    decode_cheri_cd_cs1_rs2_insn("CH.candperm");
+        INSN_CHSETADDR:    decode_cheri_cd_cs1_rs2_insn("CH.csetaddr");
+        INSN_CHINCADDR:    decode_cheri_cd_cs1_rs2_insn("CH.cincaddr");
+        INSN_CHINCADDRIMM: decode_cheri_cd_cs1_imm_insn("CH.cincaddrimm");
+        INSN_CHSETBOUNDS:  decode_cheri_cd_cs1_rs2_insn("CH.csetbounds");
+        INSN_CHSETBOUNDSEX:  decode_cheri_cd_cs1_rs2_insn("CH.csetboundsexact");
+        INSN_CHSETBOUNDSRNDN: decode_cheri_cd_cs1_rs2_insn("CH.csetboundsrounddown");
+
+        INSN_CHSETBOUNDSIMM: decode_cheri_cd_cs1_imm_insn("CH.csetboundsimm");
+        INSN_CHCLEARTAG:     decode_cheri_cd_cs1_insn("CH.ccleartag");
+        INSN_CHCRRL:         decode_cheri_rd_rs1_insn("CH.crrl");
+        INSN_CHCRAM:         decode_cheri_rd_rs1_insn("CH.cram");
+
+        INSN_CHSUB:        decode_cheri_rd_cs1_cs2_insn("CH.csub");
+        INSN_CHMOVE:       decode_cheri_cd_cs1_insn("CH.cmove");
+        INSN_CHTESTSUB:    decode_cheri_rd_cs1_cs2_insn("CH.ctestsubset");
+        INSN_CHSETEQUAL:   decode_cheri_rd_cs1_cs2_insn("CH.csetequalexact");
+        INSN_CHSETHIGH:    decode_cheri_cd_cs1_rs2_insn("CH.csethigh");
+        //INSN_CHJALR:       decode_cheri_cd_cs1_insn("CH.jalr");
+        INSN_CHCSRRW:      decode_cheri_scrrw_insn();
+        INSN_AUIPC:        decode_cheri_auipcc_insn();
+        INSN_AUICGP:       decode_cheri_auicgp_insn();
+
         default:         decode_mnemonic("INVALID");
       endcase
     end
   end
+// synthesis translate_on
 
 endmodule

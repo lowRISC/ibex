@@ -1,3 +1,7 @@
+// Copyright Microsoft Corporation
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+
 // Copyright lowRISC contributors.
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
@@ -14,7 +18,7 @@
 `include "prim_assert.sv"
 `include "dv_fcov_macros.svh"
 
-module ibex_wb_stage #(
+module ibex_wb_stage import cheri_pkg::*; #(
   parameter bit ResetAll          = 1'b0,
   parameter bit WritebackStage    = 1'b0,
   parameter bit DummyInstructions = 1'b0
@@ -27,6 +31,9 @@ module ibex_wb_stage #(
   input  logic [31:0]              pc_id_i,
   input  logic                     instr_is_compressed_id_i,
   input  logic                     instr_perf_count_id_i,
+  input  logic                     instr_is_cheri_i,
+  input  logic                     cheri_load_i,
+  input  logic                     cheri_store_i,
 
   output logic                     ready_wb_o,
   output logic                     rf_write_wb_o,
@@ -42,15 +49,22 @@ module ibex_wb_stage #(
   input  logic [31:0]              rf_wdata_id_i,
   input  logic                     rf_we_id_i,
 
+  input  logic                     cheri_rf_we_i,
+  input  logic [31:0]              cheri_rf_wdata_i,
+  input  reg_cap_t                 cheri_rf_wcap_i,
+
   input  logic                     dummy_instr_id_i,
 
   input  logic [31:0]              rf_wdata_lsu_i,
+  input  reg_cap_t                 rf_wcap_lsu_i,
   input  logic                     rf_we_lsu_i,
 
   output logic [31:0]              rf_wdata_fwd_wb_o,
+  output reg_cap_t                 rf_wcap_fwd_wb_o,
 
   output logic [4:0]               rf_waddr_wb_o,
   output logic [31:0]              rf_wdata_wb_o,
+  output reg_cap_t                 rf_wcap_wb_o,
   output logic                     rf_we_wb_o,
 
   output logic                     dummy_instr_wb_o,
@@ -68,6 +82,8 @@ module ibex_wb_stage #(
   logic [31:0] rf_wdata_wb_mux    [2];
   logic [1:0]  rf_wdata_wb_mux_we;
 
+  reg_cap_t   rf_wcap_wb;
+
   if (WritebackStage) begin : g_writeback_stage
     logic [31:0]    rf_wdata_wb_q;
     logic           rf_we_wb_q;
@@ -83,6 +99,12 @@ module ibex_wb_stage #(
 
     logic           wb_valid_d;
 
+    logic           wb_is_cheri_q;
+    logic           wb_cheri_load_q, wb_cheri_store_q;
+    logic           cheri_rf_we_q;
+    logic [31:0]    cheri_rf_wdata_q;
+    reg_cap_t       cheri_rf_wcap_q;
+
     // Stage becomes valid if an instruction enters for ID/EX and valid is cleared when instruction
     // is done
     assign wb_valid_d = (en_wb_i & ready_wb_o) | (wb_valid_q & ~wb_done);
@@ -90,7 +112,9 @@ module ibex_wb_stage #(
     // Writeback for non load/store instructions always completes in a cycle (so instantly done)
     // Writeback for load/store must wait for response to be received by the LSU
     // Signal only relevant if wb_valid_q set
-    assign wb_done = (wb_instr_type_q == WB_INSTR_OTHER) | lsu_resp_valid_i;
+
+    // note cheri_load/store doesn't just come from the decoder, but includes bound/permission check results
+    assign wb_done = (wb_instr_type_q == WB_INSTR_OTHER && ~wb_cheri_load_q && ~wb_cheri_store_q) | lsu_resp_valid_i;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
@@ -110,6 +134,13 @@ module ibex_wb_stage #(
           wb_pc_q         <= '0;
           wb_compressed_q <= '0;
           wb_count_q      <= '0;
+
+          wb_is_cheri_q       <= 1'b0;
+          wb_cheri_load_q     <= 1'b0;
+          wb_cheri_store_q    <= 1'b0;
+          cheri_rf_we_q       <= 1'b0;
+          cheri_rf_wdata_q    <= 32'h0;
+          cheri_rf_wcap_q     <= NULL_REG_CAP;
         end else if (en_wb_i) begin
           rf_we_wb_q      <= rf_we_id_i;
           rf_waddr_wb_q   <= rf_waddr_id_i;
@@ -118,6 +149,13 @@ module ibex_wb_stage #(
           wb_pc_q         <= pc_id_i;
           wb_compressed_q <= instr_is_compressed_id_i;
           wb_count_q      <= instr_perf_count_id_i;
+
+          wb_is_cheri_q       <= instr_is_cheri_i;
+          wb_cheri_load_q     <= cheri_load_i;
+          wb_cheri_store_q    <= cheri_store_i;
+          cheri_rf_we_q       <= cheri_rf_we_i;
+          cheri_rf_wdata_q    <= cheri_rf_wdata_i;
+          cheri_rf_wcap_q     <= cheri_rf_wcap_i;
         end
       end
     end else begin : g_wb_regs_nr
@@ -130,22 +168,30 @@ module ibex_wb_stage #(
           wb_pc_q         <= pc_id_i;
           wb_compressed_q <= instr_is_compressed_id_i;
           wb_count_q      <= instr_perf_count_id_i;
+
+          wb_is_cheri_q       <= instr_is_cheri_i;
+          wb_cheri_load_q     <= cheri_load_i;
+          wb_cheri_store_q    <= cheri_store_i;
+          cheri_rf_we_q       <= cheri_rf_we_i;
+          cheri_rf_wdata_q    <= cheri_rf_wdata_i;
+          cheri_rf_wcap_q     <= cheri_rf_wcap_i;
         end
       end
     end
 
     assign rf_waddr_wb_o         = rf_waddr_wb_q;
-    assign rf_wdata_wb_mux[0]    = rf_wdata_wb_q;
-    assign rf_wdata_wb_mux_we[0] = rf_we_wb_q & wb_valid_q;
+    assign rf_wdata_wb_mux[0]    = wb_is_cheri_q ? cheri_rf_wdata_q : rf_wdata_wb_q;
+    assign rf_wdata_wb_mux_we[0] = (wb_is_cheri_q ? cheri_rf_we_q : rf_we_wb_q) & wb_valid_q;
 
     assign ready_wb_o = ~wb_valid_q | wb_done;
 
+    // This is used for determining RF read hazards & forwarding in ID/EX
     // Instruction in writeback will be writing to register file if either rf_we is set or writeback
-    // is awaiting load data. This is used for determining RF read hazards in ID/EX
-    assign rf_write_wb_o = wb_valid_q & (rf_we_wb_q | (wb_instr_type_q == WB_INSTR_LOAD));
+    // is awaiting load data.
+    assign rf_write_wb_o = wb_valid_q & (rf_we_wb_q | cheri_rf_we_q | (wb_instr_type_q == WB_INSTR_LOAD) | wb_cheri_load_q);
 
-    assign outstanding_load_wb_o  = wb_valid_q & (wb_instr_type_q == WB_INSTR_LOAD);
-    assign outstanding_store_wb_o = wb_valid_q & (wb_instr_type_q == WB_INSTR_STORE);
+    assign outstanding_load_wb_o  = wb_valid_q & ((wb_instr_type_q == WB_INSTR_LOAD)  | wb_cheri_load_q);
+    assign outstanding_store_wb_o = wb_valid_q & ((wb_instr_type_q == WB_INSTR_STORE) | wb_cheri_store_q);
 
     assign pc_wb_o = wb_pc_q;
 
@@ -164,7 +210,10 @@ module ibex_wb_stage #(
     // Forward data that will be written to the RF back to ID to resolve data hazards. The flopped
     // rf_wdata_wb_q is used rather than rf_wdata_wb_o as the latter includes read data from memory
     // that returns too late to be used on the forwarding path.
-    assign rf_wdata_fwd_wb_o = rf_wdata_wb_q;
+    assign rf_wdata_fwd_wb_o = wb_is_cheri_q ? cheri_rf_wdata_q : rf_wdata_wb_q;
+    assign rf_wcap_fwd_wb_o  = wb_is_cheri_q ? cheri_rf_wcap_q : NULL_REG_CAP;
+    assign rf_wcap_wb        = (wb_is_cheri_q && (~wb_cheri_load_q)) ? cheri_rf_wcap_q : NULL_REG_CAP;
+
 
     assign rf_wdata_wb_mux_we[1] = rf_we_lsu_i;
 
@@ -197,9 +246,11 @@ module ibex_wb_stage #(
   end else begin : g_bypass_wb
     // without writeback stage just pass through register write signals
     assign rf_waddr_wb_o         = rf_waddr_id_i;
-    assign rf_wdata_wb_mux[0]    = rf_wdata_id_i;
-    assign rf_wdata_wb_mux_we[0] = rf_we_id_i;
+    assign rf_wdata_wb_mux[0]    = instr_is_cheri_i ? cheri_rf_wdata_i : rf_wdata_id_i;
+    assign rf_wdata_wb_mux_we[0] = instr_is_cheri_i ? cheri_rf_we_i : rf_we_id_i;
     assign rf_wdata_wb_mux_we[1] = rf_we_lsu_i;
+    assign rf_wcap_wb            = (instr_is_cheri_i && (~cheri_load_i)) ? cheri_rf_wcap_i : NULL_REG_CAP;
+
 
     assign dummy_instr_wb_o = dummy_instr_id_i;
 
@@ -235,6 +286,7 @@ module ibex_wb_stage #(
     assign pc_wb_o                = '0;
     assign rf_write_wb_o          = 1'b0;
     assign rf_wdata_fwd_wb_o      = 32'b0;
+    assign rf_wcap_fwd_wb_o       = NULL_REG_CAP;
     assign instr_done_wb_o        = 1'b0;
   end
 
@@ -245,6 +297,9 @@ module ibex_wb_stage #(
   assign rf_wdata_wb_o = ({32{rf_wdata_wb_mux_we[0]}} & rf_wdata_wb_mux[0]) |
                          ({32{rf_wdata_wb_mux_we[1]}} & rf_wdata_wb_mux[1]);
   assign rf_we_wb_o    = |rf_wdata_wb_mux_we;
+
+  assign rf_wcap_wb_o  = rf_wdata_wb_mux_we[0] ? rf_wcap_wb :
+                         (rf_wdata_wb_mux_we[1] ? rf_wcap_lsu_i : NULL_REG_CAP);
 
   `DV_FCOV_SIGNAL_GEN_IF(logic, wb_valid, g_writeback_stage.wb_valid_q, WritebackStage)
 
