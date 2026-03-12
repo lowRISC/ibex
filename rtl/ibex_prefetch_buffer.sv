@@ -27,6 +27,8 @@ module ibex_prefetch_buffer #(
   output logic        err_o,
   output logic        err_plus2_o,
 
+  input  logic        cheri_force_uc_i,
+
   // goes to instruction memory / instruction cache
   output logic        instr_req_o,
   input  logic        instr_gnt_i,
@@ -99,6 +101,7 @@ module ibex_prefetch_buffer #(
       .in_addr_i             ( fifo_addr         ),
       .in_rdata_i            ( instr_rdata_i     ),
       .in_err_i              ( instr_err_i       ),
+      .cheri_force_uc_i      ( cheri_force_uc_i  ),
 
       .out_valid_o           ( valid_o           ),
       .out_ready_i           ( ready_i           ),
