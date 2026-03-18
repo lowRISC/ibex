@@ -409,6 +409,12 @@ module ibex_if_stage import ibex_pkg::*; #(
   //
   // since it does not matter where we decompress instructions, we do it here
   // to ease timing closure
+
+  // The compressed decoder only has state for the Zcmp expanded instructions. Flush this state if
+  // there is an exception.
+  logic flush_expanded;
+  assign flush_expanded = pc_set_i & (pc_mux_i == ibex_pkg::PC_EXC);
+
   ibex_compressed_decoder #(
     .RV32ZC   (RV32ZC),
     .ResetAll (ResetAll)
@@ -421,6 +427,7 @@ module ibex_if_stage import ibex_pkg::*; #(
     .instr_o        (instr_decompressed),
     .is_compressed_o(instr_is_compressed),
     .gets_expanded_o(instr_gets_expanded),
+    .flush_expanded_i(flush_expanded),
     .illegal_instr_o(illegal_c_insn)
   );
 
