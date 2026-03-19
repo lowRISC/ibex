@@ -1086,7 +1086,8 @@ module ibex_id_stage #(
       (csr_addr_o inside {CSR_MINSTRET, CSR_MINSTRETH});
 
   assign instr_perf_count_id_o = ~ebrk_insn & ~ecall_insn_dec & ~illegal_insn_dec &
-      ~illegal_csr_insn_i & ~instr_fetch_err_i & ~minstret_write;
+      ~illegal_csr_insn_i & ~instr_fetch_err_i & ~minstret_write &
+      !(instr_gets_expanded_i inside {INSTR_EXPANDED, INSTR_EXPANDED_COMMIT});
 
   // An instruction is ready to move to the writeback stage (or retire if there is no writeback
   // stage)
