@@ -310,8 +310,9 @@ package ibex_pkg;
   // Compressed instruction expansion
   typedef enum logic [1:0] {
     INSTR_NOT_EXPANDED,
-    INSTR_EXPANDED,
-    INSTR_EXPANDED_LAST
+    INSTR_EXPANDED,        // Executing micro-ops of an expanded instruction
+    INSTR_EXPANDED_COMMIT, // Micro-ops need to be committed atomically with successor micro-ops
+    INSTR_EXPANDED_LAST    // Last micro-op of an expanded instruction
   } instr_exp_e;
 
   // Exception PC mux selection

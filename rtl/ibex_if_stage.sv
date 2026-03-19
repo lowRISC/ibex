@@ -574,7 +574,8 @@ module ibex_if_stage import ibex_pkg::*; #(
     // request, all of which will set branch_req. Also do not check after reset or for dummy
     // instructions.
     assign prev_instr_seq_d = (prev_instr_seq_q | instr_new_id_d) &
-        ~branch_req & ~if_instr_err & ~stall_dummy_instr & !(instr_gets_expanded == INSTR_EXPANDED);
+        ~branch_req & ~if_instr_err & ~stall_dummy_instr &
+        !(instr_gets_expanded inside {INSTR_EXPANDED, INSTR_EXPANDED_COMMIT});
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
@@ -637,7 +638,8 @@ module ibex_if_stage import ibex_pkg::*; #(
     assign instr_skid_en = predict_branch_taken & ~pc_set_i & ~id_in_ready_i & ~instr_skid_valid_q;
 
     assign instr_skid_valid_d = (instr_skid_valid_q & ~id_in_ready_i & ~stall_dummy_instr &
-                                 !(instr_gets_expanded == INSTR_EXPANDED)) | instr_skid_en;
+                                 !(instr_gets_expanded inside
+                                 {INSTR_EXPANDED, INSTR_EXPANDED_COMMIT})) | instr_skid_en;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
@@ -696,7 +698,8 @@ module ibex_if_stage import ibex_pkg::*; #(
     assign instr_bp_taken_d = instr_skid_valid_q ? instr_skid_bp_taken_q : predict_branch_taken;
 
     assign fetch_ready = id_in_ready_i & ~stall_dummy_instr &
-                         !(instr_gets_expanded == INSTR_EXPANDED) & ~instr_skid_valid_q;
+                         !(instr_gets_expanded inside {INSTR_EXPANDED, INSTR_EXPANDED_COMMIT}) &
+                         ~instr_skid_valid_q;
 
     assign instr_bp_taken_o = instr_bp_taken_q;
 
@@ -712,7 +715,7 @@ module ibex_if_stage import ibex_pkg::*; #(
     assign if_instr_addr  = fetch_addr;
     assign if_instr_bus_err = fetch_err;
     assign fetch_ready = id_in_ready_i & ~stall_dummy_instr &
-                         !(instr_gets_expanded == INSTR_EXPANDED);
+                         !(instr_gets_expanded inside {INSTR_EXPANDED, INSTR_EXPANDED_COMMIT});
   end
 
   //////////
