@@ -69,6 +69,16 @@ This will make the insertion interval of dummy instructions much harder for an a
 Note that the dummy instruction feature inserts multiply and divide instructions.
 The core must be configured with a multiplier (`RV32M != ibex_pkg::RV32MNone`) or errors will occur using this feature.
 
+Dual core lockstep
+------------------
+
+This configuration option instantiates a second copy of the core logic, referred to as the shadow core.
+The shadow core executes using a delayed version of all inputs supplied to the main core.
+All outputs of the shadow core are compared against a delayed version of the outputs of the main core.
+Any mismatch between the two sets of outputs will trigger an internal major alert.
+
+Note that the register file and icache RAMs are not duplicated since these units are covered by ECC protection.
+
 Bus integrity checking
 ----------------------
 
@@ -107,13 +117,3 @@ Certain critical CSRs (`mstatus`, `mtvec`, `cpuctrl`, `pmpcfg` and `pmpaddr`) ha
 This creates a second copy of the register which stores a complemented version of the main CSR data.
 A constant check is made that the two copies are consistent, and an internal major alert is signalled if not.
 Note that this feature is not currently used when the SecureIbex parameter is set due to overlap with dual core lockstep.
-
-Dual core lockstep
-------------------
-
-This configuration option instantiates a second copy of the core logic, referred to as the shadow core.
-The shadow core executes using a delayed version of all inputs supplied to the main core.
-All outputs of the shadow core are compared against a delayed version of the outputs of the main core.
-Any mismatch between the two sets of outputs will trigger an internal major alert.
-
-Note that the register file and icache RAMs are not duplicated since these units are covered by ECC protection.
