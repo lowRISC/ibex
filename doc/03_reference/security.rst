@@ -91,7 +91,11 @@ Write data can be checked against the supplied checkbits at its destination to c
 Register file ECC
 -----------------
 
-When Ibex is configured with the SecureIbex parameter, ECC checking is added to all reads of the register file.
+When Ibex is configured with the SecureIbex parameter, the data stored in the register file is not duplicated in the dual core lockstep to save area.
+Instead, two instances of the register file are used.
+The first instance is driven by the main core and holds the data itself.
+The second instance is driven by the shadow core and holds the corresponding ECC.
+ECC checking is conducted inside the shadow core.
 This can be useful to detect fault injection attacks since the register file covers a reasonably large area.
 No attempt is made to correct detected errors, but an internal major alert is signaled for the system to take action.
 
