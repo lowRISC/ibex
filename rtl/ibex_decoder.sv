@@ -96,6 +96,9 @@ module ibex_decoder #(
   // jump/branches
   output logic                 jump_in_dec_o,         // jump is being calculated in ALU
   output logic                 branch_in_dec_o
+  output logic stall_req_o,
+  output logic forward_rs1_o,
+  output logic forward_rs2_o
 );
 
   import ibex_pkg::*;
@@ -103,7 +106,10 @@ module ibex_decoder #(
   logic        illegal_insn;
   logic        illegal_reg_rv32e;
   logic        csr_illegal;
-  logic        rf_we;
+  logic        rf_we
+  logic        hazard_detected;
+  logic        forward_rs1;
+  logic        forward_rs2;
 
   logic [31:0] instr;
   logic [31:0] instr_alu;
@@ -1209,4 +1215,38 @@ module ibex_decoder #(
   // Selectors must be known/valid.
   `ASSERT(IbexRegImmAluOpKnown, (opcode == OPCODE_OP_IMM) |->
       !$isunknown(instr[14:12]))
+
+always_comb begin
+  hazard_detected = 1'b0;
+
+  if (rf_ren_a_o || rf_ren_b_o) begin
+    if ((rf_ren_a_o && (rf_raddr_a_o == rf_waddr_o) && rf_we_o) ||
+        (rf_ren_b_o && (rf_raddr_b_o == rf_waddr_o) && rf_we_o)) begin
+      hazard_detected = 1'b1;
+    end
+  end
+end
+
+assign hazard_detected_o = hazard_detected;
+
+assign stall_req_o = hazard_detected_o;
+
+always_comb begin
+  forward_rs1 = 1'b0;
+  forward_rs2 = 1'b0;
+
+  if (rf_we_o) begin
+    if (rf_ren_a_o && (rf_raddr_a_o == rf_waddr_o)) begin
+      forward_rs1 = 1'b1;
+    end
+    if (rf_ren_b_o && (rf_raddr_b_o == rf_waddr_o)) begin
+      forward_rs2 = 1'b1;
+    end
+  end
+end
+
+assign forward_rs1_o = forward_rs1;
+assign forward_rs2_o = forward_rs2;
+
+
 endmodule // controller
