@@ -96,6 +96,7 @@ module ibex_decoder #(
   // jump/branches
   output logic                 jump_in_dec_o,         // jump is being calculated in ALU
   output logic                 branch_in_dec_o
+  output logic                 hazard_detected_o
 );
 
   import ibex_pkg::*;
@@ -104,6 +105,7 @@ module ibex_decoder #(
   logic        illegal_reg_rv32e;
   logic        csr_illegal;
   logic        rf_we;
+  logic        hazard_detected;
 
   logic [31:0] instr;
   logic [31:0] instr_alu;
@@ -1209,4 +1211,18 @@ module ibex_decoder #(
   // Selectors must be known/valid.
   `ASSERT(IbexRegImmAluOpKnown, (opcode == OPCODE_OP_IMM) |->
       !$isunknown(instr[14:12]))
+
+always_comb begin
+  hazard_detected = 1'b0;
+
+  if (rf_ren_a_o || rf_ren_b_o) begin
+    if ((rf_ren_a_o && (rf_raddr_a_o == rf_waddr_o) && rf_we_o) ||
+        (rf_ren_b_o && (rf_raddr_b_o == rf_waddr_o) && rf_we_o)) begin
+      hazard_detected = 1'b1;
+    end
+  end
+end
+
+assign hazard_detected_o = hazard_detected;
+
 endmodule // controller
