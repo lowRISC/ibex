@@ -96,6 +96,7 @@ module ibex_decoder #(
   // jump/branches
   output logic                 jump_in_dec_o,         // jump is being calculated in ALU
   output logic                 branch_in_dec_o
+  output logic                 stall_req_o
 );
 
   import ibex_pkg::*;
@@ -1209,4 +1210,7 @@ module ibex_decoder #(
   // Selectors must be known/valid.
   `ASSERT(IbexRegImmAluOpKnown, (opcode == OPCODE_OP_IMM) |->
       !$isunknown(instr[14:12]))
-endmodule // controller
+
+assign stall_req_o = hazard_detected_o;
+endmodule //
+ controller
