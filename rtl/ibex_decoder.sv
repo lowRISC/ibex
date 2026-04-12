@@ -1206,6 +1206,35 @@ module ibex_decoder #(
   // Assertions //
   ////////////////
 
+// 1. No register write on illegal instruction
+`ASSERT(NoWriteOnIllegal,
+  illegal_insn_o |-> !rf_we_o
+)
+
+// 2. No memory request on illegal instruction
+`ASSERT(NoMemReqOnIllegal,
+  illegal_insn_o |-> !data_req_o
+)
+
+// 3. No branch + jump at same time
+`ASSERT(NoBranchAndJump,
+  !(branch_in_dec_o && jump_in_dec_o)
+)
+
+// 4. No CSR access on illegal instruction
+`ASSERT(NoCSRAccessOnIllegal,
+  illegal_insn_o |-> !csr_access_o
+)
+
+// 5. Branch should not trigger memory
+`ASSERT(NoMemDuringBranch,
+  branch_in_dec_o |-> !data_req_o
+)
+// 6. No register read on illegal instruction
+`ASSERT(NoRFReadOnIllegal,
+  illegal_insn_o |-> !(rf_ren_a_o || rf_ren_b_o)
+)
+
   // Selectors must be known/valid.
   `ASSERT(IbexRegImmAluOpKnown, (opcode == OPCODE_OP_IMM) |->
       !$isunknown(instr[14:12]))
