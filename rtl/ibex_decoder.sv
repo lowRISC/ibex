@@ -656,14 +656,21 @@ module ibex_decoder #(
     // insufficient privileges), or when accessing non-available registers in RV32E,
     // these cases are not handled here
     if (illegal_insn) begin
-      rf_we           = 1'b0;
-      data_req_o      = 1'b0;
-      data_we_o       = 1'b0;
-      jump_in_dec_o   = 1'b0;
-      jump_set_o      = 1'b0;
-      branch_in_dec_o = 1'b0;
-      csr_access_o    = 1'b0;
-    end
+  rf_we           = 1'b0;
+  data_req_o      = 1'b0;
+  data_we_o       = 1'b0;
+  jump_in_dec_o   = 1'b0;
+  jump_set_o      = 1'b0;
+  branch_in_dec_o = 1'b0;
+  csr_access_o    = 1'b0;
+
+  rf_ren_a_o      = 1'b0;
+  rf_ren_b_o      = 1'b0;
+  icache_inval_o  = 1'b0;
+
+  data_type_o           = 2'b00;
+  data_sign_extension_o = 1'b0;
+end
   end
 
   /////////////////////////////
