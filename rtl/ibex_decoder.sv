@@ -289,6 +289,10 @@ module ibex_decoder #(
 
         rf_ren_a_o = 1'b1;
         rf_ren_b_o = 1'b1;
+        if (branch_taken_i) begin
+           data_req_o = 1'b0;
+            data_we_o  = 1'b0;
+      end
       end
 
       ////////////////
