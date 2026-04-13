@@ -104,6 +104,7 @@ module ibex_decoder #(
   logic        illegal_reg_rv32e;
   logic        csr_illegal;
   logic        rf_we;
+  logic        load_use_hazard;
 
   logic [31:0] instr;
   logic [31:0] instr_alu;
@@ -236,6 +237,13 @@ module ibex_decoder #(
     wfi_insn_o            = 1'b0;
 
     opcode                = opcode_e'(instr[6:0]);
+
+    // 🔥 Load-use hazard detection
+load_use_hazard = data_req_o && !data_we_o && 
+                 ((rf_raddr_a_o == rf_waddr_o) || 
+                  (rf_raddr_b_o == rf_waddr_o)) &&
+                 (rf_waddr_o != 5'd0);
+
 
     unique case (opcode)
 
@@ -645,6 +653,7 @@ module ibex_decoder #(
       end
     endcase
 
+
     // make sure illegal compressed instructions cause illegal instruction exceptions
     if (illegal_c_insn_i) begin
       illegal_insn = 1'b1;
@@ -664,6 +673,16 @@ module ibex_decoder #(
       branch_in_dec_o = 1'b0;
       csr_access_o    = 1'b0;
     end
+
+    //Load-use hazard protection
+if (load_use_hazard) begin
+  rf_we           = 1'b0;
+  data_req_o      = 1'b0;
+  data_we_o       = 1'b0;
+  jump_in_dec_o   = 1'b0;
+  branch_in_dec_o = 1'b0;
+end
+
   end
 
   /////////////////////////////
@@ -1206,6 +1225,10 @@ module ibex_decoder #(
   // Assertions //
   ////////////////
 
+  //  No register write during load-use hazard
+`ASSERT(NoWriteOnLoadUseHazard,
+  load_use_hazard |-> !rf_we_o
+)
   // Selectors must be known/valid.
   `ASSERT(IbexRegImmAluOpKnown, (opcode == OPCODE_OP_IMM) |->
       !$isunknown(instr[14:12]))
