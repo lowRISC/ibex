@@ -1197,7 +1197,7 @@ module ibex_decoder #(
   assign illegal_insn_o = illegal_insn | illegal_reg_rv32e;
 
   // do not propagate regfile write enable if non-available registers are accessed in RV32E
-  assign rf_we_o = rf_we & ~illegal_reg_rv32e;
+  assign rf_we_o = rf_we & ~illegal_reg_rv32e  & (rf_waddr_o != 5'd0) ;
 
   // Not all bits are used
   assign unused_instr_alu = {instr_alu[19:15],instr_alu[11:7]};
