@@ -77,3 +77,12 @@ lint_off -file "*/lowrisc_prim_*/rtl/*.sv"
 
 lint_off -rule UNUSED -file "*/rtl/ibex_top_tracing.sv" -match "*RndCnstLfsrSeed*"
 lint_off -rule UNUSED -file "*/rtl/ibex_top_tracing.sv" -match "*RndCnstLfsrPerm*"
+
+// The ID stage and controller have intentional combinational feedback loops
+// (instr_executing_spec -> stall_alu -> stall_id_i -> halt_if -> id_in_ready_o
+// -> instr_executing_spec). These are safe — the logic settles in a single
+// delta cycle — but Verilator cannot prove that statically.
+lint_off -rule UNOPTFLAT -file "*/rtl/ibex_id_stage.sv" -match "*instr_executing_spec*"
+lint_off -rule UNOPTFLAT -file "*/rtl/ibex_controller.sv" -match "*special_req*"
+lint_off -rule UNOPTFLAT -file "*/rtl/ibex_controller.sv" -match "*id_in_ready_o*"
+
