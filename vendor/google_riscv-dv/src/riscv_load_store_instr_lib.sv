@@ -119,19 +119,33 @@ class riscv_load_store_base_instr_stream extends riscv_mem_access_stream;
 
   // Generate each load/store instruction
   virtual function void gen_load_store_instr();
-    bit enable_compressed_load_store;
+    bit enable_compressed_load_store, enable_zcb;
     riscv_instr instr;
     randomize_avail_regs();
     if ((rs1_reg inside {[S0 : A5], SP}) && !cfg.disable_compressed_instr) begin
       enable_compressed_load_store = 1;
     end
+    if ((RV32C inside {riscv_instr_pkg::supported_isa}) &&
+        (RV32ZCB inside {riscv_instr_pkg::supported_isa} && cfg.enable_zcb_extension)) begin
+      enable_zcb = 1;
+    end
     foreach (addr[i]) begin
       // Assign the allowed load/store instructions based on address alignment
       // This is done separately rather than a constraint to improve the randomization performance
       allowed_instr = {LB, LBU, SB};
+      if((offset[i] inside {[0:2]}) && enable_compressed_load_store &&
+        enable_zcb && rs1_reg != SP) begin
+        `uvm_info(`gfn, "Add ZCB byte load/store to allowed instr", UVM_LOW)
+        allowed_instr = {C_LBU, C_SB};
+      end
       if (!cfg.enable_unaligned_load_store) begin
         if (addr[i][0] == 1'b0) begin
           allowed_instr = {LH, LHU, SH, allowed_instr};
+          if(((offset[i] == 0) || (offset[i] == 2)) && enable_compressed_load_store &&
+            enable_zcb && rs1_reg != SP) begin
+            `uvm_info(`gfn, "Add ZCB half-word load/store to allowed instr", UVM_LOW)
+            allowed_instr = {C_LHU, C_LH, C_SH};
+          end
         end
         if (addr[i] % 4 == 0) begin
           allowed_instr = {LW, SW, allowed_instr};
@@ -679,6 +693,272 @@ class riscv_vector_load_store_instr_stream extends riscv_mem_access_stream;
       `uvm_info(`gfn, $sformatf("vs2_reg = v%0d", vs2_reg), UVM_LOW)
     end
     load_store_instr.process_load_store = 0;
+  endfunction
+
+endclass
+
+// Class to test Zcmp Push/Popret control flow chains
+class riscv_zcmp_chain_instr_stream extends riscv_mem_access_stream;
+  // Number of push/pop blocks in the chain
+  rand int unsigned   num_blocks;
+  // Execution order of these blocks
+  int unsigned        block_order[];
+
+  // Track number of chains
+  static int unsigned chain_cnt = 0;
+  int unsigned        chain_id;
+
+  // Data page to use for stack operations
+  rand int            base;
+  rand int unsigned   data_page_id;
+  rand int unsigned   max_load_store_offset;
+
+  constraint addr_c {
+    solve data_page_id before max_load_store_offset;
+    solve max_load_store_offset before base;
+    data_page_id < max_data_page_id;
+    foreach (data_page[i]) {
+      if (i == data_page_id) {max_load_store_offset == data_page[i].size_in_bytes;}
+    }
+    base inside {[0 : max_load_store_offset - 1]};
+  }
+
+  constraint block_c {num_blocks inside {[1 : 50]};}
+
+  function new(string name = "");
+    super.new(name);
+    // Assign a unique ID to this specific stream instance
+    chain_id = chain_cnt++;
+  endfunction
+
+  `uvm_object_utils(riscv_zcmp_chain_instr_stream)
+
+  function void post_randomize();
+    // SP cannot be modified by other instructions
+    if (!(SP inside {reserved_rd})) begin
+      reserved_rd = {reserved_rd, SP};
+    end
+    setup_chain_order();
+
+    // Generate the chain of blocks
+    gen_zcmp_chain();
+    // Ensure labels are preserved
+    foreach (instr_list[i]) begin
+      if (instr_list[i].label != "") instr_list[i].has_label = 1'b1;
+      else instr_list[i].has_label = 1'b0;
+      instr_list[i].atomic = 1'b1;
+    end
+    // Initizialize SP to point to a data page
+    add_rs1_init_la_instr(SP, data_page_id, 0);
+    // Don't call super here, because it will delete all labels
+  endfunction
+
+  // Randomize the order in which blocks are executed
+  virtual function void setup_chain_order();
+    block_order = new[num_blocks];
+    foreach (block_order[i]) begin
+      block_order[i] = i;
+    end
+    block_order.shuffle();
+  endfunction
+
+  // Main generator function
+  virtual function void gen_zcmp_chain();
+    riscv_instr instr;
+    riscv_instr popret_instr;
+    string prefix = $sformatf("zcmp_%0d", chain_id);
+    riscv_instr_name_t exclude_instr[];
+    update_excluded_instr(exclude_instr);
+
+    // Save all registers that will be overwritten by our upcoming push/pop chain
+    // A0 is overwritten by CM.POPRETZ, but cannot be saved by CM.PUSH/POP.
+    // Save A0 outside the main stack frame (e.g., at SP-120)
+    instr = riscv_instr::get_instr(ADDI);
+    instr.rd = SP;
+    instr.rs1 = SP;
+    instr.imm_str = "-16";
+    instr_list.push_back(instr);
+    instr = riscv_instr::get_instr(XLEN == 32 ? SW : SD);
+    instr.rs1 = SP;
+    instr.rs2 = A0;
+    instr.imm_str = "0";
+    instr_list.push_back(instr);
+    // Save all the remaining registers overwritten by pop
+    instr = riscv_instr::get_instr(CM_PUSH);
+    instr.stack_adj = -112; // Max stack frame
+    instr.rlist = 15; // All registers
+    instr_list.push_back(instr);
+    // Jump to the first block
+    instr = riscv_instr::get_instr(JAL);
+    instr.rd = ZERO; // Don't link, just jump
+    instr.imm_str = $sformatf("%s_%0d", prefix, block_order[0]);
+    instr.comment = "Bootstrap: Jump to first random block";
+    instr_list.push_back(instr);
+
+    // Generate the push/pop blocks
+    for (int i = 0; i < num_blocks; i++) begin
+      // Number of random instructions to insert between push/pop
+      int random_instructions;
+      // Labels to link blocks
+      string current_label = $sformatf("%s_%0d", prefix, i);
+      string next_label;
+      int next_block_idx = -1;
+      // Control the stack growth/shrinkage
+      // Total number of instructions (Push + Pop)
+      int num_steps;
+      // Stack size at each step
+      int stack_size[];
+      int max_stack = max_load_store_offset;
+      int delta;
+      riscv_instr_name_t final_opcode;
+
+      // Find which block comes after current block 'i' in the execution order
+      foreach (block_order[k]) begin
+        if (block_order[k] == i) begin
+          if (k < num_blocks - 1) begin
+            next_block_idx = block_order[k+1];
+            next_label = $sformatf("%s_%0d", prefix, next_block_idx);
+          end else begin
+            // End of chain
+            next_label = $sformatf("%s_end", prefix);
+          end
+        end
+      end
+
+      // Randomize the stack pointer's path and the number of steps
+      std::randomize(stack_size, num_steps) with {
+        // Number of push/pop steps per block
+        num_steps inside {[2:12]};
+        // Include the initial zero depth
+        stack_size.size() == num_steps + 1;
+        // Start and stop at zero depth
+        stack_size[0] == 0;
+        stack_size[num_steps] == 0;
+        foreach (stack_size[i]) {
+          // Stay within stack region
+          stack_size[i] inside {[-max_stack:0]};
+          // Transition Constraints
+          if (i > 0) {
+            // Must be 16-byte aligned steps
+            (stack_size[i] - stack_size[i-1]) % 16 == 0;
+            // Restrict adjustment size of single push/pop and avoid no-ops (diff==0)
+            (stack_size[i] - stack_size[i-1]) inside {[-112:-16], [16:112]};
+          }
+        }
+      };
+
+      // Loop through all the steps and insert a push or pop instruction. Also sprinkle in some
+      // random instructions inbetween. Skip the very last pop, since that will be a popret we
+      // handle specially.
+      for (int i = 0; i < num_steps - 1; i++) begin
+        delta = stack_size[i+1] - stack_size[i];
+        if (delta < 0) begin
+          // CM.PUSH (Stack Grows)
+          instr = riscv_instr::get_instr(CM_PUSH);
+          `DV_CHECK_RANDOMIZE_WITH_FATAL(instr, stack_adj == delta;)
+        end else begin
+          // CM.POP (Stack Shrinks)
+          instr = riscv_instr::get_instr(CM_POP);
+          `DV_CHECK_RANDOMIZE_WITH_FATAL(instr, stack_adj == delta;)
+        end
+
+        // First instruction gets the label to jump to
+        if (i == 0) begin
+          instr.label = current_label;
+        end
+
+        instr_list.push_back(instr);
+
+        // Insert random instructions in between push and pops
+        random_instructions = $urandom_range(0, 5);
+        repeat (random_instructions) begin
+          instr = riscv_instr::get_rand_instr(.include_category({ARITHMETIC, LOGICAL, SHIFT, COMPARE
+                                                                }), .exclude_instr(exclude_instr));
+          `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
+            // CRITICAL: Do not touch SP!
+            if (cfg.reserved_regs.size() > 0 || reserved_rd.size() > 0) {
+              !(rd inside {cfg.reserved_regs, reserved_rd});
+            },
+            $sformatf("Cannot randomize instruction %s with constrained registers\n",
+            instr.convert2asm()))
+          instr_list.push_back(instr);
+        end
+      end
+
+      // Last step is a POPRET/POPRETZ. Randomly choose which:
+      randcase
+        1: final_opcode = CM_POPRET;
+        1: final_opcode = CM_POPRETZ;
+      endcase
+      delta = stack_size[num_steps] - stack_size[num_steps-1];
+      // Do not insert this popret into the instruction stream yet. First, we have to create a
+      // proper RA address to jump to. However, since we need to know where the POPRET will load the
+      // RA from (i.e., which rlist and stack_adj it uses), we have to randomize it first.
+      popret_instr = riscv_instr::get_instr(final_opcode);
+      `DV_CHECK_RANDOMIZE_WITH_FATAL(popret_instr, stack_adj == delta;)
+
+      // Push the RA with the address of 'next_label' onto the stack at the correct location. The
+      // following instructiosn are "atomic" because we don't want other instructions to interleave
+      // between them.
+      if (next_label != "") begin
+        riscv_pseudo_instr la_instr_pseudo;
+        riscv_reg_t temp_reg;
+        int ra_offset_in_stack;
+
+        // Calculate where RA will be read from by the POPRET instruction.
+        // For cm.pop {ra, s0-sN}, stack_adj:
+        // RA is usually at `[SP + stack_adj - XLEN/8*(rlist - 3)]` because we pop rlist-3 registers
+        // There is one exception, if rlist == 15 (all registers), we pop rlist-2 registers because
+        // it includes s10 and s11. So adjust accordingly.
+        ra_offset_in_stack = delta - XLEN / 8 * (popret_instr.rlist - 3);
+        if (popret_instr.rlist == 15) begin
+          ra_offset_in_stack = ra_offset_in_stack - XLEN / 8;
+        end
+
+        // Get a temp reg that isn't reserved and not X0
+        `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(
+            temp_reg, !(temp_reg inside {cfg.reserved_regs, reserved_rd, ZERO});)
+
+        // Load Address of the NEXT block
+        la_instr_pseudo = riscv_pseudo_instr::type_id::create("la_instr_pseudo");
+        la_instr_pseudo.pseudo_instr_name = LA;
+        la_instr_pseudo.rd = temp_reg;
+        la_instr_pseudo.imm_str = next_label;
+        la_instr_pseudo.atomic = 1'b1;
+        instr_list.push_back(la_instr_pseudo);
+
+        // Overwrite the RA slot on the stack
+        instr = riscv_instr::get_instr(XLEN == 32 ? SW : SD);
+        instr.rs1 = SP;
+        instr.rs2 = temp_reg;
+        instr.imm_str = $sformatf("%0d", ra_offset_in_stack);
+        instr.atomic = 1'b1;
+        instr.comment = "Overwrite saved RA with next block address";
+        instr_list.push_back(instr);
+      end
+
+      // Insert popret at the very end. We already randomized it earlier to place the RA at the correct address.
+      instr_list.push_back(popret_instr);
+    end
+
+    // Endpoint of chain: Restore all registers overwritten by push/pop
+    instr = riscv_instr::get_instr(CM_POP);
+    instr.stack_adj = 112; // Max stack frame
+    instr.rlist = 15; // All registers
+    instr.label = $sformatf("%s_end", prefix);
+    instr.comment = "End of Zcmp Chain";
+    instr_list.push_back(instr);
+    // Restore A0 from the stack
+    instr = riscv_instr::get_instr(XLEN == 32 ? LW : LD);
+    instr.rd = A0;
+    instr.rs1 = SP;
+    instr.imm_str = "0";
+    instr_list.push_back(instr);
+    instr = riscv_instr::get_instr(ADDI);
+    instr.rd = SP;
+    instr.rs1 = SP;
+    instr.imm_str = "16";
+    instr_list.push_back(instr);
   endfunction
 
 endclass

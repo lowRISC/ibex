@@ -138,8 +138,8 @@ class riscv_instr_cov_test extends uvm_test;
         instr = riscv_instr::get_instr(instr_name);
         if ((instr.group inside {RV32I, RV32M, RV32C, RV64I, RV64M, RV64C,
                                  RV32F, RV64F, RV32D, RV64D, RV32B, RV64B,
-                                 RV32ZBA, RV32ZBB, RV32ZBC, RV32ZBS,
-                                 RV64ZBA, RV64ZBB, RV64ZBC, RV64ZBS}) &&
+                                 RV32ZBA, RV32ZBB, RV32ZBC, RV32ZBS, RV32ZCB, RV32ZCMP,
+                                 RV64ZBA, RV64ZBB, RV64ZBC, RV64ZBS, RV64ZCB, RV64ZCMP}) &&
             (instr.group inside {supported_isa})) begin
           assign_trace_info_to_instr(instr);
           instr.pre_sample();

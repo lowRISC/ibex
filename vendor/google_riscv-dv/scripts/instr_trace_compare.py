@@ -125,6 +125,8 @@ def compare_trace_csv(csv1, csv2, name1, name2, log,
                         instr_trace_2[trace_2_index].gpr,
                         gpr_val_2)
                     if gpr_state_change_2 == 1:
+                        fd.write("Mismatch[{}]:\n[{}] {} : {}\n".format(
+                            mismatch_cnt, trace_1_index, name1,trace.get_trace_string()))
                         fd.write("{} instructions left in trace {}\n".format(
                           len(instr_trace_2) - trace_2_index, name2))
                         mismatch_cnt += len(instr_trace_2) - trace_2_index

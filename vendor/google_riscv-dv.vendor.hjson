@@ -6,8 +6,8 @@
   target_dir: "google_riscv-dv",
 
   upstream: {
-    url: "https://github.com/chipsalliance/riscv-dv",
-    rev: "master",
+    url: "https://github.com/SamuelRiedel/riscv-dv",
+    rev: "zcmp-extension",
   },
 
   exclude_from_upstream: [
