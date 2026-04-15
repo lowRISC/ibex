@@ -663,6 +663,8 @@ module ibex_decoder #(
       jump_set_o      = 1'b0;
       branch_in_dec_o = 1'b0;
       csr_access_o    = 1'b0;
+
+      csr_op_o        = CSR_OP_CLEAR;
     end
   end
 
