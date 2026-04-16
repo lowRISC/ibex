@@ -31,6 +31,16 @@
 lint_off -rule WIDTH -file "*/rtl/ibex_simple_system.sv"
          -match "*expects 1 bits*Initial value's CONST '32'h1'*"
 
+// The UNOPTFLAT warnings are expected.
+lint_off -rule UNOPTFLAT -file "*/rtl/ibex_id_stage.sv"
+         -match "*controller_run*"
+lint_off -rule UNOPTFLAT -file "*/rtl/ibex_id_stage.sv"
+         -match "*instr_executing_spec*"
+lint_off -rule UNOPTFLAT -file "*/rtl/ibex_controller.sv"
+         -match "*special_req*"
+lint_off -rule UNOPTFLAT -file "*/rtl/ibex_controller.sv"
+         -match "*id_in_ready_o*"
+
 // This isn't a waiver, as such, but rather tells Verilator to expose
 // the given parameters' values to C++. This allows cosim to figure
 // out what flavour of core it is running, which allows us to call
