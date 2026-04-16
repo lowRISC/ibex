@@ -663,9 +663,14 @@ module ibex_decoder #(
       jump_set_o      = 1'b0;
       branch_in_dec_o = 1'b0;
       csr_access_o    = 1'b0;
-    end
-  end
 
+      rf_ren_a_o      = 1'b0;
+      rf_ren_b_o      = 1'b0;
+      icache_inval_o  = 1'b0;
+      csr_op_o        = CSR_OP_READ;
+    end
+  end 
+  
   /////////////////////////////
   // Decoder for ALU control //
   /////////////////////////////
