@@ -343,6 +343,8 @@ module ibex_decoder #(
       /////////
 
       OPCODE_LUI: begin  // Load Upper Immediate
+        rf_ren_a_o       = 1'b0;
+        rf_ren_b_o       = 1'b0;
         rf_we            = 1'b1;
       end
 
