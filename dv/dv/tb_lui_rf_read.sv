@@ -1,4 +1,4 @@
-module tb_lui_rf_read;
+module dv/tb_lui_rf_read;
 
   logic rf_ren_a_o, rf_ren_b_o;
 
