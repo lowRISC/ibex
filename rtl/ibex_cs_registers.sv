@@ -148,6 +148,8 @@ module ibex_cs_registers import ibex_pkg::*; #(
   localparam int unsigned RV32BExtra   = (RV32B != RV32BNone) ? 1 : 0;
   localparam int unsigned RV32MEnabled = (RV32M == RV32MNone) ? 0 : 1;
   localparam int unsigned PMPAddrWidth = (PMPGranularity > 0) ? PMP_ADDR_MSB - PMPGranularity : 32;
+  // Base index of the first HPM counter (0=cycle, 1=time, 2=instret)
+  localparam int unsigned MHPMCOUNTER_BASE = 3;
 
   // misa
   localparam logic [31:0] MISA_VALUE =
@@ -253,10 +255,15 @@ module ibex_cs_registers import ibex_pkg::*; #(
   pmp_mseccfg_t                pmp_mseccfg;
 
   // Hardware performance monitor signals
-  logic [31:0]                 mcountinhibit;
+  logic [31:0]                                mcountinhibit;
   // Only have mcountinhibit flops for counters that actually exist
-  logic [MHPMCounterNum+3-1:0] mcountinhibit_d, mcountinhibit_q;
-  logic                        mcountinhibit_we;
+  logic [MHPMCounterNum+MHPMCOUNTER_BASE-1:0] mcountinhibit_d, mcountinhibit_q;
+  logic                                       mcountinhibit_we;
+
+  // mcounteren: machine counter enable (controls U-mode counter access)
+  logic [31:0]                                mcounteren;
+  logic [MHPMCounterNum+MHPMCOUNTER_BASE-1:0] mcounteren_d, mcounteren_q;
+  logic                                       mcounteren_we;
 
   // mhpmcounter flops are elaborated below providing only the precise number that is required based
   // on MHPMCounterNum/MHPMCounterWidth. This signal connects to the Q output of these flops
@@ -374,9 +381,7 @@ module ibex_cs_registers import ibex_pkg::*; #(
       end
 
       // mcounteren: machine counter enable
-      CSR_MCOUNTEREN: begin
-        csr_rdata_int = '0;
-      end
+      CSR_MCOUNTEREN: csr_rdata_int = mcounteren;
 
       CSR_MSCRATCH: csr_rdata_int = mscratch_q;
 
@@ -598,6 +603,7 @@ module ibex_cs_registers import ibex_pkg::*; #(
     mstack_cause_d = mcause_q;
 
     mcountinhibit_we = 1'b0;
+    mcounteren_we    = 1'b0;
     mhpmcounter_we   = '0;
     mhpmcounterh_we  = '0;
 
@@ -675,6 +681,7 @@ module ibex_cs_registers import ibex_pkg::*; #(
         CSR_DSCRATCH1: dscratch1_en = 1'b1;
 
         // machine counter/timers
+        CSR_MCOUNTEREN:    mcounteren_we    = 1'b1;
         CSR_MCOUNTINHIBIT: mcountinhibit_we = 1'b1;
 
         CSR_MCYCLE,
@@ -1271,9 +1278,20 @@ module ibex_cs_registers import ibex_pkg::*; #(
   always_comb begin : mcountinhibit_update
     if (mcountinhibit_we == 1'b1) begin
       // bit 1 must always be 0
-      mcountinhibit_d = {csr_wdata_int[MHPMCounterNum+2:2], 1'b0, csr_wdata_int[0]};
+      mcountinhibit_d = csr_wdata_int[MHPMCounterNum+MHPMCOUNTER_BASE-1:0];
+      mcountinhibit_d[1] = 1'b0;
     end else begin
       mcountinhibit_d = mcountinhibit_q;
+    end
+  end
+
+  always_comb begin : mcounteren_update
+    if (mcounteren_we == 1'b1) begin
+      // bit 1 must always be 0 (no time CSR implemented)
+      mcounteren_d = csr_wdata_int[MHPMCounterNum+MHPMCOUNTER_BASE-1:0];
+      mcounteren_d[1] = 1'b0;
+    end else begin
+      mcounteren_d = mcounteren_q;
     end
   end
 
@@ -1312,14 +1330,15 @@ module ibex_cs_registers import ibex_pkg::*; #(
     for (int i = 0; i < 32; i++) begin : gen_mhpmevent_active
       mhpmevent[i] = '0;
 
-      if (i >= 3) begin
-        mhpmevent[i][i - 3] = 1'b1;
+      if (i >= MHPMCOUNTER_BASE) begin
+        mhpmevent[i][i - MHPMCOUNTER_BASE] = 1'b1;
       end
     end
 
     // deactivate
     mhpmevent[1] = '0; // not existing, reserved
-    for (int unsigned i = 3 + MHPMCounterNum; i < 32; i++) begin : gen_mhpmevent_inactive
+    for (int unsigned i = MHPMCOUNTER_BASE + MHPMCounterNum; i < 32; i++)
+    begin : gen_mhpmevent_inactive
       mhpmevent[i] = '0;
     end
   end
@@ -1370,8 +1389,8 @@ module ibex_cs_registers import ibex_pkg::*; #(
   assign unused_mhpmcounter_incr_1 = mhpmcounter_incr[1];
 
   // Iterate through optionally included counters (MHPMCounterNum controls how many are included)
-  for (genvar i = 0; i < 29; i++) begin : gen_cntrs
-    localparam int Cnt = i + 3;
+  for (genvar i = 0; i < 32 - MHPMCOUNTER_BASE; i++) begin : gen_cntrs
+    localparam int Cnt = i + MHPMCOUNTER_BASE;
 
     if (i < MHPMCounterNum) begin : gen_imp
       logic [63:0] mhpmcounter_raw, mhpmcounter_next;
@@ -1419,9 +1438,9 @@ module ibex_cs_registers import ibex_pkg::*; #(
 
     assign mcountinhibit = {{29 - MHPMCounterNum{1'b0}}, mcountinhibit_q};
     // Lint tieoffs for unused bits
-    assign unused_mhphcounter_we   = mhpmcounter_we[31:MHPMCounterNum+3];
-    assign unused_mhphcounterh_we  = mhpmcounterh_we[31:MHPMCounterNum+3];
-    assign unused_mhphcounter_incr = mhpmcounter_incr[31:MHPMCounterNum+3];
+    assign unused_mhphcounter_we   = mhpmcounter_we[31:MHPMCounterNum+MHPMCOUNTER_BASE];
+    assign unused_mhphcounterh_we  = mhpmcounterh_we[31:MHPMCounterNum+MHPMCOUNTER_BASE];
+    assign unused_mhphcounter_incr = mhpmcounter_incr[31:MHPMCounterNum+MHPMCOUNTER_BASE];
   end else begin : g_mcountinhibit_full
     assign mcountinhibit = mcountinhibit_q;
   end
@@ -1433,6 +1452,25 @@ module ibex_cs_registers import ibex_pkg::*; #(
       mcountinhibit_q <= mcountinhibit_d;
     end
   end
+
+  if (MHPMCounterNum < 29) begin : g_mcounteren_reduced
+    assign mcounteren = {{29 - MHPMCounterNum{1'b0}}, mcounteren_q};
+  end else begin : g_mcounteren_full
+    assign mcounteren = mcounteren_q;
+  end
+
+  ibex_csr #(
+    .Width     (MHPMCounterNum+MHPMCOUNTER_BASE),
+    .ShadowCopy(1'b0),
+    .ResetValue('0)
+  ) u_mcounteren_csr (
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .wr_data_i (mcounteren_d),
+    .wr_en_i   (mcounteren_we),
+    .rd_data_o (mcounteren_q),
+    .rd_error_o()
+  );
 
   /////////////////////////////
   // Debug trigger registers //
