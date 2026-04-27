@@ -98,6 +98,7 @@ module ibex_cs_registers import ibex_pkg::*; #(
   output logic                 icache_enable_o,
   output logic                 csr_shadow_err_o,
   input  logic                 ic_scr_key_valid_i,
+  input  ibex_mubi_t           mcounteren_writable_i,
 
   // Exception save/restore
   input  logic                 csr_save_if_i,
@@ -710,7 +711,7 @@ module ibex_cs_registers import ibex_pkg::*; #(
         CSR_DSCRATCH1: dscratch1_en = 1'b1;
 
         // machine counter/timers
-        CSR_MCOUNTEREN:    mcounteren_we    = 1'b1;
+        CSR_MCOUNTEREN:    mcounteren_we    = mcounteren_writable_i == IbexMuBiOn;
         CSR_MCOUNTINHIBIT: mcountinhibit_we = 1'b1;
 
         CSR_MCYCLE,
