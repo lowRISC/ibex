@@ -103,6 +103,7 @@ module top import ibex_pkg::*; #(
 
   // CPU Control Signals
   input  ibex_mubi_t                                                   fetch_enable_i,
+  input  ibex_mubi_t                                                   mcounteren_writable_i,
   output logic                                                         core_sleep_o,
   output logic                                                         alert_minor_o,
   output logic                                                         alert_major_internal_o,
