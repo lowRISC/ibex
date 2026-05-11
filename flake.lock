@@ -171,6 +171,22 @@
         "type": "github"
       }
     },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1725103162,
+        "narHash": "sha256-Ym04C5+qovuQDYL/rKWSR+WESseQBbNAe5DsXNx5trY=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "12228ff1752d7b7624a54e9c1af4b222b3c1073b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "psgen": {
       "inputs": {
         "flake-utils": [
@@ -254,7 +270,9 @@
         "psgen": "psgen",
         "pyproject-build-systems": "pyproject-build-systems",
         "pyproject-nix": "pyproject-nix",
-        "uv2nix": "uv2nix"
+        "sv2v": "sv2v",
+        "uv2nix": "uv2nix",
+        "uv2nix_hammer_overrides": "uv2nix_hammer_overrides"
       }
     },
     "rust-analyzer-src": {
@@ -274,6 +292,22 @@
         "type": "github"
       }
     },
+    "sv2v": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1774651589,
+        "narHash": "sha256-ziwLw1/S4wbnqml/AnN/yerOJJ3VOfRc3dZa8cmEaD0=",
+        "owner": "zachjs",
+        "repo": "sv2v",
+        "rev": "6662fa5da71f87797598060f17728b284b99a9fc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "zachjs",
+        "repo": "sv2v",
+        "type": "github"
+      }
+    },
     "systems": {
       "locked": {
         "lastModified": 1681028828,
@@ -286,6 +320,38 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_2": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "id": "systems",
+        "type": "indirect"
+      }
+    },
+    "treefmt-nix": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_2"
+      },
+      "locked": {
+        "lastModified": 1725271838,
+        "narHash": "sha256-VcqxWT0O/gMaeWTTjf1r4MOyG49NaNxW4GHTO3xuThE=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "9fb342d14b69aefdf46187f6bb80a4a0d97007cd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
         "type": "github"
       }
     },
@@ -309,6 +375,28 @@
       "original": {
         "owner": "pyproject-nix",
         "repo": "uv2nix",
+        "type": "github"
+      }
+    },
+    "uv2nix_hammer_overrides": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "systems": "systems_2",
+        "treefmt-nix": "treefmt-nix"
+      },
+      "locked": {
+        "lastModified": 1773092866,
+        "narHash": "sha256-ovnT1Fx1u7PiYwinKxG3rFh3B38tta9ietvoh22+SIw=",
+        "owner": "TyberiusPrime",
+        "repo": "uv2nix_hammer_overrides",
+        "rev": "efc9f213860490692e27f0854e26b8ac62acfff3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "TyberiusPrime",
+        "repo": "uv2nix_hammer_overrides",
         "type": "github"
       }
     }
