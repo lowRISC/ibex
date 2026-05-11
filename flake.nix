@@ -65,6 +65,12 @@
       url = "github:nix-community/fenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Deps for synthesis flows
+    sv2v = {
+      url = "github:zachjs/sv2v";
+      flake = false;
+    };
   };
 
   # The lowRISC public nix-cache contains builds of nix packages used by lowRISC, primarily coming from github:lowRISC/lowrisc-nix.
@@ -86,6 +92,10 @@
       let
         pkgs = import inputs.nixpkgs {
           inherit system;
+          config = {
+            allowUnfree = true;
+            allowBroken = true; # sv2v marked as broken.
+          };
         };
         inherit (pkgs) lib;
 
@@ -159,6 +169,8 @@
             # Lints & Checking
             mypy
           ]);
+
+        ibex_syn = import ./nix/syn.nix {inherit inputs pkgs;};
 
         # lowRISC fork of the Sail repository. The SAIL -> SV flow is used to generate the reference model.
         lowrisc_sail = import ./nix/lowrisc_sail.nix {
@@ -297,6 +309,12 @@
           '';
         };
 
+        syn_shell = shell.override (prev: {
+          name = "ibex-devshell-synthesis";
+          nativeBuildInputs = prev.nativeBuildInputs ++ ibex_syn.deps;
+          shellHook = prev.shellHook + ibex_syn.profile;
+        });
+
         # This shell uses mkShellNoCC as the stdenv CC can interfere with EDA tools.
         eda_shell = pkgs.lib.makeOverridable pkgs.mkShellNoCC {
           name = "ibex-devshell-eda";
@@ -320,7 +338,7 @@
             inherit lowrisc_sail;
           };
           devShells = rec {
-            inherit shell eda_shell;
+            inherit shell syn_shell eda_shell;
             formal = mkshell-minimal {
               packages = standard_deps;
               shellHook = check_jg + exports;
