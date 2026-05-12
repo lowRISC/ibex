@@ -88,6 +88,15 @@ def add_configs_and_handwritten_directed_tests():
   test_srcs: mcounteren_test/mcounteren_test.S
   config: riscv-tests
 
+- test: mcounteren_lock_test
+  desc: >
+    Tests that mcounteren retains its value after mcounteren_writable_i is
+    de-asserted mid-simulation (write-lock).
+  iterations: 1
+  rtl_test: core_ibex_mcounteren_lock_test
+  test_srcs: mcounteren_test/mcounteren_lock_test.S
+  config: riscv-tests
+
 - test: pmp_mseccfg_test_rlb1_l0_0_u0
   desc: >
     mseccfg test
