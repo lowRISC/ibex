@@ -171,6 +171,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-gcc93": {
+      "locked": {
+        "lastModified": 1635350005,
+        "narHash": "sha256-tAMJnUwfaDEB2aa31jGcu7R7bzGELM9noc91L2PbVjg=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "1c1f5649bb9c1b0d98637c8c365228f57126f361",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-20.09",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1725103162,
@@ -267,6 +283,7 @@
         "lowrisc_yosys_slang": "lowrisc_yosys_slang",
         "mkshell-minimal": "mkshell-minimal",
         "nixpkgs": "nixpkgs",
+        "nixpkgs-gcc93": "nixpkgs-gcc93",
         "psgen": "psgen",
         "pyproject-build-systems": "pyproject-build-systems",
         "pyproject-nix": "pyproject-nix",
