@@ -6,6 +6,10 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    # Intentionally not following the main nixpkgs — this pin provides GCC 9.3 /
+    # glibc 2.32 to build spike shared libraries with a low symbol-version floor
+    # compatible with older bundled toolchains.
+    nixpkgs-gcc93.url = "github:NixOS/nixpkgs/nixos-20.09";
     flake-utils.url = "github:numtide/flake-utils";
 
     pyproject-nix = {
@@ -85,6 +89,11 @@
         };
         inherit (pkgs) lib;
 
+        # Older nixpkgs providing GCC 9.3 / glibc 2.32, used only to compile
+        # spike so the resulting .so has a low symbol-version floor compatible
+        # with older bundled toolchains.
+        pkgsCompat = import inputs.nixpkgs-gcc93 { inherit system; };
+
         mkshell-minimal = inputs.mkshell-minimal pkgs;
 
         ################
@@ -93,6 +102,25 @@
 
         # Python environment, as defined in ./nix/pythonEnv/pyproject.toml
         pythonEnv = import ./nix/pythonEnv {inherit inputs pkgs;};
+
+        # lowRISC fork of Spike used as a cosimulation model for Ibex Verification.
+        # Built via pkgsCompat (nixos-20.09, GCC 9.3 / glibc 2.32) so the resulting
+        # shared libraries carry a low symbol-version floor compatible with older
+        # bundled toolchains.
+        spike = pkgsCompat.spike.overrideAttrs (prev: {
+          pname = "spike-ibex-cosim";
+          version = "0.5-dev";
+          src = pkgsCompat.fetchFromGitHub {
+            owner = "lowRISC";
+            repo = "riscv-isa-sim";
+            rev = "4b97396656485a129119deaec2ba35e5bf354841";
+            sha256 = "sha256-oF2poKMYoYXytqo/t6eqngJgrr4WFHvKj/cKsGQ88DQ=";
+          };
+          configureFlags = (prev.configureFlags or []) ++ ["--enable-commitlog" "--enable-misaligned"];
+          # Statically embed libstdc++ and libgcc so the .so carries no
+          # DT_NEEDED on libstdc++.so.6 at all.
+          LDFLAGS = (prev.LDFLAGS or "") + " -static-libstdc++ -static-libgcc";
+        });
 
         # Currently we don't build the riscv-toolchain from src, we use a github release
         # See https://github.com/lowRISC/lowrisc-nix/blob/main/pkgs/lowrisc-toolchain-gcc-rv32imcb.nix
@@ -112,6 +140,7 @@
         ibex_project_deps =
           [
             pythonEnv
+            spike
             rv32imcb_toolchain
           ] ++
           sim_shared_lib_deps ++
@@ -248,6 +277,8 @@
 
         # These exports are required by scripts within the Ibex DV flow.
         ibex_profile_common = ''
+          export SPIKE_PATH=${spike}/bin
+
           export RISCV_TOOLCHAIN=${rv32imcb_toolchain}
           export RISCV_GCC=${rv32imcb_toolchain}/bin/riscv32-unknown-elf-gcc
           export RISCV_OBJCOPY=${rv32imcb_toolchain}/bin/riscv32-unknown-elf-objcopy
