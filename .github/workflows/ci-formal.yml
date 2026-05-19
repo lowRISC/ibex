@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Setup env
         run: |
-          echo "MAX_MEM_GB=100" >> $GITHUB_ENV # Maximum memory available to conductor.py, which is inversely proportional to time. 200GB -> 40 mins
+          echo "MAX_MEM_GB=60" >> $GITHUB_ENV # Maximum memory available to conductor.py, which is inversely proportional to time. 200GB -> 40 mins
           echo "NIX_CONFIG=accept-flake-config = true" >> $GITHUB_ENV
 
       - name: Notify about queued execution
