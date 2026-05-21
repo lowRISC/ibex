@@ -255,6 +255,8 @@ def gen_setup(test_file):
     test_file.write(".option norvc\n")
     test_file.write(".org 0x80\n")
     test_file.write("_start:\n")
+    test_file.write("la x1, csr_fail\n")
+    test_file.write("csrw mtvec, x1\n")
 
 
 def gen_csr_test_fail(test_file, end_addr):
