@@ -194,7 +194,17 @@ module ibex_controller #(
   assign dret_insn       = dret_insn_i       & instr_valid_i;
   assign wfi_insn        = wfi_insn_i        & instr_valid_i;
   assign ebrk_insn       = ebrk_insn_i       & instr_valid_i;
-  assign csr_pipe_flush  = csr_pipe_flush_i  & instr_valid_i;
+  // csr_pipe_flush_i is already qualified by instr_valid_i at the source
+  // (id_stage builds it from csr_op_en_o = csr_access_o & instr_executing &
+  // instr_id_done_o, and instr_executing already AND-includes instr_valid_i),
+  // so the extra `& instr_valid_i` here is redundant. Dropping it removes one
+  // gate from the long combinational chain
+  //   csr_op_en_o -> csr_pipe_flush_i -> csr_pipe_flush ->
+  //     special_req_flush_only -> special_req -> halt_if ->
+  //     id_in_ready_o -> ctrl_fsm_ns
+  // which is the dominant post-stall_id portion of the longest topological
+  // path on the small-config Ibex.
+  assign csr_pipe_flush  = csr_pipe_flush_i;
   assign instr_fetch_err = instr_fetch_err_i & instr_valid_i;
 
   // This is recorded in the illegal_insn_q flop to help timing.  Specifically
