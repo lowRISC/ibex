@@ -662,7 +662,25 @@ module ibex_decoder #(
       jump_in_dec_o   = 1'b0;
       jump_set_o      = 1'b0;
       branch_in_dec_o = 1'b0;
-      csr_access_o    = 1'b0;
+      // csr_access_o intentionally NOT masked here: doing so creates a
+      // critical-path arc from decoder/illegal_insn through
+      // ibex_cs_registers/illegal_csr_insn_o back into id_stage/illegal_insn_o.
+      // Functional safety is preserved by downstream gating:
+      //   * csr_op_en_o = csr_access_o & instr_executing & instr_id_done_o,
+      //     and instr_executing is forced low whenever an illegal_insn raises
+      //     id_exception, so no CSR side-effect can occur.
+      //   * Any illegal_insn_dec=1 case is OR-merged into illegal_insn_o
+      //     regardless of what illegal_csr_insn_o reports.
+      //
+      // SECURITY NOTE: leaving csr_access_o asserted for an illegal
+      // instruction means cs_registers performs its internal address decode
+      // for the illegal opcode's CSR field even though no architectural CSR
+      // side-effect occurs (csr_op_en_o is gated low). In threat models that
+      // include timing or power side-channels on illegal-instruction handling,
+      // this is a side-channel surface that the original csr_access_o = 1'b0
+      // mask did not expose. Deployments where this is a concern (e.g.
+      // OpenTitan-style security-sensitive cores) may prefer to retain the
+      // mask and accept the gate cost.
     end
   end
 
