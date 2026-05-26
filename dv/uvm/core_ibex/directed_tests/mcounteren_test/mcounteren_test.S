@@ -12,6 +12,7 @@
 #include "test_macros.h"
 
 # Register Allocation:
+# s0: mcounteren WARL readback used by check_counter_aliases
 # s1: Expected instruction execution state(1 = should succeed, 0 = should trap)
 # s2: Readback snapshot of valid mcounteren bits
 # s3: Subroutine return address backup tracking register(ra)
@@ -110,6 +111,37 @@ next_test_\idx:
   RUN_CSR_TEST 63, 0xC9F   # hpmcounter31h
 .endm
 
+# Freeze one HPM counter, write it, drop to U-mode to read the user-mode alias,
+# then verify the values match.
+# s0 is the mcounteren readback on entry
+# s1 carries the M-mode read.
+# s2 carries the U-mode read.
+.macro CHECK_HPM_ALIAS_ONE idx, mhpmcsr, hpmcsr
+  li    t0, (1 << \idx)
+  and   t1, t0, s0
+  beqz  t1, skip_hpm_alias_\hpmcsr
+
+  csrs  mcountinhibit, t0
+  li    t0, (0x12345678 ^ \idx)
+  csrw  \mhpmcsr, t0
+  csrr  s1, \mhpmcsr
+
+  la    s5, after_hpm_alias_\hpmcsr
+  SWITCH_TO_U_MODE_LABEL(hpm_alias_u_\hpmcsr)
+
+.balign 4
+hpm_alias_u_\hpmcsr:
+  csrr  s2, \hpmcsr
+  ecall
+
+after_hpm_alias_\hpmcsr:
+  bne   s2, s1, fail
+  li    t0, (1 << \idx)
+  csrc  mcountinhibit, t0
+
+skip_hpm_alias_\hpmcsr:
+.endm
+
 # -----------------------------------------------------------------------
 #  Main Verification Blocks
 # -----------------------------------------------------------------------
@@ -160,6 +192,12 @@ RVTEST_CODE_BEGIN
   csrr  s2, mcounteren
   jal   ra, run_all_csr_tests
 
+  # Re-enable all counters and verify U-mode CSRs alias their M-mode counterparts.
+  li    t0, 0xFFFFFFFF
+  csrw  mcounteren, t0
+  csrr  s0, mcounteren
+  jal   ra, check_counter_aliases
+
   # If execution hits this line, all pattern sweeps successfully completed
   csrwi mcounteren, 0
   j     pass
@@ -183,6 +221,97 @@ u_mode_sweep_entry:
   ecall
 
 post_all_tests:
+  mv    ra, s3
+  ret
+
+# -----------------------------------------------------------------------
+#  Counter Alias Verification Subroutine
+# -----------------------------------------------------------------------
+# Verifies that the user-mode counter CSRs alias their M-mode counterparts.
+# cycle is checked by the cosim.
+check_counter_aliases:
+  mv    s3, ra
+
+  # Custom minstret test
+  # instret should be exactly 2 more than minstret.
+  csrr  t0, minstret
+  nop
+  csrr  t1, instret
+  addi  t2, t0, 2
+  bne   t1, t2, fail
+
+  # Reset minstret to zero. The write should suppress the automatic retirement
+  # increment, so the immediate read-back will be 0. Reading instret next counts
+  # the one csr read.
+  csrwi minstret, 0
+  csrr  t0, minstret
+  csrr  t1, instret
+  bnez  t0, fail
+  li    t2, 1
+  bne   t1, t2, fail
+
+  # HPM alias: iterate over each HPM counter (bits 3-31) that mcounteren
+  # reports as implemented. Each counter is frozen with mcountinhibit, set to a
+  # value through the m-mode counter, and read back via the U-mode alias CSR.
+  CHECK_HPM_ALIAS_ONE  3, mhpmcounter3,   hpmcounter3
+  CHECK_HPM_ALIAS_ONE  4, mhpmcounter4,   hpmcounter4
+  CHECK_HPM_ALIAS_ONE  5, mhpmcounter5,   hpmcounter5
+  CHECK_HPM_ALIAS_ONE  6, mhpmcounter6,   hpmcounter6
+  CHECK_HPM_ALIAS_ONE  7, mhpmcounter7,   hpmcounter7
+  CHECK_HPM_ALIAS_ONE  8, mhpmcounter8,   hpmcounter8
+  CHECK_HPM_ALIAS_ONE  9, mhpmcounter9,   hpmcounter9
+  CHECK_HPM_ALIAS_ONE 10, mhpmcounter10,  hpmcounter10
+  CHECK_HPM_ALIAS_ONE 11, mhpmcounter11,  hpmcounter11
+  CHECK_HPM_ALIAS_ONE 12, mhpmcounter12,  hpmcounter12
+  CHECK_HPM_ALIAS_ONE 13, mhpmcounter13,  hpmcounter13
+  CHECK_HPM_ALIAS_ONE 14, mhpmcounter14,  hpmcounter14
+  CHECK_HPM_ALIAS_ONE 15, mhpmcounter15,  hpmcounter15
+  CHECK_HPM_ALIAS_ONE 16, mhpmcounter16,  hpmcounter16
+  CHECK_HPM_ALIAS_ONE 17, mhpmcounter17,  hpmcounter17
+  CHECK_HPM_ALIAS_ONE 18, mhpmcounter18,  hpmcounter18
+  CHECK_HPM_ALIAS_ONE 19, mhpmcounter19,  hpmcounter19
+  CHECK_HPM_ALIAS_ONE 20, mhpmcounter20,  hpmcounter20
+  CHECK_HPM_ALIAS_ONE 21, mhpmcounter21,  hpmcounter21
+  CHECK_HPM_ALIAS_ONE 22, mhpmcounter22,  hpmcounter22
+  CHECK_HPM_ALIAS_ONE 23, mhpmcounter23,  hpmcounter23
+  CHECK_HPM_ALIAS_ONE 24, mhpmcounter24,  hpmcounter24
+  CHECK_HPM_ALIAS_ONE 25, mhpmcounter25,  hpmcounter25
+  CHECK_HPM_ALIAS_ONE 26, mhpmcounter26,  hpmcounter26
+  CHECK_HPM_ALIAS_ONE 27, mhpmcounter27,  hpmcounter27
+  CHECK_HPM_ALIAS_ONE 28, mhpmcounter28,  hpmcounter28
+  CHECK_HPM_ALIAS_ONE 29, mhpmcounter29,  hpmcounter29
+  CHECK_HPM_ALIAS_ONE 30, mhpmcounter30,  hpmcounter30
+  CHECK_HPM_ALIAS_ONE 31, mhpmcounter31,  hpmcounter31
+  CHECK_HPM_ALIAS_ONE  3, mhpmcounter3h,  hpmcounter3h
+  CHECK_HPM_ALIAS_ONE  4, mhpmcounter4h,  hpmcounter4h
+  CHECK_HPM_ALIAS_ONE  5, mhpmcounter5h,  hpmcounter5h
+  CHECK_HPM_ALIAS_ONE  6, mhpmcounter6h,  hpmcounter6h
+  CHECK_HPM_ALIAS_ONE  7, mhpmcounter7h,  hpmcounter7h
+  CHECK_HPM_ALIAS_ONE  8, mhpmcounter8h,  hpmcounter8h
+  CHECK_HPM_ALIAS_ONE  9, mhpmcounter9h,  hpmcounter9h
+  CHECK_HPM_ALIAS_ONE 10, mhpmcounter10h, hpmcounter10h
+  CHECK_HPM_ALIAS_ONE 11, mhpmcounter11h, hpmcounter11h
+  CHECK_HPM_ALIAS_ONE 12, mhpmcounter12h, hpmcounter12h
+  CHECK_HPM_ALIAS_ONE 13, mhpmcounter13h, hpmcounter13h
+  CHECK_HPM_ALIAS_ONE 14, mhpmcounter14h, hpmcounter14h
+  CHECK_HPM_ALIAS_ONE 15, mhpmcounter15h, hpmcounter15h
+  CHECK_HPM_ALIAS_ONE 16, mhpmcounter16h, hpmcounter16h
+  CHECK_HPM_ALIAS_ONE 17, mhpmcounter17h, hpmcounter17h
+  CHECK_HPM_ALIAS_ONE 18, mhpmcounter18h, hpmcounter18h
+  CHECK_HPM_ALIAS_ONE 19, mhpmcounter19h, hpmcounter19h
+  CHECK_HPM_ALIAS_ONE 20, mhpmcounter20h, hpmcounter20h
+  CHECK_HPM_ALIAS_ONE 21, mhpmcounter21h, hpmcounter21h
+  CHECK_HPM_ALIAS_ONE 22, mhpmcounter22h, hpmcounter22h
+  CHECK_HPM_ALIAS_ONE 23, mhpmcounter23h, hpmcounter23h
+  CHECK_HPM_ALIAS_ONE 24, mhpmcounter24h, hpmcounter24h
+  CHECK_HPM_ALIAS_ONE 25, mhpmcounter25h, hpmcounter25h
+  CHECK_HPM_ALIAS_ONE 26, mhpmcounter26h, hpmcounter26h
+  CHECK_HPM_ALIAS_ONE 27, mhpmcounter27h, hpmcounter27h
+  CHECK_HPM_ALIAS_ONE 28, mhpmcounter28h, hpmcounter28h
+  CHECK_HPM_ALIAS_ONE 29, mhpmcounter29h, hpmcounter29h
+  CHECK_HPM_ALIAS_ONE 30, mhpmcounter30h, hpmcounter30h
+  CHECK_HPM_ALIAS_ONE 31, mhpmcounter31h, hpmcounter31h
+
   mv    ra, s3
   ret
 
