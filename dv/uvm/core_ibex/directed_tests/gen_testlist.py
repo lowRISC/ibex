@@ -80,6 +80,14 @@ def add_configs_and_handwritten_directed_tests():
   test_srcs: empty/empty.S
   config: riscv-tests
 
+- test: mcounteren_test
+  desc: >
+    Tests the mcounteren CSR: reset value, hardwired-zero bit 1 (time),
+    and U-mode counter access gating.
+  iterations: 1
+  test_srcs: mcounteren_test/mcounteren_test.S
+  config: riscv-tests
+
 - test: pmp_mseccfg_test_rlb1_l0_0_u0
   desc: >
     mseccfg test
