@@ -469,11 +469,11 @@ def _main() -> int:
     add_configs_and_handwritten_directed_tests()
 
     if 'riscv-tests' in test_suite_list or test_suite == 'all':
-        isa_tests = {'rv32mi', 'rv32uc', 'rv32ui', 'rv32um'}
+        isa_tests = ['rv32mi', 'rv32uc', 'rv32um', 'rv32ui']
         append_directed_testlist(isa_tests, '../../../../vendor/riscv-tests/isa/', 'riscv-tests', 1)
 
     if 'riscv-arch-tests' in test_suite_list or test_suite == 'all':
-        arch_tests = {'rv32i_m/B/src', 'rv32i_m/C/src', 'rv32i_m/I/src', 'rv32i_m/M/src', 'rv32i_m/Zifencei/src'}
+        arch_tests = ['rv32i_m/M/src', 'rv32i_m/C/src', 'rv32i_m/Zifencei/src', 'rv32i_m/I/src', 'rv32i_m/B/src']
         append_directed_testlist(arch_tests, '../../../../vendor/riscv-arch-tests/riscv-test-suite/', 'riscv-arch-tests', 1)
 
     if 'epmp-tests' in test_suite_list or test_suite == 'all':
