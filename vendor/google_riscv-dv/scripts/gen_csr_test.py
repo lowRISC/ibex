@@ -349,15 +349,18 @@ def gen_csr_instr(original_csr_map, csr_instructions, xlen,
                                                                         csr_write_fields,
                                                                         csr_read_mask)))
                         else:
+                            safe_rs1_val = csr_val.copy()
+                            csr_write(rand_rs1_val, safe_rs1_val, csr_write_fields)
+
                             first_li = "\tli {}, 0x{}\n".format(source_reg,
-                                                                rand_rs1_val.hex)
+                                                                safe_rs1_val.hex)
                             csr_inst = "\t{} {}, {}, {}\n".format(op, dest_reg,
                                                                   csr_address,
                                                                   source_reg)
                             predict_li = ("\tli {}, "
                                           "{}\n".format(source_reg,
                                                         predict_csr_val(op,
-                                                                        rand_rs1_val,
+                                                                        safe_rs1_val,
                                                                         csr_val,
                                                                         csr_write_fields,
                                                                         csr_read_mask)))
