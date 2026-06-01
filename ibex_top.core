@@ -19,8 +19,6 @@ filesets:
       - lowrisc:prim:onehot_check
       - lowrisc:prim:onehot
       - lowrisc:prim:util
-      - "fileset_partner ? (partner:prim_generic:all)"
-      - "!fileset_partner ? (lowrisc:prim_generic:all)"
     files:
       - rtl/ibex_register_file_ff.sv # generic FF-based
       - rtl/ibex_register_file_fpga.sv # FPGA
