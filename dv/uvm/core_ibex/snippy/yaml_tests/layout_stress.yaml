@@ -1,0 +1,510 @@
+sections:
+  - name:      text_00000000
+    VMA:       0x00000000
+    SIZE:      0x20000
+    LMA:       0x00000000
+    ACCESS:    rx
+  - name:      text_00080000
+    VMA:       0x00080000
+    SIZE:      0x20000
+    LMA:       0x00080000
+    ACCESS:    rx
+  - name:      text_00100000
+    VMA:       0x00100000
+    SIZE:      0x20000
+    LMA:       0x00100000
+    ACCESS:    rx
+  - name:      text_00200000
+    VMA:       0x00200000
+    SIZE:      0x20000
+    LMA:       0x00200000
+    ACCESS:    rx
+  - name:      text_00400000
+    VMA:       0x00400000
+    SIZE:      0x20000
+    LMA:       0x00400000
+    ACCESS:    rx
+  - name:      text_00800000
+    VMA:       0x00800000
+    SIZE:      0x20000
+    LMA:       0x00800000
+    ACCESS:    rx
+  - name:      text_01000000
+    VMA:       0x01000000
+    SIZE:      0x20000
+    LMA:       0x01000000
+    ACCESS:    rx
+  - name:      text_02000000
+    VMA:       0x02000000
+    SIZE:      0x20000
+    LMA:       0x02000000
+    ACCESS:    rx
+  - name:      text_04000000
+    VMA:       0x04000000
+    SIZE:      0x20000
+    LMA:       0x04000000
+    ACCESS:    rx
+  - name:      text_08000000
+    VMA:       0x08000000
+    SIZE:      0x20000
+    LMA:       0x08000000
+    ACCESS:    rx
+  - name:      text_10000000
+    VMA:       0x10000000
+    SIZE:      0x20000
+    LMA:       0x10000000
+    ACCESS:    rx
+  - name:      text_20000000
+    VMA:       0x20000000
+    SIZE:      0x20000
+    LMA:       0x20000000
+    ACCESS:    rx
+  - name:      text_40000000
+    VMA:       0x40000000
+    SIZE:      0x20000
+    LMA:       0x40000000
+    ACCESS:    rx
+  - name:      text_80040000
+    VMA:       0x80040000
+    SIZE:      0x20000
+    LMA:       0x80040000
+    ACCESS:    rx
+  - name:      data_00040000
+    VMA:       0x00040000
+    SIZE:      0x10000
+    LMA:       0x00040000
+    ACCESS:    rw
+  - name:      data_00300000
+    VMA:       0x00300000
+    SIZE:      0x10000
+    LMA:       0x00300000
+    ACCESS:    rw
+  - name:      data_00c00000
+    VMA:       0x00c00000
+    SIZE:      0x10000
+    LMA:       0x00c00000
+    ACCESS:    rw
+  - name:      data_03000000
+    VMA:       0x03000000
+    SIZE:      0x10000
+    LMA:       0x03000000
+    ACCESS:    rw
+  - name:      data_0c000000
+    VMA:       0x0c000000
+    SIZE:      0x10000
+    LMA:       0x0c000000
+    ACCESS:    rw
+  - name:      data_30000000
+    VMA:       0x30000000
+    SIZE:      0x10000
+    LMA:       0x30000000
+    ACCESS:    rw
+  - name:      data_70000000
+    VMA:       0x70000000
+    SIZE:      0x10000
+    LMA:       0x70000000
+    ACCESS:    rw
+  - name:      data_90000000
+    VMA:       0x90000000
+    SIZE:      0x10000
+    LMA:       0x90000000
+    ACCESS:    rw
+  - name:      data_c0000000
+    VMA:       0xc0000000
+    SIZE:      0x10000
+    LMA:       0xc0000000
+    ACCESS:    rw
+  - name:      stack
+    VMA:       0x00070000
+    SIZE:      0x10000
+    LMA:       0x00070000
+    ACCESS:    rw
+  - name:      rodata
+    VMA:       0x00060000
+    SIZE:      0x10000
+    LMA:       0x00060000
+    ACCESS:    r
+
+options:
+  mtriple: "riscv32"
+  mcpu: generic-rv32
+  march: "rv32imc_zba_zbb_zbc_zbs_zicsr"
+  preserve-ra: true
+  redefine-sp: any-not-SP
+  random-scheduling: true
+  init-memory: full
+  init-regs-in-elf: on
+  num-instrs: 12000
+  riscv-disable-misaligned-access: false
+  enable-static-stack: false
+
+code-layout:
+  ranges:
+    - start: 0x00000000
+      size: 0x20000
+      stride: 0x20
+      first-offset: 0
+      last-offset: 0
+      weight: 4
+
+    - start: 0x00080000
+      size: 0x20000
+      stride: 0x20
+      first-offset: 0
+      last-offset: 0
+      weight: 8
+
+    - start: 0x00100000
+      size: 0x20000
+      stride: 0x20
+      first-offset: 0
+      last-offset: 0
+      weight: 8
+
+    - start: 0x00200000
+      size: 0x20000
+      stride: 0x20
+      first-offset: 0
+      last-offset: 0
+      weight: 8
+
+    - start: 0x00400000
+      size: 0x20000
+      stride: 0x20
+      first-offset: 0
+      last-offset: 0
+      weight: 8
+
+    - start: 0x00800000
+      size: 0x20000
+      stride: 0x20
+      first-offset: 0
+      last-offset: 0
+      weight: 8
+
+    - start: 0x01000000
+      size: 0x20000
+      stride: 0x20
+      first-offset: 0
+      last-offset: 0
+      weight: 8
+
+    - start: 0x02000000
+      size: 0x20000
+      stride: 0x20
+      first-offset: 0
+      last-offset: 0
+      weight: 8
+
+    - start: 0x04000000
+      size: 0x20000
+      stride: 0x20
+      first-offset: 0
+      last-offset: 0
+      weight: 8
+
+    - start: 0x08000000
+      size: 0x20000
+      stride: 0x20
+      first-offset: 0
+      last-offset: 0
+      weight: 8
+
+    - start: 0x10000000
+      size: 0x20000
+      stride: 0x20
+      first-offset: 0
+      last-offset: 0
+      weight: 8
+
+    - start: 0x20000000
+      size: 0x20000
+      stride: 0x20
+      first-offset: 0
+      last-offset: 0
+      weight: 8
+
+    - start: 0x40000000
+      size: 0x20000
+      stride: 0x20
+      first-offset: 0
+      last-offset: 0
+      weight: 8
+
+    - start: 0x80040000
+      size: 0x20000
+      stride: 0x20
+      first-offset: 0
+      last-offset: 0
+      weight: 8
+
+branches:
+  alignment: 1
+  loop-ratio: 0.1
+  number-of-loop-iterations:
+    min: 2
+    max: 7
+  max-depth:
+    if: 300
+    loop: 1
+  distance:
+    blocks:
+      min: 1
+      max: 80
+
+call-graph:
+  entry-point: SnippyFunction
+  function-list:
+    - name: SnippyFunction
+      callees:
+        - fun_low
+        - fun_b19
+        - fun_b20
+        - fun_b21
+        - fun_b22
+        - fun_b23
+        - fun_b24
+        - fun_b25
+        - fun_b26
+        - fun_b27
+        - fun_b28
+        - fun_b29
+        - fun_b30
+        - fun_b31
+    - name: fun_low
+      callees:
+        - fun_b19
+        - fun_b31
+    - name: fun_b19
+      callees:
+        - fun_b20
+        - fun_b30
+    - name: fun_b20
+      callees:
+        - fun_b21
+        - fun_b29
+    - name: fun_b21
+      callees:
+        - fun_b22
+        - fun_b28
+    - name: fun_b22
+      callees:
+        - fun_b23
+        - fun_b27
+    - name: fun_b23
+      callees:
+        - fun_b24
+    - name: fun_b24
+      callees:
+        - fun_b25
+    - name: fun_b25
+      callees:
+        - fun_b26
+    - name: fun_b26
+    - name: fun_b27
+    - name: fun_b28
+    - name: fun_b29
+    - name: fun_b30
+    - name: fun_b31
+
+access-ranges:
+  - start: 0x00040000
+    size: 0x10000
+    stride: 4
+    first-offset: 0
+    last-offset: 0
+    max-past-last-offset: 4
+    access-size: 4
+    weight: 4
+
+  - start: 0x00300000
+    size: 0x10000
+    stride: 4
+    first-offset: 0
+    last-offset: 0
+    max-past-last-offset: 4
+    access-size: 4
+    weight: 6
+
+  - start: 0x00c00000
+    size: 0x10000
+    stride: 4
+    first-offset: 0
+    last-offset: 0
+    max-past-last-offset: 4
+    access-size: 4
+    weight: 6
+
+  - start: 0x03000000
+    size: 0x10000
+    stride: 4
+    first-offset: 0
+    last-offset: 0
+    max-past-last-offset: 4
+    access-size: 4
+    weight: 6
+
+  - start: 0x0c000000
+    size: 0x10000
+    stride: 4
+    first-offset: 0
+    last-offset: 0
+    max-past-last-offset: 4
+    access-size: 4
+    weight: 6
+
+  - start: 0x30000000
+    size: 0x10000
+    stride: 4
+    first-offset: 0
+    last-offset: 0
+    max-past-last-offset: 4
+    access-size: 4
+    weight: 6
+
+  - start: 0x70000000
+    size: 0x10000
+    stride: 4
+    first-offset: 0
+    last-offset: 0
+    max-past-last-offset: 4
+    access-size: 4
+    weight: 6
+
+  - start: 0x90000000
+    size: 0x10000
+    stride: 4
+    first-offset: 0
+    last-offset: 0
+    max-past-last-offset: 4
+    access-size: 4
+    weight: 6
+
+  - start: 0xc0000000
+    size: 0x10000
+    stride: 4
+    first-offset: 0
+    last-offset: 0
+    max-past-last-offset: 4
+    access-size: 4
+    weight: 6
+
+  - start: 0x00040000
+    size: 0x1000
+    stride: 8
+    first-offset: 0
+    last-offset: 7
+    max-past-last-offset: 4
+    access-size: 4
+    misaligned-access: true
+    weight: 3
+
+  - start: 0x90000000
+    size: 0x1000
+    stride: 8
+    first-offset: 0
+    last-offset: 7
+    max-past-last-offset: 4
+    access-size: 4
+    misaligned-access: true
+    weight: 3
+
+histogram:
+  - [BEQ, 20.0]
+  - [BNE, 20.0]
+  - [BLT, 10.0]
+  - [BGE, 10.0]
+  - [BLTU, 10.0]
+  - [BGEU, 10.0]
+
+  - [JALR, 45.0]
+  - [C_JR, 15.0]
+  - [C_BEQZ, 10.0]
+  - [C_BNEZ, 10.0]
+
+  - [LB, 45.0]
+  - [LBU, 45.0]
+  - [LH, 45.0]
+  - [LHU, 45.0]
+  - [LW, 45.0]
+  - [SB, 45.0]
+  - [SH, 45.0]
+  - [SW, 45.0]
+  - [C_LW, 35.0]
+  - [C_SW, 35.0]
+
+  - [ADD, 3.0]
+  - [ADDI, 6.0]
+  - [SUB, 3.0]
+  - [AND, 3.0]
+  - [ANDI, 3.0]
+  - [OR, 3.0]
+  - [ORI, 3.0]
+  - [XOR, 3.0]
+  - [XORI, 3.0]
+  - [SLL, 3.0]
+  - [SLLI, 3.0]
+  - [SRL, 3.0]
+  - [SRLI, 3.0]
+  - [SRA, 3.0]
+  - [SRAI, 3.0]
+  - [SLT, 3.0]
+  - [SLTI, 3.0]
+  - [SLTU, 3.0]
+  - [SLTIU, 3.0]
+
+  - [C_ADD, 3.0]
+  - [C_ADDI, 3.0]
+  - [C_AND, 3.0]
+  - [C_ANDI, 3.0]
+  - [C_LI, 3.0]
+  - [C_LUI, 3.0]
+  - [C_MV, 3.0]
+  - [C_OR, 3.0]
+  - [C_SLLI, 3.0]
+  - [C_SRAI, 3.0]
+  - [C_SRLI, 3.0]
+  - [C_SUB, 3.0]
+  - [C_XOR, 3.0]
+
+  - [MUL, 3.0]
+  - [MULH, 2.0]
+  - [MULHSU, 2.0]
+  - [MULHU, 2.0]
+  - [DIV, 2.0]
+  - [DIVU, 2.0]
+  - [REM, 2.0]
+  - [REMU, 2.0]
+
+  - [BCLR, 3.0]
+  - [BCLRI, 2.0]
+  - [BEXT, 3.0]
+  - [BEXTI, 2.0]
+  - [BINV, 3.0]
+  - [BINVI, 2.0]
+  - [BSET, 3.0]
+  - [BSETI, 2.0]
+  - [CLZ, 2.0]
+  - [CTZ, 2.0]
+  - [CPOP, 2.0]
+  - [ANDN, 2.0]
+  - [ORN, 2.0]
+  - [XNOR, 2.0]
+  - [MAX, 2.0]
+  - [MAXU, 2.0]
+  - [MIN, 2.0]
+  - [MINU, 2.0]
+  - [ORC_B, 2.0]
+  - [REV8_RV32, 2.0]
+  - [ROL, 2.0]
+  - [ROR, 3.0]
+  - [RORI, 2.0]
+  - [SEXT_B, 2.0]
+  - [SEXT_H, 2.0]
+  - [SH1ADD, 2.0]
+  - [SH2ADD, 2.0]
+  - [SH3ADD, 2.0]
+  - [CLMUL, 2.0]
+  - [CLMULH, 2.0]
+  - [CLMULR, 2.0]
+  - [ZEXT_H_RV32, 2.0]

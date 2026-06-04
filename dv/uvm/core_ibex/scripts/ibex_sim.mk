@@ -31,6 +31,23 @@ comp-results +=
 # invocations such as GOAL=riscv_dv_fcov or GOAL=merge_cov.
 -include $(METADATA-DIR)/snippy_tests.mk
 
+# Coverage may intentionally ignore some tests from the normal Ibex metadata.
+# This is useful for external flows that reuse the standard Ibex coverage
+# scripts but do not want a placeholder/testlist entry to be generated.
+#
+# Example:
+#   COV_EXCLUDE_TESTS=snippy_func_test
+#
+# This filters only coverage dependencies. The original comp-results list is
+# left intact for ordinary check_logs/collect_results flows.
+cov-comp-results := $(comp-results)
+
+ifneq ($(strip $(COV_EXCLUDE_TESTS)),)
+cov-exclude-comp-results := \
+  $(foreach test,$(COV_EXCLUDE_TESTS),$(TESTS-DIR)/$(test).%/trr.yaml)
+cov-comp-results := $(filter-out $(cov-exclude-comp-results),$(comp-results))
+endif
+
 ###############################################################################
 # Compile ibex core TB
 #
@@ -104,7 +121,7 @@ $(comp-results): $(TESTS-DIR)/%/trr.yaml: \
 # to allow the final collect_results.py step to run where COV == 0 (as it needs
 # to declare coverage as a dependency to ensure it gets run after coverage merge
 # when COV == 1).
-$(METADATA-DIR)/fcov.stamp: $(comp-results) \
+$(METADATA-DIR)/fcov.stamp: $(cov-comp-results) \
   scripts/get_fcov.py
 ifeq ($(COV), 1)
 	@echo Generating RISCV_DV functional coverage
@@ -125,7 +142,8 @@ ifeq ($(COV), 1)
 	@echo Merging all recorded coverage data into a single report
 	$(verb)env PYTHONPATH=$(PYTHONPATH) \
 	scripts/merge_cov.py \
-	  --dir-metadata $(METADATA-DIR)
+	  --dir-metadata $(METADATA-DIR) \
+	  $(if $(VCS_URG_ELFILE),--vcs-urg-elfile "$(VCS_URG_ELFILE)",)
 endif
 	@touch $@
 
