@@ -67,6 +67,7 @@ class RegressionMetadata(scripts_lib.testdata_cls):
     signature_addr: str = ' '
     ibex_config: str = ' '
     dut_cov_rtl_path: str = ''
+    rv32zc: str = ''
 
     tests_and_counts: List[Tuple[str, int, TestType]] = field(default_factory=list)
     isa_ibex: Optional[str] = None
@@ -167,7 +168,7 @@ class RegressionMetadata(scripts_lib.testdata_cls):
         if self.seed < 0:
             raise RuntimeError('Bad --start_seed argument: must be non-negative')
 
-        cfg = ibex_cmd.get_config(self.ibex_config)
+        cfg = ibex_cmd.get_effective_config(self.ibex_config, self.rv32zc)
         self.isa_ibex, self.isa_iss = ibex_cmd.get_isas_for_config(cfg)
 
     @classmethod

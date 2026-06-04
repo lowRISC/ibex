@@ -52,6 +52,15 @@ IBEX_CONFIG         := opentitan
 # Path to DUT used for coverage reports
 DUT_COV_RTL_PATH    := "ibex_top"
 
+# Optional override for compressed extension subset.
+# Empty means: use RV32ZC from IBEX_CONFIG in ibex_configs.yaml.
+# Allowed values:
+#   ibex_pkg::RV32Zca
+#   ibex_pkg::RV32ZcaZcb
+#   ibex_pkg::RV32ZcaZcmp
+#   ibex_pkg::RV32ZcaZcbZcmp
+RV32ZC :=
+
 export EXTRA_COSIM_CFLAGS ?=
 
 ifeq ($(COSIM_SIGSEGV_WORKAROUND), 1)
@@ -76,6 +85,7 @@ run:
 	  SEED=$(SEED) WAVES=$(WAVES) COV=$(COV) SIMULATOR=$(SIMULATOR) \
 	  ISS=$(ISS) TEST=$(TEST) VERBOSE=$(VERBOSE) ITERATIONS=$(ITERATIONS) \
 	  SIGNATURE_ADDR=$(SIGNATURE_ADDR) IBEX_CONFIG=$(IBEX_CONFIG) \
+	  RV32ZC=$(RV32ZC) \
 	  DUT_COV_RTL_PATH=$(DUT_COV_RTL_PATH)"
 	@$(MAKE) --file wrapper.mk --environment-overrides --no-print-directory $(GOAL)
 

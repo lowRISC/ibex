@@ -30,13 +30,23 @@ class GenError(Exception):
     pass
 
 
-def _run_ibex_config(config_name: str, output_type: str) -> str:
+def _run_ibex_config(config_name: str,
+                     output_type: str,
+                     overrides: Dict[str, str] = None) -> str:
+    if overrides is None:
+        overrides = {}
     script_path = _IBEX_ROOT/'util'/'ibex_config.py'
     yaml_path = _IBEX_ROOT/'ibex_configs.yaml'
 
     ibex_config_cmd = [
         str(script_path),
         '--config_filename', str(yaml_path),
+    ]
+
+    for fld, val in overrides.items():
+        ibex_config_cmd += ['--set', f'{fld}={val}']
+
+    ibex_config_cmd += [
         config_name,
         output_type,
         '--ins_hier_path', 'core_ibex_tb_top',
@@ -54,7 +64,10 @@ def _run_ibex_config(config_name: str, output_type: str) -> str:
     return proc.stdout.strip()
 
 
-def _get_x_opts(config_name: str, simulator: str, stage: str) -> str:
+def _get_x_opts(config_name: str,
+                simulator: str,
+                stage: str,
+                overrides: Dict[str, str] = None) -> str:
     try:
         needs_compile_opts, needs_sim_opts = SIM_CFGS[simulator]
     except KeyError:
@@ -75,15 +88,29 @@ def _get_x_opts(config_name: str, simulator: str, stage: str) -> str:
     output_type = (f'{simulator}_{stage}_opts'
                    if specify_which_opts else f'{simulator}_opts')
 
-    return _run_ibex_config(config_name, output_type)
+    return _run_ibex_config(config_name, output_type, overrides)
 
 
-def get_compile_opts(config_name: str, simulator: str) -> str:
-    return _get_x_opts(config_name, simulator, 'compile')
+def get_compile_opts(config_name: str,
+                     simulator: str,
+                     rv32zc: str = '') -> str:
+    return _get_x_opts(
+        config_name,
+        simulator,
+        'compile',
+        get_config_overrides(rv32zc)
+    )
 
 
-def get_sim_opts(config_name: str, simulator: str) -> str:
-    return _get_x_opts(config_name, simulator, 'sim')
+def get_sim_opts(config_name: str,
+                 simulator: str,
+                 rv32zc: str = '') -> str:
+    return _get_x_opts(
+        config_name,
+        simulator,
+        'sim',
+        get_config_overrides(rv32zc)
+    )
 
 
 def get_config(cfg_name: str) -> Config:
@@ -91,17 +118,44 @@ def get_config(cfg_name: str) -> Config:
     return parse_config(cfg_name, yaml_path)
 
 
-def _rv32zc_isa_parts(rv32zc: str) -> list[str]:
-    mapping = {
-        'ibex_pkg::RV32Zca': ['zicsr', 'zifencei', 'zca'],
-        'ibex_pkg::RV32ZcaZcb': ['zicsr', 'zifencei', 'zca', 'zcb'],
-        'ibex_pkg::RV32ZcaZcmp': ['zicsr', 'zifencei', 'zca', 'zcmp'],
-        'ibex_pkg::RV32ZcaZcbZcmp': ['zicsr', 'zifencei', 'zca', 'zcb', 'zcmp'],
-    }
-    part = mapping.get(rv32zc)
-    if part is None:
-        raise ValueError(f'Unknown RV32ZC value ({rv32zc}) in config YAML')
-    return part
+RV32ZC_VALUES = {
+    'ibex_pkg::RV32Zca': ['zicsr', 'zifencei', 'zca'],
+    'ibex_pkg::RV32ZcaZcb': ['zicsr', 'zifencei', 'zca', 'zcb'],
+    'ibex_pkg::RV32ZcaZcmp': ['zicsr', 'zifencei', 'zca', 'zcmp'],
+    'ibex_pkg::RV32ZcaZcbZcmp': ['zicsr', 'zifencei', 'zca', 'zcb', 'zcmp'],
+}
+
+
+def check_rv32zc_value(rv32zc: str) -> None:
+    if rv32zc not in RV32ZC_VALUES:
+        allowed = ', '.join(RV32ZC_VALUES)
+        raise ValueError(
+            f'Unknown RV32ZC value: {rv32zc}. Expected one of: {allowed}.'
+        )
+
+
+def get_config_overrides(rv32zc: str = '') -> Dict[str, str]:
+    overrides = {}
+
+    if rv32zc:
+        check_rv32zc_value(rv32zc)
+        overrides['RV32ZC'] = rv32zc
+
+    return overrides
+
+
+def get_effective_config(cfg_name: str, rv32zc: str = '') -> Config:
+    cfg = get_config(cfg_name)
+
+    for fld, val in get_config_overrides(rv32zc).items():
+        cfg.override(fld, val)
+
+    return cfg
+
+
+def _rv32zc_isa_parts(rv32zc: str) -> List[str]:
+    check_rv32zc_value(rv32zc)
+    return RV32ZC_VALUES[rv32zc]
 
 
 def get_isas_for_config(cfg: Config) -> Tuple[str, str]:

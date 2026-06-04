@@ -41,6 +41,15 @@ class Config:
         ('MHPMCounterWidth', int)
     ]
 
+    known_values = {
+        'RV32ZC': [
+            'ibex_pkg::RV32Zca',
+            'ibex_pkg::RV32ZcaZcb',
+            'ibex_pkg::RV32ZcaZcmp',
+            'ibex_pkg::RV32ZcaZcbZcmp',
+        ],
+    }
+
     def __init__(self, yml):
         if not isinstance(yml, dict):
             raise ValueError('Configuration object is not a dict')
@@ -78,6 +87,71 @@ class Config:
         self.pmp_num_regions = Config.read_int('PMPNumRegions', yml)
         self.mhpm_counter_num = Config.read_int('MHPMCounterNum', yml)
         self.mhpm_counter_width = Config.read_int('MHPMCounterWidth', yml)
+
+    @staticmethod
+    def parse_override_value(fld, typ, val):
+        if typ is str:
+            return val
+
+        if typ is int:
+            try:
+                return int(val, 0)
+            except ValueError:
+                raise ConfigException(
+                    f'{fld} override value is {val!r}, but we expected an int.'
+                ) from None
+
+        if typ is bool:
+            if val in ['0', 'false', 'False']:
+                return False
+            if val in ['1', 'true', 'True']:
+                return True
+            raise ConfigException(
+                f'{fld} override value is {val!r}, but we expected a bool.'
+            )
+
+        raise ConfigException(f'{fld} has unsupported type {typ!r}.')
+
+    def override(self, fld, val):
+        known_types = dict(Config.known_fields)
+
+        if fld not in known_types:
+            raise ConfigException(f'Unknown configuration field {fld!r}.')
+
+        parsed_val = Config.parse_override_value(fld, known_types[fld], val)
+
+        if fld in Config.known_values and parsed_val not in Config.known_values[fld]:
+            allowed = ', '.join(Config.known_values[fld])
+            raise ConfigException(
+                f'{fld} override value is {parsed_val!r}, but expected one of: '
+                f'{allowed}.'
+            )
+
+        self.params[fld] = parsed_val
+
+        # Keep the convenience attributes in sync with params.
+        attr_name = {
+            'RV32E': 'rv32e',
+            'RV32M': 'rv32m',
+            'RV32B': 'rv32b',
+            'RV32ZC': 'rv32zc',
+            'RegFile': 'reg_file',
+            'BranchTargetALU': 'branch_target_alu',
+            'WritebackStage': 'writeback_stage',
+            'ICache': 'icache',
+            'ICacheECC': 'icache_ecc',
+            'ICacheScramble': 'icache_scramble',
+            'BranchPredictor': 'branch_predictor',
+            'DbgTriggerEn': 'dbg_trigger_en',
+            'SecureIbex': 'secure_ibex',
+            'PMPEnable': 'pmp_enable',
+            'PMPGranularity': 'pmp_granularity',
+            'PMPNumRegions': 'pmp_num_regions',
+            'MHPMCounterNum': 'mhpm_counter_num',
+            'MHPMCounterWidth': 'mhpm_counter_width',
+        }[fld]
+
+        setattr(self, attr_name, parsed_val)
 
     @staticmethod
     def read_bool(fld, yml):
@@ -295,6 +369,13 @@ def main():
     argparser.add_argument('--config_filename',
                            help='Config file to read',
                            default=get_config_file_location())
+    argparser.add_argument('--set',
+                           dest='overrides',
+                           action='append',
+                           default=[],
+                           metavar='FIELD=VALUE',
+                           help='Override a configuration field after reading '
+                                'the named config. Can be passed multiple times.')
 
     arg_subparser = argparser.add_subparsers(
         help='Format to output the configuration parameters in',
@@ -311,6 +392,17 @@ def main():
         sys.exit(1)
 
     parsed_ibex_config = parse_config(args.config_name, args.config_filename)
+
+    for override in args.overrides:
+        try:
+            fld, val = override.split('=', 1)
+        except ValueError:
+            raise ConfigException(
+                f'Invalid override {override!r}; expected FIELD=VALUE.'
+            ) from None
+
+        parsed_ibex_config.override(fld, val)
+
     print(args.output_fn(parsed_ibex_config, args))
 
 if __name__ == "__main__":
