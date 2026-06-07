@@ -28,7 +28,7 @@ jobs:
         run: |
           echo "Warning: This job will block other oss-fv jobs until it finishes, since it uses a lot of memory."
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install Nix
         uses: cachix/install-nix-action@v27
