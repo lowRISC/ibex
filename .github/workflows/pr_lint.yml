@@ -23,7 +23,7 @@ jobs:
     env:
       verible_config: "vendor/lowrisc_ip/lint/tools/veriblelint/lowrisc-styleguide.rules.verible_lint"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Display Verible config
         run: |
           echo "::group::Verible config"
