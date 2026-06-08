@@ -25,6 +25,7 @@ module ibex_compressed_decoder #(
   output logic [31:0]          instr_o,
   output logic                 is_compressed_o,
   output ibex_pkg::instr_exp_e gets_expanded_o,
+  input  logic                 flush_expanded_i,
   output logic                 illegal_instr_o
 );
   import ibex_pkg::*;
@@ -799,7 +800,7 @@ module ibex_compressed_decoder #(
     if (!rst_ni) begin
       cm_state_q <= CmIdle;
     end else begin
-      cm_state_q <= cm_state_d;
+      cm_state_q <= flush_expanded_i ? CmIdle : cm_state_d;
     end
   end
 
