@@ -3,4 +3,4 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <time.h>
-long int get_unix_timestamp() { return time(NULL); }
+time_t get_unix_timestamp() { return time(NULL); }
