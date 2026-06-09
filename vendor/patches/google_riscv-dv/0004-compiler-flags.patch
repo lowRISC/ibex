@@ -1,0 +1,55 @@
+--- a/run.py
++++ b/run.py
+@@ -951,40 +951,40 @@ def load_config(args, cwd):
+             args.core_setting_dir = cwd + "/target/" + args.target
+         if args.target == "rv32imc":
+             args.mabi = "ilp32"
+-            args.isa = "rv32imc_zicsr_zifencei"
++            args.isa = "rv32imc"
+         elif args.target == "rv32imafdc":
+             args.mabi = "ilp32"
+-            args.isa = "rv32imafdc_zicsr_zifencei"
++            args.isa = "rv32imafdc"
+         elif args.target == "rv32imc_sv32":
+             args.mabi = "ilp32"
+-            args.isa = "rv32imc_zicsr_zifencei"
++            args.isa = "rv32imc"
+         elif args.target == "multi_harts":
+             args.mabi = "ilp32"
+-            args.isa = "rv32gc_zicsr_zifencei"
++            args.isa = "rv32gc"
+         elif args.target == "rv32imcb":
+             args.mabi = "ilp32"
+-            args.isa = "rv32imcb_zicsr_zifencei"
++            args.isa = "rv32imcb"
+         elif args.target == "rv32i":
+             args.mabi = "ilp32"
+-            args.isa = "rv32i_zicsr_zifencei"
++            args.isa = "rv32i"
+         elif args.target == "rv64imc":
+             args.mabi = "lp64"
+-            args.isa = "rv64imc_zicsr_zifencei"
++            args.isa = "rv64imc"
+         elif args.target == "rv64imcb":
+             args.mabi = "lp64"
+-            args.isa = "rv64imcb_zicsr_zifencei"
++            args.isa = "rv64imcb"
+         elif args.target == "rv64gc":
+             args.mabi = "lp64"
+-            args.isa = "rv64gc_zicsr_zifencei"
++            args.isa = "rv64gc"
+         elif args.target == "rv64gcv":
+             args.mabi = "lp64"
+-            args.isa = "rv64gcv_zicsr_zifencei"
++            args.isa = "rv64gcv"
+         elif args.target == "ml":
+             args.mabi = "lp64"
+-            args.isa = "rv64imc_zicsr_zifencei"
++            args.isa = "rv64imc"
+         elif args.target == "rv64imafdc":
+             args.mabi = "lp64"
+-            args.isa = "rv64imafdc_zicsr_zifencei"
++            args.isa = "rv64imafdc"
+         else:
+             sys.exit("Unsupported pre-defined target: {}".format(args.target))
+     else:

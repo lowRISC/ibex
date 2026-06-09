@@ -39,7 +39,10 @@ SpikeCosim::SpikeCosim(const std::string &isa_string, uint32_t start_pc,
                        uint32_t pmp_num_regions, uint32_t pmp_granularity,
                        uint32_t mhpm_counter_num, uint32_t dm_start_addr,
                        uint32_t dm_end_addr)
-    : nmi_mode(false), pending_iside_error(false), insn_cnt(0) {
+    : nmi_mode(false),
+      pending_iside_error(false),
+      insn_cnt(0),
+      pending_expanded_insn(0) {
   FILE *log_file = nullptr;
   if (trace_log_path.length() != 0) {
     log = std::make_unique<log_file_t>(trace_log_path.c_str());
@@ -170,7 +173,9 @@ bool SpikeCosim::backdoor_read_mem(uint32_t addr, size_t len,
 //   processor, and when we call step() again we start executing in the new
 //   context of the trap (trap handler, new MSTATUS, debug rom, etc. etc.)
 bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
-                      bool sync_trap, bool suppress_reg_write) {
+                      bool sync_trap, bool suppress_reg_write,
+                      bool expanded_insn_valid, uint32_t expanded_insn,
+                      bool expanded_insn_last) {
   assert(write_reg < 32);
 
   // The DUT has just produced an RVFI item
@@ -214,7 +219,16 @@ bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
   // (If the current step causes a synchronous trap, it will be
   //  recorded against the current pc)
   initial_spike_pc = (processor->get_state()->pc & 0xffffffff);
-  processor->step(1);
+  // Only step Spike if the current instruction is not an expanded one or the
+  // final operation of an expanded sequence. Spike does not expand
+  // instructions, so we have to consume a single Spike step over multiple steps
+  // of Ibex. Since Spike will initiate the memory interface checks, we must
+  // complete all the steps of the expanded instruction in Ibex before stepping
+  // Spike. That is why we step Spike on expanded_insn_last and then check that
+  // all modifications match.
+  if (!expanded_insn_valid || expanded_insn_last || sync_trap) {
+    processor->step(1);
+  }
 
   // ISS
   // - If encountered an async trap,
@@ -309,13 +323,166 @@ bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
                                       suppressed_write_reg_data);
   }
 
-  if (!check_retired_instr(write_reg, write_reg_data, pc, suppress_reg_write)) {
-    return false;
+  if (expanded_insn_valid) {
+    if (!check_expanded_instr(write_reg, write_reg_data, pc, suppress_reg_write,
+                              expanded_insn, expanded_insn_last)) {
+      return false;
+    }
+  } else {
+    if (!check_retired_instr(write_reg, write_reg_data, pc,
+                             suppress_reg_write)) {
+      return false;
+    }
   }
 
   // Only increment insn_cnt and return true if there are no errors
   insn_cnt++;
   return true;
+}
+
+bool SpikeCosim::check_expanded_instr(uint32_t write_reg,
+                                      uint32_t write_reg_data, uint32_t dut_pc,
+                                      bool suppress_reg_write,
+                                      uint32_t expanded_insn,
+                                      bool expanded_insn_last) {
+  // Expanded instruction must be set when calling this function
+  assert(expanded_insn != 0);
+
+  // If it's the first instruction of an expanded sequence, set pending state
+  // and save the PC.
+  if (!pending_expanded_insn) {
+    if (expanded_insn_last) {
+      // This is the first and last instruction. This should never happen with
+      // the currently supported expanded instructions
+      std::stringstream err_str;
+      err_str << "Error: PC 0x" << std::hex << dut_pc
+              << ": First and last expanded instruction set simultaneously. "
+                 "This should never happen.";
+      errors.emplace_back(err_str.str());
+      return false;
+    }
+    pending_expanded_insn = expanded_insn;
+    expanded_insn_pc = dut_pc;
+  }
+
+  // Verify that the PC didn't change
+  if (dut_pc != expanded_insn_pc) {
+    std::stringstream err_str;
+    err_str << "Error: PC 0x" << std::hex << dut_pc
+            << ": PC changed during expanded instruction. Expected 0x"
+            << std::hex << expanded_insn_pc;
+    errors.emplace_back(err_str.str());
+    // This is a fatal error, reset state
+    pending_expanded_insn = 0;
+    dut_reg_changes.clear();
+    return false;
+  }
+
+  // Push the DUT's register write to the queue for later unless its write to x0
+  if (write_reg != 0 && !suppress_reg_write) {
+    dut_reg_changes[write_reg] = write_reg_data;
+  }
+
+  if (!expanded_insn_last) {
+    // This is part of an expanded instruction, but not the last part.
+    // We just store the state and return true, as we wait for the final
+    // instruction. The ISS did NOT step yet, so we cannot compare the states
+    // yet.
+    return true;
+  } else {
+    // This is the final instruction of this sequence. Time to check all
+    // buffered writes.
+
+    // Check ISS PC vs our saved PC
+    if ((processor->get_state()->last_inst_pc & 0xffffffff) !=
+        expanded_insn_pc) {
+      std::stringstream err_str;
+      err_str << "PC mismatch, DUT retired expanded instruction at: "
+              << std::hex << expanded_insn_pc
+              << " , but the ISS retired: " << std::hex
+              << (processor->get_state()->last_inst_pc & 0xffffffff);
+      errors.emplace_back(err_str.str());
+      pending_expanded_insn = 0;
+      dut_reg_changes.clear();
+      return false;
+    }
+
+    // Get all ISS changes and a working copy of DUT writes
+    auto &iss_reg_changes = processor->get_state()->log_reg_write;
+    bool all_checks_pass = true;
+
+    // For each ISS change, find a matching DUT write.
+    for (auto iss_reg_change : iss_reg_changes) {
+      // reg_change.first provides register type in bottom 4 bits, then register
+      // index above that
+      // Ignore writes to x0
+      if (iss_reg_change.first == 0)
+        continue;
+
+      // register is GPR
+      if ((iss_reg_change.first & 0xf) == 0) {
+        // Find match by register address first
+        uint32_t iss_write_reg = (iss_reg_change.first >> 4) & 0x1f;
+        auto dut_reg_change = dut_reg_changes.find(iss_write_reg);
+        // Check if found
+        if (dut_reg_change != dut_reg_changes.end()) {
+          // Perform the regular write check
+          // dut_reg_change->first is write_reg, dut_reg_change->second is
+          // write_reg_data
+          if (!check_gpr_write(iss_reg_change, dut_reg_change->first,
+                               dut_reg_change->second)) {
+            // Data mismatch --> continue to capture mutliple mismatches but
+            // eventually fail
+            all_checks_pass = false;
+          }
+          // Consume this write from the map
+          dut_reg_changes.erase(dut_reg_change);
+        } else {
+          // No DUT write found for this ISS register.
+          std::stringstream err_str;
+          uint32_t cosim_write_reg_data = iss_reg_change.second.v[0];
+          err_str << "PC 0x" << std::hex << expanded_insn_pc
+                  << ": ISS wrote GPR x" << iss_write_reg << " (val 0x"
+                  << std::hex << cosim_write_reg_data
+                  << "), but no matching write was found from the DUT's "
+                     "expanded instructions.";
+          errors.emplace_back(err_str.str());
+          all_checks_pass = false;
+        }
+      } else if ((iss_reg_change.first & 0xf) == 4) {
+        // register is CSR
+        on_csr_write(iss_reg_change);
+      } else {
+        // should never see other types
+        assert(false);
+      }
+    }
+
+    // Make sure there are no DUT writes left over
+    if (!dut_reg_changes.empty()) {
+      for (auto &extra_write : dut_reg_changes) {
+        std::stringstream err_str;
+        err_str << "PC 0x" << std::hex << expanded_insn_pc
+                << ": DUT expanded instruction wrote GPR x" << extra_write.first
+                << " with value 0x" << std::hex << extra_write.second
+                << ", but this write was not expected by the ISS.";
+        errors.emplace_back(err_str.str());
+        all_checks_pass = false;
+      }
+    }
+
+    // This was the last instruction of this expanded instruction. Cleanup state
+    // and return
+    pending_expanded_insn = 0;
+    dut_reg_changes.clear();
+
+    // Final check for any errors added during the process
+    if (errors.size() != 0) {
+      all_checks_pass = false;
+    }
+
+    return all_checks_pass;
+  }
 }
 
 bool SpikeCosim::check_retired_instr(uint32_t write_reg,
@@ -333,6 +500,11 @@ bool SpikeCosim::check_retired_instr(uint32_t write_reg,
             << " , but the ISS retired: " << std::hex
             << (processor->get_state()->last_inst_pc & 0xffffffff);
     errors.emplace_back(err_str.str());
+    if (pending_expanded_insn) {
+      err_str << " (while processing expanded instruction at PC 0x" << std::hex
+              << expanded_insn_pc << ")";
+      errors.emplace_back(err_str.str());
+    }
     return false;
   }
 
@@ -780,6 +952,10 @@ void SpikeCosim::set_iside_error(uint32_t addr) {
 const std::vector<std::string> &SpikeCosim::get_errors() { return errors; }
 
 void SpikeCosim::clear_errors() { errors.clear(); }
+
+const std::vector<std::string> &SpikeCosim::get_dbg() { return dbg; }
+
+void SpikeCosim::clear_dbg() { dbg.clear(); }
 
 void SpikeCosim::fixup_csr(int csr_num, uint32_t csr_val) {
   switch (csr_num) {

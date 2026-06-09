@@ -1,4 +1,4 @@
-// Copyright lowRISC contributors.
+// Copyright lowRISC contributors (OpenTitan project).
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -8,7 +8,7 @@
 {
   upstream:
   {
-    url: https://github.com/chipsalliance/riscv-dv
-    rev: 71666ebacd69266b1abb7cdbad5e1897ce5884e6
+    url: https://github.com/SamuelRiedel/riscv-dv
+    rev: 71ceff7bb7d332fcf8037752ccdec19b33c2d210
   }
 }

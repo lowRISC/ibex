@@ -88,7 +88,7 @@ def get_env_var(var, debug_cmd=None):
     return val
 
 
-def run_cmd(cmd, timeout_s=999, exit_on_error=1, check_return_code=True,
+def run_cmd(cmd, timeout_s=3600, exit_on_error=1, check_return_code=True,
             debug_cmd=None):
     """Run a command and return output
 
@@ -103,6 +103,12 @@ def run_cmd(cmd, timeout_s=999, exit_on_error=1, check_return_code=True,
         debug_cmd.write(cmd)
         debug_cmd.write("\n\n")
         return
+    def killgroup(ps):
+        try:
+            os.killpg(os.getpgid(ps.pid), signal.SIGTERM)
+        except AttributeError: #killpg not available on windows
+            ps.kill()
+        sys.exit(130)
     try:
         ps = subprocess.Popen("exec " + cmd,
                               shell=True,
@@ -112,21 +118,17 @@ def run_cmd(cmd, timeout_s=999, exit_on_error=1, check_return_code=True,
                               env=os.environ,
                               stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT)
+        output = ps.communicate(timeout = timeout_s)[0]
     except subprocess.CalledProcessError:
         logging.error(ps.communicate()[0])
         sys.exit(RET_FAIL)
     except KeyboardInterrupt:
         logging.info("\nExited Ctrl-C from user request.")
-        sys.exit(130)
-    try:
-        output = ps.communicate(timeout=timeout_s)[0]
+        killgroup(ps)
     except subprocess.TimeoutExpired:
         logging.error("Timeout[{}s]: {}".format(timeout_s, cmd))
         output = ""
-        try:
-            os.killpg(os.getpgid(ps.pid), signal.SIGTERM)
-        except AttributeError: #killpg not available on windows
-            ps.kill()
+        killgroup(ps)
     rc = ps.returncode
     if rc and check_return_code and rc > 0:
         logging.info(output)

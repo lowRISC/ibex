@@ -45,6 +45,8 @@ class riscv_instr extends uvm_object;
   rand riscv_reg_t           rs1;
   rand riscv_reg_t           rd;
   rand bit [31:0]            imm;
+  rand bit [3:0]             rlist;
+  rand int                   stack_adj;
 
   // Helper fields
   bit [31:0]                 imm_mask = 32'hFFFF_FFFF;
@@ -66,6 +68,8 @@ class riscv_instr extends uvm_object;
   bit                        has_rs2 = 1'b1;
   bit                        has_rd = 1'b1;
   bit                        has_imm = 1'b1;
+  bit                        has_rlist = 1'b0;
+  bit                        has_stack_adj = 1'b0;
 
   constraint imm_c {
     if (instr_name inside {SLLIW, SRLIW, SRAIW}) {
@@ -111,7 +115,8 @@ class riscv_instr extends uvm_object;
       if (cfg.no_fence && (instr_name inside {FENCE, FENCE_I, SFENCE_VMA})) continue;
       if ((instr_inst.group inside {supported_isa}) &&
           !(cfg.disable_compressed_instr &&
-            (instr_inst.group inside {RV32C, RV64C, RV32DC, RV32FC, RV128C})) &&
+            (instr_inst.group inside {RV32C, RV64C, RV32DC, RV32FC, RV128C,
+                                      RV32ZCB, RV64ZCB, RV32ZCMP, RV64ZCMP})) &&
           !(!cfg.enable_floating_point &&
             (instr_inst.group inside {RV32F, RV64F, RV32D, RV64D})) &&
           !(!cfg.enable_vector_extension &&
@@ -296,6 +301,7 @@ class riscv_instr extends uvm_object;
     rs2.rand_mode(has_rs2);
     rd.rand_mode(has_rd);
     imm.rand_mode(has_imm);
+    stack_adj.rand_mode(has_stack_adj);
     if (category != CSR) begin
       csr.rand_mode(0);
     end
@@ -586,6 +592,40 @@ class riscv_instr extends uvm_object;
     return imm_str;
   endfunction
 
+  virtual function string get_rlist();
+    // rlist 0-3 are reserved for future extensions
+    if (rlist < 4 || rlist > 15) begin
+      `uvm_fatal(`gfn, $sformatf("Unsupported rlist: %0d", rlist))
+    end
+    // Handle the specific cases and use a default for the general pattern.
+    case(rlist)
+      4:  return "{ra}";
+      5:  return "{ra, s0}";
+      15: return "{ra, s0-s11}"; // The special case for s10/s11
+      // The default case handles the general pattern for rlist 6 through 14
+      default: return $sformatf("{ra, s0-s%0d}", rlist - 5);
+    endcase
+  endfunction
+
+  virtual function riscv_reglist_t get_rlist_as_list();
+    case(rlist)
+      4:  return '{RA};
+      5:  return '{RA, S0};
+      6:  return '{RA, S0, S1};
+      7:  return '{RA, S0, S1, S2};
+      8:  return '{RA, S0, S1, S2, S3};
+      9:  return '{RA, S0, S1, S2, S3, S4};
+      10: return '{RA, S0, S1, S2, S3, S4, S5};
+      11: return '{RA, S0, S1, S2, S3, S4, S5, S6};
+      12: return '{RA, S0, S1, S2, S3, S4, S5, S6, S7};
+      13: return '{RA, S0, S1, S2, S3, S4, S5, S6, S7, S8};
+      14: return '{RA, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9};
+      15: return '{RA, S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11};
+      default: `uvm_fatal(`gfn, $sformatf("Unsupported rlist: %0d", rlist))
+    endcase
+    return '{};
+  endfunction
+
   virtual function void clear_unused_label();
     if(has_label && !is_branch_target && is_local_numeric_label) begin
       has_label = 1'b0;
@@ -618,6 +658,10 @@ class riscv_instr extends uvm_object;
 
   virtual function void update_imm_str();
     imm_str = $sformatf("%0d", $signed(imm));
+  endfunction
+
+  virtual function int get_imm_val();
+    return $signed(imm);
   endfunction
 
   `include "isa/riscv_instr_cov.svh"

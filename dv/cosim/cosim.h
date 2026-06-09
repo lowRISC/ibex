@@ -74,9 +74,15 @@ class Cosim {
   // In this case the instruction doesn't retire so no register write occurs (so
   // `write_reg` must be 0).
   //
+  // `expanded_insn_valid` is the current instruction an expanded one
+  // `expanded_insn` is the 32-bit instruction that is being expanded
+  // `expanded_insn_last` whether this is the last op of an expanded instruction
+  //
   // Returns false if there are any errors; use `get_errors` to obtain details
   virtual bool step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
-                    bool sync_trap, bool suppress_reg_write) = 0;
+                    bool sync_trap, bool suppress_reg_write,
+                    bool expanded_insn_valid, uint32_t expanded_insn,
+                    bool expanded_insn_last) = 0;
 
   // When more than one of `set_mip`, `set_nmi` or `set_debug_req` is called
   // before `step` which one takes effect is chosen by the co-simulator. Which
@@ -157,6 +163,12 @@ class Cosim {
 
   // Clear internal vector of error descriptions
   virtual void clear_errors() = 0;
+
+  // Get a vector of strings describing dbg that have occurred during `step`
+  virtual const std::vector<std::string> &get_dbg() = 0;
+
+  // Clear internal vector of dbg descriptions
+  virtual void clear_dbg() = 0;
 
   // Returns a count of instructions executed by co-simulator and DUT without
   // failures.

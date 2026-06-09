@@ -38,6 +38,7 @@ class SpikeCosim : public simif_t, public Cosim {
   bus_t bus;
   std::vector<std::unique_ptr<mem_t>> mems;
   std::vector<std::string> errors;
+  std::vector<std::string> dbg;
   bool nmi_mode;
 
   typedef struct {
@@ -99,6 +100,17 @@ class SpikeCosim : public simif_t, public Cosim {
 
   unsigned int insn_cnt;
 
+  // Handle expanded instructions
+  // Set to one once we start processing an expanded instruction. Used to track
+  // the start of a new expanded instruction.
+  uint32_t pending_expanded_insn;
+  // Keep track of the PC of an expanded instruction to ensure it doesn't change
+  // without completing the expansion and getting a `expanded_insn_last` signal.
+  uint32_t expanded_insn_pc;
+  // Keep track of register writes during an expanded instruction to compare
+  // with the ISS's register changes in the `expanded_insn_last` step.
+  std::map<uint32_t, uint32_t> dut_reg_changes;
+
  public:
   SpikeCosim(const std::string &isa_string, uint32_t start_pc,
              uint32_t start_mtvec, const std::string &trace_log_path,
@@ -120,10 +132,14 @@ class SpikeCosim : public simif_t, public Cosim {
                           const uint8_t *data_in) override;
   bool backdoor_read_mem(uint32_t addr, size_t len, uint8_t *data_out) override;
   bool step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
-            bool sync_trap, bool suppress_reg_write) override;
+            bool sync_trap, bool suppress_reg_write, bool expanded_insn_valid,
+            uint32_t expanded_insn, bool expanded_insn_last) override;
 
   bool check_retired_instr(uint32_t write_reg, uint32_t write_reg_data,
                            uint32_t dut_pc, bool suppress_reg_write);
+  bool check_expanded_instr(uint32_t write_reg, uint32_t write_reg_data,
+                            uint32_t dut_pc, bool suppress_reg_write,
+                            uint32_t expanded_insn, bool expanded_insn_last);
   bool check_sync_trap(uint32_t write_reg, uint32_t pc,
                        uint32_t initial_spike_pc);
   void set_mip(uint32_t pre_mip, uint32_t post_mip) override;
@@ -142,6 +158,8 @@ class SpikeCosim : public simif_t, public Cosim {
   void set_iside_error(uint32_t addr) override;
   const std::vector<std::string> &get_errors() override;
   void clear_errors() override;
+  const std::vector<std::string> &get_dbg() override;
+  void clear_dbg() override;
   unsigned int get_insn_cnt() override;
 };
 
