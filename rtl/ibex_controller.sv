@@ -607,9 +607,16 @@ module ibex_controller #(
           end
         end
 
-        // If entering debug mode or handling an IRQ the core needs to wait until any instruction in
-        // ID or WB has finished executing. Stall IF during that time.
-        if ((enter_debug_mode || handle_irq) && (stall || id_wb_pending)) begin
+        // cpu3/D9 T-008: hoist halt_if out from under special_req gating to
+        // shorten the LTP. The decode-time halt_if signal is consumed only by
+        // id_in_ready_o (= ~stall & ~halt_if & ~retain_id). When special_req
+        // is high retain_id is already 1, which forces id_in_ready_o low, so
+        // halt_if's exact value while special_req is high is observationally
+        // irrelevant. Decoupling halt_if from special_req here removes the
+        // special_req -> halt_if leg of the LTP, which arrives late because
+        // special_req depends on csr_pipe_flush -> csr_op_en -> instr_id_done.
+        // Combinational restructuring only; no new register, no new stage.
+        if (enter_debug_mode || handle_irq) begin
           halt_if = 1'b1;
         end
 
@@ -617,18 +624,12 @@ module ibex_controller #(
           if (enter_debug_mode) begin
             // enter debug mode
             ctrl_fsm_ns = DBG_TAKEN_IF;
-            // Halt IF only for now, ID will be flushed in DBG_TAKEN_IF as the
-            // ID state is needed for correct debug mode entry
-            halt_if     = 1'b1;
+            // halt_if is already asserted above for the (enter_debug_mode ||
+            // handle_irq) case.
           end else if (handle_irq) begin
             // handle interrupt (not in debug mode)
             ctrl_fsm_ns = IRQ_TAKEN;
-            // We are handling an interrupt (not in debug mode). Set halt_if to
-            // tell IF not to give us any more instructions before it redirects
-            // to the handler, but don't set flush_id: we must allow this
-            // instruction to complete (since it might have outstanding loads
-            // or stores).
-            halt_if     = 1'b1;
+            // halt_if already asserted above.
           end
         end
 
