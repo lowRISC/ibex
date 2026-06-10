@@ -91,13 +91,27 @@ def get_config(cfg_name: str) -> Config:
     return parse_config(cfg_name, yaml_path)
 
 
+def _rv32zc_isa_parts(rv32zc: str) -> list[str]:
+    mapping = {
+        'ibex_pkg::RV32Zca': ['zicsr', 'zifencei', 'zca'],
+        'ibex_pkg::RV32ZcaZcb': ['zicsr', 'zifencei', 'zca', 'zcb'],
+        'ibex_pkg::RV32ZcaZcmp': ['zicsr', 'zifencei', 'zca', 'zcmp'],
+        'ibex_pkg::RV32ZcaZcbZcmp': ['zicsr', 'zifencei', 'zca', 'zcb', 'zcmp'],
+    }
+    part = mapping.get(rv32zc)
+    if part is None:
+        raise ValueError(f'Unknown RV32ZC value ({rv32zc}) in config YAML')
+    return part
+
+
 def get_isas_for_config(cfg: Config) -> Tuple[str, str]:
     """Get ISA and ISS_ISA keys for the given Ibex config."""
     # NOTE: This logic should match the code in the get_isa_string() function
     # in core_ibex/tests/core_ibex_base_test.sv: keep them in sync!
     has_multiplier = cfg.rv32m != 'ibex_pkg::RV32MNone'
-    base_isa = 'rv32{}{}c'.format('e' if cfg.rv32e else 'i',
-                                  'm' if has_multiplier else '')
+
+    base_isa = 'rv32{}{}'.format('e' if cfg.rv32e else 'i',
+                                 'm' if has_multiplier else '')
 
     bitmanip_mapping = {
         'ibex_pkg::RV32BNone': [],
@@ -113,9 +127,12 @@ def get_isas_for_config(cfg: Config) -> Tuple[str, str]:
         raise ValueError(f'Unknown RV32B value ({cfg.rv32b}) in config YAML')
 
     has_bitmanip = cfg.rv32b != 'ibex_pkg::RV32BNone'
-    toolchain_isa = base_isa + ('b' if has_bitmanip else '')
+    # Keep the toolchain ISA using the legacy C extension spelling, but build
+    # the ISS ISA from the explicit RV32ZC subset below.
+    toolchain_isa = base_isa + 'c' + ('b' if has_bitmanip else '')
+    iss_isa = '_'.join([base_isa] + _rv32zc_isa_parts(cfg.rv32zc) + bitmanip_isa)
 
-    return (toolchain_isa, '_'.join([base_isa] + bitmanip_isa))
+    return (toolchain_isa, iss_isa)
 
 
 _TestEntry = Dict[str, object]
