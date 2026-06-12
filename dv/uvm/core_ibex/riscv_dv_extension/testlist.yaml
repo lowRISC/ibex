@@ -1157,3 +1157,10 @@
   rtl_test: core_ibex_base_test
   rtl_params:
     RV32B: ["ibex_pkg::RV32BFull", "ibex_pkg::RV32BOTEarlGrey", "ibex_pkg::RV32BBalanced"]
+
+- test: snippy_func_test
+  gen_test: riscv_instr_base_test
+  iterations: 1
+  gen_opts: >
+    +num_of_sub_program=0
+  rtl_test: core_ibex_base_test

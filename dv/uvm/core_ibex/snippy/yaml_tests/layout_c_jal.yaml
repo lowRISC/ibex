@@ -1,0 +1,24 @@
+include:
+  - sections_branches.yaml
+
+options:
+    mtriple: "riscv32"
+    mcpu: generic-rv32
+    march: "rv32imc_zba_zbb_zbc_zbs_zicsr"
+    num-instrs: 100
+    preserve-ra: true
+    function-number: 4
+    function-layers: 4
+    enable-static-stack: false
+
+code-layout:
+  ranges:
+    - start: 0x80040000
+      size: 0x800
+      stride: 0x50
+      first-offset: 0
+      last-offset: 0
+
+histogram:
+  - [C_JAL, 10.0]
+  - [C_ADD, 1.0]

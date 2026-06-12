@@ -1,0 +1,28 @@
+include:
+  - sections.yaml
+
+options:
+    mtriple: "riscv32"
+    mcpu: generic-rv32
+    march: "rv32imc_zba_zbb_zbc_zbs_zicsr"
+    preserve-ra: true
+    num-instrs: 1000
+    init-memory: full
+    redefine-ra: RA
+    function-number: 3
+    function-layers: 3
+    enable-static-stack: false
+
+code-layout:
+  ranges:
+    - start: 0x80040000
+      size: 0x40000
+      stride: 0x1
+      first-offset: 0
+      last-offset: 0
+
+
+histogram:
+  - [C_JR, 5.0]
+  - [C_JALR, 5.0]
+  - [C_J, 5.0]

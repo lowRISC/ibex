@@ -1,0 +1,23 @@
+include:
+  - sections.yaml
+
+options:
+    mtriple: "riscv32"
+    mcpu: generic-rv32
+    march: "rv32imc_zba_zbb_zbc_zbs_zicsr"
+    honor-target-abi: on
+    num-instrs: 1
+    reserved-regs-list: [X4]
+
+call-graph:
+  entry-point: SnippyFunction
+  function-list:
+    - name: SnippyFunction
+      callees:
+        - illegal_opcodes
+    - name: illegal_opcodes
+      external: true
+
+histogram:
+    - [JAL, 100.0]
+    - [ADD, 1.0]

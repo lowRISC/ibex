@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 3.20)
+
+project(IbexSnippyFlow LANGUAGES NONE)
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/snippy_cmake/Helpers.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/snippy_cmake/IbexMake.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/snippy_cmake/Options.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/snippy_cmake/Paths.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/snippy_cmake/Inputs.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/snippy_cmake/RiscvDv.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/snippy_cmake/RtlCompile.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/snippy_cmake/Cosimulation.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/snippy_cmake/SnippyCommands.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/snippy_cmake/Snippy.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/snippy_cmake/Coverage.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/snippy_cmake/FlowTargets.cmake)

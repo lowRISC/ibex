@@ -1,0 +1,25 @@
+include:
+  - sections.yaml
+
+options:
+    mtriple: "riscv32"
+    mcpu: generic-rv32
+    march: "rv32imc_zba_zbb_zbc_zbs_zicsr"
+    preserve-ra: true
+    num-instrs: 5000
+
+operands-reinitialization:
+    - type: valuegram
+      weight: 1.0
+      opcodes:
+        - "DIV":
+            - type: operands
+              values: [0x80000000, -1]
+            - [uniform, 1.0]
+        - "REM":
+            - type: operands
+              values: [0x80000000, -1]
+            - [uniform, 1.0]
+histogram:
+    - [DIV, 1.0]
+    - [REM, 1.0]
