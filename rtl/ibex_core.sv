@@ -46,6 +46,7 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   parameter bit                     DummyInstructions           = 1'b0,
   parameter bit                     RegFileECC                  = 1'b0,
   parameter int unsigned            RegFileDataWidth            = 32,
+  parameter int unsigned            RegFileCapEccWidth          = REGCAP_W,
   parameter bit                     MemECC                      = 1'b0,
   parameter int unsigned            MemDataWidth                = MemECC ? 32 + 7 : 32,
   parameter int unsigned            DmBaseAddr                  = 32'h1A110000,
@@ -93,15 +94,12 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   output logic [4:0]                   rf_raddr_b_o,
   output logic [4:0]                   rf_waddr_wb_o,
   output logic                         rf_we_wb_o,
-  output logic [RegFileDataWidth-1:0]  rf_wdata_wb_ecc_o,
-  output cap_t                         rf_wcap_wb_o,
-  input  logic [RegFileDataWidth-1:0]  rf_rdata_a_ecc_i,
-  input  logic [RegFileDataWidth-1:0]  rf_rdata_b_ecc_i,
-  input  cap_t                         rf_rcap_a_i,
-  input  cap_t                         rf_rcap_b_i,
-  output logic [6:0]                   rf_wcap_ecc_wb_o,
-  input  logic [6:0]                   rf_rcap_a_ecc_i,
-  input  logic [6:0]                   rf_rcap_b_ecc_i,
+  output logic [RegFileDataWidth-1:0]   rf_wdata_wb_ecc_o,
+  input  logic [RegFileDataWidth-1:0]   rf_rdata_a_ecc_i,
+  input  logic [RegFileDataWidth-1:0]   rf_rdata_b_ecc_i,
+  output logic [RegFileCapEccWidth-1:0] rf_wcap_ecc_wb_o,
+  input  logic [RegFileCapEccWidth-1:0] rf_rcap_a_ecc_i,
+  input  logic [RegFileCapEccWidth-1:0] rf_rcap_b_ecc_i,
 
   // RAMs interface
   output logic [IC_NUM_WAYS-1:0]       ic_tag_req_o,
@@ -280,6 +278,12 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   logic [31:0] rf_wdata_wb;
 
   cap_t        rf_wcap_wb;
+
+  // Cap data extracted from unified ECC port (cap always in lower REGCAP_W bits)
+  cap_t        rf_rcap_a, rf_rcap_b;
+
+  assign rf_rcap_a = cheriot_vec_to_regcap(rf_rcap_a_ecc_i[REGCAP_W-1:0]);
+  assign rf_rcap_b = cheriot_vec_to_regcap(rf_rcap_b_ecc_i[REGCAP_W-1:0]);
 
   // Writeback register write data that can be used on the forwarding path (doesn't factor in memory
   // read data as this is too late for the forwarding path)
@@ -917,10 +921,10 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       .fwd_wcap_i              (rf_wcap_fwd_wb),
       .rf_raddr_a_i            (rf_raddr_a),
       .rf_rdata_a_i            (rf_rdata_a),
-      .rf_rcap_a_i             (rf_rcap_a_i),
+      .rf_rcap_a_i             (rf_rcap_a),
       .rf_raddr_b_i            (rf_raddr_b),
       .rf_rdata_b_i            (rf_rdata_b),
-      .rf_rcap_b_i             (rf_rcap_b_i),
+      .rf_rcap_b_i             (rf_rcap_b),
       .rf_waddr_i              (rf_waddr_id),
       .pcc_cap_i               (pcc_cap_r),
       .pcc_cap_o               (pcc_cap_w),
@@ -1039,14 +1043,15 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     assign branch_target_ex_cheriot = 32'h0;
 
     logic unused_cheriot_core_sigs;
-    assign unused_cheriot_core_sigs = (^rf_rcap_a_i) | (^rf_rcap_b_i)  | instr_is_rv32lsu_id  |
-                                      cheriot_exec_id | (^cheriot_imm12) | (^cheriot_imm20) |
+    assign unused_cheriot_core_sigs = (^rf_rcap_a_ecc_i) | (^rf_rcap_b_ecc_i) | cheriot_exec_id |
+                                      instr_is_rv32lsu_id | (^cheriot_imm12) | (^cheriot_imm20) |
                                       (^cheriot_imm21) | (^cheriot_cs2_dec)  | (^cheriot_operator) |
                                       (^cheriot_csr_rdata) | (^cheriot_csr_rcap) |
                                       csr_dbg_tclr_fault | (^csr_mshwm) | (^csr_mshwmb) |
                                       (^rf_wcap_fwd_wb) | (^cheriot_cap_field_sel) |
                                       (^cheriot_adder_a_sel) | (^cheriot_adder_b_sel) |
-                                      (^cheriot_setaddr_sel) | (^cheriot_setbounds_sel);
+                                      (^cheriot_setaddr_sel) | (^cheriot_setbounds_sel) |
+                                      (^rf_rcap_a) | (^rf_rcap_b);
   end
 
   /////////////////////
@@ -1205,8 +1210,6 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   assign rf_we_wb_o       = rf_we_wb;
   assign rf_raddr_b_o     = rf_raddr_b;
 
-  assign rf_wcap_wb_o = rf_wcap_wb;
-
   if (RegFileECC) begin : gen_regfile_ecc
 
     // SEC_CM: DATA_REG_SW.INTEGRITY
@@ -1243,22 +1246,29 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       logic [56:0] unused_wcap_ecc_tmp;
 
       // Capability ECC checkbit generation
+      // 35 cap bits are zero-padded to 57 to use the available prim_secded_inv_64_57 primitive;
+      // only the 7 check bits [63:57] are stored in the shadow RF.
       prim_secded_inv_64_57_enc regfile_cap_ecc_enc (
         .data_i({22'b0, cheriot_regcap_to_vec(rf_wcap_wb)}),
         .data_o(wcap_ecc_tmp)
       );
-      assign rf_wcap_ecc_wb_o       = wcap_ecc_tmp[63:57];
-      assign unused_wcap_ecc_tmp    = wcap_ecc_tmp[56:0];  // data bits not needed (ECC-only output)
+      // Unified output: {7 ECC bits [41:35], 35 cap data bits [34:0]}
+      assign rf_wcap_ecc_wb_o    = {wcap_ecc_tmp[63:57], cheriot_regcap_to_vec(rf_wcap_wb)};
+      assign unused_wcap_ecc_tmp = wcap_ecc_tmp[56:0];
 
-      // Capability ECC checking on register file rcap
+      // Capability ECC checking on register file rcap: reconstruct 64-bit codeword from
+      // the 7 ECC bits (upper) and 35 cap bits (lower) of the unified input, inserting the
+      // 22-bit zero-pad in between to match the encoding layout.
       prim_secded_inv_64_57_dec regfile_cap_ecc_dec_a (
-        .data_i    ({rf_rcap_a_ecc_i, 22'b0, cheriot_regcap_to_vec(rf_rcap_a_i)}),
+        .data_i    ({rf_rcap_a_ecc_i[RegFileCapEccWidth-1:REGCAP_W], 22'b0,
+                     rf_rcap_a_ecc_i[REGCAP_W-1:0]}),
         .data_o    (),
         .syndrome_o(),
         .err_o     (rf_cap_ecc_err_a)
       );
       prim_secded_inv_64_57_dec regfile_cap_ecc_dec_b (
-        .data_i    ({rf_rcap_b_ecc_i, 22'b0, cheriot_regcap_to_vec(rf_rcap_b_i)}),
+        .data_i    ({rf_rcap_b_ecc_i[RegFileCapEccWidth-1:REGCAP_W], 22'b0,
+                     rf_rcap_b_ecc_i[REGCAP_W-1:0]}),
         .data_o    (),
         .syndrome_o(),
         .err_o     (rf_cap_ecc_err_b)
@@ -1280,7 +1290,8 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     end else begin : gen_no_cheriot_cap_ecc
       logic unused_rf_cap_ecc_i;
       assign unused_rf_cap_ecc_i = ^rf_rcap_a_ecc_i ^ ^rf_rcap_b_ecc_i;
-      assign rf_wcap_ecc_wb_o = 7'b0;
+      // ECC bits are invalid (no CHERIoT cap ECC), but cap data is preserved in lower 35 bits
+      assign rf_wcap_ecc_wb_o = {7'b0, cheriot_regcap_to_vec(rf_wcap_wb)};
 
       // Calculate errors - qualify with WB forwarding to avoid xprop into the alert signal
       assign rf_ecc_err_a_id = |rf_ecc_err_a & rf_ren_a & ~(rf_rd_a_wb_match & rf_write_wb);
@@ -1293,15 +1304,14 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   end else begin : gen_no_regfile_ecc
     logic unused_rf_ren_a, unused_rf_ren_b;
     logic unused_rf_rd_a_wb_match, unused_rf_rd_b_wb_match;
-    logic unused_rf_cap_ecc_i;
 
     assign unused_rf_ren_a         = rf_ren_a;
     assign unused_rf_ren_b         = rf_ren_b;
     assign unused_rf_rd_a_wb_match = rf_rd_a_wb_match;
     assign unused_rf_rd_b_wb_match = rf_rd_b_wb_match;
-    assign unused_rf_cap_ecc_i     = ^rf_rcap_a_ecc_i ^ ^rf_rcap_b_ecc_i;
     assign rf_wdata_wb_ecc_o       = rf_wdata_wb;
-    assign rf_wcap_ecc_wb_o        = 7'b0;
+    // RegFileCapEccWidth = REGCAP_W when ECC=0: plain cap data, no ECC
+    assign rf_wcap_ecc_wb_o        = cheriot_regcap_to_vec(rf_wcap_wb);
     assign rf_rdata_a              = rf_rdata_a_ecc_i;
     assign rf_rdata_b              = rf_rdata_b_ecc_i;
     assign rf_ecc_err_comb         = 1'b0;

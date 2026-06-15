@@ -216,6 +216,7 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   localparam bit          RegFileLockstepECC    = Lockstep;
   localparam int unsigned RegFileDataWidth      = 32;
   localparam int unsigned RegFileDataEccWidth   = 32 + 7;
+  localparam int unsigned RegFileCapEccWidth    = REGCAP_W + 7;
   // Icache parameters
   localparam int unsigned BusSizeECC        = ICacheECC ? (BUS_SIZE + IC_DATA_ECC_SIZE) :
                                                            BUS_SIZE;
@@ -246,9 +247,7 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   logic [RegFileDataWidth-1:0] rf_wdata_wb;
   logic [RegFileDataWidth-1:0] rf_rdata_a;
   logic [RegFileDataWidth-1:0] rf_rdata_b;
-  cap_t                        rf_rcap_a, rf_rcap_b;
-  cap_t                        rf_wcap;
-  logic [6:0]                  unused_rf_wcap_ecc_wb;
+  logic [REGCAP_W-1:0]         rf_rcap_a, rf_rcap_b, rf_wcap;
 
   // Combined data and integrity for data and instruction busses
   logic [MemDataWidth-1:0]     data_wdata_core;
@@ -398,6 +397,7 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     .DummyInstructions    (DummyInstructions),
     .RegFileECC           (RegFileECC),
     .RegFileDataWidth     (RegFileDataWidth),
+    .RegFileCapEccWidth   (REGCAP_W),
     .MemECC               (MemECC),
     .MemDataWidth         (MemDataWidth),
     .DmBaseAddr           (DmBaseAddr),
@@ -443,12 +443,9 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     .rf_wdata_wb_ecc_o(rf_wdata_wb),
     .rf_rdata_a_ecc_i (rf_rdata_a),
     .rf_rdata_b_ecc_i (rf_rdata_b),
-    .rf_wcap_wb_o     (rf_wcap),
-    .rf_rcap_a_i      (rf_rcap_a),
-    .rf_rcap_b_i      (rf_rcap_b),
-    .rf_wcap_ecc_wb_o (unused_rf_wcap_ecc_wb),
-    .rf_rcap_a_ecc_i  (7'b0),
-    .rf_rcap_b_ecc_i  (7'b0),
+    .rf_wcap_ecc_wb_o (rf_wcap),
+    .rf_rcap_a_ecc_i  (rf_rcap_a),
+    .rf_rcap_b_ecc_i  (rf_rcap_b),
 
     .ic_tag_req_o      (ic_tag_req),
     .ic_tag_write_o    (ic_tag_write),
@@ -532,11 +529,6 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   /////////////////////////////////
   // Register file Instantiation //
   /////////////////////////////////
-  logic [REGCAP_W-1:0] rf_rcap_a_rf, rf_rcap_b_rf, rf_wcap_rf;
-  assign rf_wcap_rf = cheriot_regcap_to_vec(rf_wcap);
-  assign rf_rcap_a  = cheriot_vec_to_regcap(rf_rcap_a_rf);
-  assign rf_rcap_b  = cheriot_vec_to_regcap(rf_rcap_b_rf);
-
   if (RegFile == RegFileFF) begin : gen_regfile_ff
 
     ibex_register_file_ff #(
@@ -555,16 +547,15 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
 
       .raddr_a_i(rf_raddr_a),
       .rdata_a_o(rf_rdata_a),
-      .rcap_a_o (rf_rcap_a_rf),
+      .rcap_a_o (rf_rcap_a),
       .raddr_b_i(rf_raddr_b),
       .rdata_b_o(rf_rdata_b),
-      .rcap_b_o (rf_rcap_b_rf),
+      .rcap_b_o (rf_rcap_b),
       .waddr_a_i(rf_waddr_wb),
       .wdata_a_i(rf_wdata_wb),
-      .wcap_a_i (rf_wcap_rf),
+      .wcap_a_i (rf_wcap),
       .we_a_i   (rf_we_wb)
     );
-
 
   end else if (RegFile == RegFileFPGA) begin : gen_regfile_fpga
     ibex_register_file_fpga #(
@@ -583,13 +574,13 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
 
       .raddr_a_i(rf_raddr_a),
       .rdata_a_o(rf_rdata_a),
-      .rcap_a_o (rf_rcap_a_rf),
+      .rcap_a_o (rf_rcap_a),
       .raddr_b_i(rf_raddr_b),
       .rdata_b_o(rf_rdata_b),
-      .rcap_b_o (rf_rcap_b_rf),
+      .rcap_b_o (rf_rcap_b),
       .waddr_a_i(rf_waddr_wb),
       .wdata_a_i(rf_wdata_wb),
-      .wcap_a_i (rf_wcap_rf),
+      .wcap_a_i (rf_wcap),
       .we_a_i   (rf_we_wb)
     );
 
@@ -610,13 +601,13 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
 
       .raddr_a_i(rf_raddr_a),
       .rdata_a_o(rf_rdata_a),
-      .rcap_a_o (rf_rcap_a_rf),
+      .rcap_a_o (rf_rcap_a),
       .raddr_b_i(rf_raddr_b),
       .rdata_b_o(rf_rdata_b),
-      .rcap_b_o (rf_rcap_b_rf),
+      .rcap_b_o (rf_rcap_b),
       .waddr_a_i(rf_waddr_wb),
       .wdata_a_i(rf_wdata_wb),
-      .wcap_a_i (rf_wcap_rf),
+      .wcap_a_i (rf_wcap),
       .we_a_i   (rf_we_wb)
     );
 
@@ -883,8 +874,6 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     // This is achieved by manually buffering each bit using prim_buf.
     // Our Xilinx and DC synthesis flows make sure that these buffers cannot be optimized away
     // using keep attributes (Vivado) and size_only constraints (DC).
-    logic [REGCAP_W-1:0] rf_wcap_vec, rf_rcap_a_vec, rf_rcap_b_vec;
-
     localparam int unsigned NumBufferBits = $bits({
       hart_id_i,
       boot_addr_i,
@@ -930,9 +919,9 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       mcounteren_writable_i,
       core_busy_d,
       cheriot_enable_i,
-      rf_wcap_vec,
-      rf_rcap_a_vec,
-      rf_rcap_b_vec
+      rf_wcap,
+      rf_rcap_a,
+      rf_rcap_b
     });
 
     logic [NumBufferBits-1:0] buf_in, buf_out;
@@ -1039,9 +1028,9 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       mcounteren_writable_i,
       core_busy_d,
       cheriot_enable_i,
-      rf_wcap_vec,
-      rf_rcap_a_vec,
-      rf_rcap_b_vec
+      rf_wcap,
+      rf_rcap_a,
+      rf_rcap_b
     };
 
     assign {
@@ -1094,9 +1083,6 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       rf_rcap_b_vec_local
     } = buf_out;
 
-    assign rf_wcap_vec     = cheriot_regcap_to_vec(rf_wcap);
-    assign rf_rcap_a_vec   = cheriot_regcap_to_vec(rf_rcap_a);
-    assign rf_rcap_b_vec   = cheriot_regcap_to_vec(rf_rcap_b);
     assign rf_wcap_local   = cheriot_vec_to_regcap(rf_wcap_vec_local);
     assign rf_rcap_a_local = cheriot_vec_to_regcap(rf_rcap_a_vec_local);
     assign rf_rcap_b_local = cheriot_vec_to_regcap(rf_rcap_b_vec_local);
@@ -1156,6 +1142,7 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       .RegFileECC           (RegFileLockstepECC),
       .RegFileDataWidth     (RegFileDataWidth),
       .RegFileDataEccWidth  (RegFileDataEccWidth),
+      .RegFileCapEccWidth   (RegFileCapEccWidth),
       .RegFile              (RegFile),
       .MemECC               (MemECC),
       .DmBaseAddr           (DmBaseAddr),

@@ -42,6 +42,7 @@ module ibex_lockstep import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   parameter bit                     RegFileECC                  = 1'b0,
   parameter int unsigned            RegFileDataWidth            = 32,
   parameter int unsigned            RegFileDataEccWidth         = 39,
+  parameter int unsigned            RegFileCapEccWidth          = REGCAP_W + 7,
   parameter regfile_e               RegFile                     = RegFileFF,
   parameter bit                     MemECC                      = 1'b0,
   parameter int unsigned            MemDataWidth                = MemECC ? 32 + 7 : 32,
@@ -439,7 +440,7 @@ module ibex_lockstep import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   logic shadow_alert_minor, shadow_alert_major_internal, shadow_alert_major_bus;
   logic [RegFileDataEccWidth - RegFileDataWidth - 1:0] shadow_rf_rdata_a_intg;
   logic [RegFileDataEccWidth - RegFileDataWidth - 1:0] shadow_rf_rdata_b_intg;
-  logic [6:0] shadow_rf_wcap_ecc_wb;
+  logic [RegFileCapEccWidth-1:0] shadow_rf_wcap_ecc_wb;
   logic [6:0] shadow_rf_rcap_a_ecc;
   logic [6:0] shadow_rf_rcap_b_ecc;
 
@@ -474,6 +475,7 @@ module ibex_lockstep import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     .DummyInstructions    ( DummyInstructions    ),
     .RegFileECC           ( RegFileECC           ),
     .RegFileDataWidth     ( RegFileDataEccWidth  ),
+    .RegFileCapEccWidth   ( RegFileCapEccWidth   ),
     .MemECC               ( MemECC               ),
     .MemDataWidth         ( MemDataWidth         ),
     .DmBaseAddr           ( DmBaseAddr           ),
@@ -521,12 +523,11 @@ module ibex_lockstep import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     .rf_rdata_a_ecc_i    ({shadow_rf_rdata_a_intg, shadow_inputs_q[0].rf_rdata_a}),
     .rf_rdata_b_ecc_i    ({shadow_rf_rdata_b_intg, shadow_inputs_q[0].rf_rdata_b}),
 
-    .rf_wcap_wb_o        (shadow_outputs_d.rf_wcap_wb),
-    .rf_rcap_a_i         (shadow_inputs_q[0].rf_rcap_a),
-    .rf_rcap_b_i         (shadow_inputs_q[0].rf_rcap_b),
     .rf_wcap_ecc_wb_o    (shadow_rf_wcap_ecc_wb),
-    .rf_rcap_a_ecc_i     (shadow_rf_rcap_a_ecc),
-    .rf_rcap_b_ecc_i     (shadow_rf_rcap_b_ecc),
+    .rf_rcap_a_ecc_i     ({shadow_rf_rcap_a_ecc,
+                           cheriot_regcap_to_vec(shadow_inputs_q[0].rf_rcap_a)}),
+    .rf_rcap_b_ecc_i     ({shadow_rf_rcap_b_ecc,
+                           cheriot_regcap_to_vec(shadow_inputs_q[0].rf_rcap_b)}),
 
     .ic_tag_req_o        (shadow_outputs_d.ic_tag_req),
     .ic_tag_write_o      (shadow_outputs_d.ic_tag_write),
@@ -607,6 +608,9 @@ module ibex_lockstep import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     .core_busy_o            (shadow_outputs_d.core_busy)
   );
 
+  // Extract cap data from shadow core's unified cap ECC output (cap in lower REGCAP_W bits)
+  assign shadow_outputs_d.rf_wcap_wb = cheriot_vec_to_regcap(shadow_rf_wcap_ecc_wb[REGCAP_W-1:0]);
+
   // Extract data_wdata and ECC bits from shadow core's combined output
   assign shadow_outputs_d.data_wdata = shadow_data_wdata_full[31:0];
   if (MemECC) begin : gen_shadow_wdata_ecc
@@ -654,7 +658,7 @@ module ibex_lockstep import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       .rcap_b_o         (shadow_rf_rcap_b_ecc),
       .waddr_a_i        (shadow_rf_waddr_wb),
       .wdata_a_i        (shadow_rf_wdata_wb_ecc[RegFileDataEccWidth-1:RegFileDataWidth]),
-      .wcap_a_i         (shadow_rf_wcap_ecc_wb),
+      .wcap_a_i         (shadow_rf_wcap_ecc_wb[RegFileCapEccWidth-1:REGCAP_W]),
       .we_a_i           (shadow_rf_we_wb)
     );
   end else if (RegFile == RegFileFPGA) begin : gen_regfile_fpga
