@@ -66,6 +66,6 @@ module ram_1p #(
       .wmask_i   (wmask),
       .rdata_o   (rdata_o),
       .cfg_i     ('0),
-      .cfg_rsp_o ()
+      .cfg_o     ()
     );
 endmodule

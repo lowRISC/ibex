@@ -109,7 +109,7 @@ module ram_2p #(
     .b_wmask_i (b_wmask),
     .b_rdata_o (b_rdata_d),
     .cfg_i     ('0),
-    .cfg_rsp_o ()
+    .cfg_o     ()
   );
 
 endmodule

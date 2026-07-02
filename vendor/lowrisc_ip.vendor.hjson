@@ -46,9 +46,21 @@
 
         {from: "hw/dv/verilator",    to: "dv/verilator"},
 
-        {from: "hw/ip/prim",         to: "ip/prim"},
-        {from: "hw/ip/prim_generic", to: "ip/prim_generic"},
-        {from: "hw/ip/prim_xilinx",  to: "ip/prim_xilinx"},
+        {
+            from:      "hw/ip/prim",
+            to:        "ip/prim",
+            patch_dir: "prim",
+        },
+        {
+            from:      "hw/ip/prim_generic",
+            to:        "ip/prim_generic",
+            patch_dir: "prim_generic",
+        },
+        {
+            from:      "hw/ip/prim_xilinx",
+            to:        "ip/prim_xilinx",
+            patch_dir: "prim_xilinx",
+        },
 
         {from: "hw/lint",            to: "lint"},
 

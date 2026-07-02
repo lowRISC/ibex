@@ -1,0 +1,251 @@
+diff --git a/prim_generic.core b/prim_generic.core
+index e7f3a43d..187ffc80 100644
+--- a/prim_generic.core
++++ b/prim_generic.core
+@@ -52,6 +52,7 @@ mapping:
+   "lowrisc:prim:pad_wrapper"  : "lowrisc:prim_generic:pad_wrapper"
+   "lowrisc:prim:ram_1p"       : "lowrisc:prim_generic:ram_1p"
+   "lowrisc:prim:ram_1r1w"     : "lowrisc:prim_generic:ram_1r1w"
++  "lowrisc:prim:ram_1r1w_pkg" : "lowrisc:prim_generic:ram_1r1w_pkg"
+   "lowrisc:prim:ram_2p"       : "lowrisc:prim_generic:ram_2p"
+   "lowrisc:prim:rom"          : "lowrisc:prim_generic:rom"
+   "lowrisc:prim:usb_diff_rx"  : "lowrisc:prim_generic:usb_diff_rx"
+diff --git a/prim_generic_ram_1r1w.core b/prim_generic_ram_1r1w.core
+index e2dd35e8..b6fc7e39 100644
+--- a/prim_generic_ram_1r1w.core
++++ b/prim_generic_ram_1r1w.core
+@@ -12,7 +12,7 @@ filesets:
+   files_rtl:
+     depend:
+       - lowrisc:prim:assert
+-      - lowrisc:prim_generic:ram_2p_pkg
++      - lowrisc:prim_generic:ram_1r1w_pkg
+       - lowrisc:prim:util_memload
+     files:
+       - rtl/prim_ram_1r1w.sv
+diff --git a/prim_generic_ram_1r1w_pkg.core b/prim_generic_ram_1r1w_pkg.core
+new file mode 100644
+index 00000000..b1b6d482
+--- /dev/null
++++ b/prim_generic_ram_1r1w_pkg.core
+@@ -0,0 +1,22 @@
++CAPI=2:
++# Copyright lowRISC contributors (OpenTitan project).
++# Licensed under the Apache License, Version 2.0, see LICENSE for details.
++# SPDX-License-Identifier: Apache-2.0
++
++name: "lowrisc:prim_generic:ram_1r1w_pkg"
++description: "Ram 1r1w package"
++virtual:
++  - "lowrisc:prim:ram_1r1w_pkg"
++
++filesets:
++  files_rtl:
++    depend:
++      - lowrisc:prim_generic:ram_2p_pkg
++    files:
++      - rtl/prim_ram_1r1w_pkg.sv
++    file_type: systemVerilogSource
++
++targets:
++  default:
++    filesets:
++      - files_rtl
+diff --git a/rtl/prim_generic_flash_bank.sv b/rtl/prim_generic_flash_bank.sv
+index 5ecb7ec2..459dd311 100644
+--- a/rtl/prim_generic_flash_bank.sv
++++ b/rtl/prim_generic_flash_bank.sv
+@@ -418,7 +418,7 @@ module prim_generic_flash_bank #(
+     .wmask_i  ({DataWidth{1'b1}}),
+     .rdata_o  (rd_data_main),
+     .cfg_i    ('0),
+-    .cfg_rsp_o()
++    .cfg_o    ()
+   );
+ 
+   for (genvar info_type = 0; info_type < InfoTypes; info_type++) begin : gen_info_types
+@@ -444,7 +444,7 @@ module prim_generic_flash_bank #(
+       .wmask_i  ({DataWidth{1'b1}}),
+       .rdata_o  (rd_nom_data_info[info_type]),
+       .cfg_i    ('0),
+-      .cfg_rsp_o()
++      .cfg_o    ()
+     );
+   end
+ 
+diff --git a/rtl/prim_ram_1p.sv b/rtl/prim_ram_1p.sv
+index e224107f..d78b5e81 100644
+--- a/rtl/prim_ram_1p.sv
++++ b/rtl/prim_ram_1p.sv
+@@ -23,8 +23,8 @@ module prim_ram_1p import prim_ram_1p_pkg::*; #(
+   input  logic [Width-1:0] wdata_i,
+   input  logic [Width-1:0] wmask_i,
+   output logic [Width-1:0] rdata_o, // Read data. Data is returned one cycle after req_i is high.
+-  input  ram_1p_cfg_t      cfg_i,
+-  output ram_1p_cfg_rsp_t  cfg_rsp_o
++  input  ram_1p_cfg_req_t  cfg_i,
++  output ram_1p_cfg_rsp_t  cfg_o
+ );
+ 
+ // For certain synthesis experiments we compile the design with generic models to get an unmapped
+@@ -42,7 +42,7 @@ module prim_ram_1p import prim_ram_1p_pkg::*; #(
+ 
+   logic unused_signals;
+   assign unused_signals = ^{cfg_i, rst_ni};
+-  assign cfg_rsp_o      = '0;
++  assign cfg_o          = RAM_1P_CFG_RSP_DEFAULT;
+ 
+   // Width of internal write mask. Note wmask_i input into the module is always assumed
+   // to be the full bit mask
+diff --git a/rtl/prim_ram_1p_pkg.sv b/rtl/prim_ram_1p_pkg.sv
+index f8d45dd4..f8ec137d 100644
+--- a/rtl/prim_ram_1p_pkg.sv
++++ b/rtl/prim_ram_1p_pkg.sv
+@@ -5,21 +5,18 @@
+ 
+ package prim_ram_1p_pkg;
+ 
+-  typedef struct packed {
+-    logic       test;
+-    logic       cfg_en;
+-    logic [3:0] cfg;
+-  } cfg_t;
++  parameter int unsigned Ram1pReqWidth = 32'd12;
++  parameter int unsigned Ram1pRspWidth = 32'd1;
+ 
+   typedef struct packed {
+-    cfg_t ram_cfg;  // configuration for ram
+-    cfg_t rf_cfg;   // configuration for regfile
+-  } ram_1p_cfg_t;
++    logic [Ram1pReqWidth-1:0] req;
++  } ram_1p_cfg_req_t;
+ 
+   typedef struct packed {
+-    logic done;
++    logic [Ram1pRspWidth-1:0] rsp;
+   } ram_1p_cfg_rsp_t;
+ 
+-  parameter ram_1p_cfg_t RAM_1P_CFG_DEFAULT = '0;
++  parameter ram_1p_cfg_req_t RAM_1P_CFG_REQ_DEFAULT = '0;
++  parameter ram_1p_cfg_rsp_t RAM_1P_CFG_RSP_DEFAULT = '0;
+ 
+ endpackage // prim_ram_1p_pkg
+diff --git a/rtl/prim_ram_1r1w.sv b/rtl/prim_ram_1r1w.sv
+index a64876b0..1a57780c 100644
+--- a/rtl/prim_ram_1r1w.sv
++++ b/rtl/prim_ram_1r1w.sv
+@@ -6,7 +6,7 @@
+ //   This module is for simulation and small size SRAM.
+ //   Implementing ECC should be done inside wrapper not this model.
+ `include "prim_assert.sv"
+-module prim_ram_1r1w import prim_ram_2p_pkg::*; #(
++module prim_ram_1r1w import prim_ram_1r1w_pkg::*; #(
+   parameter  int Width           = 32, // bit
+   parameter  int Depth           = 128,
+   parameter  int DataBitsPerMask = 1, // Number of data bits per bit of write mask
+@@ -30,8 +30,8 @@ module prim_ram_1r1w import prim_ram_2p_pkg::*; #(
+   input        [Aw-1:0]    b_addr_i,
+   output logic [Width-1:0] b_rdata_o,
+ 
+-  input  ram_2p_cfg_t      cfg_i,
+-  output ram_2p_cfg_rsp_t  cfg_rsp_o
++  input  ram_1r1w_cfg_req_t cfg_i,
++  output ram_1r1w_cfg_rsp_t cfg_o
+ );
+ 
+ // For certain synthesis experiments we compile the design with generic models to get an unmapped
+@@ -46,7 +46,7 @@ module prim_ram_1r1w import prim_ram_2p_pkg::*; #(
+ 
+   logic unused_signals;
+   assign unused_signals = ^{cfg_i, rst_a_ni, rst_b_ni};
+-  assign cfg_rsp_o      = '0;
++  assign cfg_o          = RAM_1R1W_CFG_RSP_DEFAULT;
+ 
+   // Width of internal write mask. Note *_wmask_i input into the module is always assumed
+   // to be the full bit mask.
+diff --git a/rtl/prim_ram_1r1w_pkg.sv b/rtl/prim_ram_1r1w_pkg.sv
+new file mode 100644
+index 00000000..416a71d9
+--- /dev/null
++++ b/rtl/prim_ram_1r1w_pkg.sv
+@@ -0,0 +1,20 @@
++// Copyright lowRISC contributors (OpenTitan project).
++// Licensed under the Apache License, Version 2.0, see LICENSE for details.
++// SPDX-License-Identifier: Apache-2.0
++//
++
++package prim_ram_1r1w_pkg;
++
++  // The SPI device can be switched to either use 1r1w or true 2p memories. To ensure
++  // a compatibility between the two choices without increasing the parametrization effort,
++  // derive the 1r1w type from the 2p.
++  parameter int unsigned Ram1r1wReqWidth = prim_ram_2p_pkg::Ram2pReqWidth;
++  parameter int unsigned Ram1r1wRspWidth = prim_ram_2p_pkg::Ram2pRspWidth;
++
++  typedef prim_ram_2p_pkg::ram_2p_cfg_req_t ram_1r1w_cfg_req_t;
++  typedef prim_ram_2p_pkg::ram_2p_cfg_rsp_t ram_1r1w_cfg_rsp_t;
++
++  parameter ram_1r1w_cfg_req_t RAM_1R1W_CFG_REQ_DEFAULT = '0;
++  parameter ram_1r1w_cfg_rsp_t RAM_1R1W_CFG_RSP_DEFAULT = '0;
++
++endpackage // prim_ram_1r1w_pkg
+diff --git a/rtl/prim_ram_2p.sv b/rtl/prim_ram_2p.sv
+index 65f94fe0..442c5dc0 100644
+--- a/rtl/prim_ram_2p.sv
++++ b/rtl/prim_ram_2p.sv
+@@ -32,8 +32,8 @@ module prim_ram_2p import prim_ram_2p_pkg::*; #(
+   input  logic [Width-1:0] b_wmask_i,
+   output logic [Width-1:0] b_rdata_o,
+ 
+-  input  ram_2p_cfg_t      cfg_i,
+-  output ram_2p_cfg_rsp_t  cfg_rsp_o
++  input  ram_2p_cfg_req_t  cfg_i,
++  output ram_2p_cfg_rsp_t  cfg_o
+ );
+ 
+ // For certain synthesis experiments we compile the design with generic models to get an unmapped
+@@ -48,7 +48,7 @@ module prim_ram_2p import prim_ram_2p_pkg::*; #(
+ 
+   logic unused_cfg;
+   assign unused_cfg = ^cfg_i;
+-  assign cfg_rsp_o  = '0;
++  assign cfg_o      = RAM_2P_CFG_RSP_DEFAULT;
+ 
+   // Width of internal write mask. Note *_wmask_i input into the module is always assumed
+   // to be the full bit mask.
+diff --git a/rtl/prim_ram_2p_pkg.sv b/rtl/prim_ram_2p_pkg.sv
+index 87702eeb..c8cb5230 100644
+--- a/rtl/prim_ram_2p_pkg.sv
++++ b/rtl/prim_ram_2p_pkg.sv
+@@ -5,23 +5,18 @@
+ 
+ package prim_ram_2p_pkg;
+ 
+-  typedef struct packed {
+-    logic       test;
+-    logic       cfg_en;
+-    logic [3:0] cfg;
+-  } cfg_t;
++  parameter int unsigned Ram2pReqWidth = 32'd7;
++  parameter int unsigned Ram2pRspWidth = 32'd1;
+ 
+   typedef struct packed {
+-    cfg_t a_ram_fcfg;  // configuration for a port
+-    cfg_t b_ram_fcfg;  // configuration for b port
+-    cfg_t a_ram_lcfg;  // configuration for a port
+-    cfg_t b_ram_lcfg;  // configuration for b port
+-  } ram_2p_cfg_t;
+-
+-  parameter ram_2p_cfg_t RAM_2P_CFG_DEFAULT = '0;
++    logic [Ram2pReqWidth-1:0] req;
++  } ram_2p_cfg_req_t;
+ 
+   typedef struct packed {
+-    logic done;
++    logic [Ram2pRspWidth-1:0] rsp;
+   } ram_2p_cfg_rsp_t;
+ 
++  parameter ram_2p_cfg_req_t RAM_2P_CFG_REQ_DEFAULT = '0;
++  parameter ram_2p_cfg_rsp_t RAM_2P_CFG_RSP_DEFAULT = '0;
++
+ endpackage // prim_ram_2p_pkg
