@@ -1,0 +1,51 @@
+name: "CLA Assistant"
+on:
+  issue_comment:
+    types: [created]
+  pull_request_target:
+    types: [opened, closed, synchronize]
+
+# Explicitly configure permissions for this action on the repository.
+permissions:
+  actions: write
+  contents: read # This is 'read' because the signatures live in a remote repository.
+  pull-requests: write
+  statuses: write
+
+env:
+  CLA_URL: 'https://github.com/lowRISC/ibex/blob/master/CLA.md'
+  CLA_SIGNATURE: 'I have read the CLA Document. By submitting this pull request comment, I am hereby confirming my acceptance of the terms of the CLA Document and my agreement to be legally bound by its terms.'
+
+jobs:
+  CLAAssistant:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "CLA Assistant"
+        if: (github.event.comment.body == 'recheck' || github.event.comment.body == env.CLA_SIGNATURE) || github.event_name == 'pull_request_target'
+        uses: contributor-assistant/github-action@v2.6.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The below token should have repo scope and must be manually added by you in the repository's secret and is needed because the signatures live in a remote repository.
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.SIGNATURE_REPO_SECRET }}
+        with:
+          path-to-signatures: 'signatures/version1/cla.json'
+          path-to-document: '${{ env.CLA_URL }}' # e.g. a CLA or a DCO document
+          # This branch on the signature repository should not be protected:
+          branch: 'main'
+
+          # The followings are optional inputs.
+          remote-organization-name: 'lowRISC' # Enter the remote organization name where the signatures should be stored (Default is storing the signatures in the same repository).
+          remote-repository-name: 'cla-signatures' # Enter the  remote repository name where the signatures should be stored (Default is storing the signatures in the same repository).
+          custom-notsigned-prcomment: |
+             Thank you for your submission, we really appreciate it.
+
+             Like many open-source projects, we ask that you sign the [Contributor License Agreement](${{ env.CLA_URL }}) before we can accept your contribution.
+
+             The CLA ensures that all users of the project are granted rights to use the submission.
+
+             Before signing the CLA, please ensure that you have the authority from your organisation to grant these rights.
+
+             You will be asked to sign the CLA when you first contribute to each lowRISC repository, and will be asked to re-sign if the CLA changes.
+
+             Each individual who has committed in this Pull Request should sign the CLA by posting a Pull Request Comment containing the text below.
+          custom-pr-sign-comment: ${{ env.CLA_SIGNATURE }}
