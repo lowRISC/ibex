@@ -73,13 +73,15 @@ The Ibex Demo System is maintained by lowRISC but is not an official part of Ibe
 We highly appreciate community contributions. To ease our work of reviewing your contributions,
 please:
 
-* Create your own branch to commit your changes and then open a Pull Request.
+* Create your own fork to commit your changes and then open a Pull Request.
 * Split large contributions into smaller commits addressing individual changes or bug fixes. Do not
   mix unrelated changes into the same commit!
 * Write meaningful commit messages. For more information, please check out the [contribution
   guide](https://github.com/lowrisc/ibex/blob/master/CONTRIBUTING.md).
 * If asked to modify your changes, do fixup your commits and rebase your branch to maintain a
   clean history.
+* Sign our [contributors license agreement
+  (CLA)](https://github.com/lowrisc/ibex/blob/master/CLA.md).
 
 When contributing SystemVerilog source code, please try to be consistent and adhere to [our Verilog
 coding style guide](https://github.com/lowRISC/style-guides/blob/master/VerilogCodingStyle.md).
