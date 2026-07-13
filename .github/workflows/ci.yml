@@ -51,6 +51,10 @@ jobs:
           riscv32-unknown-elf-gcc --version
           verible-verilog-lint --version
 
+      - name: Commit metadata
+        run: ./ci/lint-commits.sh "$GITHUB_BASE_REF"
+        if: ${{ github.event_name == 'pull_request' }}
+
       # Verible format is experimental so only run on default config for now,
       # will eventually become part of the per-config CI
       - name: Format all source code with Verible format (experimental)

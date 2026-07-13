@@ -27,3 +27,7 @@ premailer < 3.9.0
 
 # Recurse to get any requirements from riscv-dv
 -r vendor/google_riscv-dv/requirements.txt
+
+# Needed by commit lint
+argparse
+GitPython
