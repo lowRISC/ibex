@@ -151,12 +151,48 @@ uint32_t PmpCfgRegister::GetLockMask() {
   return lock_mask;
 }
 
+// Returns a per-byte mask of the pmpcfg fields whose write must be ignored
+// because of the Smepmp MML restriction. Smepmp v1.0 (chapter 2, item 4b),
+// which newer Privileged Spec releases include in the "Machine Security
+// Configuration (mseccfg) Register" section, states: "Adding a rule with
+// executable privileges that either is M-mode-only or a locked Shared-Region is
+// not possible and such pmpcfg writes are ignored, leaving pmpcfg unchanged."
+// Setting mseccfg.RLB lifts this restriction.
+//
+// The check is done on the candidate value, i.e. the value each pmpcfg field
+// would take after the write, not on the current register value (fields that
+// are already locked are handled by GetLockMask()). With MML=1 a field with L=1
+// is affected if its {X,W,R} encoding is one of (see the Smepmp truth table):
+// - 0x4 (X):     M-mode-only execute-only region
+// - 0x5 (X,R):   M-mode-only read/execute region
+// - 0x2 (W):     locked Shared-Region, execute-only on M and S/U mode
+// - 0x6 (X,W):   locked Shared-Region, read/execute on M, execute-only on S/U
+// The RTL equivalent is is_mml_m_exec_cfg() in ibex_cs_registers.sv.
+uint32_t PmpCfgRegister::GetMmlSuppressMask(uint32_t candidate) {
+  BaseRegister *mseccfg = GetRegisterFromMap(kCSRMSeccfg);
+  assert(mseccfg);
+  uint32_t mseccfg_val = mseccfg->RegisterRead();
+  if (!(mseccfg_val & kMSeccfgMml) || (mseccfg_val & kMSeccfgRlb))
+    return 0;
+  uint32_t suppress_mask = 0;
+  for (int i = 0; i < 4; i++) {
+    uint8_t byte_val = (candidate >> (8 * i)) & 0xFF;
+    uint8_t xwr = byte_val & 0x7;
+    if ((byte_val & 0x80) &&
+        (xwr == 0x4 || xwr == 0x2 || xwr == 0x6 || xwr == 0x5)) {
+      suppress_mask |= (0xFFu << (8 * i));
+    }
+  }
+  return suppress_mask;
+}
+
 uint32_t PmpCfgRegister::RegisterWrite(uint32_t newval) {
   uint32_t lock_mask = GetLockMask();
   uint32_t read_value = register_value_;
+  uint32_t suppress_mask = GetMmlSuppressMask(newval);
 
-  register_value_ &= lock_mask;
-  register_value_ |= (newval & ~lock_mask);
+  register_value_ &= (lock_mask | suppress_mask);
+  register_value_ |= (newval & ~lock_mask & ~suppress_mask);
   register_value_ = HandleReservedVals(register_value_);
 
   return read_value;
@@ -165,8 +201,10 @@ uint32_t PmpCfgRegister::RegisterWrite(uint32_t newval) {
 uint32_t PmpCfgRegister::RegisterSet(uint32_t newval) {
   uint32_t lock_mask = GetLockMask();
   uint32_t read_value = register_value_;
+  uint32_t candidate = register_value_ | (newval & ~lock_mask);
+  uint32_t suppress_mask = GetMmlSuppressMask(candidate);
 
-  register_value_ |= (newval & ~lock_mask);
+  register_value_ |= (newval & ~lock_mask & ~suppress_mask);
   register_value_ = HandleReservedVals(register_value_);
 
   return read_value;
@@ -175,8 +213,10 @@ uint32_t PmpCfgRegister::RegisterSet(uint32_t newval) {
 uint32_t PmpCfgRegister::RegisterClear(uint32_t newval) {
   uint32_t lock_mask = GetLockMask();
   uint32_t read_value = register_value_;
+  uint32_t candidate = register_value_ & (~newval | lock_mask);
+  uint32_t suppress_mask = GetMmlSuppressMask(candidate);
 
-  register_value_ &= (~newval | lock_mask);
+  register_value_ &= (~newval | lock_mask | suppress_mask);
   register_value_ = HandleReservedVals(register_value_);
 
   return read_value;
