@@ -151,12 +151,34 @@ uint32_t PmpCfgRegister::GetLockMask() {
   return lock_mask;
 }
 
+// Returns a per-byte mask for bytes whose write must be suppressed under
+// SMEPMP rule 4b: MML=1, RLB=0, and the candidate byte has lock=1 with
+// {X,W,R} in {0x4(X), 0x2(W), 0x6(W+X), 0x5(X+R)}.
+uint32_t PmpCfgRegister::GetMmlSuppressMask(uint32_t candidate) {
+  BaseRegister *mseccfg = GetRegisterFromMap(kCSRMSeccfg);
+  assert(mseccfg);
+  uint32_t mseccfg_val = mseccfg->RegisterRead();
+  if (!(mseccfg_val & kMSeccfgMml) || (mseccfg_val & kMSeccfgRlb))
+    return 0;
+  uint32_t suppress_mask = 0;
+  for (int i = 0; i < 4; i++) {
+    uint8_t byte_val = (candidate >> (8 * i)) & 0xFF;
+    uint8_t xwr = byte_val & 0x7;
+    if ((byte_val & 0x80) &&
+        (xwr == 0x4 || xwr == 0x2 || xwr == 0x6 || xwr == 0x5)) {
+      suppress_mask |= (0xFFu << (8 * i));
+    }
+  }
+  return suppress_mask;
+}
+
 uint32_t PmpCfgRegister::RegisterWrite(uint32_t newval) {
   uint32_t lock_mask = GetLockMask();
   uint32_t read_value = register_value_;
+  uint32_t suppress_mask = GetMmlSuppressMask(newval);
 
-  register_value_ &= lock_mask;
-  register_value_ |= (newval & ~lock_mask);
+  register_value_ &= (lock_mask | suppress_mask);
+  register_value_ |= (newval & ~lock_mask & ~suppress_mask);
   register_value_ = HandleReservedVals(register_value_);
 
   return read_value;
@@ -165,8 +187,10 @@ uint32_t PmpCfgRegister::RegisterWrite(uint32_t newval) {
 uint32_t PmpCfgRegister::RegisterSet(uint32_t newval) {
   uint32_t lock_mask = GetLockMask();
   uint32_t read_value = register_value_;
+  uint32_t candidate = register_value_ | (newval & ~lock_mask);
+  uint32_t suppress_mask = GetMmlSuppressMask(candidate);
 
-  register_value_ |= (newval & ~lock_mask);
+  register_value_ |= (newval & ~lock_mask & ~suppress_mask);
   register_value_ = HandleReservedVals(register_value_);
 
   return read_value;
@@ -175,8 +199,11 @@ uint32_t PmpCfgRegister::RegisterSet(uint32_t newval) {
 uint32_t PmpCfgRegister::RegisterClear(uint32_t newval) {
   uint32_t lock_mask = GetLockMask();
   uint32_t read_value = register_value_;
+  uint32_t candidate = register_value_ & (~newval | lock_mask);
+  uint32_t suppress_mask = GetMmlSuppressMask(candidate);
 
-  register_value_ &= (~newval | lock_mask);
+  register_value_ = (register_value_ & (lock_mask | suppress_mask)) |
+                    (candidate & ~lock_mask & ~suppress_mask);
   register_value_ = HandleReservedVals(register_value_);
 
   return read_value;
