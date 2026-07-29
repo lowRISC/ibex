@@ -43,7 +43,13 @@ module tb_cs_registers #(
   //-----------------
   // Allow reset to be toggled by the top-level (in Verilator)
   // or a DPI call
+  // Note: under Verilator, in_rst_ni is an inout that eval_initial forces to 0,
+  // so we rely solely on the DPI reset driver (dpi_rst_ni).
+`ifdef VERILATOR
+  assign rst_ni = dpi_rst_ni;
+`else
   assign rst_ni = in_rst_ni & dpi_rst_ni;
+`endif
 
   //----------------------------------------
   // Clock generation (not used in Verilator
