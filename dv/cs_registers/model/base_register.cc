@@ -231,11 +231,19 @@ uint32_t PmpCfgRegister::HandleReservedVals(uint32_t cfg_val) {
 }
 
 uint32_t PmpAddrRegister::GetLockMask() {
+  BaseRegister *mseccfg = GetRegisterFromMap(kCSRMSeccfg);
+  assert(mseccfg);
+
+  // When RLB=1, locked entries can still be modified (SMEPMP).
+  if (mseccfg->RegisterRead() & kMSeccfgRlb) {
+    return 0;
+  }
+
   // Calculate which region this is
   uint32_t pmp_region = (register_address_ & 0xF);
   // Form the address of the corresponding CFG register
   uint32_t pmp_cfg_addr = 0x3A0 + (pmp_region / 4);
-  // Form the address of the CFG registerfor the next region
+  // Form the address of the CFG register for the next region
   // For region 15, this will point to a non-existant register, which is fine
   uint32_t pmp_cfg_plus1_addr = 0x3A0 + ((pmp_region + 1) / 4);
   uint32_t cfg_value = 0;
@@ -252,8 +260,8 @@ uint32_t PmpAddrRegister::GetLockMask() {
   // Shift to the relevant bits in the CFG registers
   cfg_value >>= ((pmp_region & 0x3) * 8);
   cfg_plus1_value >>= (((pmp_region + 1) & 0x3) * 8);
-  // Locked if the lock bit is set, or the next region is TOR
-  if ((cfg_value & 0x80) || ((cfg_plus1_value & 0x18) == 0x8)) {
+  // Locked if own L=1, or next region is BOTH locked (L=1) and TOR mode.
+  if ((cfg_value & 0x80) || ((cfg_plus1_value & 0x98) == 0x88)) {
     return 0xFFFFFFFF;
   } else {
     return 0;
