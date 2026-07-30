@@ -72,7 +72,7 @@ def _main() -> int:
         'core_ibex': md.ibex_dv_root,
         'sim_opts': (f"+signature_addr={md.signature_addr}\n" +
                      f"+test_timeout_s={trr.timeout_s}\n" +
-                     f"{get_sim_opts(md.ibex_config, md.simulator)}\n" +
+                     f"{get_sim_opts(md.ibex_config, md.simulator, md.rv32zc)}\n" +
                      trr.ddm_sim_opts +
                      sim_opts)
     }

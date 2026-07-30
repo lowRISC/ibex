@@ -1,3 +1,6 @@
 `include "ibex_asm_program_gen.sv"
 `include "ibex_directed_instr_lib.sv"
 `include "ibex_debug_triggers_overrides.sv"
+`include "snippy_func_instr.sv"
+`include "snippy_asm_program_gen.sv"
+`include "snippy_fix_tp_and_ra.sv"

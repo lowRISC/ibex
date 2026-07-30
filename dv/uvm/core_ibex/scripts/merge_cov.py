@@ -11,7 +11,7 @@ import logging
 import os
 import sys
 import pathlib3x as pathlib
-from typing import Set
+from typing import Optional, Set
 
 from metadata import RegressionMetadata, LockedMetadata
 from setup_imports import _OT_LOWRISC_IP
@@ -38,7 +38,9 @@ def find_cov_dbs(start_dir: pathlib.Path, simulator: str) -> Set[pathlib.Path]:
     return cov_dbs
 
 
-def merge_cov_vcs(md: RegressionMetadata, cov_dirs: Set[pathlib.Path]) -> int:
+def merge_cov_vcs(md: RegressionMetadata,
+                  cov_dirs: Set[pathlib.Path],
+                  vcs_urg_elfile: Optional[pathlib.Path]) -> int:
     cmd = (['urg', '-full64',
             '-format', 'both',
             '-dbname', str(md.dir_cov/'merged.vdb'),
@@ -46,6 +48,9 @@ def merge_cov_vcs(md: RegressionMetadata, cov_dirs: Set[pathlib.Path]) -> int:
             '-log', str(md.dir_cov/'merge.log'),
             '-dir'] +
            [str(cov_dir) for cov_dir in list(cov_dirs)])
+
+    if vcs_urg_elfile is not None:
+        cmd += ['-elfile', str(vcs_urg_elfile)]
 
     with LockedMetadata(md.dir_metadata, __file__) as md:
         md.cov_merge_log = md.dir_cov / 'merge.log'
@@ -134,11 +139,16 @@ def main():
     '''Entry point when run as a script'''
     parser = argparse.ArgumentParser()
     parser.add_argument('--dir-metadata', type=pathlib.Path, required=True)
+    parser.add_argument('--vcs-urg-elfile',
+                        type=pathlib.Path,
+                        default=None,
+                        help='Optional URG exclude file passed to VCS URG '
+                             'as -elfile.')
     args = parser.parse_args()
     md = RegressionMetadata.construct_from_metadata_dir(args.dir_metadata)
 
     if md.simulator not in ['xlm', 'vcs']:
-        raise ValueError(f'Unsupported simulator for merging coverage: {args.simulator}')
+        raise ValueError(f'Unsupported simulator for merging coverage: {md.simulator}')
 
     md.dir_cov.mkdir(exist_ok=True, parents=True)
 
@@ -146,7 +156,7 @@ def main():
     cov_dbs = find_cov_dbs(md.dir_run, md.simulator)
 
     merge_funs = {
-        'vcs': merge_cov_vcs,
+        'vcs': lambda md, cov_dbs: merge_cov_vcs(md, cov_dbs, args.vcs_urg_elfile),
         'xlm': merge_cov_xlm
     }
     return merge_funs[md.simulator](md, cov_dbs)

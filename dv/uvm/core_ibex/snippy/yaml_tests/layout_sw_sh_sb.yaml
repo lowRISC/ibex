@@ -1,0 +1,40 @@
+
+sections:
+- name:      for_x0
+  VMA:       0x100
+  SIZE:      0x120
+  LMA:       0x100
+  ACCESS:    rw
+- name:      text
+  VMA:       0x80050000
+  SIZE:      0x30000
+  LMA:       0x80050000
+  ACCESS:    rx
+- name:      stack
+  VMA:       0x800B0000
+  SIZE:      0x10000
+  LMA:       0x800B0000
+  ACCESS:    rw
+- name:      rodata
+  VMA:       0x800C0000
+  SIZE:      0x10000
+  LMA:       0x800C0000
+  ACCESS:    r
+
+options:
+    mtriple: "riscv32"
+    mcpu: generic-rv32
+    march: "rv32imc_zba_zbb_zbc_zbs_zicsr"
+    preserve-ra: true
+    redefine-ra: RA
+    num-instrs: 5000
+    reserved-regs-list: ["X(1|[3-9]|[12][0-9]|3[01])"]
+    init-memory: full
+
+histogram:
+      - [LB, 1.0]
+      - [LH, 1.0]
+      - [LW, 1.0]
+      - [SB, 1.0]
+      - [SH, 1.0]
+      - [SW, 1.0]

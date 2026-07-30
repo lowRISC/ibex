@@ -1,0 +1,21 @@
+sections:
+  - name:      text
+    VMA:       0x80040000
+    SIZE:      0x40000
+    LMA:       0x80040000
+    ACCESS:    rx
+  - name:      data
+    VMA:       0x800A0000
+    SIZE:      0x10000
+    LMA:       0x800A0000
+    ACCESS:    rw
+  - name:      stack
+    VMA:       0x800B0000
+    SIZE:      0x10000
+    LMA:       0x800B0000
+    ACCESS:    rw
+  - name:      rodata
+    VMA:       0x800C0000
+    SIZE:      0x10000
+    LMA:       0x800C0000
+    ACCESS:    r
