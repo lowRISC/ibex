@@ -50,15 +50,11 @@ std::string SimpleSystem::GetIsaString() const {
       break;
 
     case 1:  // RV32BBalanced
-      extensions += "_Zba_Zbb_Zbs_XZbf_XZbt";
+      extensions += "_Zba_Zbb_Zbs";
       break;
 
-    case 2:  // RV32BOTEarlGrey
-      extensions += "_Zba_Zbb_Zbc_Zbs_XZbf_XZbp_XZbr_XZbt";
-      break;
-
-    case 3:  // RV32BFull
-      extensions += "_Zba_Zbb_Zbc_Zbs_XZbe_XZbf_XZbp_XZbr_XZbt";
+    case 2:  // RV32BFull
+      extensions += "_Zba_Zbb_Zbc_Zbs_Zbkb_Zbkx";
       break;
   }
 
