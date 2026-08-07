@@ -869,10 +869,9 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     .rst_ni(rst_ni),
 
     // ALU signal from ID stage
-    .alu_operator_i         (alu_operator_ex),
-    .alu_operand_a_i        (alu_operand_a_ex),
-    .alu_operand_b_i        (alu_operand_b_ex),
-    .alu_instr_first_cycle_i(instr_first_cycle_id),
+    .alu_operator_i (alu_operator_ex),
+    .alu_operand_a_i(alu_operand_a_ex),
+    .alu_operand_b_i(alu_operand_b_ex),
 
     // Branch target ALU signal from ID stage
     .bt_a_operand_i(bt_a_operand),
