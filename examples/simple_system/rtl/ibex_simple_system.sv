@@ -240,6 +240,8 @@ module ibex_simple_system (
       // First instruction executed is at 0x0 + 0x80
       .boot_addr_i               (32'h00100000),
 
+      .trvk_heap_base_addr_i     (32'h00000000),
+
       .instr_req_o               (instr_req),
       .instr_gnt_i               (instr_gnt),
       .instr_rvalid_i            (instr_rvalid),
@@ -256,9 +258,19 @@ module ibex_simple_system (
       .data_addr_o               (host_addr[CoreD]),
       .data_wdata_o              (host_wdata[CoreD]),
       .data_wdata_intg_o         (),
+      .data_tag_o                (),
       .data_rdata_i              (host_rdata[CoreD]),
       .data_rdata_intg_i         (data_rdata_intg),
+      .data_tag_i                (1'b0),
       .data_err_i                (host_err[CoreD]),
+
+      .trvk_revbm_req_o          (),
+      .trvk_revbm_gnt_i          (1'b0),
+      .trvk_revbm_rvalid_i       (1'b0),
+      .trvk_revbm_addr_o         (),
+      .trvk_revbm_rdata_i        ('0),
+      .trvk_revbm_rdata_intg_i   ('0),
+      .trvk_revbm_err_i          (1'b0),
 
       .irq_software_i            (1'b0),
       .irq_timer_i               (timer_irq),
