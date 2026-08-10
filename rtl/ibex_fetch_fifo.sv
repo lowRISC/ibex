@@ -239,14 +239,14 @@ module ibex_fetch_fifo #(
         if (!rst_ni) begin
           rdata_q[i] <= '0;
           err_q[i]   <= '0;
-        end else if (entry_en[i]) begin
+        end else if (entry_en[i] && !clear_i) begin
           rdata_q[i] <= rdata_d[i];
           err_q[i]   <= err_d[i];
         end
       end
     end else begin : g_rdata_nr
       always_ff @(posedge clk_i) begin
-        if (entry_en[i]) begin
+        if (entry_en[i] && !clear_i) begin
           rdata_q[i] <= rdata_d[i];
           err_q[i]   <= err_d[i];
         end
@@ -265,5 +265,13 @@ module ibex_fetch_fifo #(
   // Must not push to FIFO when full.
   `ASSERT(IbexFetchFifoPushFull,
       (in_valid_i) |-> (!valid_q[DEPTH-1] || clear_i))
+
+  // A flush invalidates every FIFO entry.
+  `ASSERT(IbexFetchFifoClearInvalidates,
+      clear_i |=> (valid_q == '0))
+
+  // A flush suppresses unnecessary payload/error register updates.
+  `ASSERT(IbexFetchFifoClearPayloadStable,
+      clear_i |=> $stable({rdata_q, err_q}))
 
 endmodule
