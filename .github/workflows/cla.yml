@@ -2,6 +2,12 @@ name: "CLA Assistant"
 on:
   issue_comment:
     types: [created]
+  # The CLA Assistant action cannot check a merge group, so the job below runs
+  # without steps for this event.  The workflow is nonetheless triggered so that
+  # the required `CLAAssistant` check reports a result instead of blocking the
+  # merge queue.  The CLA is checked on the pull request before it is queued.
+  merge_group:
+    types: [checks_requested]
   pull_request_target:
     types: [opened, closed, synchronize]
 
