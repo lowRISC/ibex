@@ -541,9 +541,10 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       .clk_i (clk),
       .rst_ni(rst_ni),
 
-      .test_en_i       (test_en_i),
-      .dummy_instr_id_i(dummy_instr_id),
-      .dummy_instr_wb_i(dummy_instr_wb),
+      .test_en_i        (test_en_i),
+      .dummy_instr_id_i (dummy_instr_id),
+      .dummy_instr_wb_i (dummy_instr_wb),
+      .cheriot_enable_i (cheriot_enable_i),
 
       .raddr_a_i(rf_raddr_a),
       .rdata_a_o(rf_rdata_a),
@@ -571,6 +572,7 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       .test_en_i       (test_en_i),
       .dummy_instr_id_i(dummy_instr_id),
       .dummy_instr_wb_i(dummy_instr_wb),
+      .cheriot_enable_i (cheriot_enable_i),
 
       .raddr_a_i(rf_raddr_a),
       .rdata_a_o(rf_rdata_a),
@@ -598,6 +600,7 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       .test_en_i       (test_en_i),
       .dummy_instr_id_i(dummy_instr_id),
       .dummy_instr_wb_i(dummy_instr_wb),
+      .cheriot_enable_i (cheriot_enable_i),
 
       .raddr_a_i(rf_raddr_a),
       .rdata_a_o(rf_rdata_a),

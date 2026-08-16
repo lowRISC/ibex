@@ -649,6 +649,7 @@ module ibex_lockstep import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       .test_en_i        (test_en_i),
       .dummy_instr_id_i (shadow_dummy_instr_id),
       .dummy_instr_wb_i (shadow_dummy_instr_wb),
+      .cheriot_enable_i (shadow_inputs_q[0].cheriot_enable),
 
       .raddr_a_i        (shadow_rf_raddr_a),
       .rdata_a_o        (shadow_rf_rdata_a_intg),
@@ -677,6 +678,7 @@ module ibex_lockstep import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       .test_en_i        (test_en_i),
       .dummy_instr_id_i (shadow_dummy_instr_id),
       .dummy_instr_wb_i (shadow_dummy_instr_wb),
+      .cheriot_enable_i (shadow_inputs_q[0].cheriot_enable),
 
       .raddr_a_i        (shadow_rf_raddr_a),
       .rdata_a_o        (shadow_rf_rdata_a_intg),
@@ -686,7 +688,7 @@ module ibex_lockstep import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       .rcap_b_o         (shadow_rf_rcap_b_ecc),
       .waddr_a_i        (shadow_rf_waddr_wb),
       .wdata_a_i        (shadow_rf_wdata_wb_ecc[RegFileDataEccWidth-1:RegFileDataWidth]),
-      .wcap_a_i         (shadow_rf_wcap_ecc_wb),
+      .wcap_a_i         (shadow_rf_wcap_ecc_wb[RegFileCapEccWidth-1:REGCAP_W]),
       .we_a_i           (shadow_rf_we_wb)
     );
   end else if (RegFile == RegFileLatch) begin : gen_regfile_latch
@@ -705,6 +707,7 @@ module ibex_lockstep import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       .test_en_i        (test_en_i),
       .dummy_instr_id_i (shadow_dummy_instr_id),
       .dummy_instr_wb_i (shadow_dummy_instr_wb),
+      .cheriot_enable_i (shadow_inputs_q[0].cheriot_enable),
 
       .raddr_a_i        (shadow_rf_raddr_a),
       .rdata_a_o        (shadow_rf_rdata_a_intg),
@@ -714,7 +717,7 @@ module ibex_lockstep import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       .rcap_b_o         (shadow_rf_rcap_b_ecc),
       .waddr_a_i        (shadow_rf_waddr_wb),
       .wdata_a_i        (shadow_rf_wdata_wb_ecc[RegFileDataEccWidth-1:RegFileDataWidth]),
-      .wcap_a_i         (shadow_rf_wcap_ecc_wb),
+      .wcap_a_i         (shadow_rf_wcap_ecc_wb[RegFileCapEccWidth-1:REGCAP_W]),
       .we_a_i           (shadow_rf_we_wb)
     );
   end
