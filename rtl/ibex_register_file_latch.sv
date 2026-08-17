@@ -11,11 +11,15 @@
  * based RF. It requires a target technology-specific clock gating cell. Use this
  * register file when targeting ASIC synthesis or event-based simulators.
  */
-module ibex_register_file_latch #(
+module ibex_register_file_latch import ibex_pkg::*; #(
+  parameter base_isa_e            BaseIsa           = BaseIsaRV32I,
   parameter bit                   RV32E             = 0,
   parameter int unsigned          DataWidth         = 32,
   parameter bit                   DummyInstructions = 0,
-  parameter logic [DataWidth-1:0] WordZeroVal       = '0
+  parameter logic [DataWidth-1:0] WordZeroVal       = '0,
+  // Capability port width
+  parameter int unsigned          CapWidth          = ibex_cheriot_pkg::REGCAP_W,
+  parameter logic [CapWidth-1:0]  CapWordZeroVal    = '0
 ) (
   // Clock and Reset
   input  logic                 clk_i,
@@ -28,14 +32,17 @@ module ibex_register_file_latch #(
   //Read port R1
   input  logic [4:0]           raddr_a_i,
   output logic [DataWidth-1:0] rdata_a_o,
+  output logic [CapWidth-1:0]  rcap_a_o,
 
   //Read port R2
   input  logic [4:0]           raddr_b_i,
   output logic [DataWidth-1:0] rdata_b_o,
+  output logic [CapWidth-1:0]  rcap_b_o,
 
   // Write port W1
   input  logic [4:0]           waddr_a_i,
   input  logic [DataWidth-1:0] wdata_a_i,
+  input  logic [CapWidth-1:0]  wcap_a_i,
   input  logic                 we_a_i
 );
 
@@ -43,11 +50,13 @@ module ibex_register_file_latch #(
   localparam int unsigned NUM_WORDS  = 2**ADDR_WIDTH;
 
   logic [DataWidth-1:0] mem[NUM_WORDS];
+  logic [CapWidth-1:0]  cap[NUM_WORDS];
 
   logic [NUM_WORDS-1:0] waddr_onehot_a;
 
   logic [NUM_WORDS-1:1] mem_clocks;
   logic [DataWidth-1:0] wdata_a_q;
+  logic [CapWidth-1:0]  wcap_a_q;
 
   // internal addresses
   logic [ADDR_WIDTH-1:0] raddr_a_int, raddr_b_int, waddr_a_int;
@@ -63,6 +72,8 @@ module ibex_register_file_latch #(
   //////////
   assign rdata_a_o = mem[raddr_a_int];
   assign rdata_b_o = mem[raddr_b_int];
+  assign rcap_a_o  = cap[raddr_a_int];
+  assign rcap_b_o  = cap[raddr_b_int];
 
   ///////////
   // WRITE //
@@ -79,7 +90,7 @@ module ibex_register_file_latch #(
   // Use clk_int here, since otherwise we don't want to write anything anyway.
   always_ff @(posedge clk_int or negedge rst_ni) begin : sample_wdata
     if (!rst_ni) begin
-      wdata_a_q   <= WordZeroVal;
+      wdata_a_q <= WordZeroVal;
     end else begin
       if (we_a_i) begin
         wdata_a_q <= wdata_a_i;
@@ -123,6 +134,31 @@ module ibex_register_file_latch #(
     end
   end
 
+  if (BaseIsa == BaseIsaRV32IorCHERIoT) begin : g_cap
+    always_ff @(posedge clk_int or negedge rst_ni) begin : sample_wcap
+      if (!rst_ni) begin
+        wcap_a_q <= CapWordZeroVal;
+      end else if (we_a_i) begin
+        wcap_a_q <= wcap_a_i;
+      end
+    end
+
+    for (genvar i = 1; i < NUM_WORDS; i++) begin : g_rf_cap_latches
+      always_latch begin
+        if (mem_clocks[i]) begin
+          cap[i] = wcap_a_q;
+        end
+      end
+    end
+  end else begin : g_no_cap
+    assign wcap_a_q = CapWordZeroVal;
+    for (genvar i = 1; i < NUM_WORDS; i++) begin : g_no_cap_latches
+      assign cap[i] = CapWordZeroVal;
+    end
+    logic unused_wcap_a;
+    assign unused_wcap_a = ^wcap_a_i;
+  end
+
   // With dummy instructions enabled, R0 behaves as a real register but will always return 0 for
   // real instructions.
   if (DummyInstructions) begin : g_dummy_r0
@@ -151,11 +187,26 @@ module ibex_register_file_latch #(
     // Output the dummy data for dummy instructions, otherwise R0 reads as zero
     assign mem[0] = dummy_instr_id_i ? mem_r0 : WordZeroVal;
 
+    if (BaseIsa == BaseIsaRV32IorCHERIoT) begin : g_cap_dummy_r0
+      logic [CapWidth-1:0] cap_r0;
+
+      always_latch begin : latch_cap_r0
+        if (r0_clock) begin
+          cap_r0 = wcap_a_q;
+        end
+      end
+
+      assign cap[0] = dummy_instr_id_i ? cap_r0 : CapWordZeroVal;
+    end else begin : g_no_cap_dummy_r0
+      assign cap[0] = CapWordZeroVal;
+    end
+
   end else begin : g_normal_r0
     logic unused_dummy_instr;
     assign unused_dummy_instr = dummy_instr_id_i ^ dummy_instr_wb_i;
 
     assign mem[0] = WordZeroVal;
+    assign cap[0] = CapWordZeroVal;
   end
 
 `ifdef VERILATOR

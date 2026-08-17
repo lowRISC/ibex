@@ -1,9 +1,6 @@
-// Copyright Microsoft Corporation
-// Licensed under the Apache License, Version 2.0, see LICENSE for details.
-// SPDX-License-Identifier: Apache-2.0
-
 // Copyright lowRISC contributors.
 // Copyright 2018 ETH Zurich and University of Bologna, see also CREDITS.md.
+// Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -13,7 +10,8 @@
 
 `include "prim_assert.sv"
 
-module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
+module ibex_cs_registers import ibex_pkg::*, ibex_cheriot_pkg::*; #(
+  parameter base_isa_e              BaseIsa                     = BaseIsaRV32I,
   parameter bit                     DbgTriggerEn                = 0,
   parameter int unsigned            DbgHwBreakNum               = 1,
   parameter bit                     DataIndTiming               = 1'b0,
@@ -34,14 +32,13 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
   // mvendorid: encoding of manufacturer/provider
   parameter logic [31:0]            CsrMvendorId                = 32'b0,
   // mimpid: encoding of processor implementation version
-  parameter logic [31:0]            CsrMimpId                   = 32'b0,
-  parameter bit                     CHERIoTEn                   = 1'b1
+  parameter logic [31:0]            CsrMimpId                   = 32'b0
 ) (
   // Clock and Reset
   input  logic                 clk_i,
   input  logic                 rst_ni,
 
-  input  logic                 cheri_pmode_i,
+  input  ibex_mubi_t           cheriot_enable_i,
   // Hart ID
   input  logic [31:0]          hart_id_i,
 
@@ -60,20 +57,20 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
   input  ibex_pkg::csr_num_e   csr_addr_i,
   input  logic [31:0]          csr_wdata_i,
   input  ibex_pkg::csr_op_e    csr_op_i,
-  input                        csr_op_en_i,
+  input  logic                 csr_op_en_i,
   output logic [31:0]          csr_rdata_o,
 
-  input  logic                 cheri_csr_access_i,
-  input  logic [4:0]           cheri_csr_addr_i,
-  input  logic [31:0]          cheri_csr_wdata_i,
-  input  reg_cap_t             cheri_csr_wcap_i,
-  input  cheri_csr_op_e        cheri_csr_op_i,
-  input  logic                 cheri_csr_op_en_i,
-  input  logic                 cheri_csr_set_mie_i,
-  input  logic                 cheri_csr_clr_mie_i,
+  input  logic                 cheriot_csr_access_i,
+  input  logic [4:0]           cheriot_csr_addr_i,
+  input  logic [31:0]          cheriot_csr_wdata_i,
+  input  cap_t                 cheriot_csr_wcap_i,
+  input  cheriot_csr_op_e      cheriot_csr_op_i,
+  input  logic                 cheriot_csr_op_en_i,
+  input  logic                 cheriot_csr_set_mie_i,
+  input  logic                 cheriot_csr_clr_mie_i,
 
-  output logic [31:0]          cheri_csr_rdata_o,
-  output reg_cap_t             cheri_csr_rcap_o,
+  output logic [31:0]          cheriot_csr_rdata_o,
+  output cap_t                 cheriot_csr_rcap_o,
 
   // stack highwatermark and fast-clearing function
   output logic [31:0]          csr_mshwm_o,
@@ -153,14 +150,14 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
   input  logic                 mul_wait_i,                  // core waiting for multiply
   input  logic                 div_wait_i,                   // core waiting for divide
 
-  input  logic                 cheri_branch_req_i,
-  input  logic [31:0]          cheri_branch_target_i,
-  input  pcc_cap_t             pcc_cap_i,
-  output pcc_cap_t             pcc_cap_o,
+  input  logic                 cheriot_branch_req_i,
+  input  logic [31:0]          cheriot_branch_target_i,
+  input  decoded_cap_t         pcc_cap_i,
+  output decoded_cap_t         pcc_cap_o,
 
   output logic                 csr_dbg_tclr_fault_o,
-  output logic                 cheri_fatal_err_o
-  );
+  output logic                 cheriot_fatal_err_o
+);
 
   // Is a PMP config a locked one that allows M-mode execution when MSECCFG.MML is set (either
   // M mode alone or shared M/U mode execution)?
@@ -181,6 +178,8 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
   // All bitmanip configs enable non-ratified sub-extensions
   localparam int unsigned RV32BExtra   = (RV32B != RV32BNone) ? 1 : 0;
   localparam int unsigned RV32MEnabled = (RV32M == RV32MNone) ? 0 : 1;
+  // X bit: non-standard extensions present (B extra sub-extensions or CHERIoT configured)
+  localparam int unsigned MisaXBit     = RV32BExtra | 32'(BaseIsa == BaseIsaRV32IorCHERIoT);
   localparam int unsigned PMPAddrWidth = (PMPGranularity > 0) ? PMP_ADDR_MSB - PMPGranularity : 32;
   // Base index of the first HPM counter (0=cycle, 1=time, 2=instret)
   localparam int unsigned MHPMCOUNTER_BASE = 3;
@@ -198,7 +197,8 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
     | (0                 << 13)  // N - User level interrupts supported
     | (0                 << 18)  // S - Supervisor mode implemented
     | (1                 << 20)  // U - User mode implemented
-    | ((RV32BExtra | 32'(CHERIoTEn)) << 23)  // X - Non-standard extensions present
+    // X - Non-standard extensions present
+    | (MisaXBit          << 23)
     | (32'(CSR_MISA_MXL) << 30); // M-XLEN
 
   typedef struct packed {
@@ -249,41 +249,41 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
   logic [31:0] exception_pc;
 
   // CSRs
-  priv_lvl_e   priv_lvl_q, priv_lvl_d;
-  status_t     mstatus_q, mstatus_d;
-  logic        mstatus_err;
-  logic        mstatus_en;
-  irqs_t       mie_q, mie_d;
-  logic        mie_en;
-  logic [31:0] mscratch_q;
-  logic        mscratch_en;
-  logic [31:0] mepc_q, mepc_d;
-  logic        mepc_en;
-  exc_cause_t  mcause_q, mcause_d;
-  reg_cap_t    mepc_cap;
-  logic        mcause_en;
-  logic [31:0] mtval_q, mtval_d;
-  logic        mtval_en;
-  logic [31:0] mtvec_q, mtvec_d;
-  reg_cap_t    mtvec_cap;
-  logic        mtvec_err;
-  logic        mtvec_en;
-  irqs_t       mip;
-  dcsr_t       dcsr_q, dcsr_d;
-  logic        dcsr_en;
-  logic [31:0] depc_q, depc_d;
-  logic        depc_en;
-  reg_cap_t    depc_cap;
-  logic [31:0] dscratch0_q;
-  logic [31:0] dscratch1_q;
-  logic        dscratch0_en, dscratch1_en;
-  reg_cap_t    dscratch0_cap, dscratch1_cap;
-  logic [31:0] mshwm_q, mshwm_d;
-  logic [31:0] mshwmb_q;
-  logic        mshwm_en, mshwmb_en;
-  logic [31:0] cdbg_ctrl_q;
-  logic        cdbg_ctrl_en;
-  pcc_cap_t    pcc_cap_q, pcc_cap_d;
+  priv_lvl_e    priv_lvl_q, priv_lvl_d;
+  status_t      mstatus_q, mstatus_d;
+  logic         mstatus_err;
+  logic         mstatus_en;
+  irqs_t        mie_q, mie_d;
+  logic         mie_en;
+  logic [31:0]  mscratch_q;
+  logic         mscratch_en;
+  logic [31:0]  mepc_q, mepc_d;
+  logic         mepc_en;
+  exc_cause_t   mcause_q, mcause_d;
+  cap_t         mepc_cap;
+  logic         mcause_en;
+  logic [31:0]  mtval_q, mtval_d;
+  logic         mtval_en;
+  logic [31:0]  mtvec_q, mtvec_d;
+  cap_t         mtvec_cap;
+  logic         mtvec_err;
+  logic         mtvec_en;
+  irqs_t        mip;
+  dcsr_t        dcsr_q, dcsr_d;
+  logic         dcsr_en;
+  logic [31:0]  depc_q, depc_d;
+  logic         depc_en;
+  cap_t         depc_cap;
+  logic [31:0]  dscratch0_q;
+  logic [31:0]  dscratch1_q;
+  logic         dscratch0_en, dscratch1_en;
+  cap_t         dscratch0_cap, dscratch1_cap;
+  logic [31:0]  mshwm_q, mshwm_d;
+  logic [31:0]  mshwmb_q;
+  logic         mshwm_en, mshwmb_en;
+  logic [31:0]  cdbg_ctrl_q;
+  logic         cdbg_ctrl_en;
+  decoded_cap_t pcc_cap_q, pcc_cap_d;
 
   // CSRs for recoverable NMIs
   // NOTE: these CSRS are nonstandard, see https://github.com/riscv/riscv-isa-manual/issues/261
@@ -354,32 +354,39 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
   logic [7:0]  unused_boot_addr;
   logic [2:0]  unused_csr_addr;
 
-  logic        mepc_en_combi, mepc_en_cheri;
+  logic        mepc_en_combi, mepc_en_cheriot;
   logic [31:0] mepc_d_combi;
 
-  logic        mtvec_en_combi, mtvec_en_cheri;
+  logic        mtvec_en_combi, mtvec_en_cheriot;
   logic [31:0] mtvec_d_combi;
 
-  logic        depc_en_combi, depc_en_cheri;
+  logic        depc_en_combi, depc_en_cheriot;
   logic [31:0] depc_d_combi;
 
-  logic        dscratch0_en_combi, dscratch0_en_cheri;
+  logic        dscratch0_en_combi, dscratch0_en_cheriot;
   logic [31:0] dscratch0_d_combi;
-  logic        dscratch1_en_combi, dscratch1_en_cheri;
+  logic        dscratch1_en_combi, dscratch1_en_cheriot;
   logic [31:0] dscratch1_d_combi;
 
   assign unused_boot_addr = boot_addr_i[7:0];
 
   logic [31:0] misa_value_masked;
 
-  // Set the X, I and E bits dynamically based on cheri_pmode_i.
+  // Set the X, I and E bits dynamically based on cheriot_enable_i.
   // I must always be the complement of E.
   assign misa_value_masked = {MISA_VALUE[31:24],
-                              CHERIoTEn ? cheri_pmode_i : MISA_VALUE[23], // X
+                              // X
+                              (BaseIsa == BaseIsaRV32IorCHERIoT)
+                                ? ((cheriot_enable_i == IbexMuBiOn) || (RV32BExtra != 0)) :
+                                  MISA_VALUE[23],
                               MISA_VALUE[22:9],
-                              CHERIoTEn ? ~cheri_pmode_i : MISA_VALUE[8], // I
+                              // I
+                              (BaseIsa == BaseIsaRV32IorCHERIoT)
+                                ? (cheriot_enable_i != IbexMuBiOn) : MISA_VALUE[8],
                               MISA_VALUE[7:5],
-                              CHERIoTEn ? cheri_pmode_i : MISA_VALUE[4], // E
+                              // E
+                              (BaseIsa == BaseIsaRV32IorCHERIoT)
+                                ? (cheriot_enable_i == IbexMuBiOn) : MISA_VALUE[4],
                               MISA_VALUE[3:0]
                              };
 
@@ -388,12 +395,12 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
   /////////////
 
   logic [$bits(csr_num_e)-1:0] csr_addr;
-  assign csr_addr           = {csr_addr_i};
+  assign csr_addr           = csr_addr_i;
   assign unused_csr_addr    = csr_addr[7:5];
   assign mhpmcounter_idx    = csr_addr[4:0];
 
   assign illegal_csr_dbg    = dbg_csr & ~debug_mode_i;
-  assign illegal_csr_priv   = (csr_addr[9:8] > {priv_lvl_q});
+  assign illegal_csr_priv   = (csr_addr[9:8] > priv_lvl_q);
   assign illegal_csr_write  = (csr_addr[11:10] == 2'b11) && csr_wr;
   assign illegal_csr_insn_o = csr_access_i & (illegal_csr | illegal_csr_write | illegal_csr_priv |
                                               illegal_csr_dbg);
@@ -414,7 +421,9 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
       // mvendorid: encoding of manufacturer/provider
       CSR_MVENDORID: csr_rdata_int = CsrMvendorId;
       // marchid: encoding of base microarchitecture
-      CSR_MARCHID: csr_rdata_int = (CHERIoTEn&cheri_pmode_i) ? CSR_MARCHID_CHERI_VALUE : CSR_MARCHID_VALUE;
+      CSR_MARCHID: csr_rdata_int =
+        ((BaseIsa == BaseIsaRV32IorCHERIoT) & (cheriot_enable_i == IbexMuBiOn))
+          ? CSR_MARCHID_CHERIOT_VALUE : CSR_MARCHID_VALUE;
       // mimpid: encoding of processor implementation version
       CSR_MIMPID: csr_rdata_int = CsrMimpId;
       // mhartid: unique hardware thread id
@@ -456,11 +465,23 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
 
       CSR_MSCRATCH: csr_rdata_int = mscratch_q;
 
-      // mtvec: trap-vector base address
-      CSR_MTVEC: csr_rdata_int = mtvec_q;
+      // mtvec: trap-vector base address (replaced by MTCC in CHERIoT mode)
+      CSR_MTVEC: begin
+        if ((BaseIsa == BaseIsaRV32IorCHERIoT) && (cheriot_enable_i == IbexMuBiOn)) begin
+          illegal_csr = 1'b1;
+        end else begin
+          csr_rdata_int = mtvec_q;
+        end
+      end
 
-      // mepc: exception program counter
-      CSR_MEPC: csr_rdata_int = mepc_q;
+      // mepc: exception program counter (replaced by MEPCC in CHERIoT mode)
+      CSR_MEPC: begin
+        if ((BaseIsa == BaseIsaRV32IorCHERIoT) && (cheriot_enable_i == IbexMuBiOn)) begin
+          illegal_csr = 1'b1;
+        end else begin
+          csr_rdata_int = mepc_q;
+        end
+      end
 
       // mcause: exception cause
       CSR_MCAUSE: csr_rdata_int = {mcause_q.irq_ext | mcause_q.irq_int,
@@ -480,7 +501,8 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
       end
 
       CSR_MSECCFG: begin
-        if (PMPEnable) begin
+        if (PMPEnable &&
+            !((BaseIsa == BaseIsaRV32IorCHERIoT) && (cheriot_enable_i == IbexMuBiOn))) begin
           csr_rdata_int                       = '0;
           csr_rdata_int[CSR_MSECCFG_MML_BIT]  = pmp_mseccfg.mml;
           csr_rdata_int[CSR_MSECCFG_MMWP_BIT] = pmp_mseccfg.mmwp;
@@ -491,7 +513,8 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
       end
 
       CSR_MSECCFGH: begin
-        if (PMPEnable) begin
+        if (PMPEnable &&
+            !((BaseIsa == BaseIsaRV32IorCHERIoT) && (cheriot_enable_i == IbexMuBiOn))) begin
           csr_rdata_int = '0;
         end else begin
           illegal_csr = 1'b1;
@@ -653,24 +676,24 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
 
       // MSHWM CSR (stack high watermark in cheriot)
       CSR_MSHWM:  begin
-        if (cheri_pmode_i) begin
-          csr_rdata_int = cheri_pmode_i ? mshwm_q : 32'h0;
+        if (cheriot_enable_i == IbexMuBiOn) begin
+          csr_rdata_int = mshwm_q;
         end else begin
           illegal_csr = 1'b1;
         end
       end
 
       CSR_MSHWMB: begin
-        if (cheri_pmode_i) begin
-          csr_rdata_int = cheri_pmode_i ? mshwmb_q : 32'h0;
+        if (cheriot_enable_i == IbexMuBiOn) begin
+          csr_rdata_int = mshwmb_q;
         end else begin
           illegal_csr = 1'b1;
         end
       end
 
       CSR_CDBG_CTRL: begin
-        if (cheri_pmode_i) begin
-          csr_rdata_int = cheri_pmode_i ? cdbg_ctrl_q : 32'h0;
+        if (cheriot_enable_i == IbexMuBiOn) begin
+          csr_rdata_int = cdbg_ctrl_q;
         end else begin
           illegal_csr = 1'b1;
         end
@@ -681,7 +704,8 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
       end
     endcase
 
-    if (!PMPEnable) begin
+    if (!PMPEnable ||
+        ((BaseIsa == BaseIsaRV32IorCHERIoT) && (cheriot_enable_i == IbexMuBiOn))) begin
       if (csr_addr inside {CSR_PMPCFG0,   CSR_PMPCFG1,   CSR_PMPCFG2,   CSR_PMPCFG3,
                            CSR_PMPADDR0,  CSR_PMPADDR1,  CSR_PMPADDR2,  CSR_PMPADDR3,
                            CSR_PMPADDR4,  CSR_PMPADDR5,  CSR_PMPADDR6,  CSR_PMPADDR7,
@@ -712,8 +736,11 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
     mtvec_en     = csr_mtvec_init_i;
     // mtvec.MODE set to vectored
     // mtvec.BASE must be 256-byte aligned
-    mtvec_d      = csr_mtvec_init_i ? {boot_addr_i[31:8], 6'b0, 1'b0, ~(CHERIoTEn&cheri_pmode_i)} :
-                                      {csr_wdata_int[31:8], 6'b0, 1'b0, ~(CHERIoTEn&cheri_pmode_i)};
+    mtvec_d      = csr_mtvec_init_i
+      ? {boot_addr_i[31:8], 6'b0, 1'b0,
+         ~((BaseIsa == BaseIsaRV32IorCHERIoT) & (cheriot_enable_i == IbexMuBiOn))}
+      : {csr_wdata_int[31:8], 6'b0, 1'b0,
+         ~((BaseIsa == BaseIsaRV32IorCHERIoT) & (cheriot_enable_i == IbexMuBiOn))};
     dcsr_en      = 1'b0;
     dcsr_d       = dcsr_q;
     depc_d       = {csr_wdata_int[31:1], 1'b0};
@@ -765,7 +792,9 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
         CSR_MSCRATCH: mscratch_en = 1'b1;
 
         // mepc: exception program counter
-        CSR_MEPC: mepc_en = ~CHERIoTEn | ~cheri_pmode_i;   // disabled for pure cap mode (only allow cap writes)
+        // disabled for pure cap mode (only allow cap writes)
+        CSR_MEPC: mepc_en = ~(BaseIsa == BaseIsaRV32IorCHERIoT)
+                            | (cheriot_enable_i != IbexMuBiOn);
 
         // mcause
         CSR_MCAUSE: mcause_en = 1'b1;
@@ -774,7 +803,9 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
         CSR_MTVAL: mtval_en = 1'b1;
 
         // mtvec
-        CSR_MTVEC: mtvec_en = ~CHERIoTEn | ~cheri_pmode_i;  // disabled for pure cap mode (only allow cap writes)
+        // disabled for pure cap mode (only allow cap writes)
+        CSR_MTVEC: mtvec_en = ~(BaseIsa == BaseIsaRV32IorCHERIoT)
+                            | (cheriot_enable_i != IbexMuBiOn);
 
         CSR_DCSR: begin
           dcsr_d = csr_wdata_int;
@@ -844,9 +875,12 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
           cpuctrlsts_part_we = 1'b1;
         end
 
-        CSR_MSHWM:      mshwm_en  = CHERIoTEn & cheri_pmode_i;
-        CSR_MSHWMB:     mshwmb_en = CHERIoTEn & cheri_pmode_i;
-        CSR_CDBG_CTRL:  cdbg_ctrl_en = CHERIoTEn & cheri_pmode_i;
+        CSR_MSHWM:     mshwm_en     = (BaseIsa == BaseIsaRV32IorCHERIoT)
+                                    & (cheriot_enable_i == IbexMuBiOn);
+        CSR_MSHWMB:    mshwmb_en    = (BaseIsa == BaseIsaRV32IorCHERIoT)
+                                    & (cheriot_enable_i == IbexMuBiOn);
+        CSR_CDBG_CTRL: cdbg_ctrl_en = (BaseIsa == BaseIsaRV32IorCHERIoT)
+                                    & (cheriot_enable_i == IbexMuBiOn);
 
         default:;
       endcase
@@ -920,7 +954,6 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
         mstatus_en     = 1'b1;
         mstatus_d.mie  = mstatus_q.mpie; // re-enable interrupts
 
-        // merge in upstream change 9/7/2022  // LEC_NOT_COMPATIBLE
         if (mstatus_q.mpp != PRIV_LVL_M) begin
           mstatus_d.mprv = 1'b0;
         end
@@ -978,18 +1011,17 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
 
   // only write CSRs during one clock cycle
 
-  // enforcing the CHERI CSR access policy.
+  // enforcing the CHERIoT CSR access policy.
   //  - exceptions for ASR violation is generated in the controller.
   //  - we never allow writes to any CSR if ASR=0
   //  - no need to gate csr_rdata for ASR violation since the instruction will be faulted anyway
 
-  // logic read_ok;
-  // assign read_ok = ~CHERIoTEn || ~cheri_pmode_i || debug_mode_i || pcc_cap_q.perms[PERM_SR] ||
-                   // ((csr_addr_i>=CSR_MCYCLE) && (csr_addr_i<=CSR_CDBG_CTRL));
-  assign csr_we_int  = csr_wr & csr_op_en_i & (~CHERIoTEn | ~cheri_pmode_i | debug_mode_i | pcc_cap_q.perms[PERM_SR]) & ~illegal_csr_insn_o;
+  assign csr_we_int  = csr_wr & csr_op_en_i
+    & (~(BaseIsa == BaseIsaRV32IorCHERIoT) | (cheriot_enable_i != IbexMuBiOn)
+       | debug_mode_i | pcc_cap_q.perms.SR)
+    & ~illegal_csr_insn_o;
 
-  //  assign csr_rdata_o = read_ok ? csr_rdata_int : 0;
-   assign csr_rdata_o = csr_rdata_int;
+  assign csr_rdata_o = csr_rdata_int;
 
   // directly output some registers
   assign csr_mepc_o  = mepc_q;
@@ -1026,11 +1058,14 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
   logic    mstatus_en_combi;
   status_t mstatus_d_combi;
 
-  assign mstatus_en_combi = mstatus_en | cheri_csr_clr_mie_i | cheri_csr_set_mie_i;
+  assign mstatus_en_combi = mstatus_en |
+      ((cheriot_enable_i == IbexMuBiOn) & (cheriot_csr_clr_mie_i | cheriot_csr_set_mie_i));
 
   always_comb begin
-   mstatus_d_combi      = mstatus_d;
-   mstatus_d_combi.mie  = (mstatus_d.mie & ~cheri_csr_clr_mie_i) | cheri_csr_set_mie_i;
+    mstatus_d_combi     = mstatus_d;
+    mstatus_d_combi.mie = (mstatus_d.mie
+                          & ~((cheriot_enable_i == IbexMuBiOn) & cheriot_csr_clr_mie_i))
+                          | ((cheriot_enable_i == IbexMuBiOn) & cheriot_csr_set_mie_i);
   end
 
   ibex_csr #(
@@ -1046,8 +1081,8 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
     .rd_error_o(mstatus_err)
   );
 
-  assign mepc_en_combi = mepc_en | mepc_en_cheri;
-  assign mepc_d_combi = ({32{mepc_en}} & mepc_d) | ({32{mepc_en_cheri}} & cheri_csr_wdata_i);
+  assign mepc_en_combi = mepc_en | mepc_en_cheriot;
+  assign mepc_d_combi = ({32{mepc_en}} & mepc_d) | ({32{mepc_en_cheriot}} & cheriot_csr_wdata_i);
 
   // MEPC
   ibex_csr #(
@@ -1124,11 +1159,11 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
   );
 
 
-  assign mtvec_en_combi = mtvec_en | mtvec_en_cheri;
+  assign mtvec_en_combi = mtvec_en | mtvec_en_cheriot;
 
   // use only 2'b00 (direct mode) for CHERIoT
-  assign mtvec_d_combi = ({32{mtvec_en}} & mtvec_d) | ({32{mtvec_en_cheri}} &
-                          {cheri_csr_wdata_i[31:2],2'b00});
+  assign mtvec_d_combi = ({32{mtvec_en}} & mtvec_d) | ({32{mtvec_en_cheriot}} &
+                          {cheriot_csr_wdata_i[31:2], 2'b00});
 
   // MTVEC
   ibex_csr #(
@@ -1164,8 +1199,8 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
     .rd_error_o()
   );
 
-  assign depc_en_combi = depc_en | depc_en_cheri;
-  assign depc_d_combi = ({32{depc_en}} & depc_d) | ({32{depc_en_cheri}} & cheri_csr_wdata_i);
+  assign depc_en_combi = depc_en | depc_en_cheriot;
+  assign depc_d_combi = ({32{depc_en}} & depc_d) | ({32{depc_en_cheriot}} & cheriot_csr_wdata_i);
 
   // DEPC
   ibex_csr #(
@@ -1181,8 +1216,9 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
     .rd_error_o()
   );
 
-  assign dscratch0_en_combi = dscratch0_en | dscratch0_en_cheri;
-  assign dscratch0_d_combi = ({32{dscratch0_en}} & csr_wdata_int) | ({32{dscratch0_en_cheri}} & cheri_csr_wdata_i);
+  assign dscratch0_en_combi = dscratch0_en | dscratch0_en_cheriot;
+  assign dscratch0_d_combi = ({32{dscratch0_en}} & csr_wdata_int) |
+                             ({32{dscratch0_en_cheriot}} & cheriot_csr_wdata_i);
 
   // DSCRATCH0
   ibex_csr #(
@@ -1198,10 +1234,11 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
     .rd_error_o()
   );
 
-  assign dscratch1_en_combi = dscratch1_en | dscratch1_en_cheri;
-  assign dscratch1_d_combi = ({32{dscratch1_en}} & csr_wdata_int) | ({32{dscratch1_en_cheri}} & cheri_csr_wdata_i);
+  assign dscratch1_en_combi = dscratch1_en | dscratch1_en_cheriot;
+  assign dscratch1_d_combi = ({32{dscratch1_en}} & csr_wdata_int) |
+                             ({32{dscratch1_en_cheriot}} & cheriot_csr_wdata_i);
 
-  // DSCRATCH0
+  // DSCRATCH1
   ibex_csr #(
     .Width     (32),
     .ShadowCopy(1'b0),
@@ -1263,11 +1300,11 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
   assign mshwm_en_combi = mshwm_en | csr_mshwm_set_i;
   assign mshwm_d = csr_mshwm_set_i ? csr_mshwm_new_i : {csr_wdata_int[31:4], 4'h0};
 
-  if (CHERIoTEn) begin: g_mshwm
+  if (BaseIsa == BaseIsaRV32IorCHERIoT) begin: g_mshwm
     ibex_csr #(
       .Width     (32),
       .ShadowCopy(ShadowCSR),
-      .ResetValue(32'd0)
+      .ResetValue('0)
     ) u_mshwm_csr (
       .clk_i     (clk_i),
       .rst_ni    (rst_ni),
@@ -1280,7 +1317,7 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
     ibex_csr #(
       .Width     (32),
       .ShadowCopy(ShadowCSR),
-      .ResetValue(32'd0)
+      .ResetValue('0)
     ) u_mshwmb_csr (
       .clk_i     (clk_i),
       .rst_ni    (rst_ni),
@@ -1290,11 +1327,11 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
       .rd_error_o()
       );
 
-    // cheri debug feature control
+    // cheriot debug feature control
     ibex_csr #(
       .Width     (32),
       .ShadowCopy(ShadowCSR),
-      .ResetValue(32'd0)
+      .ResetValue('0)
     ) u_cdbg_ctrl_csr (
       .clk_i     (clk_i),
       .rst_ni    (rst_ni),
@@ -1306,11 +1343,15 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
 
     assign csr_dbg_tclr_fault_o = cdbg_ctrl_q[0];
 
-  end else begin
-    assign mshwm_q  = 32'h0;
-    assign mshwmb_q = 32'h0;
+  end else begin: g_mshwm_tieoff
+    assign mshwm_q    = '0;
+    assign mshwmb_q   = '0;
+    assign cdbg_ctrl_q = '0;
 
     assign csr_dbg_tclr_fault_o = 1'b0;
+
+    logic unused_mshwm_sigs;
+    assign unused_mshwm_sigs = ^{mshwm_d, mshwmb_en, cdbg_ctrl_en, mshwm_en_combi};
   end
 
   // -----------------
@@ -1950,85 +1991,91 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
 
   `ASSERT(IbexCsrOpEnRequiresAccess, csr_op_en_i |-> csr_access_i)
 
+  // CHERIoT isolation: MIE control signals must be 0 when CHERIoT is disabled.
+  `ASSERT_IF(IbexCheriotClrMieDisabled, !cheriot_csr_clr_mie_i, cheriot_enable_i != IbexMuBiOn)
+  `ASSERT_IF(IbexCheriotSetMieDisabled, !cheriot_csr_set_mie_i, cheriot_enable_i != IbexMuBiOn)
+
   //////////////////////
   // Cheriot SCR's
   //////////////////////
 
-  if (CHERIoTEn) begin: gen_scr
-    reg_cap_t     pcc_exc_cap;
-    reg_cap_t     mtdc_cap;
+  if (BaseIsa == BaseIsaRV32IorCHERIoT) begin: gen_scr
+    cap_t         pcc_exc_cap;
+    cap_t         mtdc_cap;
     logic [31:0]  mtdc_data;
-    reg_cap_t     mscratchc_cap;
+    cap_t         mscratchc_cap;
     logic [31:0]  mscratchc_data;  // note this is separate from legacy mscratch
+    cap_t         mstack_epc_cap_q;
 
 
-    logic mtdc_en_cheri, mscratchc_en_cheri;
+    logic mtdc_en_cheriot, mscratchc_en_cheriot;
 
     always_comb begin
-      case (cheri_csr_addr_i)
-        CHERI_SCR_DEPCC:
+      unique case (cheriot_csr_addr_i)
+        CHERIOT_SCR_DEPCC:
           begin
-            cheri_csr_rdata_o = debug_mode_i ? depc_q : 0;
-            cheri_csr_rcap_o  = debug_mode_i ? depc_cap : NULL_REG_CAP;
+            cheriot_csr_rdata_o = debug_mode_i ? depc_q : '0;
+            cheriot_csr_rcap_o  = debug_mode_i ? depc_cap : NULL_CAP;
           end
-        CHERI_SCR_DSCRATCHC0:
+        CHERIOT_SCR_DSCRATCHC0:
           begin
-            cheri_csr_rdata_o = debug_mode_i ? dscratch0_q : 0;
-            cheri_csr_rcap_o  = debug_mode_i ? dscratch0_cap : NULL_REG_CAP;
+            cheriot_csr_rdata_o = debug_mode_i ? dscratch0_q : '0;
+            cheriot_csr_rcap_o  = debug_mode_i ? dscratch0_cap : NULL_CAP;
           end
-        CHERI_SCR_DSCRATCHC1:
+        CHERIOT_SCR_DSCRATCHC1:
           begin
-            cheri_csr_rdata_o = debug_mode_i ? dscratch1_q : 0;
-            cheri_csr_rcap_o  = debug_mode_i ? dscratch1_cap : NULL_REG_CAP;
+            cheriot_csr_rdata_o = debug_mode_i ? dscratch1_q : '0;
+            cheriot_csr_rcap_o  = debug_mode_i ? dscratch1_cap : NULL_CAP;
           end
-        CHERI_SCR_MTCC:
+        CHERIOT_SCR_MTCC:
           begin
-            cheri_csr_rdata_o = mtvec_q;
-            cheri_csr_rcap_o  = mtvec_cap;
+            cheriot_csr_rdata_o = mtvec_q;
+            cheriot_csr_rcap_o  = mtvec_cap;
           end
-        CHERI_SCR_MTDC:
+        CHERIOT_SCR_MTDC:
           begin
-            cheri_csr_rdata_o = mtdc_data;
-            cheri_csr_rcap_o  = mtdc_cap;
+            cheriot_csr_rdata_o = mtdc_data;
+            cheriot_csr_rcap_o  = mtdc_cap;
           end
-        CHERI_SCR_MSCRATCHC:
+        CHERIOT_SCR_MSCRATCHC:
           begin
-            cheri_csr_rdata_o = mscratchc_data;
-            cheri_csr_rcap_o  = mscratchc_cap;
+            cheriot_csr_rdata_o = mscratchc_data;
+            cheriot_csr_rcap_o  = mscratchc_cap;
           end
-        CHERI_SCR_MEPCC:
+        CHERIOT_SCR_MEPCC:
           begin
-            cheri_csr_rdata_o = mepc_q;
-            cheri_csr_rcap_o  = mepc_cap;
+            cheriot_csr_rdata_o = mepc_q;
+            cheriot_csr_rcap_o  = mepc_cap;
           end
         default:
           begin
-            cheri_csr_rdata_o = 32'h0;
-            cheri_csr_rcap_o  = NULL_REG_CAP;
+            cheriot_csr_rdata_o = 32'h0;
+            cheriot_csr_rcap_o  = NULL_CAP;
           end
       endcase
     end
 
     assign pcc_cap_o = pcc_cap_q;
 
-    assign pcc_exc_cap = pcc2mepcc(pcc_cap_q, exception_pc, csr_mepcc_clrtag_i);
+    assign pcc_exc_cap = cheriot_pcc_to_mepc(pcc_cap_q, exception_pc, csr_mepcc_clrtag_i);
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
-        pcc_cap_q  <= PCC_RESET_CAP;
-      end else begin
+        pcc_cap_q  <= ROOT_DECODED_CAP_TX;
+      end else if (cheriot_enable_i == IbexMuBiOn) begin
         pcc_cap_q  <= pcc_cap_d;
       end
     end
+
+    decoded_cap_t   tf_cap;
+    cap_t           tr_cap;
+    logic [31:0]    tr_addr;
 
     // PCC updating
     //  -- PC address range checking is always against the pcc_cap, which is only updated with
     //     CHER CJALR or exceptions. Legacy RV32 jumps/branches can change PC but not the PCC
     //     bounds/perms, so they are still limited by the orginal bounds in IF stage checking
     always_comb begin
-      full_cap_t   tf_cap;
-      reg_cap_t    tr_cap;
-      logic [31:0] tr_addr;
 
       if (csr_save_cause_i) begin              // Exception cases
         tr_cap  = mtvec_cap;
@@ -2040,16 +2087,16 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
         tr_cap  = depc_cap;
         tr_addr = depc_q;
       end else begin
-        tr_cap  = NULL_REG_CAP;
+        tr_cap  = NULL_CAP;
         tr_addr = 32'h0;
       end
 
-      tf_cap = reg2fullcap(tr_cap, tr_addr);
+      tf_cap = cheriot_decode_cap(tr_cap, tr_addr);
 
       // Exception cases
       if (csr_save_cause_i | csr_restore_mret_i | (csr_restore_dret_i & debug_mode_i)) begin
-        pcc_cap_d = full2pcap(tf_cap);
-      end else if (cheri_branch_req_i) begin
+        pcc_cap_d = tf_cap;
+      end else if (cheriot_branch_req_i) begin
         pcc_cap_d = pcc_cap_i;
       end else begin
         pcc_cap_d = pcc_cap_q;
@@ -2057,114 +2104,158 @@ module ibex_cs_registers import ibex_pkg::*, cheri_pkg::*; #(
     end
 
     // mtvec extended capability
-    assign mtvec_en_cheri = cheri_csr_op_en_i && (cheri_csr_addr_i == CHERI_SCR_MTCC) && (cheri_csr_op_i == CHERI_CSR_RW);
-
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-      if (!rst_ni)
-        mtvec_cap <= MTVEC_RESET_CAP;
-      else if (mtvec_en_cheri)
-        mtvec_cap <= cheri_csr_wcap_i;
-    end
-
-    // mepc extended capability
-    assign mepc_en_cheri = cheri_csr_op_en_i && (cheri_csr_addr_i == CHERI_SCR_MEPCC) && (cheri_csr_op_i == CHERI_CSR_RW);
-
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-      if (!rst_ni)
-        mepc_cap <= MEPC_RESET_CAP;
-      else if (csr_save_cause_i & (~debug_csr_save_i) & (~debug_mode_i))
-        mepc_cap <= pcc_exc_cap;
-      else if (cheri_pmode_i & mepc_en)            // legacy cssrw; NMI recover
-        mepc_cap <= NULL_REG_CAP;
-      else if (mepc_en_cheri)
-        mepc_cap <= cheri_csr_wcap_i;
-    end
-
-    // MTDC capability
-    assign mtdc_en_cheri = cheri_csr_op_en_i && (cheri_csr_addr_i == CHERI_SCR_MTDC) && (cheri_csr_op_i == CHERI_CSR_RW);
+    assign mtvec_en_cheriot = cheriot_csr_op_en_i &&
+                              (cheriot_csr_addr_i == CHERIOT_SCR_MTCC) &&
+                              (cheriot_csr_op_i == CHERIOT_CSR_RW);
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
-        mtdc_cap  <= MTDC_RESET_CAP;
+        mtvec_cap <= ROOT_CAP_TX;
+      end else if (mtvec_en_cheriot) begin
+        mtvec_cap <= cheriot_csr_wcap_i;
+      end
+    end
+
+    // mepc extended capability
+    assign mepc_en_cheriot = cheriot_csr_op_en_i &&
+                             (cheriot_csr_addr_i == CHERIOT_SCR_MEPCC) &&
+                             (cheriot_csr_op_i == CHERIOT_CSR_RW);
+
+    // Shadow capability for the mstack EPC so NMI return can restore a tagged mepc_cap.
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        mstack_epc_cap_q <= NULL_CAP;
+      end else if (mstack_en) begin
+        mstack_epc_cap_q <= mepc_cap;
+      end
+    end
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        mepc_cap <= ROOT_CAP_TX;
+      end else if ((cheriot_enable_i == IbexMuBiOn) && csr_save_cause_i && ~debug_csr_save_i &&
+                   ~debug_mode_i) begin
+        mepc_cap <= pcc_exc_cap;
+      end else if ((cheriot_enable_i == IbexMuBiOn) && csr_restore_mret_i && nmi_mode_i) begin
+        // Restore the full capability saved before the NMI.
+        mepc_cap <= mstack_epc_cap_q;
+      end else if (mepc_en_cheriot) begin
+        mepc_cap <= cheriot_csr_wcap_i;
+      end
+    end
+
+    // MTDC capability
+    assign mtdc_en_cheriot = cheriot_csr_op_en_i &&
+                           (cheriot_csr_addr_i == CHERIOT_SCR_MTDC) &&
+                           (cheriot_csr_op_i == CHERIOT_CSR_RW);
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        mtdc_cap  <= ROOT_CAP_TM;
         mtdc_data <= 32'h0;
-      end else if (mtdc_en_cheri) begin
-        mtdc_cap  <= cheri_csr_wcap_i;
-        mtdc_data <= cheri_csr_wdata_i;
+      end else if (mtdc_en_cheriot) begin
+        mtdc_cap  <= cheriot_csr_wcap_i;
+        mtdc_data <= cheriot_csr_wdata_i;
       end
     end
 
     // MSCRATCHC capability
-    assign mscratchc_en_cheri = cheri_csr_op_en_i && (cheri_csr_addr_i == CHERI_SCR_MSCRATCHC) && (cheri_csr_op_i == CHERI_CSR_RW);
+    assign mscratchc_en_cheriot = cheriot_csr_op_en_i &&
+                                (cheriot_csr_addr_i == CHERIOT_SCR_MSCRATCHC) &&
+                                (cheriot_csr_op_i == CHERIOT_CSR_RW);
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
-        mscratchc_cap  <= MSCRATCHC_RESET_CAP;
+        mscratchc_cap  <= ROOT_CAP_TS;
         mscratchc_data <= 32'h0;
-      end else if (mscratchc_en_cheri) begin
-        mscratchc_cap  <= cheri_csr_wcap_i;
-        mscratchc_data <= cheri_csr_wdata_i;
+      end else if (mscratchc_en_cheriot) begin
+        mscratchc_cap  <= cheriot_csr_wcap_i;
+        mscratchc_data <= cheriot_csr_wdata_i;
       end
     end
 
     // depc extended capability
-    assign depc_en_cheri = debug_mode_i & cheri_csr_op_en_i && (cheri_csr_addr_i == CHERI_SCR_DEPCC) && (cheri_csr_op_i == CHERI_CSR_RW);
-
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-      if (!rst_ni)
-        depc_cap <= NULL_REG_CAP;
-      else if (csr_save_cause_i & debug_csr_save_i)
-        depc_cap <= pcc_exc_cap;
-      else if (depc_en_cheri)
-        depc_cap <= cheri_csr_wcap_i;
-    end
-
-    // dscratch0/1 extended capability
-    assign dscratch0_en_cheri = debug_mode_i & cheri_csr_op_en_i && (cheri_csr_addr_i == CHERI_SCR_DSCRATCHC0) && (cheri_csr_op_i == CHERI_CSR_RW);
-    assign dscratch1_en_cheri = debug_mode_i & cheri_csr_op_en_i && (cheri_csr_addr_i == CHERI_SCR_DSCRATCHC1) && (cheri_csr_op_i == CHERI_CSR_RW);
+    assign depc_en_cheriot = debug_mode_i & cheriot_csr_op_en_i &&
+                           (cheriot_csr_addr_i == CHERIOT_SCR_DEPCC) &&
+                           (cheriot_csr_op_i == CHERIOT_CSR_RW);
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
-        dscratch0_cap <= NULL_REG_CAP;
-        dscratch1_cap <= NULL_REG_CAP;
-      end else if (dscratch0_en_cheri)
-        dscratch0_cap <= cheri_csr_wcap_i;
-      else if (dscratch1_en_cheri)
-        dscratch1_cap <= cheri_csr_wcap_i;
+        depc_cap <= NULL_CAP;
+      end else if ((cheriot_enable_i == IbexMuBiOn) && csr_save_cause_i & debug_csr_save_i) begin
+        depc_cap <= pcc_exc_cap;
+      end else if (depc_en_cheriot) begin
+        depc_cap <= cheriot_csr_wcap_i;
+      end
+    end
 
+    // dscratch0/1 extended capability
+    assign dscratch0_en_cheriot = debug_mode_i & cheriot_csr_op_en_i &&
+                                (cheriot_csr_addr_i == CHERIOT_SCR_DSCRATCHC0) &&
+                                (cheriot_csr_op_i == CHERIOT_CSR_RW);
+    assign dscratch1_en_cheriot = debug_mode_i & cheriot_csr_op_en_i &&
+                                (cheriot_csr_addr_i == CHERIOT_SCR_DSCRATCHC1) &&
+                                (cheriot_csr_op_i == CHERIOT_CSR_RW);
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        dscratch0_cap <= NULL_CAP;
+        dscratch1_cap <= NULL_CAP;
+      end else if (dscratch0_en_cheriot) begin
+        dscratch0_cap <= cheriot_csr_wcap_i;
+      end else if (dscratch1_en_cheriot) begin
+        dscratch1_cap <= cheriot_csr_wcap_i;
+      end
     end
 
     // fatal error condition (unrecoverable, need external reset)
     // exception with invalid mepcc
-    logic cheri_fatal_err_q;
+    logic cheriot_fatal_err_q;
 
-    assign cheri_fatal_err_o = cheri_fatal_err_q;
+    assign cheriot_fatal_err_o = cheriot_fatal_err_q;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
-        cheri_fatal_err_q <= 1'b0;
+        cheriot_fatal_err_q <= 1'b0;
       end else begin
-        if (cheri_pmode_i & csr_save_cause_i & ~mtvec_cap.valid)
-          cheri_fatal_err_q <= 1'b1;
+        if ((cheriot_enable_i == IbexMuBiOn) && csr_save_cause_i && ~mtvec_cap.valid)
+          cheriot_fatal_err_q <= 1'b1;
       end
     end
 
 
   end else begin: gen_no_scr
 
-    assign cheri_csr_rdata_o = 32'h0;
-    assign cheri_csr_rcap_o  = NULL_REG_CAP;
+    assign cheriot_csr_rdata_o = 32'h0;
+    assign cheriot_csr_rcap_o  = NULL_CAP;
 
-    assign pcc_cap_o         = NULL_PCC_CAP;
-    assign pcc_cap_q         = NULL_PCC_CAP;
+    assign pcc_cap_o  = NULL_DECODED_CAP;
+    assign pcc_cap_q  = NULL_DECODED_CAP;
+    assign pcc_cap_d  = NULL_DECODED_CAP;
 
-    assign mtvec_en_cheri      = 1'b0;
-    assign mepc_en_cheri       = 1'b0;
-    assign depc_en_cheri       = 1'b0;
-    assign dscratch0_en_cheri  = 1'b0;
-    assign dscratch1_en_cheri  = 1'b0;
+    assign mepc_cap      = NULL_CAP;
+    assign mtvec_cap     = NULL_CAP;
+    assign depc_cap      = NULL_CAP;
+    assign dscratch0_cap = NULL_CAP;
+    assign dscratch1_cap = NULL_CAP;
 
-    assign cheri_fatal_err_o   = 1'b0;
+    assign mtvec_en_cheriot      = 1'b0;
+    assign mepc_en_cheriot       = 1'b0;
+    assign depc_en_cheriot       = 1'b0;
+    assign dscratch0_en_cheriot  = 1'b0;
+    assign dscratch1_en_cheriot  = 1'b0;
 
+    assign cheriot_fatal_err_o   = 1'b0;
+
+    logic unused_cheriot_scr_sigs;
+    assign unused_cheriot_scr_sigs = (^cheriot_csr_addr_i) | (^cheriot_csr_op_i) |
+                                     cheriot_csr_op_en_i | (^cheriot_csr_wcap_i) |
+                                     csr_mepcc_clrtag_i | cheriot_branch_req_i | (^pcc_cap_i) |
+                                     (^mepc_cap) | (^mtvec_cap) | (^depc_cap) | (^dscratch0_cap) |
+                                     (^dscratch1_cap) | (^pcc_cap_d) | (^pcc_cap_q);
   end
+
+  logic unused_cheriot_csr_inputs;
+  assign unused_cheriot_csr_inputs = ^{cheriot_csr_access_i, cheriot_branch_target_i};
 
 endmodule

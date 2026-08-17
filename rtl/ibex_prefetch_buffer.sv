@@ -27,7 +27,7 @@ module ibex_prefetch_buffer #(
   output logic        err_o,
   output logic        err_plus2_o,
 
-  input  logic        cheri_force_uc_i,
+  input  logic        cheriot_force_uc_i,
 
   // goes to instruction memory / instruction cache
   output logic        instr_req_o,
@@ -91,24 +91,24 @@ module ibex_prefetch_buffer #(
     .NUM_REQS (NUM_REQS),
     .ResetAll (ResetAll)
   ) fifo_i (
-      .clk_i                 ( clk_i             ),
-      .rst_ni                ( rst_ni            ),
+      .clk_i                 ( clk_i              ),
+      .rst_ni                ( rst_ni             ),
 
-      .clear_i               ( fifo_clear        ),
-      .busy_o                ( fifo_busy         ),
+      .clear_i               ( fifo_clear         ),
+      .busy_o                ( fifo_busy          ),
 
-      .in_valid_i            ( fifo_valid        ),
-      .in_addr_i             ( fifo_addr         ),
-      .in_rdata_i            ( instr_rdata_i     ),
-      .in_err_i              ( instr_err_i       ),
-      .cheri_force_uc_i      ( cheri_force_uc_i  ),
+      .in_valid_i            ( fifo_valid         ),
+      .in_addr_i             ( fifo_addr          ),
+      .in_rdata_i            ( instr_rdata_i      ),
+      .in_err_i              ( instr_err_i        ),
+      .cheriot_force_uc_i    ( cheriot_force_uc_i ),
 
-      .out_valid_o           ( valid_o           ),
-      .out_ready_i           ( ready_i           ),
-      .out_rdata_o           ( rdata_o           ),
-      .out_addr_o            ( addr_o            ),
-      .out_err_o             ( err_o             ),
-      .out_err_plus2_o       ( err_plus2_o       )
+      .out_valid_o           ( valid_o            ),
+      .out_ready_i           ( ready_i            ),
+      .out_rdata_o           ( rdata_o            ),
+      .out_addr_o            ( addr_o             ),
+      .out_err_o             ( err_o              ),
+      .out_err_plus2_o       ( err_plus2_o        )
   );
 
   //////////////

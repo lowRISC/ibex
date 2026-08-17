@@ -26,6 +26,10 @@
   `define INSTR_CYCLE_DELAY 0
 `endif
 
+`ifndef BASE_ISA
+  `define BASE_ISA ibex_pkg::BaseIsaRV32IorCHERIoT
+`endif
+
 /**
  * Ibex simple system
  *
@@ -56,6 +60,7 @@ module ibex_simple_system (
   parameter ibex_pkg::rv32b_e   RV32B                    = `RV32B;
   parameter ibex_pkg::rv32zc_e  RV32ZC                   = `RV32ZC;
   parameter ibex_pkg::regfile_e RegFile                  = `RegFile;
+  parameter ibex_pkg::base_isa_e BaseIsa                 = `BASE_ISA;
   parameter bit                 BranchTargetALU          = 1'b0;
   parameter bit                 WritebackStage           = 1'b0;
   parameter bit                 ICache                   = 1'b0;
@@ -201,6 +206,7 @@ module ibex_simple_system (
   end
 
   ibex_top_tracing #(
+      .BaseIsa              ( BaseIsa              ),
       .SecureIbex           ( SecureIbex           ),
       .LockstepOffset       ( LockstepOffset       ),
       .ICacheScramble       ( ICacheScramble       ),
@@ -304,7 +310,9 @@ module ibex_simple_system (
       .data_wdata_intg_shadow_o  (),
 
       .instr_req_shadow_o        (),
-      .instr_addr_shadow_o       ()
+      .instr_addr_shadow_o       (),
+
+      .cheriot_enable_i          (ibex_pkg::IbexMuBiOff)
     );
 
   // SRAM block for instruction and data storage

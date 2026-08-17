@@ -1,9 +1,6 @@
-// Copyright Microsoft Corporation
-// Licensed under the Apache License, Version 2.0, see LICENSE for details.
-// SPDX-License-Identifier: Apache-2.0
-
 // Copyright lowRISC contributors.
 // Copyright 2017 ETH Zurich and University of Bologna, see also CREDITS.md.
+// Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -350,8 +347,8 @@ package ibex_tracer_pkg;
   parameter logic [15:0] INSN_CEBREAK    = { 3'b100, 1'b1,        5'h0,  5'h0,       {OPCODE_C2} };
   parameter logic [15:0] INSN_CJR        = { 3'b100, 1'b0,        5'h0,  5'h0,       {OPCODE_C2} };
   parameter logic [15:0] INSN_CJALR      = { 3'b100, 1'b1,        5'h?,  5'h0,       {OPCODE_C2} };
-  parameter logic [15:0] INSN_CCLCSP     = { 3'b011,       11'h?,                    {OPCODE_C2} };  // FLWSP
-  parameter logic [15:0] INSN_CCSCSP     = { 3'b111,       11'h?,                    {OPCODE_C2} };  // FSWSP
+  parameter logic [15:0] INSN_CCLCSP     = { 3'b011,       11'h?,           {OPCODE_C2} };  // FLWSP
+  parameter logic [15:0] INSN_CCSCSP     = { 3'b111,       11'h?,           {OPCODE_C2} };  // FSWSP
   // Zc extension C2
   parameter logic [15:0] INSN_CMPUSH     = { 3'b101, 3'b110, 2'b00, 4'h?, 2'b?,      {OPCODE_C2} };
   parameter logic [15:0] INSN_CMPOP      = { 3'b101, 3'b110, 2'b10, 4'h?, 2'b?,      {OPCODE_C2} };
@@ -360,40 +357,40 @@ package ibex_tracer_pkg;
   parameter logic [15:0] INSN_CMMVSA01   = { 3'b101, 3'b011, 3'h?, 2'b01, 3'h?,      {OPCODE_C2} };
   parameter logic [15:0] INSN_CMMVA01S   = { 3'b101, 3'b011, 3'h?, 2'b11, 3'h?,      {OPCODE_C2} };
 
-  // 32-bit CHERI instructions
-  parameter logic [31:0] INSN_CHGETPERM    = {7'h7f, 5'h0, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHGETTYPE    = {7'h7f, 5'h1, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHGETBASE    = {7'h7f, 5'h2, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHGETHIGH    = {7'h7f, 5'h17, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHGETTOP     = {7'h7f, 5'h18, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHGETLEN     = {7'h7f, 5'h3, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHGETTAG     = {7'h7f, 5'h4, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHGETSEALED  = {7'h7f, 5'h5, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHGETADDR    = {7'h7f, 5'hf, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  // 32-bit CHERIoT instructions
+  parameter logic [31:0] INSN_CHGETPERM    = { 7'h7f, 5'h0, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHGETTYPE    = { 7'h7f, 5'h1, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHGETBASE    = { 7'h7f, 5'h2, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHGETHIGH    = { 7'h7f, 5'h17, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHGETTOP     = { 7'h7f, 5'h18, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHGETLEN     = { 7'h7f, 5'h3, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHGETTAG     = { 7'h7f, 5'h4, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHGETSEALED  = { 7'h7f, 5'h5, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHGETADDR    = { 7'h7f, 5'hf, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
 
-  parameter logic [31:0] INSN_CHSEAL          = {7'h0b, 10'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHUNSEAL        = {7'h0c, 10'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHANDPERM       = {7'h0d, 10'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHSETADDR       = {7'h10, 10'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHINCADDR       = {7'h11, 10'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHINCADDRIMM    = {12'h?, 5'h?,  3'b001, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHSETBOUNDS     = {7'h08, 10'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHSETBOUNDSEX   = {7'h09, 10'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHSETBOUNDSRNDN = {7'h0a, 10'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHSETBOUNDSIMM  = {12'h?, 5'h?,  3'b010, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHCLEARTAG      = {7'h7f, 5'hb, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHCRRL          = {7'h7f, 5'h8, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHCRAM          = {7'h7f, 5'h9, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHSEAL          = { 7'h0b, 10'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHUNSEAL        = { 7'h0c, 10'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHANDPERM       = { 7'h0d, 10'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHSETADDR       = { 7'h10, 10'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHINCADDR       = { 7'h11, 10'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHINCADDRIMM    = { 12'h?, 5'h?,  3'b001, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHSETBOUNDS     = { 7'h08, 10'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHSETBOUNDSEX   = { 7'h09, 10'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHSETBOUNDSRNDN = { 7'h0a, 10'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHSETBOUNDSIMM  = { 12'h?, 5'h?,  3'b010, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHCLEARTAG      = { 7'h7f, 5'hb, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHCRRL          = { 7'h7f, 5'h8, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHCRAM          = { 7'h7f, 5'h9, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
 
-  parameter logic [31:0] INSN_CHSUB      = {7'h14, 5'h?, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHMOVE     = {7'h7f, 5'ha, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHTESTSUB  = {7'h20, 5'h?, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHSETEQUAL = {7'h21, 5'h?, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
-  parameter logic [31:0] INSN_CHSETHIGH  = {7'h16, 5'h?, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHSUB      = { 7'h14, 5'h?, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHMOVE     = { 7'h7f, 5'ha, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHTESTSUB  = { 7'h20, 5'h?, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHSETEQUAL = { 7'h21, 5'h?, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHSETHIGH  = { 7'h16, 5'h?, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
 
-  parameter logic [31:0] INSN_CHJALR   = {7'h7f, 5'hc, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHJALR   = { 7'h7f, 5'hc, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
 
-  parameter logic [31:0] INSN_CHCSRRW = {7'h01, 5'h?, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
+  parameter logic [31:0] INSN_CHCSRRW = { 7'h01, 5'h?, 5'h?, 3'b000, 5'h?, {OPCODE_CHERI} };
   parameter logic [31:0] INSN_AUICGP  = { 25'h?,                          {OPCODE_AUICGP} };
 
 endpackage

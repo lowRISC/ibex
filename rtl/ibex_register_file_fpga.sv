@@ -11,11 +11,15 @@
  * This register file is designed to make FPGA synthesis tools infer RAM primitives. For Xilinx
  * FPGA architectures, it will produce RAM32M primitives. Other vendors have not yet been tested.
  */
-module ibex_register_file_fpga #(
+module ibex_register_file_fpga import ibex_pkg::*; #(
+    parameter base_isa_e            BaseIsa           = BaseIsaRV32I,
     parameter bit                   RV32E             = 0,
     parameter int unsigned          DataWidth         = 32,
     parameter bit                   DummyInstructions = 0,
-    parameter logic [DataWidth-1:0] WordZeroVal       = '0
+    parameter logic [DataWidth-1:0] WordZeroVal       = '0,
+    // Capability port width
+    parameter int unsigned          CapWidth          = ibex_cheriot_pkg::REGCAP_W,
+    parameter logic [CapWidth-1:0]  CapWordZeroVal    = '0
 ) (
   // Clock and Reset
   input  logic                 clk_i,
@@ -28,12 +32,15 @@ module ibex_register_file_fpga #(
   //Read port R1
   input  logic [          4:0] raddr_a_i,
   output logic [DataWidth-1:0] rdata_a_o,
+  output logic [ CapWidth-1:0] rcap_a_o,
   //Read port R2
   input  logic [          4:0] raddr_b_i,
   output logic [DataWidth-1:0] rdata_b_o,
+  output logic [ CapWidth-1:0] rcap_b_o,
   // Write port W1
   input  logic [          4:0] waddr_a_i,
   input  logic [DataWidth-1:0] wdata_a_i,
+  input  logic [ CapWidth-1:0] wcap_a_i,
   input  logic                 we_a_i
 );
 
@@ -41,6 +48,7 @@ module ibex_register_file_fpga #(
   localparam int NUM_WORDS = 2 ** ADDR_WIDTH;
 
   logic [DataWidth-1:0] mem[NUM_WORDS];
+  logic [CapWidth-1:0]  cap[NUM_WORDS];
   logic we; // write enable if writing to any register other than R0
 
   logic [DataWidth-1:0] mem_o_a, mem_o_b;
@@ -67,6 +75,28 @@ module ibex_register_file_fpga #(
     for (int k = 0; k < NUM_WORDS; k++) begin
       mem[k] = WordZeroVal;
     end
+  end
+
+  if (BaseIsa == BaseIsaRV32IorCHERIoT) begin : g_cap_sync_write
+    always @(posedge clk_i) begin : sync_cap_write
+      if (we == 1'b1) begin
+        cap[waddr_a_i] <= wcap_a_i;
+      end
+    end : sync_cap_write
+
+    initial begin
+      for (int k = 0; k < NUM_WORDS; k++) begin
+        cap[k] = CapWordZeroVal;
+      end
+    end
+
+    assign rcap_a_o = (raddr_a_i == '0) ? CapWordZeroVal : cap[raddr_a_i];
+    assign rcap_b_o = (raddr_b_i == '0) ? CapWordZeroVal : cap[raddr_b_i];
+  end else begin : g_no_cap_sync_write
+    assign rcap_a_o = CapWordZeroVal;
+    assign rcap_b_o = CapWordZeroVal;
+    logic unused_wcap_a;
+    assign unused_wcap_a = ^wcap_a_i;
   end
 
   // Reset not used in this register file version

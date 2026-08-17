@@ -29,7 +29,8 @@ module ibex_fetch_fifo #(
   input  logic [31:0]         in_rdata_i,
   input  logic                in_err_i,
 
-  input  logic                cheri_force_uc_i,  // force unaligned compressed based on CHERI bounds check
+  // force unaligned compressed based on CHERIoT bounds check
+  input  logic                cheriot_force_uc_i,
 
   // output port
   output logic                out_valid_o,
@@ -116,13 +117,14 @@ module ibex_fetch_fifo #(
   //   16-bit instruction: instr_rdata_dii[15:0] = compressed instruction
   //                       instr_rdata_dii[31:0] = don't care
 
-  assign unaligned_is_compressed = out_addr_o[1] & cheri_force_uc_i | ((instr_rdata_dii[1:0] != 2'b11) & ~err);
+  assign unaligned_is_compressed = out_addr_o[1] & cheriot_force_uc_i
+                                 | ((instr_rdata_dii[1:0] != 2'b11) & ~err);
   assign aligned_is_compressed   = ~out_addr_o[1] & (instr_rdata_dii[1:0] != 2'b11) & ~err;
 
   assign instr_ack = out_ready_i & out_valid_o;
   assign instr_pc  = out_addr_o;
 `else
-  assign unaligned_is_compressed = cheri_force_uc_i | ((rdata[17:16] != 2'b11) & ~err);
+  assign unaligned_is_compressed = cheriot_force_uc_i | ((rdata[17:16] != 2'b11) & ~err);
   assign aligned_is_compressed   = (rdata[ 1: 0] != 2'b11) & ~err;
 `endif
 

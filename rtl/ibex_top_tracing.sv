@@ -1,8 +1,5 @@
-// Copyright Microsoft Corporation
-// Licensed under the Apache License, Version 2.0, see LICENSE for details.
-// SPDX-License-Identifier: Apache-2.0
-
 // Copyright lowRISC contributors.
+// Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -10,50 +7,39 @@
  * Top level module of the ibex RISC-V core with tracing enabled
  */
 
-module ibex_top_tracing import ibex_pkg::*; import cheri_pkg::*; #(
-  parameter base_isa_e   BaseIsa              = BaseIsaRV32I,
-  parameter bit          PMPEnable            = 1'b0,
-  parameter int unsigned PMPGranularity       = 0,
-  parameter int unsigned PMPNumRegions        = 4,
-  parameter int unsigned MHPMCounterNum       = 0,
-  parameter int unsigned MHPMCounterWidth     = 40,
-  parameter bit          RV32E                = 1'b0,
-  parameter rv32m_e      RV32M                = RV32MFast,
-  parameter rv32b_e      RV32B                = RV32BNone,
-  parameter rv32zc_e     RV32ZC               = RV32ZcaZcbZcmp,
-  parameter regfile_e    RegFile              = RegFileFF,
-  parameter bit          BranchTargetALU      = 1'b0,
-  parameter bit          WritebackStage       = 1'b0,
-  parameter bit          ICache               = 1'b0,
-  parameter bit          ICacheECC            = 1'b0,
-  parameter bit          ICacheTweakInfection = 1'b0,
-  parameter bit          BranchPredictor      = 1'b0,
-  parameter bit          DbgTriggerEn         = 1'b0,
-  parameter int unsigned DbgHwBreakNum        = 1,
-  parameter bit          SecureIbex           = 1'b0,
-  parameter int unsigned LockstepOffset       = 1,
-  parameter bit          MemECC               = SecureIbex,
-  parameter int unsigned MemDataWidth         = MemECC ? 32 + 7 : 32,
-  parameter bit          ICacheScramble       = 1'b0,
-  parameter lfsr_seed_t  RndCnstLfsrSeed      = RndCnstLfsrSeedDefault,
-  parameter lfsr_perm_t  RndCnstLfsrPerm      = RndCnstLfsrPermDefault,
-  parameter int unsigned DmBaseAddr           = 32'h1A110000,
-  parameter int unsigned DmAddrMask           = 32'h00000FFF,
-  parameter int unsigned DmHaltAddr           = 32'h1A110800,
-  parameter int unsigned DmExceptionAddr      = 32'h1A110808,
-  parameter bit          CHERIoTEn            = 1'b1,
-  parameter int unsigned DataWidth            = 33,
-  parameter int unsigned HeapBase             = 32'h2001_0000,
-  parameter int unsigned TSMapBase            = 32'h2004_0000, // 4kB default
-  parameter int unsigned TSMapSize            = 1024,
-  parameter bit          MemCapFmt            = 1'b0,
-  parameter bit          CheriPPLBC           = 1'b1,
-  parameter bit          CheriSBND2           = 1'b0,
-  parameter bit          CheriTBRE            = 1'b1,
-  parameter bit          CheriStkZ            = 1'b1,
-  parameter bit          CheriCapIT8          = 1'b0,
-  parameter int unsigned MMRegDinW            = 128,
-  parameter int unsigned MMRegDoutW           = 64
+module ibex_top_tracing import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
+  parameter base_isa_e   BaseIsa                   = BaseIsaRV32I,
+  parameter bit          PMPEnable                 = 1'b0,
+  parameter int unsigned PMPGranularity            = 0,
+  parameter int unsigned PMPNumRegions             = 4,
+  parameter int unsigned MHPMCounterNum            = 0,
+  parameter int unsigned MHPMCounterWidth          = 40,
+  parameter bit          RV32E                     = 1'b0,
+  parameter rv32m_e      RV32M                     = RV32MFast,
+  parameter rv32b_e      RV32B                     = RV32BNone,
+  parameter rv32zc_e     RV32ZC                    = RV32ZcaZcbZcmp,
+  parameter regfile_e    RegFile                   = RegFileFF,
+  parameter bit          BranchTargetALU           = 1'b0,
+  parameter bit          WritebackStage            = 1'b0,
+  parameter bit          ICache                    = 1'b0,
+  parameter bit          ICacheECC                 = 1'b0,
+  parameter bit          ICacheTweakInfection      = 1'b0,
+  parameter bit          BranchPredictor           = 1'b0,
+  parameter bit          DbgTriggerEn              = 1'b0,
+  parameter int unsigned DbgHwBreakNum             = 1,
+  parameter bit          SecureIbex                = 1'b0,
+  parameter int unsigned LockstepOffset            = 1,
+  parameter bit          MemECC                    = SecureIbex,
+  parameter int unsigned MemDataWidth              = MemECC ? 32 + 7 : 32,
+  parameter bit          ICacheScramble            = 1'b0,
+  parameter lfsr_seed_t  RndCnstLfsrSeed           = RndCnstLfsrSeedDefault,
+  parameter lfsr_perm_t  RndCnstLfsrPerm           = RndCnstLfsrPermDefault,
+  parameter int unsigned DmBaseAddr                = 32'h1A110000,
+  parameter int unsigned DmAddrMask                = 32'h00000FFF,
+  parameter int unsigned DmHaltAddr                = 32'h1A110800,
+  parameter int unsigned DmExceptionAddr           = 32'h1A110808,
+  parameter int unsigned CheriotRevBitmapAddrWidth = 32'd11,
+  parameter int unsigned CheriotRevBitmapBaseAddr  = 32'h0
 ) (
   // Clock and Reset
   input  logic                                                         clk_i,
@@ -69,9 +55,7 @@ module ibex_top_tracing import ibex_pkg::*; import cheri_pkg::*; #(
 
   input  logic [31:0]                                                  trvk_heap_base_addr_i,
 
-  input  logic                                                         cheri_pmode_i,
-  input  logic                                                         cheri_tsafe_en_i,
-
+  input  ibex_mubi_t                                                   cheriot_enable_i,
   input  logic [31:0]                                                  hart_id_i,
   input  logic [31:0]                                                  boot_addr_i,
 
@@ -86,16 +70,15 @@ module ibex_top_tracing import ibex_pkg::*; import cheri_pkg::*; #(
 
   // Data memory interface
   output logic                                                         data_req_o,
-  output logic                                                         data_is_cap_o,
   input  logic                                                         data_gnt_i,
   input  logic                                                         data_rvalid_i,
   output logic                                                         data_we_o,
   output logic [3:0]                                                   data_be_o,
   output logic [31:0]                                                  data_addr_o,
-  output logic [DataWidth-1:0]                                         data_wdata_o,
+  output logic [31:0]                                                  data_wdata_o,
   output logic [6:0]                                                   data_wdata_intg_o,
   output logic                                                         data_tag_o,
-  input  logic [DataWidth:0]                                           data_rdata_i,
+  input  logic [31:0]                                                  data_rdata_i,
   input  logic [6:0]                                                   data_rdata_intg_i,
   input  logic                                                         data_tag_i,
   input  logic                                                         data_err_i,
@@ -108,14 +91,6 @@ module ibex_top_tracing import ibex_pkg::*; import cheri_pkg::*; #(
   input  logic [31:0]                                                  trvk_revbm_rdata_i,
   input  logic [6:0]                                                   trvk_revbm_rdata_intg_i,
   input  logic                                                         trvk_revbm_err_i,
-
-  // TS map memory interface
-  output logic                                                         tsmap_cs_o,
-  output logic [15:0]                                                  tsmap_addr_o,
-  input  logic [31:0]                                                  tsmap_rdata_i,
-  input  logic [6:0]                                                   tsmap_rdata_intg_i,
-  input  logic [MMRegDinW-1:0]                                         mmreg_corein_i,
-  output logic [MMRegDoutW-1:0]                                        mmreg_coreout_o,
 
   // Interrupt inputs
   input  logic                                                         irq_software_i,
@@ -177,13 +152,15 @@ module ibex_top_tracing import ibex_pkg::*; import cheri_pkg::*; #(
   logic [ 4:0] rvfi_rs2_addr;
   logic [ 4:0] rvfi_rs3_addr;
   logic [31:0] rvfi_rs1_rdata;
-  reg_cap_t    rvfi_rs1_rcap;
-  reg_cap_t    rvfi_rs2_rcap;
+  cap_t        rvfi_rs1_rcap;
+  cap_t        rvfi_rs2_rcap;
   logic [31:0] rvfi_rs2_rdata;
   logic [31:0] rvfi_rs3_rdata;
+  // verilator lint_off UNOPTFLAT
   logic [ 4:0] rvfi_rd_addr;
+  // verilator lint_on UNOPTFLAT
   logic [31:0] rvfi_rd_wdata;
-  reg_cap_t    rvfi_rd_wcap;
+  cap_t        rvfi_rd_wcap;
   logic [31:0] rvfi_pc_rdata;
   logic [31:0] rvfi_pc_wdata;
   logic [31:0] rvfi_mem_addr;
@@ -192,12 +169,8 @@ module ibex_top_tracing import ibex_pkg::*; import cheri_pkg::*; #(
   logic [31:0] rvfi_mem_rdata;
   logic [31:0] rvfi_mem_wdata;
   logic        rvfi_mem_is_cap;
-  reg_cap_t    rvfi_mem_rcap;
-  reg_cap_t    rvfi_mem_wcap;
-  logic [31:0] rvfi_mem2_addr;
-  logic        rvfi_mem2_we;
-  logic [65:0] rvfi_mem2_rdata;
-  logic [65:0] rvfi_mem2_wdata;
+  cap_t        rvfi_mem_rcap;
+  cap_t        rvfi_mem_wcap;
   logic [31:0] rvfi_ext_pre_mip;
   logic [31:0] rvfi_ext_post_mip;
   logic        rvfi_ext_nmi;
@@ -230,7 +203,6 @@ module ibex_top_tracing import ibex_pkg::*; import cheri_pkg::*; #(
   logic        unused_rvfi_ext_ic_scr_key_valid;
   logic        unused_rvfi_ext_irq_valid;
   logic        unused_rvfi_ext_expanded_insn_last;
-
 
   // Tracer doesn't use these signals, though other modules may probe down into tracer to observe
   // them.
@@ -275,21 +247,12 @@ module ibex_top_tracing import ibex_pkg::*; import cheri_pkg::*; #(
     .ICacheScramble       ( ICacheScramble       ),
     .RndCnstLfsrSeed      ( RndCnstLfsrSeed      ),
     .RndCnstLfsrPerm      ( RndCnstLfsrPerm      ),
-    .DmBaseAddr           ( DmBaseAddr           ),
-    .DmAddrMask           ( DmAddrMask           ),
-    .DmHaltAddr           ( DmHaltAddr           ),
-    .DmExceptionAddr      ( DmExceptionAddr      ),
-    .CHERIoTEn            ( CHERIoTEn            ),
-    .DataWidth            ( DataWidth            ),
-    .HeapBase             ( HeapBase             ),
-    .TSMapBase            ( TSMapBase            ),
-    .TSMapSize            ( TSMapSize            ),
-    .MemCapFmt            ( MemCapFmt            ),
-    .CheriPPLBC           ( CheriPPLBC           ),
-    .CheriSBND2           ( CheriSBND2           ),
-    .CheriTBRE            ( CheriTBRE            ),
-    .CheriStkZ            ( CheriStkZ            ),
-    .CheriCapIT8          ( CheriCapIT8          )
+    .DmBaseAddr                ( DmBaseAddr                ),
+    .DmAddrMask                ( DmAddrMask                ),
+    .DmHaltAddr                ( DmHaltAddr                ),
+    .DmExceptionAddr           ( DmExceptionAddr           ),
+    .CheriotRevBitmapAddrWidth ( CheriotRevBitmapAddrWidth ),
+    .CheriotRevBitmapBaseAddr  ( CheriotRevBitmapBaseAddr  )
   ) u_ibex_top (
     .clk_i,
     .rst_ni,
@@ -301,8 +264,7 @@ module ibex_top_tracing import ibex_pkg::*; import cheri_pkg::*; #(
     .ram_cfg_icache_data_i,
     .ram_cfg_icache_data_o,
 
-    .cheri_pmode_i,
-    .cheri_tsafe_en_i,
+    .cheriot_enable_i,
     .hart_id_i,
     .boot_addr_i,
 
@@ -315,7 +277,6 @@ module ibex_top_tracing import ibex_pkg::*; import cheri_pkg::*; #(
     .instr_err_i,
 
     .data_req_o,
-    .data_is_cap_o,
     .data_gnt_i,
     .data_rvalid_i,
     .data_we_o,
@@ -323,13 +284,13 @@ module ibex_top_tracing import ibex_pkg::*; import cheri_pkg::*; #(
     .data_addr_o,
     .data_wdata_o,
     .data_wdata_intg_o,
+    .data_tag_o,
     .data_rdata_i,
     .data_rdata_intg_i,
+    .data_tag_i,
     .data_err_i,
 
     .trvk_heap_base_addr_i,
-    .data_tag_o,
-    .data_tag_i,
     .trvk_revbm_req_o,
     .trvk_revbm_gnt_i,
     .trvk_revbm_rvalid_i,
@@ -337,13 +298,6 @@ module ibex_top_tracing import ibex_pkg::*; import cheri_pkg::*; #(
     .trvk_revbm_rdata_i,
     .trvk_revbm_rdata_intg_i,
     .trvk_revbm_err_i,
-
-    .tsmap_cs_o,
-    .tsmap_addr_o,
-    .tsmap_rdata_i,
-    .tsmap_rdata_intg_i,
-    .mmreg_corein_i,
-    .mmreg_coreout_o,
 
     .irq_software_i,
     .irq_timer_i,
@@ -428,14 +382,12 @@ module ibex_top_tracing import ibex_pkg::*; import cheri_pkg::*; #(
   );
 
 `ifdef RVFI
-  ibex_tracer #(
-    .CheriCapIT8      (CheriCapIT8)
-  ) u_ibex_tracer (
+  ibex_tracer
+  u_ibex_tracer (
     .clk_i,
     .rst_ni,
 
-    .cheri_pmode_i,
-    .cheri_tsafe_en_i,
+    .cheriot_enable_i,
     .hart_id_i,
 
     .rvfi_valid,
