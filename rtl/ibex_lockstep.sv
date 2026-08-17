@@ -6,8 +6,10 @@
 // This module instantiates a second copy of the core logic, and compares it's outputs against
 // those from the main core. The second core runs synchronously with the main core, delayed by
 // LockstepOffset cycles.
+
 // SEC_CM: LOGIC.SHADOW
-module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
+module ibex_lockstep import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
+  parameter base_isa_e              BaseIsa                     = BaseIsaRV32I,
   parameter int unsigned            LockstepOffset              = 1,
   parameter bit                     PMPEnable                   = 1'b0,
   parameter int unsigned            PMPGranularity              = 0,
@@ -50,27 +52,14 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
   // mvendorid: encoding of manufacturer/provider
   parameter logic [31:0]            CsrMvendorId                = 32'b0,
   // marchid: encoding of base microarchitecture
-  parameter logic [31:0]            CsrMimpId                   = 32'b0,
-  // CHERIoT parameters
-  parameter bit                     CHERIoTEn                   = 1'b1,
-  parameter int unsigned            DataWidth                   = 33,
-  parameter int unsigned            HeapBase                    = 32'h2001_0000,
-  parameter int unsigned            TSMapBase                   = 32'h2002_f000,
-  parameter int unsigned            TSMapSize                   = 1024,
-  parameter bit                     MemCapFmt                   = 1'b0,
-  parameter bit                     CheriPPLBC                  = 1'b1,
-  parameter bit                     CheriSBND2                  = 1'b0,
-  parameter bit                     CheriTBRE                   = 1'b1,
-  parameter int unsigned            MMRegDinW                   = 128,
-  parameter int unsigned            MMRegDoutW                  = 64
+  parameter logic [31:0]            CsrMimpId                   = 32'b0
 ) (
   input  logic                         clk_i,
   input  logic                         rst_ni,
 
   input  logic [31:0]                  hart_id_i,
   input  logic [31:0]                  boot_addr_i,
-  input  logic                         cheri_pmode_i,
-  input  logic                         cheri_tsafe_en_i,
+  input  ibex_mubi_t                   cheriot_enable_i,
 
   input  logic                         instr_req_i,
   input  logic                         instr_gnt_i,
@@ -85,41 +74,19 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
   input  logic                         data_we_i,
   input  logic [3:0]                   data_be_i,
   input  logic [31:0]                  data_addr_i,
-  input  logic [DataWidth-1:0]         data_wdata_i,
-  input  logic                         data_is_cap_i,
-  output logic [6:0]                   data_wdata_intg_o,
+  input  logic [31:0]                  data_wdata_i,
+  input  logic                         data_tag_i,
   input  logic [MemDataWidth-1:0]      data_rdata_i,
-  input  logic [6:0]                   data_rdata_intg_i,
+  input  logic                         data_rdata_tag_i,
   input  logic                         data_err_i,
 
-  input  logic                         dummy_instr_id_i,
-  input  logic [4:0]                   rf_raddr_a_i,
-  input  logic [4:0]                   rf_raddr_b_i,
-  input  logic [4:0]                   rf_waddr_wb_i,
-  input  logic                         rf_we_wb_i,
-  input  logic [RegFileDataWidth-1:0]  rf_wdata_wb_ecc_i,
-  input  logic [RegFileDataWidth-1:0]  rf_rdata_a_ecc_i,
-  input  logic [RegFileDataWidth-1:0]  rf_rdata_b_ecc_i,
   input  logic [RegFileDataWidth-1:0]  rf_rdata_a_i,
   input  logic [RegFileDataWidth-1:0]  rf_rdata_b_i,
 
-  input  reg_cap_t                     rf_wcap_wb_i,
-  input  reg_cap_t                     rf_rcap_a_i,
-  input  reg_cap_t                     rf_rcap_b_i,
-  input  logic [31:0]                  rf_reg_rdy_i,
-  input  logic                         rf_trsv_en_i,
-  input  logic [4:0]                   rf_trsv_addr_i,
-  input  logic [6:0]                   rf_trsv_par_i,
-  input  logic [4:0]                   rf_trvk_addr_i,
-  input  logic                         rf_trvk_en_i,
-  input  logic                         rf_trvk_clrtag_i,
-  input  logic [6:0]                   rf_trvk_par_i,
-  input  logic                         tsmap_cs_i,
-  input  logic [15:0]                  tsmap_addr_i,
-  input  logic [31:0]                  tsmap_rdata_i,
-  input  logic [6:0]                   tsmap_rdata_intg_i,
-  input  logic [MMRegDinW-1:0]         mmreg_corein_i,
-  input  logic [MMRegDoutW-1:0]        mmreg_coreout_i,
+  input  cap_t                         rf_wcap_wb_i,
+  input  cap_t                         rf_rcap_a_i,
+  input  cap_t                         rf_rcap_b_i,
+
   input  logic [IC_NUM_WAYS-1:0]       ic_tag_req_i,
   input  logic                         ic_tag_write_i,
   input  logic [IC_INDEX_W-1:0]        ic_tag_addr_i,
@@ -165,6 +132,7 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
 );
 
   import prim_secded_pkg::SecdedInv3932ZeroWord;
+  import prim_secded_pkg::SecdedInv6457ZeroEcc;
 
   localparam int unsigned LockstepOffsetW = prim_util_pkg::vbits(LockstepOffset);
   // Core outputs are delayed for an extra cycle due to shadow output registers
@@ -278,7 +246,8 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
     logic                        instr_err;
     logic                        data_gnt;
     logic                        data_rvalid;
-    logic [DataWidth-1:0]        data_rdata;
+    logic [MemDataWidth-1:0]     data_rdata;
+    logic                        data_rdata_tag;
     logic                        data_err;
     logic [RegFileDataWidth-1:0] rf_rdata_a;
     logic [RegFileDataWidth-1:0] rf_rdata_b;
@@ -291,19 +260,14 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
     ibex_mubi_t                  fetch_enable;
     ibex_mubi_t                  mcounteren_writable;
     logic                        ic_scr_key_valid;
-    logic                        cheri_pmode;
-    logic                        cheri_tsafe_en;
-    reg_cap_t                    rf_rcap_a;
-    reg_cap_t                    rf_rcap_b;
-    logic [31:0]                 rf_reg_rdy;
-    logic [31:0]                 tsmap_rdata;
-    logic [MMRegDinW-1:0]        mmreg_corein;
+    ibex_mubi_t                  cheriot_enable;
+    cap_t                        rf_rcap_a;
+    cap_t                        rf_rcap_b;
   } delayed_inputs_t;
 
   delayed_inputs_t [LockstepOffset-1:0] shadow_inputs_q;
   delayed_inputs_t                      shadow_inputs_in;
-  logic [6:0]                           instr_rdata_intg_q, data_rdata_intg_q;
-  logic [6:0]                           tsmap_rdata_intg_q;
+
   // Packed arrays must be dealt with separately
   logic [TagSizeECC-1:0]                shadow_tag_rdata_delayed [IC_NUM_WAYS];
   logic [LineSizeECC-1:0]               shadow_data_rdata_delayed [IC_NUM_WAYS];
@@ -368,6 +332,7 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
   assign shadow_inputs_in.data_gnt            = data_gnt_i;
   assign shadow_inputs_in.data_rvalid         = data_rvalid_i;
   assign shadow_inputs_in.data_rdata          = data_rdata_i;
+  assign shadow_inputs_in.data_rdata_tag      = data_rdata_tag_i;
   assign shadow_inputs_in.data_err            = data_err_i;
   assign shadow_inputs_in.rf_rdata_a          = rf_rdata_a_i;
   assign shadow_inputs_in.rf_rdata_b          = rf_rdata_b_i;
@@ -380,131 +345,10 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
   assign shadow_inputs_in.fetch_enable        = fetch_enable_i;
   assign shadow_inputs_in.mcounteren_writable = mcounteren_writable_i;
   assign shadow_inputs_in.ic_scr_key_valid    = ic_scr_key_valid_i;
-  assign shadow_inputs_in.cheri_pmode         = cheri_pmode_i;
-  assign shadow_inputs_in.cheri_tsafe_en      = cheri_tsafe_en_i;
+  assign shadow_inputs_in.cheriot_enable      = cheriot_enable_i;
   assign shadow_inputs_in.rf_rcap_a           = rf_rcap_a_i;
   assign shadow_inputs_in.rf_rcap_b           = rf_rcap_b_i;
-  assign shadow_inputs_in.rf_reg_rdy          = rf_reg_rdy_i;
-  assign shadow_inputs_in.tsmap_rdata         = tsmap_rdata_i;
-  assign shadow_inputs_in.mmreg_corein        = mmreg_corein_i;
 
-  // Delay the inputs
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) begin
-      instr_rdata_intg_q <= '0;
-      data_rdata_intg_q  <= '0;
-      tsmap_rdata_intg_q  <= '0;
-      for (int unsigned i = 0; i < LockstepOffset; i++) begin
-        shadow_inputs_q[i]     <= delayed_inputs_t'('0);
-        shadow_tag_rdata_q[i]  <= '{default: 0};
-        shadow_data_rdata_q[i] <= '{default: 0};
-      end
-    end else begin
-      instr_rdata_intg_q <= instr_rdata_intg_i;
-      data_rdata_intg_q  <= data_rdata_intg_i;
-      tsmap_rdata_intg_q  <= tsmap_rdata_intg_i;
-      for (int unsigned i = 0; i < LockstepOffset - 1; i++) begin
-        shadow_inputs_q[i]     <= shadow_inputs_q[i+1];
-        shadow_tag_rdata_q[i]  <= shadow_tag_rdata_q[i+1];
-        shadow_data_rdata_q[i] <= shadow_data_rdata_q[i+1];
-      end
-      shadow_inputs_q[LockstepOffset-1]     <= shadow_inputs_in;
-      shadow_tag_rdata_q[LockstepOffset-1]  <= ic_tag_rdata_i;
-      shadow_data_rdata_q[LockstepOffset-1] <= ic_data_rdata_i;
-    end
-  end
-
-  ////////////////////////////
-  // Bus integrity checking //
-  ////////////////////////////
-
-  logic        bus_intg_err;
-  logic [1:0]  instr_intg_err, data_intg_err, data_intg_err_tmp;
-  logic [31:0] unused_wdata;
-  logic [1:0]  data_we_q;
-  logic [31:0] rdata_tmp;
-
-  always @(posedge clk_i, negedge rst_ni) begin
-    if (~rst_ni) begin
-      data_we_q <= 2'b00;
-    end else begin
-      if (data_gnt_i) data_we_q[1] <= data_we_i;
-      data_we_q[0] <= data_we_q[1];    // align with shadow_inputs_q[LockstepOffset-1]
-    end
-  end
-
-  // Checks on incoming data
-  prim_secded_inv_39_32_dec u_instr_intg_dec (
-    .data_i     ({instr_rdata_intg_q, shadow_inputs_q[LockstepOffset-1].instr_rdata}),
-    .data_o     (),
-    .syndrome_o (),
-    .err_o      (instr_intg_err)
-  );
-
-  if (CHERIoTEn) begin
-    assign rdata_tmp = shadow_inputs_q[LockstepOffset-1].data_rdata[31:0] ^
-                       {31'h0, shadow_inputs_q[LockstepOffset-1].data_rdata[32]};
-  end else begin
-    assign rdata_tmp = shadow_inputs_q[LockstepOffset-1].data_rdata[31:0];
-  end
-
-  prim_secded_inv_39_32_dec u_data_intg_dec (
-    .data_i     ({data_rdata_intg_q, rdata_tmp}),
-    .data_o     (),
-    .syndrome_o (),
-    .err_o      (data_intg_err_tmp)
-  );
-
-  // only check read data (data_rvalid includes both reads and writes)
-  assign data_intg_err = data_we_q[0] ? 2'h0 : data_intg_err_tmp;
-
-  assign bus_intg_err = (shadow_inputs_q[LockstepOffset-1].instr_rvalid & |instr_intg_err) |
-                        (shadow_inputs_q[LockstepOffset-1].data_rvalid  & |data_intg_err);
-
-  // Generate integrity bits
-  if (CHERIoTEn) begin
-    prim_secded_inv_39_32_enc u_data_gen (
-      .data_i (data_wdata_i[31:0]^{31'h0, data_wdata_i[32]}),
-      .data_o ({data_wdata_intg_o, unused_wdata})
-    );
-  end else begin
-    prim_secded_inv_39_32_enc u_data_gen (
-      .data_i (data_wdata_i[31:0]),
-      .data_o ({data_wdata_intg_o, unused_wdata})
-    );
-  end
-
-
-  ////////////////////////////////////////
-  // TSMAP interface integrity checking //
-  ////////////////////////////////////////
-
-  logic       tsmap_intg_err;
-  logic [1:0] tsmap_intg_err_tmp;
-  logic [1:0] tsmap_cs_q;
-
-  if (CHERIoTEn && CheriPPLBC) begin
-    always @(posedge clk_i, negedge rst_ni) begin
-      if (~rst_ni) begin
-        tsmap_cs_q <= 2'b00;
-      end else begin
-        tsmap_cs_q <= {tsmap_cs_i, tsmap_cs_q[1]}; // align with shadow_inputs_q[LockstepOffset-1]
-      end
-    end
-
-    // Checks on incoming data
-    prim_secded_inv_39_32_dec u_tsmap_intg_dec (
-      .data_i     ({tsmap_rdata_intg_q, shadow_inputs_q[LockstepOffset-1].tsmap_rdata}),
-      .data_o     (),
-      .syndrome_o (),
-      .err_o      (tsmap_intg_err_tmp)
-    );
-
-    assign tsmap_intg_err = tsmap_cs_q[0] & tsmap_intg_err_tmp;
-
-  end else begin
-    assign tsmap_intg_err = 1'b0;
-  end
   ///////////////////
   // Output delays //
   ///////////////////
@@ -516,14 +360,8 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
     logic                    data_we;
     logic [3:0]              data_be;
     logic [31:0]             data_addr;
-    logic [DataWidth-1:0]    data_wdata;
-    logic                    data_is_cap;
-    logic                    dummy_instr_id;
-    logic [4:0]              rf_raddr_a;
-    logic [4:0]              rf_raddr_b;
-    logic [4:0]              rf_waddr_wb;
-    logic                    rf_we_wb;
-    logic [RegFileDataWidth-1:0] rf_wdata_wb_ecc;
+    logic [31:0]             data_wdata;
+    logic                    data_tag;
     logic [IC_NUM_WAYS-1:0]  ic_tag_req;
     logic                    ic_tag_write;
     logic [IC_INDEX_W-1:0]   ic_tag_addr;
@@ -537,18 +375,7 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
     crash_dump_t             crash_dump;
     logic                    double_fault_seen;
     ibex_mubi_t              core_busy;
-    logic                    icache_inval;
-    reg_cap_t                rf_wcap_wb;
-    logic                    rf_trsv_en;
-    logic [4:0]              rf_trsv_addr;
-    logic [6:0]              rf_trsv_par;
-    logic [4:0]              rf_trvk_addr;
-    logic                    rf_trvk_en;
-    logic                    rf_trvk_clrtag;
-    logic [6:0]              rf_trvk_par;
-    logic                    tsmap_cs;
-    logic [15:0]             tsmap_addr;
-    logic [MMRegDoutW-1:0]   mmreg_coreout;
+    cap_t                    rf_wcap_wb;
   } delayed_outputs_t;
 
   delayed_outputs_t [OutputsOffset-1:0]  core_outputs_q;
@@ -563,13 +390,7 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
   assign core_outputs_in.data_be             = data_be_i;
   assign core_outputs_in.data_addr           = data_addr_i;
   assign core_outputs_in.data_wdata          = data_wdata_i;
-  assign core_outputs_in.data_is_cap         = data_is_cap_i;
-  assign core_outputs_in.dummy_instr_id      = dummy_instr_id_i;
-  assign core_outputs_in.rf_raddr_a          = rf_raddr_a_i;
-  assign core_outputs_in.rf_raddr_b          = rf_raddr_b_i;
-  assign core_outputs_in.rf_waddr_wb         = rf_waddr_wb_i;
-  assign core_outputs_in.rf_we_wb            = rf_we_wb_i;
-  assign core_outputs_in.rf_wdata_wb_ecc     = rf_wdata_wb_ecc_i;
+  assign core_outputs_in.data_tag            = data_tag_i;
   assign core_outputs_in.ic_tag_req          = ic_tag_req_i;
   assign core_outputs_in.ic_tag_write        = ic_tag_write_i;
   assign core_outputs_in.ic_tag_addr         = ic_tag_addr_i;
@@ -584,16 +405,6 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
   assign core_outputs_in.double_fault_seen   = double_fault_seen_i;
   assign core_outputs_in.core_busy           = core_busy_i;
   assign core_outputs_in.rf_wcap_wb          = rf_wcap_wb_i;
-  assign core_outputs_in.rf_trsv_en          = rf_trsv_en_i;
-  assign core_outputs_in.rf_trsv_addr        = rf_trsv_addr_i;
-  assign core_outputs_in.rf_trsv_par         = rf_trsv_par_i;
-  assign core_outputs_in.rf_trvk_addr        = rf_trvk_addr_i;
-  assign core_outputs_in.rf_trvk_en          = rf_trvk_en_i;
-  assign core_outputs_in.rf_trvk_clrtag      = rf_trvk_clrtag_i;
-  assign core_outputs_in.rf_trvk_par         = rf_trvk_par_i;
-  assign core_outputs_in.tsmap_cs            = tsmap_cs_i;
-  assign core_outputs_in.tsmap_addr          = tsmap_addr_i;
-  assign core_outputs_in.mmreg_coreout       = mmreg_coreout_i;
 
   // Delay the outputs
   always_ff @(posedge clk_i) begin
@@ -619,6 +430,7 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
   // The following output does not need to be checked in the lockstep comparison as we anyways
   // check the data_wdata itself.
   logic [6:0]                     shadow_data_wdata_intg;
+  logic [MemDataWidth-1:0]        shadow_data_wdata_full;
 
   ///////////////////////////////
   // Shadow core instantiation //
@@ -627,6 +439,9 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
   logic shadow_alert_minor, shadow_alert_major_internal, shadow_alert_major_bus;
   logic [RegFileDataEccWidth - RegFileDataWidth - 1:0] shadow_rf_rdata_a_intg;
   logic [RegFileDataEccWidth - RegFileDataWidth - 1:0] shadow_rf_rdata_b_intg;
+  logic [6:0] shadow_rf_wcap_ecc_wb;
+  logic [6:0] shadow_rf_rcap_a_ecc;
+  logic [6:0] shadow_rf_rcap_b_ecc;
 
   ibex_core #(
     .PMPEnable            ( PMPEnable            ),
@@ -667,15 +482,7 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
     .DmExceptionAddr      ( DmExceptionAddr      ),
     .CsrMvendorId         ( CsrMvendorId         ),
     .CsrMimpId            ( CsrMimpId            ),
-    .CHERIoTEn            ( CHERIoTEn            ),
-    .DataWidth            ( DataWidth            ),
-    .HeapBase             ( HeapBase             ),
-    .TSMapBase            ( TSMapBase            ),
-    .TSMapSize            ( TSMapSize            ),
-    .MemCapFmt            ( MemCapFmt            ),
-    .CheriPPLBC           ( CheriPPLBC           ),
-    .CheriSBND2           ( CheriSBND2           ),
-    .CheriTBRE            ( CheriTBRE            )
+    .BaseIsa              ( BaseIsa              )
   ) u_shadow_core (
     .clk_i               (clk_i),
     .rst_ni              (rst_shadow_n),
@@ -683,8 +490,7 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
     .hart_id_i           (hart_id_i),
     .boot_addr_i         (boot_addr_i),
 
-    .cheri_pmode_i       (shadow_inputs_q[0].cheri_pmode),
-    .cheri_tsafe_en_i    (shadow_inputs_q[0].cheri_tsafe_en),
+    .cheriot_enable_i    (shadow_inputs_q[0].cheriot_enable),
 
     .instr_req_o         (shadow_outputs_d.instr_req),
     .instr_gnt_i         (shadow_inputs_q[0].instr_gnt),
@@ -699,35 +505,28 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
     .data_we_o           (shadow_outputs_d.data_we),
     .data_be_o           (shadow_outputs_d.data_be),
     .data_addr_o         (shadow_outputs_d.data_addr),
-    .data_wdata_o        (shadow_outputs_d.data_wdata),
-    .data_is_cap_o       (shadow_outputs_d.data_is_cap),
+    .data_wdata_o        (shadow_data_wdata_full),
+    .data_tag_o          (shadow_outputs_d.data_tag),
     .data_rdata_i        (shadow_inputs_q[0].data_rdata),
+    .data_tag_i          (shadow_inputs_q[0].data_rdata_tag),
     .data_err_i          (shadow_inputs_q[0].data_err),
 
-    .dummy_instr_id_o    (shadow_outputs_d.dummy_instr_id),
-    .rf_raddr_a_o        (shadow_outputs_d.rf_raddr_a),
-    .rf_raddr_b_o        (shadow_outputs_d.rf_raddr_b),
-    .rf_waddr_wb_o       (shadow_outputs_d.rf_waddr_wb),
-    .rf_we_wb_o          (shadow_outputs_d.rf_we_wb),
-    .rf_wdata_wb_ecc_o   (shadow_outputs_d.rf_wdata_wb_ecc),
+    .dummy_instr_id_o    (shadow_dummy_instr_id),
+    .dummy_instr_wb_o    (shadow_dummy_instr_wb),
+    .rf_raddr_a_o        (shadow_rf_raddr_a),
+    .rf_raddr_b_o        (shadow_rf_raddr_b),
+    .rf_waddr_wb_o       (shadow_rf_waddr_wb),
+    .rf_we_wb_o          (shadow_rf_we_wb),
+    .rf_wdata_wb_ecc_o   (shadow_rf_wdata_wb_ecc),
     .rf_rdata_a_ecc_i    ({shadow_rf_rdata_a_intg, shadow_inputs_q[0].rf_rdata_a}),
     .rf_rdata_b_ecc_i    ({shadow_rf_rdata_b_intg, shadow_inputs_q[0].rf_rdata_b}),
+
     .rf_wcap_wb_o        (shadow_outputs_d.rf_wcap_wb),
     .rf_rcap_a_i         (shadow_inputs_q[0].rf_rcap_a),
     .rf_rcap_b_i         (shadow_inputs_q[0].rf_rcap_b),
-    .rf_reg_rdy_i        (shadow_inputs_q[0].rf_reg_rdy),
-    .rf_trsv_en_o        (shadow_outputs_d.rf_trsv_en),
-    .rf_trsv_addr_o      (shadow_outputs_d.rf_trsv_addr),
-    .rf_trsv_par_o       (shadow_outputs_d.rf_trsv_par),
-    .rf_trvk_addr_o      (shadow_outputs_d.rf_trvk_addr),
-    .rf_trvk_en_o        (shadow_outputs_d.rf_trvk_en),
-    .rf_trvk_clrtag_o    (shadow_outputs_d.rf_trvk_clrtag),
-    .rf_trvk_par_o       (shadow_outputs_d.rf_trvk_par),
-    .tsmap_cs_o          (shadow_outputs_d.tsmap_cs),
-    .tsmap_addr_o        (shadow_outputs_d.tsmap_addr),
-    .tsmap_rdata_i       (shadow_inputs_q[0].tsmap_rdata),
-    .mmreg_corein_i      (shadow_inputs_q[0].tsmap_rdata),
-    .mmreg_coreout_o     (shadow_outputs_d.mmreg_coreout),
+    .rf_wcap_ecc_wb_o    (shadow_rf_wcap_ecc_wb),
+    .rf_rcap_a_ecc_i     (shadow_rf_rcap_a_ecc),
+    .rf_rcap_b_ecc_i     (shadow_rf_rcap_b_ecc),
 
     .ic_tag_req_o        (shadow_outputs_d.ic_tag_req),
     .ic_tag_write_o      (shadow_outputs_d.ic_tag_write),
@@ -808,6 +607,14 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
     .core_busy_o            (shadow_outputs_d.core_busy)
   );
 
+  // Extract data_wdata and ECC bits from shadow core's combined output
+  assign shadow_outputs_d.data_wdata = shadow_data_wdata_full[31:0];
+  if (MemECC) begin : gen_shadow_wdata_ecc
+    assign shadow_data_wdata_intg = shadow_data_wdata_full[MemDataWidth-1:32];
+  end else begin : gen_shadow_wdata_no_ecc
+    assign shadow_data_wdata_intg = '0;
+  end
+
   // Register the shadow core outputs
   always_ff @(posedge clk_i) begin
     shadow_outputs_q <= shadow_outputs_d;
@@ -824,10 +631,13 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
   // SEC_CM: DATA_REG_SW.GLITCH_DETECT
   if (RegFile == RegFileFF) begin : gen_shadow_regfile_ff
     ibex_register_file_ff #(
+      .BaseIsa          (BaseIsa),
       .RV32E            (RV32E),
       .DataWidth        (RegFileDataEccWidth - RegFileDataWidth),
       .DummyInstructions(DummyInstructions),
-      .WordZeroVal      (SecdedInv3932ZeroWord[RegFileDataEccWidth-1:RegFileDataWidth])
+      .WordZeroVal      (SecdedInv3932ZeroWord[RegFileDataEccWidth-1:RegFileDataWidth]),
+      .CapWidth         (7),
+      .CapWordZeroVal   (SecdedInv6457ZeroEcc)
     ) register_file_shadow_i (
       .clk_i            (clk_i),
       .rst_ni           (rst_shadow_n),
@@ -838,18 +648,24 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
 
       .raddr_a_i        (shadow_rf_raddr_a),
       .rdata_a_o        (shadow_rf_rdata_a_intg),
+      .rcap_a_o         (shadow_rf_rcap_a_ecc),
       .raddr_b_i        (shadow_rf_raddr_b),
       .rdata_b_o        (shadow_rf_rdata_b_intg),
+      .rcap_b_o         (shadow_rf_rcap_b_ecc),
       .waddr_a_i        (shadow_rf_waddr_wb),
       .wdata_a_i        (shadow_rf_wdata_wb_ecc[RegFileDataEccWidth-1:RegFileDataWidth]),
+      .wcap_a_i         (shadow_rf_wcap_ecc_wb),
       .we_a_i           (shadow_rf_we_wb)
     );
   end else if (RegFile == RegFileFPGA) begin : gen_regfile_fpga
     ibex_register_file_fpga #(
+      .BaseIsa          (BaseIsa),
       .RV32E            (RV32E),
       .DataWidth        (RegFileDataEccWidth - RegFileDataWidth),
       .DummyInstructions(DummyInstructions),
-      .WordZeroVal      (SecdedInv3932ZeroWord[RegFileDataEccWidth-1:RegFileDataWidth])
+      .WordZeroVal      (SecdedInv3932ZeroWord[RegFileDataEccWidth-1:RegFileDataWidth]),
+      .CapWidth         (7),
+      .CapWordZeroVal   (SecdedInv6457ZeroEcc)
     ) register_file_shadow_i (
       .clk_i            (clk_i),
       .rst_ni           (rst_shadow_n),
@@ -860,18 +676,24 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
 
       .raddr_a_i        (shadow_rf_raddr_a),
       .rdata_a_o        (shadow_rf_rdata_a_intg),
+      .rcap_a_o         (shadow_rf_rcap_a_ecc),
       .raddr_b_i        (shadow_rf_raddr_b),
       .rdata_b_o        (shadow_rf_rdata_b_intg),
+      .rcap_b_o         (shadow_rf_rcap_b_ecc),
       .waddr_a_i        (shadow_rf_waddr_wb),
       .wdata_a_i        (shadow_rf_wdata_wb_ecc[RegFileDataEccWidth-1:RegFileDataWidth]),
+      .wcap_a_i         (shadow_rf_wcap_ecc_wb),
       .we_a_i           (shadow_rf_we_wb)
     );
   end else if (RegFile == RegFileLatch) begin : gen_regfile_latch
     ibex_register_file_latch #(
+      .BaseIsa          (BaseIsa),
       .RV32E            (RV32E),
       .DataWidth        (RegFileDataEccWidth - RegFileDataWidth),
       .DummyInstructions(DummyInstructions),
-      .WordZeroVal      (SecdedInv3932ZeroWord[RegFileDataEccWidth-1:RegFileDataWidth])
+      .WordZeroVal      (SecdedInv3932ZeroWord[RegFileDataEccWidth-1:RegFileDataWidth]),
+      .CapWidth         (7),
+      .CapWordZeroVal   (SecdedInv6457ZeroEcc)
     ) register_file_shadow_i (
       .clk_i            (clk_i),
       .rst_ni           (rst_shadow_n),
@@ -882,10 +704,13 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
 
       .raddr_a_i        (shadow_rf_raddr_a),
       .rdata_a_o        (shadow_rf_rdata_a_intg),
+      .rcap_a_o         (shadow_rf_rcap_a_ecc),
       .raddr_b_i        (shadow_rf_raddr_b),
       .rdata_b_o        (shadow_rf_rdata_b_intg),
+      .rcap_b_o         (shadow_rf_rcap_b_ecc),
       .waddr_a_i        (shadow_rf_waddr_wb),
       .wdata_a_i        (shadow_rf_wdata_wb_ecc[RegFileDataEccWidth-1:RegFileDataWidth]),
+      .wcap_a_i         (shadow_rf_wcap_ecc_wb),
       .we_a_i           (shadow_rf_we_wb)
     );
   end
@@ -902,7 +727,7 @@ module ibex_lockstep import ibex_pkg::*; import cheri_pkg::*; #(
 
   assign alert_major_internal_o
     = outputs_mismatch | shadow_alert_major_internal | rst_shadow_cnt_err;
-  assign alert_major_bus_o      = shadow_alert_major_bus | bus_intg_err | tsmap_intg_err;
+  assign alert_major_bus_o      = shadow_alert_major_bus;
   assign alert_minor_o          = shadow_alert_minor;
 
   assign lockstep_cmp_en_o = enable_cmp_q;

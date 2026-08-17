@@ -1,9 +1,6 @@
-// Copyright Microsoft Corporation
-// Licensed under the Apache License, Version 2.0, see LICENSE for details.
-// SPDX-License-Identifier: Apache-2.0
-
 // Copyright lowRISC contributors.
 // Copyright 2018 ETH Zurich and University of Bologna, see also CREDITS.md.
+// Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -17,25 +14,23 @@
 
 `include "prim_assert.sv"
 
-module ibex_compressed_decoder #(
-  parameter ibex_pkg::rv32zc_e RV32ZC   = ibex_pkg::RV32ZcaZcbZcmp,
-  parameter bit                ResetAll = 1'b0,
-  parameter bit                CHERIoTEn  = 1'b1
+module ibex_compressed_decoder import ibex_pkg::*; #(
+  parameter ibex_pkg::rv32zc_e   RV32ZC   = ibex_pkg::RV32ZcaZcbZcmp,
+  parameter bit                  ResetAll = 1'b0,
+  parameter ibex_pkg::base_isa_e BaseIsa  = ibex_pkg::BaseIsaRV32IorCHERIoT
 ) (
   input  logic                 clk_i,
   input  logic                 rst_ni,
   input  logic                 valid_i,
   input  logic                 id_in_ready_i,
   input  logic [31:0]          instr_i,
-  input  logic                 cheri_pmode_i,
+  input  ibex_mubi_t           cheriot_enable_i,
   output logic [31:0]          instr_o,
   output logic                 is_compressed_o,
   output ibex_pkg::instr_exp_e gets_expanded_o,
   input  logic                 flush_expanded_i,
   output logic                 illegal_instr_o
 );
-  import ibex_pkg::*;
-
   if (!(RV32ZC == RV32ZcaZcbZcmp || RV32ZC == RV32ZcaZcmp)) begin : gen_unused_valid
     // valid_i indicates if instr_i is valid and is used for assertions only if Zcmp is disabled.
     // id_in_ready_i indicates if instr_o is consumed and is used for assertions only if Zcmp is
@@ -232,15 +227,16 @@ module ibex_compressed_decoder #(
       2'b00: begin
         unique case (instr_i[15:13])
           3'b000: begin
-            if (CHERIoTEn & cheri_pmode_i)
+            if ((BaseIsa == BaseIsaRV32IorCHERIoT) && (cheriot_enable_i == IbexMuBiOn)) begin
               // c.incaddr4cspn -> cincoffsetimm cd', csp, imm
               instr_o = {2'b0, instr_i[10:7], instr_i[12:11], instr_i[5],
-                        instr_i[6], 2'b00, 5'h02, 3'b001, 2'b01, instr_i[4:2], {OPCODE_CHERI}};
-            else
+                         instr_i[6], 2'b00, 5'h02, 3'b001, 2'b01, instr_i[4:2], {OPCODE_CHERI}};
+            end else begin
               // c.addi4spn -> addi rd', x2, imm
               instr_o = {2'b0, instr_i[10:7], instr_i[12:11], instr_i[5],
                          instr_i[6], 2'b00, 5'h02, 3'b000, 2'b01, instr_i[4:2], {OPCODE_OP_IMM}};
-            if (instr_i[12:5] == 8'b0)  illegal_instr_o = 1'b1;
+            end
+            if (instr_i[12:5] == 8'b0) illegal_instr_o = 1'b1;
           end
 
           3'b010: begin
@@ -250,11 +246,11 @@ module ibex_compressed_decoder #(
           end
 
           3'b011: begin
-            if (CHERIoTEn & cheri_pmode_i) begin
-              // CHERI: c.clc -> clc rd', imm(rs1'); reuse c.ld
+            if ((BaseIsa == BaseIsaRV32IorCHERIoT) && (cheriot_enable_i == IbexMuBiOn)) begin
+              // CHERIoT: c.clc -> clc rd', imm(rs1'); reuse c.ld
               instr_o = {4'b0, instr_i[6:5], instr_i[12:10],
                          3'b000, 2'b01, instr_i[9:7], 3'b011, 2'b01, instr_i[4:2], {OPCODE_LOAD}};
-             end else begin
+            end else begin
               instr_o = instr_i;
               illegal_instr_o = 1'b1;
             end
@@ -329,22 +325,21 @@ module ibex_compressed_decoder #(
             end
           end
 
-          3'b001,
-3'b001,
-3'b101: begin
-  illegal_instr_o = 1'b1;
-end
+          3'b111: begin
+            if ((BaseIsa == BaseIsaRV32IorCHERIoT) && (cheriot_enable_i == IbexMuBiOn)) begin
+              // CHERIoT: c.csc -> csc rs2', imm(rs1'); reuse c.sd
+              instr_o = {4'b0, instr_i[6:5], instr_i[12], 2'b01, instr_i[4:2],
+                        2'b01, instr_i[9:7], 3'b011, instr_i[11:10], 3'b000, {OPCODE_STORE}};
+            end else begin
+              instr_o = instr_i;
+              illegal_instr_o = 1'b1;
+            end
+          end
 
-3'b111: begin
-  if (CHERIoTEn & cheri_pmode_i) begin
-    // CHERI: c.csc -> csc rs2', imm(rs1'); reuse c.sd
-    instr_o = {4'b0, instr_i[6:5], instr_i[12], 2'b01, instr_i[4:2],
-               2'b01, instr_i[9:7], 3'b011, instr_i[11:10], 3'b000, {OPCODE_STORE}};
-  end else begin
-    instr_o = instr_i;
-    illegal_instr_o = 1'b1;
-  end
-end
+          3'b001,
+          3'b101: begin
+            illegal_instr_o = 1'b1;
+          end
           default: begin
             illegal_instr_o = 1'b1;
           end
@@ -360,13 +355,16 @@ end
         unique case (instr_i[15:13])
           3'b000: begin
             // c.addi -> addi rd, rd, nzimm
-            // c.hint now maps to NOP in CHERIoT mode
-            logic [4:0] rd_dec;
-            logic [5:0] nzimm;
-            nzimm   = {instr_i[12], instr_i[6:2]};
-            rd_dec  = (CHERIoTEn & cheri_pmode_i && (nzimm == 6'h0)) ? 5'h0 : instr_i[11:7];
-            instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2],
-                       instr_i[11:7], 3'b0, rd_dec, {OPCODE_OP_IMM}};
+            // c.nop
+            if ((BaseIsa == BaseIsaRV32IorCHERIoT) && (cheriot_enable_i == IbexMuBiOn)) begin
+              // In CHERIoT mode, hints (nzimm==0) zero rd to avoid clearing capability metadata
+              instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], instr_i[11:7], 3'b0,
+                         ({instr_i[12], instr_i[6:2]} == 6'h0) ? 5'h0 : instr_i[11:7],
+                         {OPCODE_OP_IMM}};
+            end else begin
+              instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2],
+                         instr_i[11:7], 3'b0, instr_i[11:7], {OPCODE_OP_IMM}};
+            end
           end
 
           3'b001, 3'b101: begin
@@ -390,10 +388,11 @@ end
             instr_o = {{15 {instr_i[12]}}, instr_i[6:2], instr_i[11:7], {OPCODE_LUI}};
 
             // c.incaddr16csp -> cincoffsetimm csp, csp, nzimm
-            if (CHERIoTEn & cheri_pmode_i &&  (instr_i[11:7] == 5'h02))  begin
+            if ((BaseIsa == BaseIsaRV32IorCHERIoT) && (cheriot_enable_i == IbexMuBiOn) &&
+                (instr_i[11:7] == 5'h02)) begin
               instr_o = {{3 {instr_i[12]}}, instr_i[4:3], instr_i[5], instr_i[2],
-                         instr_i[6], 4'b0, 5'h02, 3'b001,  5'h02, {OPCODE_CHERI}};
-            end else if (instr_i[11:7] == 5'h02)  begin
+                         instr_i[6], 4'b0, 5'h02, 3'b001, 5'h02, {OPCODE_CHERI}};
+            end else if (instr_i[11:7] == 5'h02) begin
               // c.addi16sp -> addi x2, x2, nzimm
               instr_o = {{3 {instr_i[12]}}, instr_i[4:3], instr_i[5], instr_i[2],
                          instr_i[6], 4'b0, 5'h02, 3'b000, 5'h02, {OPCODE_OP_IMM}};
@@ -409,8 +408,15 @@ end
                 // 00: c.srli -> srli rd, rd, shamt
                 // 01: c.srai -> srai rd, rd, shamt
                 // (c.srli/c.srai hints are translated into a srli/srai hint)
-                instr_o = {1'b0, instr_i[10], 5'b0, instr_i[6:2], 2'b01, instr_i[9:7],
-                           3'b101, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+                if ((BaseIsa == BaseIsaRV32IorCHERIoT) && (cheriot_enable_i == IbexMuBiOn)) begin
+                  // In CHERIoT mode, hints (shamt==0) zero rd to avoid clearing capability metadata
+                  instr_o = {1'b0, instr_i[10], 5'b0, instr_i[6:2], 2'b01, instr_i[9:7],
+                             3'b101, (instr_i[6:2] == 5'b0) ? 5'b0 : {2'b01, instr_i[9:7]},
+                             {OPCODE_OP_IMM}};
+                end else begin
+                  instr_o = {1'b0, instr_i[10], 5'b0, instr_i[6:2], 2'b01, instr_i[9:7],
+                             3'b101, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+                end
                 if (instr_i[12] == 1'b1)  illegal_instr_o = 1'b1;
               end
 
@@ -548,7 +554,13 @@ end
           3'b000: begin
             // c.slli -> slli rd, rd, shamt
             // (c.ssli hints are translated into a slli hint)
-            instr_o = {7'b0, instr_i[6:2], instr_i[11:7], 3'b001, instr_i[11:7], {OPCODE_OP_IMM}};
+            if ((BaseIsa == BaseIsaRV32IorCHERIoT) && (cheriot_enable_i == IbexMuBiOn)) begin
+              // In CHERIoT mode, hints (shamt==0) zero rd to avoid clearing capability metadata
+              instr_o = {7'b0, instr_i[6:2], instr_i[11:7], 3'b001,
+                         (instr_i[6:2] == 5'b0) ? 5'b0 : instr_i[11:7], {OPCODE_OP_IMM}};
+            end else begin
+              instr_o = {7'b0, instr_i[6:2], instr_i[11:7], 3'b001, instr_i[11:7], {OPCODE_OP_IMM}};
+            end
             if (instr_i[12] == 1'b1)  illegal_instr_o = 1'b1; // reserved for custom extensions
           end
 
@@ -560,7 +572,7 @@ end
           end
 
           3'b011: begin
-            if (CHERIoTEn & cheri_pmode_i) begin
+            if ((BaseIsa == BaseIsaRV32IorCHERIoT) && (cheriot_enable_i == IbexMuBiOn)) begin
               // c.clcsp -> clc cd, imm(c2),  reused c.ldsp
               instr_o = {3'b0, instr_i[4:2], instr_i[12], instr_i[6:5], 3'b000, 5'h02,
                          3'b011, instr_i[11:7], OPCODE_LOAD};
@@ -600,7 +612,13 @@ end
           end
 
           3'b101: begin
-            if (RV32ZC == RV32ZcaZcbZcmp || RV32ZC == RV32ZcaZcmp) begin
+            if ((BaseIsa == BaseIsaRV32IorCHERIoT) && (cheriot_enable_i == IbexMuBiOn)) begin
+              // Zcmp is incompatible with CHERIoT mode: sw/lw strip capability tags and addi
+              // corrupts CSP bounds. We could inject the CHERIoT version of those instructions
+              // but the stack offset would need to be 8 bytes (full capability) for each push/pop,
+              // which doesn't align with the spec and how the stack update is defined.
+              illegal_instr_o = 1'b1;
+            end else if (RV32ZC == RV32ZcaZcbZcmp || RV32ZC == RV32ZcaZcmp) begin
               unique casez (instr_i[12:8])
                 // cm.push
                 5'b11000: begin
@@ -832,26 +850,20 @@ end
                        instr_i[11:9], 2'b00, {OPCODE_STORE}};
           end
 
-          3'b001,
-          3'b011,
           3'b111: begin
-            if (CHERIoTEn & cheri_pmode_i) begin
-              // c.clcsp -> clc cd, imm(c2),  reused c.ldsp
-              if (instr_i[15:13] == 3'b011) begin
-                instr_o = {3'b0, instr_i[4:2], instr_i[12], instr_i[6:5], 3'b000, 5'h02,
-                           3'b011, instr_i[11:7], OPCODE_LOAD};
-              end else begin
-                // c.cscsp -> csc cs2, imm(c2),  reuse c.sdsp
-                instr_o = {3'b0, instr_i[9:7], instr_i[12], instr_i[6:2], 5'h02, 3'b011,
-                           instr_i[11:10], 3'b000, {OPCODE_STORE}};
-              end
-              if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
+            if ((BaseIsa == BaseIsaRV32IorCHERIoT) && (cheriot_enable_i == IbexMuBiOn)) begin
+              // c.cscsp -> csc cs2, imm(c2),  reuse c.sdsp
+              instr_o = {3'b0, instr_i[9:7], instr_i[12], instr_i[6:2], 5'h02, 3'b011,
+                         instr_i[11:10], 3'b000, {OPCODE_STORE}};
             end else begin
               instr_o = instr_i;
               illegal_instr_o = 1'b1;
             end
           end
 
+          3'b001: begin
+            illegal_instr_o = 1'b1;
+          end
 
           default: begin
             illegal_instr_o = 1'b1;
@@ -894,6 +906,11 @@ end
       cm_rlist_q     <= cm_rlist_d;
       cm_sp_offset_q <= cm_sp_offset_d;
     end
+  end
+
+  if (BaseIsa != BaseIsaRV32IorCHERIoT) begin : gen_no_cheriot_cdec
+    logic unused_cheriot_enable;
+    assign unused_cheriot_enable = ^cheriot_enable_i;
   end
 
   ////////////////

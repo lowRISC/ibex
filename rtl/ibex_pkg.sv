@@ -1,9 +1,6 @@
-// Copyright Microsoft Corporation
-// Licensed under the Apache License, Version 2.0, see LICENSE for details.
-// SPDX-License-Identifier: Apache-2.0
-
 // Copyright lowRISC contributors.
 // Copyright 2017 ETH Zurich and University of Bologna, see also CREDITS.md.
+// Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -728,7 +725,7 @@ package ibex_pkg;
   // RISC-V Foundation. Note this is allocated specifically to Ibex, should significant changes be
   // made a different architecture ID should be supplied.
   localparam logic [31:0] CSR_MARCHID_VALUE = {1'b0, 31'd22};
-  localparam logic [31:0] CSR_MARCHID_CHERI_VALUE = 32'hce1;
+  localparam logic [31:0] CSR_MARCHID_CHERIOT_VALUE = 32'hce1;
 
 
   // Machine Configuration Pointer

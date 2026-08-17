@@ -1,9 +1,6 @@
-// Copyright Microsoft Corporation
-// Licensed under the Apache License, Version 2.0, see LICENSE for details.
-// SPDX-License-Identifier: Apache-2.0
-
 // Copyright lowRISC contributors.
 // Copyright 2018 ETH Zurich and University of Bologna, see also CREDITS.md.
+// Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -17,20 +14,17 @@
 
 `include "prim_assert.sv"
 
-module ibex_decoder import cheri_pkg::*; #(
+module ibex_decoder import ibex_cheriot_pkg::*; #(
   parameter bit RV32E               = 0,
   parameter ibex_pkg::rv32m_e RV32M = ibex_pkg::RV32MFast,
   parameter ibex_pkg::rv32b_e RV32B = ibex_pkg::RV32BNone,
   parameter bit BranchTargetALU     = 0,
-  parameter bit CHERIoTEn           = 1'b1,
-  parameter bit CheriPPLBC          = 1'b0,
-  parameter bit CheriSBND2          = 1'b0
+  parameter ibex_pkg::base_isa_e BaseIsa        = ibex_pkg::BaseIsaRV32IorCHERIoT
 ) (
   input  logic                 clk_i,
   input  logic                 rst_ni,
 
-  input  logic                 cheri_pmode_i,
-  input  logic                 cheri_tsafe_en_i,
+  input  ibex_pkg::ibex_mubi_t cheriot_enable_i,
 
   // to/from controller
   output logic                 illegal_insn_o,        // illegal instr encountered
@@ -95,11 +89,11 @@ module ibex_decoder import cheri_pkg::*; #(
   output logic                 csr_access_o,          // access to CSR
   output ibex_pkg::csr_op_e    csr_op_o,              // operation to perform on CSR
   output ibex_pkg::csr_num_e   csr_addr_o,            // CSR address
-  output logic                 csr_cheri_always_ok_o, // CHERI safe-listed (no ASR needed) CSRs
+  output logic                 csr_cheriot_always_ok_o, // CHERIoT safe-listed (no ASR needed) CSRs
 
   // LSU
   output logic                 data_req_o,            // start transaction to data memory
-  output logic                 cheri_data_req_o,      // cheri lsu transaction
+  output logic                 cheriot_data_req_o,      // cheriot lsu transaction
   output logic                 data_we_o,             // write enable
   output logic [1:0]           data_type_o,           // size of transaction: byte, half
                                                       // word or word
@@ -110,24 +104,28 @@ module ibex_decoder import cheri_pkg::*; #(
   output logic                 jump_in_dec_o,         // jump is being calculated in ALU
   output logic                 branch_in_dec_o,
 
-  // output to cheri EX
-  output logic                 instr_is_cheri_o,
-  output logic                 instr_is_legal_cheri_o,
-  output logic [11:0]          cheri_imm12_o,
-  output logic [19:0]          cheri_imm20_o,
-  output logic [20:0]          cheri_imm21_o,
-  output logic [OPDW-1:0]      cheri_operator_o,
-  output logic [4:0]           cheri_cs2_dec_o,
-  output logic                 cheri_multicycle_dec_o
+  // output to cheriot EX
+  output logic                   instr_is_cheriot_o,
+  output logic                   instr_is_legal_cheriot_o,
+  output logic [11:0]            cheriot_imm12_o,
+  output logic [19:0]            cheriot_imm20_o,
+  output logic [20:0]            cheriot_imm21_o,
+  output cheriot_op_t            cheriot_operator_o,
+  output logic [4:0]             cheriot_cs2_dec_o,
+  output cheriot_cap_field_e     cheriot_cap_field_sel_o,
+  output cheriot_adder_a_sel_e   cheriot_adder_a_sel_o,
+  output cheriot_adder_b_sel_e   cheriot_adder_b_sel_o,
+  output cheriot_setaddr_sel_e   cheriot_setaddr_sel_o,
+  output cheriot_setbounds_sel_e cheriot_setbounds_sel_o
 );
 
   import ibex_pkg::*;
 
-  localparam bit CheriLimit16Regs = CHERIoTEn;
+  localparam bit CheriLimit16Regs = (BaseIsa == BaseIsaRV32IorCHERIoT);
 
   logic        illegal_insn;
   logic        illegal_reg_rv32e;
-  logic        illegal_reg_cheri;
+  logic        illegal_reg_cheriot;
   logic        csr_illegal;
   logic        rf_we;
 
@@ -148,16 +146,7 @@ module ibex_decoder import cheri_pkg::*; #(
   opcode_e     opcode;
   opcode_e     opcode_alu;
 
-  logic        cheri_opcode_en;
-  logic        cheri_auipcc_en;
-  logic        cheri_auicgp_en;
-  logic        cheri_jalr_en;
-  logic        cheri_jal_en;
-  logic        cheri_cload_en;
-  logic        cheri_cstore_en;
-  logic        instr_is_legal_cheri;
-  logic        cheri_rf_ren_a, cheri_rf_ren_b;
-  logic        cheri_rf_we_dec;
+  logic        instr_is_legal_cheriot;
 
   // To help timing the flops containing the current instruction are replicated to reduce fan-out.
   // instr_alu is used to determine the ALU control logic and associated operand/imm select signals
@@ -211,39 +200,40 @@ module ibex_decoder import cheri_pkg::*; #(
   // note for GDC (c3) we want to use the regular scheme to resovel data hazards, instead of using
   // sideband signals to export CX3 from register file directly
   logic [4:0] raddr_a, raddr_b;
-  assign raddr_a = cheri_auicgp_en ? 5'h3 : ((use_rs3_q & ~instr_first_cycle_i) ? instr_rs3 : instr_rs1); // rs3 / rs1
+  assign raddr_a = cheriot_operator_o.CAUICGP ? 5'h3 :
+                   ((use_rs3_q & ~instr_first_cycle_i) ? instr_rs3 : instr_rs1); // rs3 / rs1
   assign raddr_b = instr_rs2; // rs2
 
   // cheriot only uses 16 registers and repurposes the MSB addr bits
-  if (CheriLimit16Regs) begin
-    assign rf_raddr_a_o = cheri_pmode_i ?{1'b0,  raddr_a[3:0]} : raddr_a;
-    assign rf_raddr_b_o = cheri_pmode_i ?{1'b0,  raddr_b[3:0]} : raddr_b;
-  end else begin
-    assign rf_raddr_a_o = raddr_a;
-    assign rf_raddr_b_o = raddr_b;
-  end
-
   // destination register
   assign instr_rd = instr[11:7];
-  if (CheriLimit16Regs) begin
-    assign rf_waddr_o   = cheri_pmode_i ? {1'b0, instr_rd[3:0]} : instr_rd; // rd
-  end else begin
-    assign rf_waddr_o   = instr_rd; // rd
+  // CHERIoT instructions encode a 4-bit capability register (c0-c15) in instr[11:7].
+  // Standard RV32I instructions use all 32 integer registers and must not be masked.
+  if (CheriLimit16Regs) begin : gen_16_regs
+    assign rf_raddr_a_o = ((cheriot_enable_i == IbexMuBiOn) & instr_is_cheriot_o) ?
+                          {1'b0,  raddr_a[3:0]} : raddr_a;
+    assign rf_raddr_b_o = ((cheriot_enable_i == IbexMuBiOn) & instr_is_cheriot_o) ?
+                          {1'b0,  raddr_b[3:0]} : raddr_b;
+    assign rf_waddr_o   = ((cheriot_enable_i == IbexMuBiOn) & instr_is_cheriot_o) ?
+                          {1'b0, instr_rd[3:0]} : instr_rd;
+  end else begin : gen_regs
+    assign rf_raddr_a_o = raddr_a;
+    assign rf_raddr_b_o = raddr_b;
+    assign rf_waddr_o   = instr_rd;
   end
 
   ////////////////////
   // Register check //
   ////////////////////
 
-  // rf_we from decoder doesn't cover memory load case (where regfile write signal comes from LSU response)
+  // rf_we from decoder doesn't cover memory load case (where regfile write signal
+  // comes from LSU response)
   logic rf_we_or_load;
   assign rf_we_or_load = rf_we | (opcode == OPCODE_LOAD);
 
   assign rf_we_or_load_o = rf_we_or_load;
 
   if (RV32E) begin : gen_rv32e_reg_check_active
-    //assign illegal_reg_rv32e = ((rf_raddr_a_o[4] & (alu_op_a_mux_sel_o == OP_A_REG_A)) |
-    //                            (rf_raddr_b_o[4] & (alu_op_b_mux_sel_o == OP_B_REG_B)) |
     assign illegal_reg_rv32e = ((rf_raddr_a_o[4] & rf_ren_a_o) |
                                 (rf_raddr_b_o[4] & rf_ren_b_o) |
                                 (instr_rs3[4] & use_rs3_d & rf_ren_a_o) |
@@ -252,14 +242,16 @@ module ibex_decoder import cheri_pkg::*; #(
     assign illegal_reg_rv32e = 1'b0;
   end
 
-  if (CheriLimit16Regs) begin : gen_cheri_reg_check_active
-    assign illegal_reg_cheri = cheri_pmode_i &
+  if (CheriLimit16Regs) begin : gen_cheriot_reg_check_active
+    // Trap only on CHERIoT instructions that use an out-of-range capability register (>= c16).
+    // Standard RV32I instructions may freely use x0-x31.
+    assign illegal_reg_cheriot = (cheriot_enable_i == IbexMuBiOn) & instr_is_cheriot_o &
                                ((raddr_a[4]  & rf_ren_a_o) |
                                 (raddr_b[4]  & rf_ren_b_o) |
                                 (instr_rs3[4] & use_rs3_d & rf_ren_a_o) |
-                                (instr_rd[4] & rf_we_or_load ));
-  end else begin : gen_cheri_reg_check_inactive
-    assign illegal_reg_cheri = 1'b0;
+                                (instr_rd[4] & rf_we_or_load));
+  end else begin : gen_cheriot_reg_check_inactive
+    assign illegal_reg_cheriot = 1'b0;
   end
 
   ///////////////////////
@@ -281,46 +273,46 @@ module ibex_decoder import cheri_pkg::*; #(
   /////////////
 
   always_comb begin
-    jump_in_dec_o         = 1'b0;
-    jump_set_o            = 1'b0;
-    branch_in_dec_o       = 1'b0;
-    icache_inval_o        = 1'b0;
+    jump_in_dec_o           = 1'b0;
+    jump_set_o              = 1'b0;
+    branch_in_dec_o         = 1'b0;
+    icache_inval_o          = 1'b0;
 
-    multdiv_operator_o    = MD_OP_MULL;
-    multdiv_signed_mode_o = 2'b00;
+    multdiv_operator_o      = MD_OP_MULL;
+    multdiv_signed_mode_o   = 2'b00;
 
-    rf_wdata_sel_o        = RF_WD_EX;
-    rf_we                 = 1'b0;
-    rf_ren_a_o            = 1'b0;
-    rf_ren_b_o            = 1'b0;
+    rf_wdata_sel_o          = RF_WD_EX;
+    rf_we                   = 1'b0;
+    rf_ren_a_o              = 1'b0;
+    rf_ren_b_o              = 1'b0;
 
-    csr_access_o          = 1'b0;
-    csr_illegal           = 1'b0;
-    csr_op                = CSR_OP_READ;
-    csr_cheri_always_ok_o = 1'b0;
+    csr_access_o            = 1'b0;
+    csr_illegal             = 1'b0;
+    csr_op                  = CSR_OP_READ;
+    csr_cheriot_always_ok_o = 1'b0;
 
-    data_we_o             = 1'b0;
-    data_type_o           = 2'b00;
-    data_sign_extension_o = 1'b0;
-    data_req_o            = 1'b0;
-    cheri_data_req_o      = 1'b0;
+    data_we_o               = 1'b0;
+    data_type_o             = 2'b00;
+    data_sign_extension_o   = 1'b0;
+    data_req_o              = 1'b0;
+    cheriot_data_req_o      = 1'b0;
 
-    illegal_insn          = 1'b0;
-    ebrk_insn_o           = 1'b0;
-    mret_insn_o           = 1'b0;
-    dret_insn_o           = 1'b0;
-    ecall_insn_o          = 1'b0;
-    wfi_insn_o            = 1'b0;
+    illegal_insn            = 1'b0;
+    ebrk_insn_o             = 1'b0;
+    mret_insn_o             = 1'b0;
+    dret_insn_o             = 1'b0;
+    ecall_insn_o            = 1'b0;
+    wfi_insn_o              = 1'b0;
 
-    cheri_opcode_en       = 1'b0;
-    cheri_cload_en        = 1'b0;
-    cheri_cstore_en       = 1'b0;
-    cheri_auipcc_en       = 1'b0;
-    cheri_auicgp_en       = 1'b0;
-    cheri_jalr_en         = 1'b0;
-    cheri_jal_en          = 1'b0;
+    cheriot_operator_o      = '0;
+    instr_is_cheriot_o      = 1'b0;
+    cheriot_cap_field_sel_o = CFIELD_PERM;
+    cheriot_adder_a_sel_o   = CHERIOT_ADDER_A_ZERO;
+    cheriot_adder_b_sel_o   = CHERIOT_ADDER_B_ZERO;
+    cheriot_setaddr_sel_o   = SETADDR_NONE;
+    cheriot_setbounds_sel_o = SETBOUNDS_NONE;
 
-    opcode                = opcode_e'(instr[6:0]);
+    opcode                  = opcode_e'(instr[6:0]);
 
     unique case (opcode)
 
@@ -329,11 +321,16 @@ module ibex_decoder import cheri_pkg::*; #(
       ///////////
 
       OPCODE_JAL: begin   // Jump and Link
-        if (CHERIoTEn & cheri_pmode_i & ~illegal_c_insn_i) begin
-          // cheri_ex takes over JAL now as a single-cycle jump
-          cheri_jal_en      = 1'b1;
-          illegal_insn      = 1'b0;
-          rf_we             = 1'b1;
+        if ((BaseIsa == BaseIsaRV32IorCHERIoT) & (cheriot_enable_i == IbexMuBiOn) &
+            ~illegal_c_insn_i) begin
+          // cheriot_ex takes over JAL now as a single-cycle jump
+          cheriot_operator_o.CJAL = 1'b1;
+          instr_is_cheriot_o      = 1'b1;
+          illegal_insn            = 1'b0;
+          rf_we                   = 1'b1;
+          cheriot_adder_a_sel_o   = CHERIOT_ADDER_A_IMM21;
+          cheriot_adder_b_sel_o   = CHERIOT_ADDER_B_PC;
+          cheriot_setaddr_sel_o   = SETADDR_PCC_PCNXT;
         end else begin
           jump_in_dec_o     = 1'b1;
 
@@ -349,11 +346,16 @@ module ibex_decoder import cheri_pkg::*; #(
       end
 
       OPCODE_JALR: begin  // Jump and Link Register
-        if (CHERIoTEn & cheri_pmode_i & ~illegal_c_insn_i) begin
-          // cheri_ex takes over JALR now as a single-cycle jump
-          cheri_jalr_en     = (instr[14:12] == 3'b0);
-          rf_ren_a_o        = 1'b1;
-          rf_we             = 1'b1;
+        if ((BaseIsa == BaseIsaRV32IorCHERIoT) & (cheriot_enable_i == IbexMuBiOn) &
+            ~illegal_c_insn_i) begin
+          // cheriot_ex takes over JALR now as a single-cycle jump
+          if (instr[14:12] == 3'b0) cheriot_operator_o.CJALR = 1'b1;
+          instr_is_cheriot_o    = 1'b1;
+          rf_ren_a_o            = 1'b1;
+          rf_we                 = 1'b1;
+          cheriot_adder_a_sel_o = CHERIOT_ADDER_A_IMM12;
+          cheriot_adder_b_sel_o = CHERIOT_ADDER_B_RS1;
+          cheriot_setaddr_sel_o = SETADDR_PCC_PCNXT;
 
           if (instr[14:12] != 3'b0) begin
             illegal_insn    = 1'b1;
@@ -407,15 +409,15 @@ module ibex_decoder import cheri_pkg::*; #(
         if (instr[14]) begin
           illegal_insn     = 1'b1;
         end else if (instr[13:12] == 2'b11) begin
-          if (CHERIoTEn & cheri_pmode_i) begin
-            cheri_cstore_en  =  ~illegal_c_insn_i; // csc
-            cheri_data_req_o =  ~illegal_c_insn_i;
-            data_req_o       =  1'b0;
-            illegal_insn     =  1'b0;
+          if ((BaseIsa == BaseIsaRV32IorCHERIoT) & (cheriot_enable_i == IbexMuBiOn)) begin
+            cheriot_operator_o.CSTORE_CAP = ~illegal_c_insn_i;
+            instr_is_cheriot_o            = ~illegal_c_insn_i;
+            cheriot_data_req_o            = ~illegal_c_insn_i;
+            data_req_o                    = 1'b0;
+            illegal_insn                  = 1'b0;
           end else begin
-            cheri_cstore_en  =  1'b0; // csc
-            cheri_data_req_o =  1'b0;
-            illegal_insn     =  1'b1;
+            cheriot_data_req_o = 1'b0;
+            illegal_insn       = 1'b1;
           end
         end
 
@@ -449,17 +451,19 @@ module ibex_decoder import cheri_pkg::*; #(
           end
           2'b11: begin
             // illegal_c_insn_i is added to fix the c.clcsp case
-            //   (compressed decoder translate to cheri instruction but could still assert illegal_c_insn
+            //   (compressed decoder translate to cheriot instruction but could still
+            //   assert illegal_c_insn
             //   if rd == 0
-            if (CHERIoTEn & cheri_pmode_i && ~instr[14] && ~illegal_c_insn_i) begin
-              cheri_cload_en   = 1'b1;
-              cheri_data_req_o = ~cheri_tsafe_en_i | CheriPPLBC;
-              data_req_o       = 1'b0;    // req generated by cheri_ex
-              illegal_insn     = 1'b0;
+            if ((BaseIsa == BaseIsaRV32IorCHERIoT) & (cheriot_enable_i == IbexMuBiOn) &&
+                ~instr[14] && ~illegal_c_insn_i) begin
+              cheriot_operator_o.CLOAD_CAP = 1'b1;
+              instr_is_cheriot_o           = 1'b1;
+              cheriot_data_req_o           = 1'b1;
+              data_req_o                   = 1'b0;    // req generated by cheriot_ex
+              illegal_insn                 = 1'b0;
             end else begin                // CHERIoT consider instr[14]=1 illegal
-              cheri_cload_en   = 1'b0;
-              cheri_data_req_o = 1'b0;
-              illegal_insn     = 1'b1;
+              cheriot_data_req_o = 1'b0;
+              illegal_insn       = 1'b1;
             end
           end
           default: begin
@@ -477,13 +481,17 @@ module ibex_decoder import cheri_pkg::*; #(
       end
 
       OPCODE_AUIPC: begin
-        if (CHERIoTEn & cheri_pmode_i & ~illegal_c_insn_i) begin
-          cheri_auipcc_en  = 1'b1;
-          illegal_insn     = 1'b0;
-          rf_we            = 1'b1;
+        if ((BaseIsa == BaseIsaRV32IorCHERIoT) & (cheriot_enable_i == IbexMuBiOn) &
+            ~illegal_c_insn_i) begin
+          cheriot_operator_o.CAUIPCC = 1'b1;
+          instr_is_cheriot_o         = 1'b1;
+          illegal_insn               = 1'b0;
+          rf_we                      = 1'b1;
+          cheriot_adder_a_sel_o      = CHERIOT_ADDER_A_IMM20;
+          cheriot_adder_b_sel_o      = CHERIOT_ADDER_B_PC;
+          cheriot_setaddr_sel_o      = SETADDR_PCC_ARITH;
         end else begin
-          // OPCODE_AUIPC: begin  // Add Upper Immediate to PC
-          rf_we            = 1'b1;
+          rf_we = 1'b1;
         end
       end
 
@@ -507,8 +515,8 @@ module ibex_decoder import cheri_pkg::*; #(
               end
               5'b0_1001,                                                              // bclri
               5'b0_0101,                                                              // bseti
-              // 5'b0_1101: illegal_insn = (RV32B != RV32BNone) ? 1'b0 : 1'b1;           // binvi
-              5'b0_1101: illegal_insn = (RV32B != RV32BNone) ? (instr[26:25] != 2'b00) : 1'b1;    // binvi
+              5'b0_1101: illegal_insn = (RV32B != RV32BNone) ?        // binvi
+                         (instr[26:25] != 2'b00) : 1'b1;
               5'b0_0001: begin
                 if (instr[26] == 1'b0) begin                                          // shfl
                   illegal_insn = (RV32B == RV32BOTEarlGrey || RV32B == RV32BFull) ? 1'b0 : 1'b1;
@@ -550,8 +558,8 @@ module ibex_decoder import cheri_pkg::*; #(
                   illegal_insn = (RV32B == RV32BOTEarlGrey || RV32B == RV32BFull) ? 1'b0 : 1'b1;
                 end
                 5'b0_1100,                                                             // rori
-                // 5'b0_1001: illegal_insn = (RV32B != RV32BNone) ? 1'b0 : 1'b1;          // bexti
-                5'b0_1001: illegal_insn = (RV32B != RV32BNone) ? (instr[26:25] != 2'b00) : 1'b1;          // bexti
+                5'b0_1001: illegal_insn = (RV32B != RV32BNone) ?       // bexti
+                           (instr[26:25] != 2'b00) : 1'b1;
 
                 5'b0_1101: begin
                   if (RV32B == RV32BOTEarlGrey || RV32B == RV32BFull) begin
@@ -776,45 +784,123 @@ module ibex_decoder import cheri_pkg::*; #(
           endcase
 
           // always allow access to the following CSRs even without ASR permission
-          //   -- 0xC01-0xC9F (unpriviledged counters)
-          //   -- 0xB01-0xB9F (m-mode counters).
-          //      note 0xb01 is undefined per rvi spec. CSR register logic will handle it.
-          csr_cheri_always_ok_o = CHERIoTEn & cheri_pmode_i &
-                                  (((instr[31:28] == 4'hb) || (instr[31:28] == 4'hc)) &&
-                                   ((instr[27] == 1'b0) || (instr[26:25] == 2'b00)));
+          //   -- 0xC00-0xC9F (unprivileged read-only counters, per CHERIoT spec Table 7.1)
+          csr_cheriot_always_ok_o = (BaseIsa == BaseIsaRV32IorCHERIoT) &
+                                    (cheriot_enable_i == IbexMuBiOn) &
+                                    ((instr[31:28] == 4'hc) &&
+                                     ((instr[27] == 1'b0) || (instr[26:25] == 2'b00)));
 
           illegal_insn = csr_illegal;
         end
       end
 
+      /////////////
+      // CHERIoT //
+      /////////////
+
       OPCODE_CHERI: begin
-        if (CHERIoTEn & cheri_pmode_i & ~illegal_c_insn_i) begin
-          cheri_opcode_en  = 1'b1;
-          rf_ren_a_o       = cheri_rf_ren_a;
-          rf_ren_b_o       = cheri_rf_ren_b;
-          rf_we            = cheri_rf_we_dec;
-          illegal_insn     = ~instr_is_legal_cheri;
+        if ((BaseIsa == BaseIsaRV32IorCHERIoT) & (cheriot_enable_i == IbexMuBiOn) &
+            ~illegal_c_insn_i) begin
+          instr_is_cheriot_o = 1'b1;
+          rf_ren_a_o       = 1'b1;
+          rf_we            = 1'b1;
+
+          if (instr[14:12] == 3'b000) begin
+            if (instr[31:25] == 7'h7f) begin
+              // fmt3: single-source instructions (rd = op(cs1))
+              unique case (instr[24:20])
+                5'h00: begin cheriot_operator_o.CGET_FIELD = 1'b1;
+                             cheriot_cap_field_sel_o = CFIELD_PERM; end
+                5'h01: begin cheriot_operator_o.CGET_FIELD = 1'b1;
+                             cheriot_cap_field_sel_o = CFIELD_TYPE; end
+                5'h02: begin cheriot_operator_o.CGET_FIELD = 1'b1;
+                             cheriot_cap_field_sel_o = CFIELD_BASE; end
+                5'h03: begin cheriot_operator_o.CGET_FIELD = 1'b1;
+                             cheriot_cap_field_sel_o = CFIELD_LEN;  end
+                5'h04: begin cheriot_operator_o.CGET_FIELD = 1'b1;
+                             cheriot_cap_field_sel_o = CFIELD_TAG;  end
+                5'h08: begin cheriot_operator_o.CRRL = 1'b1;
+                             cheriot_setbounds_sel_o = SETBOUNDS_CRRL; end
+                5'h09: begin cheriot_operator_o.CRAM = 1'b1;
+                             cheriot_setbounds_sel_o = SETBOUNDS_CRAM; end
+                5'h0a: cheriot_operator_o.CMOVE_CAP  = 1'b1; // CMove
+                5'h0b: cheriot_operator_o.CCLEAR_TAG = 1'b1; // CClearTag
+                5'h0f: begin cheriot_operator_o.CGET_FIELD = 1'b1;
+                             cheriot_cap_field_sel_o = CFIELD_ADDR; end
+                5'h17: begin cheriot_operator_o.CGET_FIELD = 1'b1;
+                             cheriot_cap_field_sel_o = CFIELD_HIGH; end
+                5'h18: begin cheriot_operator_o.CGET_FIELD = 1'b1;
+                             cheriot_cap_field_sel_o = CFIELD_TOP;  end
+                default: illegal_insn = 1'b1;
+              endcase
+
+            end else if (instr[31:25] == 7'h01) begin
+              // CCSR_RW (CSpecialRW): imm5 selects the special register, not rs2
+              cheriot_operator_o.CCSR_RW = 1'b1;
+              cheriot_setaddr_sel_o = SETADDR_SCR;
+
+            end else begin
+              // fmt2: two-source instructions (rd = op(cs1, cs2))
+              rf_ren_b_o = 1'b1;
+              unique case (instr[31:25])
+                7'h08: begin cheriot_operator_o.CSET_BOUNDS      = 1'b1;
+                             cheriot_setbounds_sel_o = SETBOUNDS_RS2;    end
+                7'h09: begin cheriot_operator_o.CSET_BOUNDS_EX   = 1'b1;
+                             cheriot_setbounds_sel_o = SETBOUNDS_RS2_EX; end
+                7'h0a: begin cheriot_operator_o.CSET_BOUNDS_RNDN = 1'b1;
+                             cheriot_setbounds_sel_o = SETBOUNDS_RNDN;   end
+                7'h0b: cheriot_operator_o.CSEAL            = 1'b1; // CSeal
+                7'h0c: cheriot_operator_o.CUNSEAL          = 1'b1; // CUnseal
+                7'h0d: cheriot_operator_o.CAND_PERM        = 1'b1; // CAndPerm
+                7'h10: begin cheriot_operator_o.CSET_ADDR = 1'b1;
+                             cheriot_adder_a_sel_o = CHERIOT_ADDER_A_RS2;
+                             cheriot_setaddr_sel_o = SETADDR_RFA_ARITH; end
+                7'h11: begin cheriot_operator_o.CINC_ADDR = 1'b1;
+                             cheriot_adder_a_sel_o = CHERIOT_ADDER_A_RS2;
+                             cheriot_adder_b_sel_o = CHERIOT_ADDER_B_RS1;
+                             cheriot_setaddr_sel_o = SETADDR_RFA_ARITH; end
+                7'h14: cheriot_operator_o.CSUB_CAP         = 1'b1; // CSub
+                7'h16: cheriot_operator_o.CSET_HIGH        = 1'b1; // CSetHigh
+                7'h20: cheriot_operator_o.CIS_SUBSET       = 1'b1; // CTestSubset
+                7'h21: cheriot_operator_o.CIS_EQUAL        = 1'b1; // CIsEqual
+                default: illegal_insn = 1'b1;
+              endcase
+            end
+
+          end else if (instr[14:12] == 3'b001) begin
+            // fmt1: CIncAddrImm
+            cheriot_operator_o.CINC_ADDR_IMM = 1'b1;
+            cheriot_adder_a_sel_o = CHERIOT_ADDER_A_IMM12;
+            cheriot_adder_b_sel_o = CHERIOT_ADDER_B_RS1;
+            cheriot_setaddr_sel_o = SETADDR_RFA_ARITH;
+
+          end else if (instr[14:12] == 3'b010) begin
+            // fmt1: CSetBoundsImm
+            cheriot_operator_o.CSET_BOUNDS_IMM = 1'b1;
+            cheriot_setbounds_sel_o = SETBOUNDS_IMM;
+
+          end else begin
+            illegal_insn = 1'b1;
+          end
+
         end else begin
-          cheri_opcode_en  = 1'b0;
-          rf_ren_a_o       = 1'b0;
-          rf_ren_b_o       = 1'b0;
-          rf_we            = 1'b0;
-          illegal_insn     = 1'b1;
+          illegal_insn = 1'b1;
         end
       end
 
       OPCODE_AUICGP: begin
-        if (CHERIoTEn & cheri_pmode_i & ~illegal_c_insn_i) begin
-          cheri_auicgp_en  = 1'b1;
-          rf_ren_a_o       = 1'b1;
-          rf_ren_b_o       = 1'b0;
-          rf_we            = 1'b1;
-          illegal_insn     = 1'b0;
+        if ((BaseIsa == BaseIsaRV32IorCHERIoT) & (cheriot_enable_i == IbexMuBiOn) &
+            ~illegal_c_insn_i) begin
+          cheriot_operator_o.CAUICGP = 1'b1;
+          instr_is_cheriot_o          = 1'b1;
+          rf_ren_a_o                = 1'b1;
+          rf_we                     = 1'b1;
+          illegal_insn              = 1'b0;
+          cheriot_adder_a_sel_o       = CHERIOT_ADDER_A_IMM20;
+          cheriot_adder_b_sel_o       = CHERIOT_ADDER_B_RS1;
+          cheriot_setaddr_sel_o       = SETADDR_RFA_ARITH;
         end else begin
-          cheri_opcode_en  = 1'b0;
-          rf_ren_a_o       = 1'b0;
-          rf_ren_b_o       = 1'b0;
-          illegal_insn     = 1'b1;
+          illegal_insn = 1'b1;
         end
       end
 
@@ -988,7 +1074,7 @@ module ibex_decoder import cheri_pkg::*; #(
         alu_operator_o      = ALU_ADD;
       end
 
-      // use CHERI version of AUIPCC when pmode == 1
+      // use CHERIoT version of AUIPCC when pmode == 1
       OPCODE_AUIPC: begin  // Add Upper Immediate to PC
         alu_op_a_mux_sel_o  = OP_A_CURRPC;
         alu_op_b_mux_sel_o  = OP_B_IMM;
@@ -1373,59 +1459,39 @@ module ibex_decoder import cheri_pkg::*; #(
 
   // make sure instructions accessing non-available registers in RV32E cause illegal
   // instruction exceptions
-  assign illegal_insn_o = illegal_insn | illegal_reg_rv32e | illegal_reg_cheri;
+  assign illegal_insn_o = illegal_insn | illegal_reg_rv32e | illegal_reg_cheriot;
 
   // do not propagate regfile write enable if non-available registers are accessed in RV32E
-  assign rf_we_o = rf_we & ~illegal_reg_rv32e & ~illegal_reg_cheri;
+  assign rf_we_o = rf_we & ~illegal_reg_rv32e & ~illegal_reg_cheriot;
 
   // Not all bits are used
-  assign unused_instr_alu = {instr_alu[19:15],instr_alu[11:7]};
+  assign unused_instr_alu = {instr_alu[19:15], instr_alu[11:7]};
 
-  assign instr_is_legal_cheri_o = instr_is_legal_cheri & ~illegal_reg_cheri;
+  assign instr_is_legal_cheriot   = |cheriot_operator_o;
+  assign instr_is_legal_cheriot_o = instr_is_legal_cheriot & ~illegal_reg_cheriot;
 
-  // cheri decoder
-  if (CHERIoTEn) begin : gen_cheri_decoder
-    cheri_decoder # (
-      .CheriPPLBC              (CheriPPLBC),
-      .CheriSBND2              (CheriSBND2)
-    ) u_cheri_decoder (
-      .cheri_opcode_en_i       (cheri_opcode_en),
-      .cheri_tsafe_en_i        (cheri_tsafe_en_i),
-      .cheri_auipcc_en_i       (cheri_auipcc_en),
-      .cheri_auicgp_en_i       (cheri_auicgp_en),
-      .cheri_jalr_en_i         (cheri_jalr_en),
-      .cheri_jal_en_i          (cheri_jal_en),
-      .cheri_cload_en_i        (cheri_cload_en),
-      .cheri_cstore_en_i       (cheri_cstore_en),
-      .instr_rdata_i           (instr_rdata_i),
-      .instr_is_cheri_o        (instr_is_cheri_o),
-      .instr_is_legal_cheri_o  (instr_is_legal_cheri),
-      .cheri_imm12_o           (cheri_imm12_o),
-      .cheri_imm20_o           (cheri_imm20_o),
-      .cheri_imm21_o           (cheri_imm21_o),
-      .cheri_operator_o        (cheri_operator_o),
-      .cheri_cs2_dec_o         (cheri_cs2_dec_o),
-      .cheri_rf_ren_a_o        (cheri_rf_ren_a),
-      .cheri_rf_ren_b_o        (cheri_rf_ren_b),
-      .cheri_rf_we_dec_o       (cheri_rf_we_dec),
-      .cheri_multicycle_dec_o  (cheri_multicycle_dec_o)
-      );
-  end else begin
-    assign instr_is_cheri_o       = 1'b0;
-    assign instr_is_legal_cheri   = 1'b0;
-    assign cheri_imm12_o          = 12'h0;
-    assign cheri_imm20_o          = 20'h0;
-    assign cheri_imm21_o          = 21'h0;
-    assign cheri_operator_o       = 'h0;
-    assign cheri_cs2_dec_o        = 1'b0;
-    assign cheri_rf_ren_a         = 1'b0;
-    assign cheri_rf_ren_b         = 1'b0;
-    assign cheri_rf_we_dec        = 1'b0;
-    assign cheri_multicycle_dec_o = 1'b0;
 
+  assign cheriot_cs2_dec_o = cheriot_operator_o.CCSR_RW ? instr[24:20] : 5'h0;
+
+  assign cheriot_imm12_o = (cheriot_operator_o.CJALR           |
+                            cheriot_operator_o.CSET_BOUNDS_IMM  |
+                            cheriot_operator_o.CINC_ADDR_IMM    |
+                            cheriot_operator_o.CLOAD_CAP) ?
+                           {instr[31:25], instr[24:20]} :
+                           (cheriot_operator_o.CSTORE_CAP ? {instr[31:25], instr[11:7]} : 12'h0);
+
+  assign cheriot_imm20_o = (cheriot_operator_o.CAUIPCC | cheriot_operator_o.CAUICGP) ?
+                            instr[31:12] : 20'h0;
+
+  assign cheriot_imm21_o = cheriot_operator_o.CJAL ?
+                           {instr[31], instr[19:12], instr[20], instr[30:21], 1'b0} : 21'h0;
+
+  if (BaseIsa != BaseIsaRV32IorCHERIoT) begin : gen_no_cheriot_decoder
+    logic unused_cheriot_enable;
+    assign unused_cheriot_enable = ^cheriot_enable_i;
   end
 
-  ////////////////a
+  ////////////////
   // Assertions //
   ////////////////
 

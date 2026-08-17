@@ -10,11 +10,15 @@
  * This register file is based on flip flops. Use this register file when
  * targeting FPGA synthesis or Verilator simulation.
  */
-module ibex_register_file_ff #(
+module ibex_register_file_ff import ibex_pkg::*; #(
+  parameter base_isa_e            BaseIsa           = BaseIsaRV32I,
   parameter bit                   RV32E             = 0,
   parameter int unsigned          DataWidth         = 32,
   parameter bit                   DummyInstructions = 0,
-  parameter logic [DataWidth-1:0] WordZeroVal       = '0
+  parameter logic [DataWidth-1:0] WordZeroVal       = '0,
+  // Capability port width
+  parameter int unsigned          CapWidth          = ibex_cheriot_pkg::REGCAP_W,
+  parameter logic [CapWidth-1:0]  CapWordZeroVal    = '0
 ) (
   // Clock and Reset
   input  logic                 clk_i,
@@ -27,15 +31,17 @@ module ibex_register_file_ff #(
   //Read port R1
   input  logic [4:0]           raddr_a_i,
   output logic [DataWidth-1:0] rdata_a_o,
+  output logic [CapWidth-1:0]  rcap_a_o,
 
   //Read port R2
   input  logic [4:0]           raddr_b_i,
   output logic [DataWidth-1:0] rdata_b_o,
-
+  output logic [CapWidth-1:0]  rcap_b_o,
 
   // Write port W1
   input  logic [4:0]           waddr_a_i,
   input  logic [DataWidth-1:0] wdata_a_i,
+  input  logic [CapWidth-1:0]  wcap_a_i,
   input  logic                 we_a_i
 );
 
@@ -43,6 +49,7 @@ module ibex_register_file_ff #(
   localparam int unsigned NUM_WORDS  = 2**ADDR_WIDTH;
 
   logic [DataWidth-1:0] rf_reg   [NUM_WORDS];
+  logic [CapWidth-1:0]  rf_cap   [NUM_WORDS];
   logic [NUM_WORDS-1:0] we_a_dec;
 
   always_comb begin : we_a_decoder
@@ -67,6 +74,24 @@ module ibex_register_file_ff #(
     end
 
     assign rf_reg[i] = rf_reg_q;
+
+    if ((BaseIsa == BaseIsaRV32IorCHERIoT) && (i < 16)) begin : g_rf_cap_flops
+      logic [CapWidth-1:0] rf_cap_q;
+
+      always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+          rf_cap_q <= CapWordZeroVal;
+        end else if (we_a_dec[i]) begin
+          rf_cap_q <= wcap_a_i;
+        end
+      end
+
+      assign rf_cap[i] = rf_cap_q;
+    end else begin : g_no_cap_flops
+      assign rf_cap[i] = CapWordZeroVal;
+      logic unused_wcap_a;
+      assign unused_wcap_a = ^wcap_a_i;
+    end
   end
 
   // With dummy instructions enabled, R0 behaves as a real register but will always return 0 for
@@ -90,16 +115,36 @@ module ibex_register_file_ff #(
     // Output the dummy data for dummy instructions, otherwise R0 reads as zero
     assign rf_reg[0] = dummy_instr_id_i ? rf_r0_q : WordZeroVal;
 
+    if (BaseIsa == BaseIsaRV32IorCHERIoT) begin : g_cap_dummy_r0
+      logic [CapWidth-1:0] rf_cap0_q;
+
+      always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+          rf_cap0_q <= CapWordZeroVal;
+        end else if (we_r0_dummy) begin
+          rf_cap0_q <= wcap_a_i;
+        end
+      end
+
+      assign rf_cap[0] = dummy_instr_id_i ? rf_cap0_q : CapWordZeroVal;
+    end else begin : g_no_cap_dummy_r0
+      assign rf_cap[0] = CapWordZeroVal;
+    end
+
   end else begin : g_normal_r0
     logic unused_dummy_instr;
     assign unused_dummy_instr = dummy_instr_id_i ^ dummy_instr_wb_i;
 
     // R0 is nil
     assign rf_reg[0] = WordZeroVal;
+    assign rf_cap[0] = CapWordZeroVal;
   end
 
   assign rdata_a_o = rf_reg[raddr_a_i];
   assign rdata_b_o = rf_reg[raddr_b_i];
+
+  assign rcap_a_o = rf_cap[raddr_a_i];
+  assign rcap_b_o = rf_cap[raddr_b_i];
 
   // Signal not used in FF register file
   logic unused_test_en;
