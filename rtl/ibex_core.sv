@@ -231,6 +231,7 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   logic        icache_ecc_error;
   logic        pc_mismatch_alert;
   logic        csr_shadow_err;
+  logic        cheriot_enable_mubi_err;
 
   logic        instr_first_cycle_id;
   logic        instr_valid_clear;
@@ -1335,9 +1336,18 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   // Minor alert - core is in a recoverable state
   assign alert_minor_o = icache_ecc_error;
 
+  // Detect invalid MuBi encoding on cheriot_enable_i (neither On nor Off).
+  // Gated by instr_exec to not trigger alerts before all signals are initialized.
+  if (BaseIsa == BaseIsaRV32IorCHERIoT) begin : gen_cheriot_enable_check
+    assign cheriot_enable_mubi_err = instr_exec & !((cheriot_enable_i == IbexMuBiOn) ||
+                                                    (cheriot_enable_i == IbexMuBiOff));
+  end else begin : gen_no_cheriot_enable_check
+    assign cheriot_enable_mubi_err = 1'b0;
+  end
+
   // Major internal alert - core is unrecoverable
   assign alert_major_internal_o = rf_ecc_err_comb | pc_mismatch_alert | csr_shadow_err |
-                                  cheriot_fatal_err;
+                                  cheriot_fatal_err | cheriot_enable_mubi_err;
   // Major bus alert
   assign alert_major_bus_o = lsu_load_resp_intg_err | lsu_store_resp_intg_err | instr_intg_err;
 
