@@ -151,12 +151,34 @@ uint32_t PmpCfgRegister::GetLockMask() {
   return lock_mask;
 }
 
+// Returns a per-byte mask for bytes whose write must be suppressed under
+// SMEPMP rule 4b: MML=1, RLB=0, and the candidate byte has lock=1 with
+// {X,W,R} in {0x4(X), 0x2(W), 0x6(W+X), 0x5(X+R)}.
+uint32_t PmpCfgRegister::GetMmlSuppressMask(uint32_t candidate) {
+  BaseRegister *mseccfg = GetRegisterFromMap(kCSRMSeccfg);
+  assert(mseccfg);
+  uint32_t mseccfg_val = mseccfg->RegisterRead();
+  if (!(mseccfg_val & kMSeccfgMml) || (mseccfg_val & kMSeccfgRlb))
+    return 0;
+  uint32_t suppress_mask = 0;
+  for (int i = 0; i < 4; i++) {
+    uint8_t byte_val = (candidate >> (8 * i)) & 0xFF;
+    uint8_t xwr = byte_val & 0x7;
+    if ((byte_val & 0x80) &&
+        (xwr == 0x4 || xwr == 0x2 || xwr == 0x6 || xwr == 0x5)) {
+      suppress_mask |= (0xFFu << (8 * i));
+    }
+  }
+  return suppress_mask;
+}
+
 uint32_t PmpCfgRegister::RegisterWrite(uint32_t newval) {
   uint32_t lock_mask = GetLockMask();
   uint32_t read_value = register_value_;
+  uint32_t suppress_mask = GetMmlSuppressMask(newval);
 
-  register_value_ &= lock_mask;
-  register_value_ |= (newval & ~lock_mask);
+  register_value_ &= (lock_mask | suppress_mask);
+  register_value_ |= (newval & ~lock_mask & ~suppress_mask);
   register_value_ = HandleReservedVals(register_value_);
 
   return read_value;
@@ -165,8 +187,10 @@ uint32_t PmpCfgRegister::RegisterWrite(uint32_t newval) {
 uint32_t PmpCfgRegister::RegisterSet(uint32_t newval) {
   uint32_t lock_mask = GetLockMask();
   uint32_t read_value = register_value_;
+  uint32_t candidate = register_value_ | (newval & ~lock_mask);
+  uint32_t suppress_mask = GetMmlSuppressMask(candidate);
 
-  register_value_ |= (newval & ~lock_mask);
+  register_value_ |= (newval & ~lock_mask & ~suppress_mask);
   register_value_ = HandleReservedVals(register_value_);
 
   return read_value;
@@ -175,8 +199,11 @@ uint32_t PmpCfgRegister::RegisterSet(uint32_t newval) {
 uint32_t PmpCfgRegister::RegisterClear(uint32_t newval) {
   uint32_t lock_mask = GetLockMask();
   uint32_t read_value = register_value_;
+  uint32_t candidate = register_value_ & (~newval | lock_mask);
+  uint32_t suppress_mask = GetMmlSuppressMask(candidate);
 
-  register_value_ &= (~newval | lock_mask);
+  register_value_ = (register_value_ & (lock_mask | suppress_mask)) |
+                    (candidate & ~lock_mask & ~suppress_mask);
   register_value_ = HandleReservedVals(register_value_);
 
   return read_value;
@@ -204,11 +231,19 @@ uint32_t PmpCfgRegister::HandleReservedVals(uint32_t cfg_val) {
 }
 
 uint32_t PmpAddrRegister::GetLockMask() {
+  BaseRegister *mseccfg = GetRegisterFromMap(kCSRMSeccfg);
+  assert(mseccfg);
+
+  // When RLB=1, locked entries can still be modified (SMEPMP).
+  if (mseccfg->RegisterRead() & kMSeccfgRlb) {
+    return 0;
+  }
+
   // Calculate which region this is
   uint32_t pmp_region = (register_address_ & 0xF);
   // Form the address of the corresponding CFG register
   uint32_t pmp_cfg_addr = 0x3A0 + (pmp_region / 4);
-  // Form the address of the CFG registerfor the next region
+  // Form the address of the CFG register for the next region
   // For region 15, this will point to a non-existant register, which is fine
   uint32_t pmp_cfg_plus1_addr = 0x3A0 + ((pmp_region + 1) / 4);
   uint32_t cfg_value = 0;
@@ -225,8 +260,8 @@ uint32_t PmpAddrRegister::GetLockMask() {
   // Shift to the relevant bits in the CFG registers
   cfg_value >>= ((pmp_region & 0x3) * 8);
   cfg_plus1_value >>= (((pmp_region + 1) & 0x3) * 8);
-  // Locked if the lock bit is set, or the next region is TOR
-  if ((cfg_value & 0x80) || ((cfg_plus1_value & 0x18) == 0x8)) {
+  // Locked if own L=1, or next region is BOTH locked (L=1) and TOR mode.
+  if ((cfg_value & 0x80) || ((cfg_plus1_value & 0x98) == 0x88)) {
     return 0xFFFFFFFF;
   } else {
     return 0;
