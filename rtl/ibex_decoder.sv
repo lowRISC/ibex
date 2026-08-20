@@ -124,8 +124,7 @@ module ibex_decoder import ibex_cheriot_pkg::*; #(
   localparam bit CheriLimit16Regs = (BaseIsa == BaseIsaRV32IorCHERIoT);
 
   logic        illegal_insn;
-  logic        illegal_reg_rv32e;
-  logic        illegal_reg_cheriot;
+  logic        illegal_reg_16;
   logic        csr_illegal;
   logic        rf_we;
 
@@ -207,14 +206,14 @@ module ibex_decoder import ibex_cheriot_pkg::*; #(
   // cheriot only uses 16 registers and repurposes the MSB addr bits
   // destination register
   assign instr_rd = instr[11:7];
-  // CHERIoT instructions encode a 4-bit capability register (c0-c15) in instr[11:7].
-  // Standard RV32I instructions use all 32 integer registers and must not be masked.
+  // In CHERIoT mode all instructions (both CHERIoT-specific and standard RV32I) are limited to
+  // x0-x15.
   if (CheriLimit16Regs) begin : gen_16_regs
-    assign rf_raddr_a_o = ((cheriot_enable_i == IbexMuBiOn) & instr_is_cheriot_o) ?
+    assign rf_raddr_a_o = (cheriot_enable_i == IbexMuBiOn) ?
                           {1'b0,  raddr_a[3:0]} : raddr_a;
-    assign rf_raddr_b_o = ((cheriot_enable_i == IbexMuBiOn) & instr_is_cheriot_o) ?
+    assign rf_raddr_b_o = (cheriot_enable_i == IbexMuBiOn) ?
                           {1'b0,  raddr_b[3:0]} : raddr_b;
-    assign rf_waddr_o   = ((cheriot_enable_i == IbexMuBiOn) & instr_is_cheriot_o) ?
+    assign rf_waddr_o   = (cheriot_enable_i == IbexMuBiOn) ?
                           {1'b0, instr_rd[3:0]} : instr_rd;
   end else begin : gen_regs
     assign rf_raddr_a_o = raddr_a;
@@ -233,25 +232,16 @@ module ibex_decoder import ibex_cheriot_pkg::*; #(
 
   assign rf_we_or_load_o = rf_we_or_load;
 
-  if (RV32E) begin : gen_rv32e_reg_check_active
-    assign illegal_reg_rv32e = ((rf_raddr_a_o[4] & rf_ren_a_o) |
-                                (rf_raddr_b_o[4] & rf_ren_b_o) |
-                                (instr_rs3[4] & use_rs3_d & rf_ren_a_o) |
-                                (rf_waddr_o[4]   & rf_we_or_load));
-  end else begin : gen_rv32e_reg_check_inactive
-    assign illegal_reg_rv32e = 1'b0;
-  end
-
-  if (CheriLimit16Regs) begin : gen_cheriot_reg_check_active
-    // Trap only on CHERIoT instructions that use an out-of-range capability register (>= c16).
-    // Standard RV32I instructions may freely use x0-x31.
-    assign illegal_reg_cheriot = (cheriot_enable_i == IbexMuBiOn) & instr_is_cheriot_o &
-                               ((raddr_a[4]  & rf_ren_a_o) |
-                                (raddr_b[4]  & rf_ren_b_o) |
-                                (instr_rs3[4] & use_rs3_d & rf_ren_a_o) |
-                                (instr_rd[4] & rf_we_or_load));
-  end else begin : gen_cheriot_reg_check_inactive
-    assign illegal_reg_cheriot = 1'b0;
+  // RV32E and CHERIoT both enforce a 16-register address space (CheriLimit16Regs implies RV32E).
+  // RV32E is a static build choice (unconditional); CHERIoT is runtime-gated on cheriot_enable_i.
+  if (RV32E || CheriLimit16Regs) begin : gen_16reg_check_active
+    assign illegal_reg_16 = (RV32E || (cheriot_enable_i == IbexMuBiOn)) &&
+                            ((raddr_a[4]   && rf_ren_a_o) ||
+                             (raddr_b[4]   && rf_ren_b_o) ||
+                             (instr_rs3[4] && use_rs3_d && rf_ren_a_o) ||
+                             (instr_rd[4]  && rf_we_or_load));
+  end else begin : gen_16reg_check_inactive
+    assign illegal_reg_16 = 1'b0;
   end
 
   ///////////////////////
@@ -1457,18 +1447,17 @@ module ibex_decoder import ibex_cheriot_pkg::*; #(
   assign mult_en_o = illegal_insn_o ? 1'b0 : mult_sel_o;
   assign div_en_o  = illegal_insn_o ? 1'b0 : div_sel_o;
 
-  // make sure instructions accessing non-available registers in RV32E cause illegal
-  // instruction exceptions
-  assign illegal_insn_o = illegal_insn | illegal_reg_rv32e | illegal_reg_cheriot;
+  // Trap on illegal register addresses (x16-x31 in RV32E or CHERIoT mode).
+  assign illegal_insn_o = illegal_insn | illegal_reg_16;
 
-  // do not propagate regfile write enable if non-available registers are accessed in RV32E
-  assign rf_we_o = rf_we & ~illegal_reg_rv32e & ~illegal_reg_cheriot;
+  // Suppress regfile write enable when an illegal register is addressed.
+  assign rf_we_o = rf_we & ~illegal_reg_16;
 
   // Not all bits are used
   assign unused_instr_alu = {instr_alu[19:15], instr_alu[11:7]};
 
   assign instr_is_legal_cheriot   = |cheriot_operator_o;
-  assign instr_is_legal_cheriot_o = instr_is_legal_cheriot & ~illegal_reg_cheriot;
+  assign instr_is_legal_cheriot_o = instr_is_legal_cheriot & ~illegal_reg_16;
 
 
   assign cheriot_cs2_dec_o = cheriot_operator_o.CCSR_RW ? instr[24:20] : 5'h0;
