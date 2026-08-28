@@ -239,7 +239,6 @@ module ibex_tracer import ibex_cheriot_pkg::*; import ibex_pkg::*; (
   // Get a SCR name for a CHERIoT SCR address.
   function automatic string get_scr_name(input logic [4:0] scr_addr);
     unique case (scr_addr)
-      5'd27:   return "ztopc";
       5'd28:   return "mtcc";
       5'd29:   return "mtdc";
       5'd30:   return "mscratchc";

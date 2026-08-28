@@ -992,8 +992,6 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       .csr_mshwmb_i            (csr_mshwmb),
       .csr_mshwm_set_o         (csr_mshwm_set),
       .csr_mshwm_new_o         (csr_mshwm_new),
-      .ztop_rdata_i            (32'h0),
-      .ztop_rcap_i             (NULL_CAP),
       .csr_dbg_tclr_fault_i    (csr_dbg_tclr_fault)
     );
 
