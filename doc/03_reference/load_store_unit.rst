@@ -57,7 +57,7 @@ Signals that are used by the LSU:
 Bus Integrity Checking
 ----------------------
 
-The core can optionally generate and verify check bits sent alongside the data for memory accesses.
+The core can optionally generate integrity bits for all outgoing data bus requests and verify integrity bits on every incoming data bus response (``data_rvalid_i``), regardless of whether the response data is consumed by the instruction.
 Checkbits are generated and checked using an inverted 39/32 Hsaio code (see :file:`vendor/lowrisc_ip/ip/prim/rtl/prim_secded_inv_39_32_enc.sv`).
 An :ref:`internal interrupt<internal-interrupts>` will be generated and a bus major alert signalled if there is a mismatch.
 Where load data has bad checkbits the write to the load's destination register will be suppressed.
