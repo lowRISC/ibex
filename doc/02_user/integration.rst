@@ -410,6 +410,9 @@ Interfaces
 | ``debug_*``                  | Debug interface, see :ref:`debug-support`                              |
 +------------------------------+------------------------------------------------------------------------+
 | ``crash_dump_o``             | A set of signals that can be captured on reset to aid crash debugging. |
+|                              | The ``current_pc`` and ``next_pc`` fields are only guaranteed to be    |
+|                              | defined after reset if ``SecureIbex`` and thereby ``ResetAll`` is      |
+|                              | enabled.                                                               |
 +------------------------------+------------------------------------------------------------------------+
 | ``double_fault_seen_o``      | A double fault was observed, see :ref:`double-fault-detect`            |
 +------------------------------+-------------------------+-----+----------------------------------------+
