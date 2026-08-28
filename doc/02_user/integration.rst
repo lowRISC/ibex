@@ -86,6 +86,7 @@ Instantiation Template
 .. code-block:: verilog
 
   ibex_top #(
+      .BaseIsa                      ( ibex_pkg::BaseIsaRV32I           ),
       .PMPEnable                    ( 1'b0                             ),
       .PMPGranularity               ( 0                                ),
       .PMPNumRegions                ( 4                                ),
@@ -94,6 +95,8 @@ Instantiation Template
       .PMPRstCfg                    ( ibex_pkg::PmpCfgRst              ),
       .PMPRstAddr                   ( ibex_pkg::PmpAddrRst             ),
       .PMPRstMsecCfg                ( ibex_pkg::PmpMseccfgRst          ),
+      .CheriotRevBitmapAddrWidth    ( 32'd11                           ),
+      .CheriotRevBitmapBaseAddr     ( 32'h0                            ),
       .RV32E                        ( 1'b0                             ),
       .RV32M                        ( ibex_pkg::RV32MFast              ),
       .RV32B                        ( ibex_pkg::RV32BNone              ),
@@ -134,8 +137,11 @@ Instantiation Template
       .ram_cfg_icache_data_i        ( ),
       .ram_cfg_icache_data_o        ( ),
 
+      // CHERIoT configuration
+      .cheriot_enable_i             ( ),
       .hart_id_i                    ( ),
       .boot_addr_i                  ( ),
+      .trvk_heap_base_addr_i        ( ),
 
       // Instruction memory interface
       .instr_req_o                  ( ),
@@ -155,9 +161,20 @@ Instantiation Template
       .data_addr_o                  ( ),
       .data_wdata_o                 ( ),
       .data_wdata_intg_o            ( ),
+      .data_tag_o                   ( ),
       .data_rdata_i                 ( ),
       .data_rdata_intg_i            ( ),
+      .data_tag_i                   ( ),
       .data_err_i                   ( ),
+
+      // TRVK revocation bitmap read interface
+      .trvk_revbm_req_o             ( ),
+      .trvk_revbm_gnt_i             ( ),
+      .trvk_revbm_rvalid_i          ( ),
+      .trvk_revbm_addr_o            ( ),
+      .trvk_revbm_rdata_i           ( ),
+      .trvk_revbm_rdata_intg_i      ( ),
+      .trvk_revbm_err_i             ( ),
 
       // Interrupt inputs
       .irq_software_i               ( ),
@@ -219,6 +236,9 @@ Instantiation Template
       .rvfi_rs1_rdata               ( ),
       .rvfi_rs2_rdata               ( ),
       .rvfi_rs3_rdata               ( ),
+      .rvfi_rs1_rcap                ( ),
+      .rvfi_rs2_rcap                ( ),
+      .rvfi_rd_wcap                 ( ),
       .rvfi_rd_addr                 ( ),
       .rvfi_rd_wdata                ( ),
       .rvfi_pc_rdata                ( ),
@@ -228,6 +248,9 @@ Instantiation Template
       .rvfi_mem_wmask               ( ),
       .rvfi_mem_rdata               ( ),
       .rvfi_mem_wdata               ( ),
+      .rvfi_mem_is_cap              ( ),
+      .rvfi_mem_rcap                ( ),
+      .rvfi_mem_wcap                ( ),
       .rvfi_ext_pre_mip             ( ),
       .rvfi_ext_post_mip            ( ),
       .rvfi_ext_nmi                 ( ),
@@ -246,12 +269,18 @@ Instantiation Template
   `endif
   );
 
+.. _parameters:
+
 Parameters
 ----------
 
 +----------------------------------+---------------------+-------------------------+----------------------------------------------------------------------------------------------+
 | Name                             | Type/Range          | Default                 | Description                                                                                  |
 +==================================+=====================+=========================+==============================================================================================+
+| ``BaseIsa``                      | base_isa_e          | BaseIsaRV32I            | Selects the base ISA mode:                                                                   |
+|                                  |                     |                         |  - ``ibex_pkg::BaseIsaRV32I``: RV32I only                                                    |
+|                                  |                     |                         |  - ``ibex_pkg::BaseIsaRV32IorCHERIoT``: runtime-switchable RV32I/CHERIoT (:ref:`cheriot`)    |
++----------------------------------+---------------------+-------------------------+----------------------------------------------------------------------------------------------+
 | ``PMPEnable``                    | bit                 | 0                       | Enable :ref:`pmp`                                                                            |
 +----------------------------------+---------------------+-------------------------+----------------------------------------------------------------------------------------------+
 | ``PMPGranularity``               | int (0..31)         | 0                       | Minimum granularity of PMP address matching                                                  |
@@ -267,6 +296,12 @@ Parameters
 | ``PMPRstAddr``                   | logic[]             | PmpAddrRst              | Reset values for PMP address registers                                                       |
 +----------------------------------+---------------------+-------------------------+----------------------------------------------------------------------------------------------+
 | ``PMPRstMsecCfg``                | pmp_mseccfg_t       | PmpMseccfgRst           | Reset value for the ``mseccfg`` register (:ref:`pmp-enhancements`)                           |
++----------------------------------+---------------------+-------------------------+----------------------------------------------------------------------------------------------+
+| ``CheriotRevBitmapAddrWidth``    | int unsigned        | 11                      | Log2 of the revocation bitmap memory size in bytes. Only relevant                            |
+|                                  |                     |                         | when ``BaseIsa == BaseIsaRV32IorCHERIoT``. See :ref:`cheriot`.                               |
++----------------------------------+---------------------+-------------------------+----------------------------------------------------------------------------------------------+
+| ``CheriotRevBitmapBaseAddr``     | int unsigned        | 0x0                     | Base byte address of the revocation bitmap memory. Only relevant                             |
+|                                  |                     |                         | when ``BaseIsa == BaseIsaRV32IorCHERIoT``. See :ref:`cheriot`.                               |
 +----------------------------------+---------------------+-------------------------+----------------------------------------------------------------------------------------------+
 | ``RV32E``                        | bit                 | 0                       | RV32E mode enable (16 integer registers only)                                                |
 +----------------------------------+---------------------+-------------------------+----------------------------------------------------------------------------------------------+
@@ -392,6 +427,14 @@ Interfaces
 | ``ram_cfg_icache_data_o``    | ram_1p_cfg_rsp_t        | out | Per-way icache data RAM config         |
 |                              |                         |     | response from the icache data RAMs     |
 +------------------------------+-------------------------+-----+----------------------------------------+
+| ``cheriot_enable_i``         | ibex_mubi_t             | in  | Runtime enable for CHERIoT mode.       |
+|                              |                         |     | ``IbexMuBiOn`` enables CHERIoT         |
+|                              |                         |     | instructions and capability registers. |
+|                              |                         |     | Only active when                       |
+|                              |                         |     | ``BaseIsa == BaseIsaRV32IorCHERIoT``.  |
+|                              |                         |     | Tie to ``IbexMuBiOff`` to always run   |
+|                              |                         |     | in RV32I mode.                         |
++------------------------------+-------------------------+-----+----------------------------------------+
 | ``hart_id_i``                | 32                      | in  | Hart ID, usually static, can be read   |
 |                              |                         |     | from :ref:`csr-mhartid` CSR            |
 +------------------------------+-------------------------+-----+----------------------------------------+
@@ -399,9 +442,21 @@ Interfaces
 |                              |                         |     | = ``boot_addr_i`` + 0x80,              |
 |                              |                         |     | see :ref:`exceptions-interrupts`       |
 +------------------------------+-------------------------+-----+----------------------------------------+
+| ``trvk_heap_base_addr_i``    | 32                      | in  | Base address of the heap region for    |
+|                              |                         |     | CHERIoT capability revocation. Used    |
+|                              |                         |     | by the TRVK filter to determine which  |
+|                              |                         |     | load results need revocation checking. |
+|                              |                         |     | See :ref:`cheriot`.                    |
+|                              |                         |     | Tie to 0 in non-CHERIoT mode.          |
++------------------------------+-------------------------+-----+----------------------------------------+
 | ``instr_*``                  | Instruction fetch interface, see :ref:`instruction-fetch`              |
 +------------------------------+------------------------------------------------------------------------+
 | ``data_*``                   | Load-store unit interface, see :ref:`load-store-unit`                  |
++------------------------------+------------------------------------------------------------------------+
+| ``trvk_revbm_*``             | :ref:`cheriot` revocation bitmap read interface.                       |
+|                              | Used by the TRVK filter to check whether a loaded capability           |
+|                              | has been revoked. If ``BaseIsa == BaseIsaRV32I`` this interface        |
+|                              | can be tied off.                                                       |
 +------------------------------+------------------------------------------------------------------------+
 | ``irq_*``                    | Interrupt inputs, see :ref:`exceptions-interrupts`                     |
 +------------------------------+-------------------------+-----+----------------------------------------+
