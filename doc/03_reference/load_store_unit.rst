@@ -65,7 +65,7 @@ Ibex checks the integrity against the response data for both loads and stores.
 For stores the response data is otherwise ignored so the data can be any value provided the integrity is valid (``data_rdata_intg_i`` must match with ``data_rdata_i``).
 It is recommended for write responses some fixed value is placed on ``data_rdata_i`` and ``data_rdata_intg_i`` by the memory system Ibex is connected to in configurations where integrity is used.
 
-This feature is only used if the core is configured with the SecureIbex parameter set.
+This feature is only used if the core is configured with the MemECC parameter set.
 For all other configurations, the integrity signals can be ignored.
 
 Misaligned Accesses

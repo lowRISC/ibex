@@ -16,6 +16,8 @@ Ibex implements all the Control and Status Registers (CSRs) listed in the follow
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x305  | ``mtvec``          | WARL   | Machine Trap-Vector Base Address              |
 +---------+--------------------+--------+-----------------------------------------------+
+|  0x306  | ``mcounteren``     | WARL   | Machine Counter-Enable Register               |
++---------+--------------------+--------+-----------------------------------------------+
 |  0x320  | ``mcountinhibit``  | RW     | Machine Counter-Inhibit Register              |
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x323  | ``mhpmevent3``     | WARL   | Machine Performance-Monitoring Event Selector |
@@ -95,6 +97,27 @@ Ibex implements all the Control and Status Registers (CSRs) listed in the follow
 |     .             .               .                    .                              |
 +---------+--------------------+--------+-----------------------------------------------+
 |  0xB9F  | ``mhpmcounter31h`` | WARL   | Upper 32 bits of ``mhmpcounter31``            |
++---------+--------------------+--------+-----------------------------------------------+
+|  0xC00  | ``cycle``          | R      | Cycle Counter (U-mode alias of ``mcycle``)    |
++---------+--------------------+--------+-----------------------------------------------+
+|  0xC02  | ``instret``        | R      | Instructions-Retired (U-mode alias of         |
+|         |                    |        | ``minstret``)                                 |
++---------+--------------------+--------+-----------------------------------------------+
+|  0xC03  | ``hpmcounter3``    | R      | Performance-Monitoring Counter (U-mode alias) |
++---------+--------------------+--------+-----------------------------------------------+
+|     .             .               .                    .                              |
++---------+--------------------+--------+-----------------------------------------------+
+|  0xC1F  | ``hpmcounter31``   | R      | Performance-Monitoring Counter (U-mode alias) |
++---------+--------------------+--------+-----------------------------------------------+
+|  0xC80  | ``cycleh``         | R      | Upper 32 bits of ``cycle``                    |
++---------+--------------------+--------+-----------------------------------------------+
+|  0xC82  | ``instreth``       | R      | Upper 32 bits of ``instret``                  |
++---------+--------------------+--------+-----------------------------------------------+
+|  0xC83  | ``hpmcounter3h``   | R      | Upper 32 bits of ``hpmcounter3``              |
++---------+--------------------+--------+-----------------------------------------------+
+|     .             .               .                    .                              |
++---------+--------------------+--------+-----------------------------------------------+
+|  0xC9F  | ``hpmcounter31h``  | R      | Upper 32 bits of ``hpmcounter31``             |
 +---------+--------------------+--------+-----------------------------------------------+
 |  0xF11  | ``mvendorid``      | R      | Machine Vendor ID                             |
 +---------+--------------------+--------+-----------------------------------------------+
@@ -187,6 +210,36 @@ Reset Value: ``0x0000_0001``
 +-------+--------------------------------------------------------------------------------------+
 | 1:0   | **MODE:** Always set to 2'b01 to indicate vectored interrupt handling (read-only).   |
 +-------+--------------------------------------------------------------------------------------+
+
+
+Machine Counter-Enable Register (mcounteren)
+--------------------------------------------
+
+CSR Address: ``0x306``
+
+Reset Value: ``0x0000_0000``
+
+``mcounteren`` is a WARL register that controls which performance counters are accessible in User Mode.
+When a bit is set, the corresponding counter can be read from U-mode, when clear, a U-mode access to that counter raises an illegal instruction exception.
+
++--------+------+-------------------------------------------------------------------------------------+
+| Bit#   | R/W  | Description                                                                         |
++========+======+=====================================================================================+
+| 31:3   | WARL | **HPMx:** Enable U-mode access to ``hpmcounterX`` / ``hpmcounterXh`` (bits 3–31,    |
+|        |      | where the bit index matches the counter number).                                    |
+|        |      | Bits above ``MHPMCounterNum + 2`` always read as zero.                              |
++--------+------+-------------------------------------------------------------------------------------+
+| 2      | RW   | **IR:** Enable U-mode access to ``instret`` / ``instreth``.                         |
++--------+------+-------------------------------------------------------------------------------------+
+| 1      | R    | **TM:** Always reads as zero. The ``time`` CSR is not implemented.                  |
++--------+------+-------------------------------------------------------------------------------------+
+| 0      | RW   | **CY:** Enable U-mode access to ``cycle`` / ``cycleh``.                             |
++--------+------+-------------------------------------------------------------------------------------+
+
+Writes to ``mcounteren`` are only accepted when the ``mcounteren_writable_i`` input is set to ``IbexMuBiOn``.
+If ``mcounteren_writable_i`` is not ``IbexMuBiOn``, writes are silently ignored, effectively locking the register.
+This allows a system integrator to prevent software from granting U-mode counter access after an initial configuration phase.
+See :ref:`performance-counters` for the synthesis-time parameters that control counter availability.
 
 
 Machine Exception PC (mepc)
