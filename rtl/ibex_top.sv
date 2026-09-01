@@ -1546,8 +1546,8 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
         if (new_sync_exc) begin
           // Set flag when we see a new synchronous exception
           sync_exc_seen <= 1'b1;
-        end else if (rvfi_valid && rvfi_insn == 32'h30200073) begin
-          // Clear flag when we see an MRET
+        end else if (rvfi_valid && (rvfi_insn inside {32'h30200073, 32'h7b200073})) begin
+          // Clear flag when we see an MRET or DRET
           sync_exc_seen <= 1'b0;
         end else if (rvfi_valid && insn_write_sync_exc_seen(rvfi_insn)) begin
           // Update predicted sync_exc_seen when the instruction modifies the relevant CPUCTRLSTS
