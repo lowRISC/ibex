@@ -79,6 +79,7 @@ void SimpleSystem::Run() {
 
   std::cout << "Simulation of Ibex" << std::endl
             << "==================" << std::endl
+            << "ISA: " << GetIsaString() << std::endl
             << std::endl;
 
   simctrl.RunSimulation();
