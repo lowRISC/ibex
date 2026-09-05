@@ -77,6 +77,19 @@
   test_srcs: mcounteren_test/mcounteren_lock_test.S
   config: riscv-tests
 
+- test: zcmp_reserved_test
+  desc: >
+    Reserved Zcmp encodings trap as illegal instructions and are not
+    expanded. Cosim mismatches are not fatal because the cosim does not
+    enable Zcmp.
+  iterations: 1
+  test_srcs: zcmp_reserved_test/zcmp_reserved_test.S
+  config: riscv-tests
+  rtl_params:
+    PMPEnable: 1
+    RV32ZC: ["ibex_pkg::RV32ZcaZcmp", "ibex_pkg::RV32ZcaZcbZcmp"]
+  sim_opts: +disable_cosim=1
+
 - test: pmp_mseccfg_test_rlb1_l0_0_u0
   desc: >
     mseccfg test
