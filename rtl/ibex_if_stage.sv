@@ -490,7 +490,8 @@ module ibex_if_stage import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     .clk_i            (clk_i),
     .rst_ni           (rst_ni),
     .valid_i          (fetch_valid & ~fetch_err),
-    .id_in_ready_i    (id_in_ready_i & ~pc_set_i),
+    // Hold the expander when dummy insertion replaces its current micro-op.
+    .id_in_ready_i    (id_in_ready_i & ~pc_set_i & ~stall_dummy_instr),
     .instr_i          (if_instr_rdata),
     .cheriot_enable_i (cheriot_enable_i),
     .instr_o          (instr_decompressed),
@@ -533,6 +534,16 @@ module ibex_if_stage import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     // is currently in the ID stage and whatever is valid from the prefetch buffer this cycle. The
     // PC of the dummy instruction will match whatever is next from the prefetch buffer.
     assign stall_dummy_instr = insert_dummy_instr;
+
+    // A dummy must not advance the Zcmp expander. In CmIdle, rlist and sp_offset are preloaded from
+    // instr_i and may change. A flush reloads the expander, so only a real accept is checked.
+    `ASSERT(NoZcmpExpansionAdvanceOnDummy,
+            insert_dummy_instr && fetch_valid && !fetch_err && id_in_ready_i && !pc_set_i &&
+            (instr_gets_expanded != INSTR_NOT_EXPANDED)
+            |=> $stable(compressed_decoder_i.cm_state_q) &&
+                (($past(compressed_decoder_i.cm_state_q) == compressed_decoder_i.CmIdle) ||
+                 $stable({compressed_decoder_i.cm_rlist_q,
+                          compressed_decoder_i.cm_sp_offset_q})))
 
     // Register the dummy instruction indication into the ID stage
     always_ff @(posedge clk_i or negedge rst_ni) begin
