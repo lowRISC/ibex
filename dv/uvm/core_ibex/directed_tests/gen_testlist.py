@@ -97,6 +97,22 @@ def add_configs_and_handwritten_directed_tests():
   test_srcs: mcounteren_test/mcounteren_lock_test.S
   config: riscv-tests
 
+- test: zcmp_reserved_test
+  desc: >
+    Reserved Zcmp encodings raise an illegal-instruction exception and leave
+    the registers and stack words a real expansion would touch untouched:
+    cm.mvsa01 with r1s' == r2s', the cm.mv* group with a reserved funct2,
+    and cm.push/cm.pop/cm.popretz/cm.popret with rlist 0-3. Legal
+    neighbours are executed as controls. The cosim check is relaxed because
+    the cosim does not enable Zcmp for the reference model.
+  iterations: 1
+  test_srcs: zcmp_reserved_test/zcmp_reserved_test.S
+  config: riscv-tests
+  rtl_params:
+    PMPEnable: 1
+    RV32ZC: ["ibex_pkg::RV32ZcaZcmp", "ibex_pkg::RV32ZcaZcbZcmp"]
+  sim_opts: +disable_cosim=1
+
 - test: pmp_mseccfg_test_rlb1_l0_0_u0
   desc: >
     mseccfg test
