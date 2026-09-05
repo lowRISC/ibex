@@ -786,10 +786,16 @@ module ibex_compressed_decoder import ibex_pkg::*; #(
                           // No cm.mvsa01 instruction is active yet; start a new one.
                           // Move a0 to register indicated by r1s'.
                           instr_o = cm_mvsa01(.a01(1'b0), .rs(instr_i[9:7]));
-                          // Ensure the second move happens atomically with this one.
-                          gets_expanded = INSTR_EXPANDED_COMMIT;
-                          if (valid_i && id_in_ready_i) begin
-                            cm_state_d = CmMvSecondReg;
+                          if (instr_i[9:7] == instr_i[4:2]) begin
+                            // r1s' == r2s' is reserved --> illegal instruction, not expanded.
+                            illegal_instr_o = 1'b1;
+                            gets_expanded   = INSTR_NOT_EXPANDED;
+                          end else begin
+                            // Ensure the second move happens atomically with this one.
+                            gets_expanded = INSTR_EXPANDED_COMMIT;
+                            if (valid_i && id_in_ready_i) begin
+                              cm_state_d = CmMvSecondReg;
+                            end
                           end
                         end
                         CmMvSecondReg: begin
