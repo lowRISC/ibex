@@ -1,0 +1,57 @@
+--- a/src/riscv_instr_pkg.sv
++++ b/src/riscv_instr_pkg.sv
+@@ -1381,7 +1381,18 @@ package riscv_instr_pkg;
+                                                    riscv_reg_t tp,
+                                                    ref string instr[$]);
+     string store_instr = (XLEN == 32) ? "sw" : "sd";
+-    if (scratch inside {implemented_csr}) begin
++    // On RV32 with BARE translation, claim the whole frame (USP slot plus 32 GPR slots) in a
++    // single instruction and publish the claim in gpr.TP before any slot is written, so a debug
++    // entry taken mid-push allocates below this frame instead of on top of it. Other
++    // configurations keep the original sequence.
++    bit atomic_claim = (scratch inside {implemented_csr}) && (XLEN == 32) && (SATP_MODE == BARE);
++    if (atomic_claim) begin
++      instr.push_back($sformatf("addi x%0d, x%0d, -132", tp, tp));
++      // Push USP from gpr.SP onto the kernel stack (the top slot of the frame)
++      instr.push_back($sformatf("%0s  x%0d, 128(x%0d)", store_instr, sp, tp));
++      // Move KSP to gpr.SP
++      instr.push_back($sformatf("add x%0d, x%0d, zero", sp, tp));
++    end else if (scratch inside {implemented_csr}) begin
+       // Push USP from gpr.SP onto the kernel stack
+       instr.push_back($sformatf("addi x%0d, x%0d, -4", tp, tp));
+       instr.push_back($sformatf("%0s  x%0d, (x%0d)", store_instr, sp, tp));
+@@ -1408,8 +1419,10 @@ package riscv_instr_pkg;
+       end
+     end
+     // Push all GPRs (except for x0) to kernel stack
+-    // (gpr.SP currently holds the KSP)
+-    instr.push_back($sformatf("addi x%0d, x%0d, -%0d", sp, sp, 32 * (XLEN/8)));
++    // (gpr.SP currently holds the KSP; with an atomic claim the frame is already reserved)
++    if (!atomic_claim) begin
++      instr.push_back($sformatf("addi x%0d, x%0d, -%0d", sp, sp, 32 * (XLEN/8)));
++    end
+     for(int i = 1; i < 32; i++) begin
+       instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, i, i * (XLEN/8), sp));
+     end
+@@ -1426,12 +1439,21 @@ package riscv_instr_pkg;
+                                                     riscv_reg_t tp,
+                                                     ref string instr[$]);
+     string load_instr = (XLEN == 32) ? "lw" : "ld";
++    // Mirror of the claim made in push_gpr_to_kernel_stack.
++    bit atomic_claim = (scratch inside {implemented_csr}) && (XLEN == 32) && (SATP_MODE == BARE);
+     // Move KSP to gpr.SP
+     instr.push_back($sformatf("add x%0d, x%0d, zero", sp, tp));
+     // Pop GPRs from kernel stack
+     for(int i = 1; i < 32; i++) begin
+       instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, i, i * (XLEN/8), sp));
+     end
++    if (atomic_claim) begin
++      // Restore USP while the claim is still held, then release the USP slot and the frame in a
++      // single instruction (mirrors the push-side claim).
++      instr.push_back($sformatf("%0s  x%0d, 128(x%0d)", load_instr, sp, tp));
++      instr.push_back($sformatf("addi x%0d, x%0d, 132", tp, tp));
++      return;
++    end
+     instr.push_back($sformatf("addi x%0d, x%0d, %0d", sp, sp, 32 * (XLEN/8)));
+     if (scratch inside {implemented_csr}) begin
+       // Move KSP back to gpr.TP
