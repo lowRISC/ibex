@@ -97,6 +97,35 @@ def add_configs_and_handwritten_directed_tests():
   test_srcs: mcounteren_test/mcounteren_lock_test.S
   config: riscv-tests
 
+- test: dummy_instr_minstret_test
+  desc: >
+    Dummy instructions must not be counted in minstret. The retired-instruction
+    count over a straight-line block of known length is read with dummy
+    instruction insertion disabled, enabled at its highest rate, and disabled
+    again; the cosim compares the read values as well.
+  iterations: 1
+  test_srcs: dummy_instr_test/dummy_instr_minstret_test.S
+  config: riscv-tests
+  rtl_params:
+    PMPEnable: 1
+    SecureIbex: 1
+
+- test: dummy_instr_zcmp_test
+  desc: >
+    Dummy instructions must not disturb an expanded Zcmp sequence. cm.push,
+    cm.pop, cm.mvsa01, cm.mva01s, cm.popret and cm.popretz are executed
+    repeatedly with dummy instruction insertion at its highest rate and every
+    architectural effect is checked. Cosim mismatches are non-fatal because
+    the cosim does not enable Zcmp for the reference model.
+  iterations: 1
+  test_srcs: dummy_instr_test/dummy_instr_zcmp_test.S
+  config: riscv-tests
+  rtl_params:
+    PMPEnable: 1
+    SecureIbex: 1
+    RV32ZC: ["ibex_pkg::RV32ZcaZcmp", "ibex_pkg::RV32ZcaZcbZcmp"]
+  sim_opts: +disable_cosim=1
+
 - test: pmp_mseccfg_test_rlb1_l0_0_u0
   desc: >
     mseccfg test
