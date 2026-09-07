@@ -32,8 +32,6 @@
       inputs.uv2nix.follows = "uv2nix";
     };
 
-    mkshell-minimal.url = "github:viperML/mkshell-minimal";
-
     lowrisc-nix = {
       url = "github:lowrisc/lowrisc-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -103,8 +101,6 @@
         # spike so the resulting .so has a low symbol-version floor compatible
         # with older bundled toolchains.
         pkgsCompat = import inputs.nixpkgs-gcc93 { inherit system; };
-
-        mkshell-minimal = inputs.mkshell-minimal pkgs;
 
         ################
         # DEPENDENCIES #
@@ -339,17 +335,17 @@
           };
           devShells = rec {
             inherit shell syn_shell eda_shell;
-            formal = mkshell-minimal {
+            formal = pkgs.mkShellNoCC {
               packages = standard_deps;
               shellHook = check_jg + exports;
             };
 
-            formal-dev = mkshell-minimal {
+            formal-dev = pkgs.mkShellNoCC {
               packages = standard_deps;
               shellHook = check_jg + exports + dev_msg;
             };
 
-            oss-dev = mkshell-minimal {
+            oss-dev = pkgs.mkShellNoCC {
               packages = standard_deps ++ [
                 lowrisc_yosys_slang
                 ((pkgs.yosys.override (attrs: { enablePython = false; })).overrideAttrs (finalAttrs: prev: { doCheck = false; }))

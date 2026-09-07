@@ -140,21 +140,6 @@
         "url": "https://github.com/mndstrmr/yosys-slang"
       }
     },
-    "mkshell-minimal": {
-      "locked": {
-        "lastModified": 1700988624,
-        "narHash": "sha256-KJyiF67zVYOBkNltKhJATfSj+gfRFX9dSFIWDEBy2nQ=",
-        "owner": "viperML",
-        "repo": "mkshell-minimal",
-        "rev": "6b0868be06da900b5fe6ece05616b84e3cbd7944",
-        "type": "github"
-      },
-      "original": {
-        "owner": "viperML",
-        "repo": "mkshell-minimal",
-        "type": "github"
-      }
-    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1757810152,
@@ -281,7 +266,6 @@
         "lowrisc_sail": "lowrisc_sail",
         "lowrisc_sail_riscv": "lowrisc_sail_riscv",
         "lowrisc_yosys_slang": "lowrisc_yosys_slang",
-        "mkshell-minimal": "mkshell-minimal",
         "nixpkgs": "nixpkgs",
         "nixpkgs-gcc93": "nixpkgs-gcc93",
         "psgen": "psgen",
