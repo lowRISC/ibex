@@ -5,7 +5,7 @@
   description = "Nix Flake for Ibex development and testing.";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     # Intentionally not following the main nixpkgs — this pin provides GCC 9.3 /
     # glibc 2.32 to build spike shared libraries with a low symbol-version floor
     # compatible with older bundled toolchains.
@@ -38,10 +38,15 @@
       inputs.flake-utils.follows = "flake-utils";
     };
 
+    gomod2nix = {
+      url = "github:tweag/gomod2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     psgen = {
       url = "github:mndstrmr/psgen";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
+      inputs.gomod2nix.follows = "gomod2nix";
     };
     lowrisc_sail = {
       url = "github:lowrisc/sail?ref=ast_translate";
