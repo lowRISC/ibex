@@ -161,11 +161,15 @@ module ibex_cs_registers import ibex_pkg::*, ibex_cheriot_pkg::*; #(
 
   // Is a PMP config a locked one that allows M-mode execution when MSECCFG.MML is set (either
   // M mode alone or shared M/U mode execution)?
+  //
+  // Returns 0 for A=OFF entries unconditionally: an OFF entry creates no PMP rule and therefore
+  // cannot grant M-mode execute access, regardless of the L and permission bits written.
+  // The write-suppression guard in Smepmp applies only to entries that would produce a valid rule.
   function automatic logic is_mml_m_exec_cfg(ibex_pkg::pmp_cfg_t pmp_cfg);
-    logic unused_cfg = ^{pmp_cfg.mode};
     logic value = 1'b0;
 
-    if (pmp_cfg.lock) begin
+    // A=OFF entries are inert; never suppress their writes.
+    if (pmp_cfg.lock && (pmp_cfg.mode != ibex_pkg::PMP_MODE_OFF)) begin
       unique case ({pmp_cfg.read, pmp_cfg.write, pmp_cfg.exec})
         3'b001, 3'b010, 3'b011, 3'b101: value = 1'b1;
         default: value = 1'b0;
@@ -1463,10 +1467,24 @@ module ibex_cs_registers import ibex_pkg::*, ibex_cheriot_pkg::*; #(
       assign pmp_cfg_locked[i] = pmp_cfg[i].lock & ~pmp_mseccfg_q.rlb;
 
       // When MSECCFG.MML is set cannot add new regions allowing M mode execution unless MSECCFG.RLB
-      // is set
+      // is set. Suppression is skipped for:
+      //   - A=OFF entries (is_mml_m_exec_cfg returns 0 after the function fix above)
+      //   - A=TOR entries where pmpaddr[i-1] >= pmpaddr[i]: that range is empty and creates no rule.
+      //     For region 0 the implicit base is 0; if pmpaddr[0]==0 the range is also empty.
+      logic tor_range_nonempty;
+      if (i == 0) begin : g_tor_base0
+        assign tor_range_nonempty = (pmp_cfg_wdata[i].mode == PMP_MODE_TOR) ?
+                                    (pmp_addr[i] != '0) : 1'b1;
+      end else begin : g_tor_base_prev
+        assign tor_range_nonempty = (pmp_cfg_wdata[i].mode == PMP_MODE_TOR) ?
+                                    (pmp_addr[i-1] < pmp_addr[i]) : 1'b1;
+      end
+
       assign pmp_cfg_wr_suppress[i] = pmp_mseccfg_q.mml                   &
                                       ~pmp_mseccfg_q.rlb                  &
+                                      tor_range_nonempty                   &
                                       is_mml_m_exec_cfg(pmp_cfg_wdata[i]);
+
 
       // --------------------------
       // Instantiate addr registers
