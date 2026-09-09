@@ -10,8 +10,8 @@ void RegisterTransaction::Randomize(std::default_random_engine &gen) {
   std::uniform_int_distribution<int> addr_dist_ =
       std::uniform_int_distribution<int>(
           0, (sizeof(CSRAddresses) / sizeof(uint16_t)) - 1);
-  std::uniform_int_distribution<int> wdata_dist_ =
-      std::uniform_int_distribution<int>(0, 0xFFFFFFFF);
+  std::uniform_int_distribution<unsigned int> wdata_dist_ =
+      std::uniform_int_distribution<unsigned int>(0, 0xFFFFFFFFu);
   std::uniform_int_distribution<int> operation_dist_ =
       std::uniform_int_distribution<int>(kCSRRead, kCSRClear);
   // Generate a random array index, and get the address
