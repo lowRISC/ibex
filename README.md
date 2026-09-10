@@ -5,19 +5,17 @@
 
 # Ibex RISC-V Core
 
-Ibex is a production-quality open source 32-bit RISC-V CPU core written in
-SystemVerilog. The CPU core is heavily parametrizable and well suited for
-embedded control applications. Ibex is being extensively verified and has
-seen multiple tape-outs. Ibex supports the Integer (I) or Embedded (E),
-Integer Multiplication and Division (M), Compressed (C), and B (Bit
-Manipulation) extensions.
+Ibex is a production-quality open-source 32-bit RISC-V CPU core written in SystemVerilog.
+The CPU core is heavily parametrizable and well suited for embedded control applications.
+Ibex is being extensively verified and has seen multiple tape-outs.
+Ibex supports the integer (I) or embedded (E), integer multiplication and division (M), compressed (C), and bit manipulation (B) extensions.
 
 <p align="center"><img src="doc/03_reference/images/blockdiagram.svg" width="650"></p>
 
 Ibex was initially developed as part of the [PULP platform](https://www.pulp-platform.org)
 under the name ["Zero-riscy"](https://doi.org/10.1109/PATMOS.2017.8106976), and has been
-contributed to [lowRISC](https://www.lowrisc.org) who maintains it and develops it further. It is
-under active development.
+contributed to [lowRISC](https://www.lowrisc.org) who maintains it and develops it further.
+It is under active development.
 
 ## Configuration
 
@@ -54,8 +52,8 @@ Notes:
 ## Documentation
 
 The Ibex user manual can be
-[read online at ReadTheDocs](https://ibex-core.readthedocs.io/en/latest/). It is also contained in
-the `doc` folder of this repository.
+[read online at ReadTheDocs](https://ibex-core.readthedocs.io/en/latest/).
+It is also contained in the `doc` folder of this repository.
 
 ## Examples
 
