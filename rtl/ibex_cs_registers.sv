@@ -948,6 +948,11 @@ module ibex_cs_registers import ibex_pkg::*, ibex_cheriot_pkg::*; #(
 
       csr_restore_dret_i: begin // DRET
         priv_lvl_d = dcsr_q.prv;
+
+        // SEC_CM: EXCEPTION.CTRL_FLOW.LOCAL_ESC
+        // SEC_CM: EXCEPTION.CTRL_FLOW.GLOBAL_ESC
+        cpuctrlsts_part_we              = 1'b1;
+        cpuctrlsts_part_d.sync_exc_seen = 1'b0;
       end // csr_restore_dret_i
 
       csr_restore_mret_i: begin // MRET

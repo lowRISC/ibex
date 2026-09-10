@@ -606,7 +606,7 @@ Other bit fields read as zero.
 |       |      | cleared, hardware only sets it (see :ref:`double-fault-detect`). |
 +-------+------+------------------------------------------------------------------+
 | 6     | RW   | **sync_exc_seen:** A synchronous exception has been observed.    |
-|       |      | This flag is cleared when ``mret`` is executed.                  |
+|       |      | This flag is cleared when ``mret`` or ``dret`` is executed.       |
 |       |      | (see :ref:`double-fault-detect`).                                |
 +-------+------+------------------------------------------------------------------+
 | 5:3   | WARL | **dummy_instr_mask:** Mask to control frequency of dummy         |

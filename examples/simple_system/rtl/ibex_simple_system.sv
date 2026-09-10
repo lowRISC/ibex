@@ -79,11 +79,17 @@ module ibex_simple_system (
   typedef enum logic[1:0] {
     Ram,
     SimCtrl,
-    Timer
+    Timer,
+    DbgCtrl
   } bus_device_e;
 
-  localparam int NrDevices = 3;
+  localparam int NrDevices = 4;
   localparam int NrHosts = 1;
+
+  // F7 PoC: debug request pin + double fault observability
+  logic        dbg_req_q;
+  logic        double_fault_pulse;
+  logic [3:0]  double_fault_latch_q;
 
   // interrupts
   logic timer_irq;
@@ -121,6 +127,8 @@ module ibex_simple_system (
   assign cfg_device_addr_mask[SimCtrl] = ~32'h3FF; // 1 kB
   assign cfg_device_addr_base[Timer] = 32'h30000;
   assign cfg_device_addr_mask[Timer] = ~32'h3FF; // 1 kB
+  assign cfg_device_addr_base[DbgCtrl] = 32'h40000;
+  assign cfg_device_addr_mask[DbgCtrl] = ~32'h3FF; // 1 kB
 
   // Instruction fetch signals
   logic instr_req;
@@ -154,6 +162,7 @@ module ibex_simple_system (
   // Tie-off unused error signals
   assign device_err[Ram] = 1'b0;
   assign device_err[SimCtrl] = 1'b0;
+  assign device_err[DbgCtrl] = 1'b0;
 
   bus #(
     .NrDevices    ( NrDevices ),
@@ -289,9 +298,9 @@ module ibex_simple_system (
       .scramble_nonce_i          ('0),
       .scramble_req_o            (),
 
-      .debug_req_i               (1'b0),
+      .debug_req_i               (dbg_req_q),
       .crash_dump_o              (),
-      .double_fault_seen_o       (),
+      .double_fault_seen_o       (double_fault_pulse),
 
       .fetch_enable_i            (ibex_pkg::IbexMuBiOn),
       .mcounteren_writable_i     (ibex_pkg::IbexMuBiOn),
@@ -385,5 +394,44 @@ module ibex_simple_system (
   function automatic longint unsigned mhpmcounter_get(int index);
     return u_top.u_ibex_top.u_ibex_core.cs_registers_i.mhpmcounter[index];
   endfunction
+
+  // ---------------------------------------------------------------------------
+  // Test support: debug request control + double fault observability
+  //   0x40000: RW debug_req pin (write 1 to assert, 0 to deassert)
+  //   0x40004: RO latched double_fault_seen_o pulse count
+  //   0x40008: RO current sync_exc_seen (cpuctrlsts bit 6)
+  // ---------------------------------------------------------------------------
+  always_comb begin : dbg_ctrl_dev
+    device_rdata[DbgCtrl] = 32'b0;
+    unique case (device_addr[DbgCtrl][3:2])
+      2'b00:   device_rdata[DbgCtrl] = {31'b0, dbg_req_q};
+      2'b01:   device_rdata[DbgCtrl] = {28'b0, double_fault_latch_q};
+      default: device_rdata[DbgCtrl] = {31'b0,
+        u_top.u_ibex_top.u_ibex_core.cs_registers_i.cpuctrlsts_part_q.sync_exc_seen};
+    endcase
+  end
+
+  always_ff @(posedge clk_sys or negedge rst_sys_n) begin
+    if (!rst_sys_n) begin
+      dbg_req_q            <= 1'b0;
+      device_rvalid[DbgCtrl] <= 1'b0;
+    end else begin
+      device_rvalid[DbgCtrl] <= device_req[DbgCtrl];
+      dbg_req_q <= device_req[DbgCtrl] & device_we[DbgCtrl] &
+                   (device_addr[DbgCtrl][11:0] == 12'h000) ? device_wdata[DbgCtrl][0] : dbg_req_q;
+    end
+  end
+
+  // Latch and loudly report every double_fault_seen_o pulse
+  always_ff @(posedge clk_sys or negedge rst_sys_n) begin
+    if (!rst_sys_n) begin
+      double_fault_latch_q <= 4'b0;
+    end else if (double_fault_pulse) begin
+      double_fault_latch_q <= double_fault_latch_q + 4'd1;
+      $display("[%0t] TB: double_fault_seen_o PULSED (count=%0d) sync_exc_seen=%0d",
+               $time, double_fault_latch_q + 4'd1,
+               u_top.u_ibex_top.u_ibex_core.cs_registers_i.cpuctrlsts_part_q.sync_exc_seen);
+    end
+  end
 
 endmodule
