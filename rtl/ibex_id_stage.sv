@@ -35,6 +35,7 @@ module ibex_id_stage import ibex_cheriot_pkg::*; #(
   input  ibex_pkg::ibex_mubi_t      cheriot_enable_i,
   output logic                      ctrl_busy_o,
   output logic                      illegal_insn_o,
+  output logic                      alert_major_o,
 
   // Interface to IF stage
   input  logic                      instr_valid_i,
@@ -982,6 +983,13 @@ module ibex_id_stage import ibex_cheriot_pkg::*; #(
   // modifying this.
   assign stall_id = stall_ld_hz | stall_mem | stall_multdiv | stall_jump | stall_branch | stall_alu;
 
+  // SEC_CM: CORE.CONTROL_FLOW.GLITCH_DETECTION
+  // Hardened Fault Injection Countermeasure: Differentiate transient instruction suppression
+  // from routine pipeline stalls (stall_id).
+  logic glitch_suppression_detected;
+  assign glitch_suppression_detected = ~instr_valid_i & (id_fsm_q != FIRST_CYCLE) & ~stall_id;
+  assign alert_major_o = glitch_suppression_detected;
+
   // Generally illegal instructions have no reason to stall, however they must still stall waiting
   // for outstanding memory requests so exceptions related to them take priority over the illegal
   // instruction exception.
@@ -1298,5 +1306,13 @@ module ibex_id_stage import ibex_cheriot_pkg::*; #(
   `ASSERT_IF(IbexCheriotStoreDisabled, !cheriot_store_o,        cheriot_enable_i != IbexMuBiOn)
   `ASSERT_IF(IbexInstrNotCheriot,      !instr_is_cheriot_id_o,  cheriot_enable_i != IbexMuBiOn)
   `ASSERT_IF(IbexCheriotExecDisabled,  !cheriot_exec_id_o,      cheriot_enable_i != IbexMuBiOn)
+
+  // SEC_CM: CORE.CONTROL_FLOW.GLITCH_DETECTION
+  // Formal Assertions: Glitch Suppression Security and Liveness Invariants
+  `ASSERT(IbexGlitchSuppressionAssertAlert,
+      !instr_valid_i && (id_fsm_q != FIRST_CYCLE) && !stall_id |-> alert_major_o)
+
+  `ASSERT(IbexBusStallNoFalsePositive,
+      !instr_valid_i && stall_id |-> !glitch_suppression_detected)
 
 endmodule
