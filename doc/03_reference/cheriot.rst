@@ -38,7 +38,7 @@ CHERIoT support requires two conditions to be met:
 .. important::
    **Security Constraint:** The ``cheriot_enable_i`` signal acts as a one-way switch. To ensure security and prevent arbitrary switching between memory protection modes, the mode must either be configured at reset and kept constant, or switched exactly once from off to on during runtime.
    Once CHERIoT mode is enabled, it **must not** be switched off again until reset.
-   This constraint is **not enforced by hardware**.
+   This constraint is **not enforced by hardware** but is checked by the ``CheriotEnableOneWaySwitch`` assertion in ``ibex_core``.
    The integrator is responsible for ensuring the signal is driven by a one-way latch or equivalent logic outside the core.
 
 When CHERIoT is enabled, ``misa`` reflects the CHERIoT base ISA (bits X=1, I=0, E=1), and ``marchid`` reads as 0xCE1 instead of the standard Ibex value of 0x16 (22).
