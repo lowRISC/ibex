@@ -1098,7 +1098,7 @@ module ibex_id_stage import ibex_cheriot_pkg::*; #(
     // If we stall a load in ID for any reason, it must not make an LSU request
     // (otherwise we might issue two requests for the same instruction)
     `ASSERT(IbexStallMemNoRequest,
-      instr_valid_i & lsu_req_dec & ~instr_done |-> ~lsu_req_done_i)
+      instr_valid_i & (lsu_req_dec | cheriot_lsu_req_dec) & ~instr_done |-> ~lsu_req_done_i)
 
     assign rf_rd_a_wb_match = (rf_waddr_wb_i == rf_raddr_a_o) & |rf_raddr_a_o;
     assign rf_rd_b_wb_match = (rf_waddr_wb_i == rf_raddr_b_o) & |rf_raddr_b_o;
@@ -1277,7 +1277,7 @@ module ibex_id_stage import ibex_cheriot_pkg::*; #(
 
   // Multicycle enable signals must be unique.
   `ASSERT(IbexMulticycleEnableUnique,
-      $onehot0({lsu_req_dec, multdiv_en_dec, branch_in_dec, jump_in_dec}))
+      $onehot0({lsu_req_dec, cheriot_lsu_req_dec, multdiv_en_dec, branch_in_dec, jump_in_dec}))
 
   // Duplicated instruction flops must match
   // === as DV environment can produce instructions with Xs in, so must use precise match that
