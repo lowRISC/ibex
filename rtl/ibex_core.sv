@@ -1364,20 +1364,27 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   logic outstanding_load_id;
   logic outstanding_store_id;
 
-  assign outstanding_load_id  = id_stage_i.instr_executing & id_stage_i.lsu_req_dec &
+  assign outstanding_load_id  = id_stage_i.instr_executing &
+                                (id_stage_i.lsu_req_dec | id_stage_i.cheriot_lsu_req_dec) &
                                 ~id_stage_i.lsu_we;
-  assign outstanding_store_id = id_stage_i.instr_executing & id_stage_i.lsu_req_dec &
+  assign outstanding_store_id = id_stage_i.instr_executing &
+                                (id_stage_i.lsu_req_dec | id_stage_i.cheriot_lsu_req_dec) &
                                 id_stage_i.lsu_we;
 
   if (WritebackStage) begin : gen_wb_stage
-    // When the writeback stage is present a load/store could be in ID or WB. A Load/store in ID can
-    // see a response before it moves to WB when it is unaligned otherwise we should only see
-    // a response when load/store is in WB.
-    assign outstanding_load_resp  = outstanding_load_wb |
-      (outstanding_load_id  & load_store_unit_i.split_misaligned_access);
+    // lsu_busy indicates that the LSU's state machine is in a non-idle state and therefore that
+    // we are still waiting for a response to come back. The only exception is the WAIT_GNT state,
+    // in which the access is still waiting for its grant, so no response can be outstanding.
+    logic lsu_expecting_resp;
+    assign lsu_expecting_resp = lsu_busy & (load_store_unit_i.ls_fsm_cs != WAIT_GNT);
 
+    // When the writeback stage is present a load/store could be in ID or WB. A Load/store in ID can
+    // see a response before it moves to WB when it is unaligned or a CHERIoT capability access.
+    // Otherwise we should only see a response when load/store is in WB.
+    assign outstanding_load_resp  = outstanding_load_wb  |
+                                    (outstanding_load_id & lsu_expecting_resp);
     assign outstanding_store_resp = outstanding_store_wb |
-      (outstanding_store_id & load_store_unit_i.split_misaligned_access);
+                                    (outstanding_store_id & lsu_expecting_resp);
 
     // When writing back the result of a load, the load must have made it to writeback
     `ASSERT(NoMemRFWriteWithoutPendingLoad, rf_we_lsu |-> outstanding_load_wb, clk_i, !rst_ni)
