@@ -2446,6 +2446,8 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
 
   // Certain parameter combinations are not supported
   `ASSERT_INIT(IllegalParamSecure, !(SecureIbex && (RV32M == RV32MNone)))
+  `ASSERT_INIT(IllegalParamCHERIoTNoWriteback,
+               !((BaseIsa == BaseIsaRV32IorCHERIoT) && !WritebackStage))
 
   // If the ID stage signals its ready the mult/div FSMs must be idle in the following cycle
   // `ASSERT(MultDivFSMIdleOnIdReady, id_in_ready |=> ex_block_i.sva_multdiv_fsm_idle)
