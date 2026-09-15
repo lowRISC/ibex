@@ -26,8 +26,12 @@ def create_dvsim_report_dict(tool: str, block_name: str, block_variant: str,
         })
 
     if cov_summary_dict:
-        dvsim_cov_summary_dict = {cov_name: cov_value * 100 for cov_name, cov_value
-                in cov_summary_dict.items()}
+        # A metric can be legitimately unavailable (e.g. a single-test run
+        # with no covergroup data, or a coverage type xcelium's report didn't
+        # produce) -- create_cov_summary_dict represents that as None rather
+        # than omitting the key, so this can't assume every value is a float.
+        dvsim_cov_summary_dict = {cov_name: (cov_value * 100 if cov_value is not None else None)
+                for cov_name, cov_value in cov_summary_dict.items()}
     else:
         dvsim_cov_summary_dict = {}
 

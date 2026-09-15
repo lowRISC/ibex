@@ -1,0 +1,131 @@
+(** RV32I (and RV64I) ***********************************************)
+
+| 'l' (('b'|'h') as width) ("u"? as u) (".aq"? as aq) (".rl"? as rl) as load
+    { if (rl = ".rl") && not (aq = ".aq") then failwith ("'" ^ load ^ "' is not a valid instruction") else
+      LOAD  { width    = (match width with 'b' -> RISCVBYTE | 'h' -> RISCVHALF | _ -> failwith "bad width");
+              unsigned = (u = "u");
+              aq       = (aq = ".aq");
+              rl       = (rl = ".rl");
+            }
+    }
+
+| "lw" (".aq"? as aq) (".rl"? as rl) as load
+    { if (rl = ".rl") && not (aq = ".aq") then failwith ("'" ^ load ^ "' is not a valid instruction") else
+      LOAD  { width    = RISCVWORD;
+              unsigned = false;
+              aq       = (aq = ".aq");
+              rl       = (rl = ".rl");
+            }
+    }
+
+| 's' (('b'|'h'|'w') as width) (".aq"? as aq) (".rl"? as rl) as store
+    { if (aq = ".aq") && not (rl = ".rl") then failwith ("'" ^ store ^ "' is not a valid instruction") else
+      STORE { width    = (match width with 'b' -> RISCVBYTE | 'h' -> RISCVHALF | 'w' -> RISCVWORD | _ -> failwith "bad width");
+              aq       = (aq = ".aq");
+              rl       = (rl = ".rl");
+            }
+    }
+
+(** RV64I (in addition to RV32I) ************************************)
+
+| "lwu" (".aq"? as aq) (".rl"? as rl) as load
+    { if (rl = ".rl") && not (aq = ".aq") then failwith ("'" ^ load ^ "' is not a valid instruction") else
+      LOAD  { width    = RISCVWORD;
+              unsigned = true;
+              aq       = (aq = ".aq");
+              rl       = (rl = ".rl");
+            }
+    }
+
+| "ld" (".aq"? as aq) (".rl"? as rl) as load
+    { if (rl = ".rl") && not (aq = ".aq") then failwith ("'" ^ load ^ "' is not a valid instruction") else
+      LOAD  { width    = RISCVDOUBLE;
+              unsigned = false;
+              aq       = (aq = ".aq");
+              rl       = (rl = ".rl");
+            }
+    }
+
+| "sd" (".aq"? as aq) (".rl"? as rl) as store
+    { if (aq = ".aq") && not (rl = ".rl") then failwith ("'" ^ store ^ "' is not a valid instruction") else
+      STORE { width    = RISCVDOUBLE;
+              aq       = (aq = ".aq");
+              rl       = (rl = ".rl");
+            }
+    }
+
+(** RV32A (and RV64A) ***********************************************)
+
+| "lr.w" (".aq"? as aq) (".rl"? as rl) as lr
+    { if (rl = ".rl") && not (aq = ".aq") then failwith ("'" ^ lr ^ "' is not a valid instruction") else
+      LOADRES { width = RISCVWORD;
+                aq    = (aq = ".aq");
+                rl    = (rl = ".rl");
+              }
+    }
+
+| "sc.w" (".aq"? as aq) (".rl"? as rl) as sc
+    { if (aq = ".aq") && not (rl = ".rl") then failwith ("'" ^ sc ^ "' is not a valid instruction") else
+      STORECON  { width = RISCVWORD;
+                  aq    = (aq = ".aq");
+                  rl    = (rl = ".rl");
+                }
+    }
+
+| "amo" (("swap"|"add"|"and"|"or"|"xor"|"max"|"min"|"maxu"|"minu") as op) ".w" (".aq"? as aq) (".rl"? as rl)
+    { AMO { op    =
+              begin match op with
+              | "swap" -> RISCVAMOSWAP;
+              | "add"  -> RISCVAMOADD;
+              | "and"  -> RISCVAMOAND;
+              | "or"   -> RISCVAMOOR;
+              | "xor"  -> RISCVAMOXOR;
+              | "max"  -> RISCVAMOMAX;
+              | "min"  -> RISCVAMOMIN;
+              | "maxu" -> RISCVAMOMAXU;
+              | "minu" -> RISCVAMOMINU;
+              | _ -> failwith "bad amo"
+              end;
+            width = RISCVWORD;
+            aq    = (aq = ".aq");
+            rl    = (rl = ".rl");
+          }
+    }
+
+(** RV64A (in addition to RV32A) ************************************)
+
+| "lr.d" (".aq"? as aq) (".rl"? as rl) as lr
+    { if (rl = ".rl") && not (aq = ".aq") then failwith ("'" ^ lr ^ "' is not a valid instruction") else
+      LOADRES { width = RISCVDOUBLE;
+                aq    = (aq = ".aq");
+                rl    = (rl = ".rl");
+              }
+    }
+
+| "sc.d" (".aq"? as aq) (".rl"? as rl) as sc
+    { if (aq = ".aq") && not (rl = ".rl") then failwith ("'" ^ sc ^ "' is not a valid instruction") else
+      STORECON  { width = RISCVDOUBLE;
+                  aq    = (aq = ".aq");
+                  rl    = (rl = ".rl");
+                }
+    }
+
+| "amo" (("swap"|"add"|"and"|"or"|"xor"|"max"|"min"|"maxu"|"minu") as op) ".d" (".aq"? as aq) (".rl"? as rl)
+    { AMO { op    =
+              begin match op with
+              | "swap" -> RISCVAMOSWAP;
+              | "add"  -> RISCVAMOADD;
+              | "and"  -> RISCVAMOAND;
+              | "or"   -> RISCVAMOOR;
+              | "xor"  -> RISCVAMOXOR;
+              | "max"  -> RISCVAMOMAX;
+              | "min"  -> RISCVAMOMIN;
+              | "maxu" -> RISCVAMOMAXU;
+              | "minu" -> RISCVAMOMINU;
+              | _ -> failwith "bad amo"
+              end;
+            width = RISCVDOUBLE;
+            aq    = (aq = ".aq");
+            rl    = (rl = ".rl");
+          }
+    }

@@ -13,9 +13,17 @@ from functools import reduce
 from .util import gen_test_run_result_text, css_red_green_gradient
 
 def pct_str(pct_val: float) -> str:
+    # A metric can be legitimately unavailable (e.g. a single-test run with no
+    # covergroup data, or a coverage type xcelium's report simply didn't
+    # produce) -- create_cov_summary_dict represents that as None rather than
+    # omitting the key, so this must not assume a real float.
+    if pct_val is None:
+        return 'n/a'
     return f'{pct_val * 100:.1f}%'
 
 def pct_style(pct_val: float) -> str:
+    if pct_val is None:
+        return ''
     return f'background-color: {css_red_green_gradient(pct_val)};'
 
 def output_results_html(md: RegressionMetadata,

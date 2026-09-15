@@ -1,0 +1,63 @@
+\newcommand{\ghissue}[1]{\href{https://github.com/CHERIoT-Platform/cheriot-sail/issues/#1}{Issue #1}}
+\newcommand{\ghpr}[1]{\href{https://github.com/CHERIoT-Platform/cheriot-sail/pull/#1}{PR #1}}
+\chapter{Version history}
+\label{chap:changes}
+
+\begin{description}
+\item[0.5] The version released as technical report MSR-TR-2023-6: \emph{CHERIoT: Rethinking security for low-cost embedded systems}, February 2023\footnote{\url{https://aka.ms/cheriot-tech-report}}.
+\item[1.0] As implemented in CHERIoT-Ibex 1.0 Release. The following changes have been made since 0.5:
+  \begin{description}
+    \item[\ghissue{20}, \ghpr{26}] Capability stores now clear the tag of the stored value instead of raising an exception in case of a store-local violation
+    (i.e. an attempt to store a non-global capability via a capability without the store-local permission).
+    Tag clearing is preferable for software because it removes the possibility of a trap when copying untrusted inputs.
+    It is also likely easier to implement in hardware.
+    The capability exception code that was previously used for this (0x16) is now reserved.
+    \item[\ghpr{33}] The relocations for \insnref{auicgp} and \insnref{auipcc} are unified and the CHERIoT-specific relocations are now named with CHERIOT, rather than CHERI, as the prefix.
+    \item[\ghissue{23}, \ghissue{18}, \ghpr{37}] Jumps and branches no longer include bounds checks.
+    Instead, any \PCC{} bounds error will be detected on the subsequent instruction fetch at the target.
+    To avoid problems with unrepresentable capabilities the tag of the value stored in \EPCC{} is cleared for instruction fetch bounds exceptions.
+    \item[\ghissue{30}, \ghpr{37}] Validate \MEPCC{} and \MTCC{} on write.
+    If either of these is written with a sealed or non-executable capability then the tag is cleared.
+    If the least significant bit of \MEPCC{}.\caddress{} is set on write then it is cleared and the tag is cleared.
+    If either of the two least significant bits of \MTCC{}.\caddress{} is set on write then they are cleared and the tag is cleared.
+    This simplifies both ISA and hardware and avoids potential violations of capability monotonicity due to \asm{mtvec} and \asm{mepc} legalization.
+    vectored interrupt mode is explicitly unsupported.
+    \item[\ghpr{38}] Fix reversed T and B fields in the capability encoding diagram (\cref{fig:capformat}).
+    There was an inconsistency between the Sail implementation and this document about the locations of the T and B fields in the capability encoding.
+    The document had the T and B fields swapped compared to the Sail (which matches the Ibex implementation) so we treat the Sail as canonical and update the document to match i.e. B is in bits 0 to 8 of the metadata word and T is in 9 to 17.
+    \item[\ghpr{44}] Fix two long-standing nits regarding transitive permissions:
+      \begin{description}
+        \item[\ghissue{13}] If we clear the tag on a loaded capability because the authority lacks \cappermMC,
+          we do not also attenuate the loaded capability's permissions as per \cappermILG and \cappermLM,
+          as the result is an untagged bit pattern anyway.
+          The old behavior may have been confusing to humans or debuggers.
+        \item[\ghissue{14}] When loading a sealed capability through an authority lacking \cappermILG,
+          the loaded capability will lack \cappermG but will retain \cappermILG if present under seal.
+          This is more in line with our handling of \cappermLM, which does not modify sealed capabilities.
+          Software accepting sealed capabilities must be prepared to receive local (that is, \cappermG-lacking) variants,
+          even if none were ever explicitly constructed.
+      \end{description}
+    \item[\ghissue{15}, \ghpr{49}] Document stack high water mark.
+    Make it explicitly 16-byte aligned and point out the unaligned write spanning \mshwmb{} corner case, which we do not require hardware to handle.
+    \item[\ghpr{54}] Create backward sentries for function returns and add more checks in \rvcheriasminsnref{CJAL}
+    Because CHERIoT allows manipulating the status of the interrupt through a function call (and function return) by encoding the interrupt type in the otype, the following attack can occur: A caller calling an interrupt-disabling callee can set the return sentry of the callee to the same callee. This means, the callee will call itself on return all the while operating with interrupts disabled. This will lead to infinite repeated calls to the callee with interrupts disabled, violating availability. This attack can be prevented in CHERIoT by adding two new ``backwards-edge'' sentries and adding more checks on \rvcheriasminsnref{CJALR}.
+      \begin{description}
+        \item[\ghissue{85}, \ghpr{86}] Relaxes the original change to better support code outlining,
+          by allowing \rvcheriasminsnref{CJALR} to create unsealed return addresses
+          when its (output) link register is not \asm{\$cra}.
+          See the discussion in \cref{sec:sealing}.
+      \end{description}
+    \item[\ghissue{71}, \ghpr{87}] \rvcheriasminsnref{CUnseal} now no longer requires exact equality between sealed input otype and authority address.
+      Instead, it merely requires that the otype of the sealed input is within bounds to yield a tagged result.
+      The address of a sealing-root capability is now meaningful only to \rvcheriasminsnref{CSeal}.
+    \item[\ghissue{72},\ghpr{74}] Introduce \rvcheriasminsnref{CSetBoundsRoundDown} to facilitate constructing representable slices of buffers.
+    \item[\ghissue{70},\ghpr{83}] \rvcheriasminsnref{CAndPerm} can now clear \cappermG on sealed caps, so long as that is the only bit being cleared.
+      Previously, this was possible by round-tripping to memory, loading back through an authority lacking \cappermILG(recall \ghpr{44} and \ghissue{14} above), but not directly as a register-to-register operation.
+      Presently, we require that the mask provided to \rvcheriasminsnref{CAndPerm} be all-1s except possibly \cappermG;
+      that is, feeding the result of \rvcheriasminsnref{CGetPerm} on a sealed capability to \rvcheriasminsnref{CAndPerm} will still clear the tag of the result.
+    \item[\ghpr{97}] Introduce the \asm{CHERIOT\_CCALL} relocation. This addresses difficulties with relaxation of compartment call relocations as per 
+    \href{https://github.com/CHERIoT-Platform/llvm-project/pull/114}{CHERIoT-Platform/llvm-project/pull/114}.
+    \item[\ghpr{104}, \ghpr{105}] Modify the scalar calling convention ABI to more efficiently use capability registers for small records and 64-bit floating values.
+    \item[\ghpr{112}] Change LLVM attribute prefix from \ccode{cheri} to \ccode{cheriot}.
+  \end{description}
+\end{description}

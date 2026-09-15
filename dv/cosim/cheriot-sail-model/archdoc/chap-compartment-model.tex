@@ -1,0 +1,192 @@
+\chapter{Compartment model}
+\label{chap:compartmentmodel}
+CHERI is designed to support fine-grained compartmentalization.
+A compartment, in the CHERI sense, is defined by the memory that is transitively reachable\footnote{i.e. including memory reachable from capabilities loadable from memory by any number of indirections} from the capability registers in the running code.
+The mechanism for transitioning between compartments is key to any CHERI compartmentalization strategy.
+
+The original CHERI/MIPS prototype had an instruction that raised a synchronous abort, providing a transition into an in-kernel compartment switcher.
+Morello and newer CHERI/RISC-V implementations for large systems have instructions that perform atomic unsealing and domain transition.
+This provides a rich set of tools for building compartmentalization models but leaves concerns such as stack management to the software stack.
+The \cherimcu{} model relies on a mixture of hardware and software to enforce compartment isolation.
+
+The threat model for this work assumes that compartments all exist in a mutual distrust relationship with each other.
+Compartments should not be able to see or tamper with other compartments' data unless they are explicitly granted access to it via capabilities passed across an exposed interface.
+
+Compartments, in isolation, are not automatically trusted (or untrusted) with respect to availability.
+Each compartment explicitly lists the entry points that it exposes or may invoke that run with interrupts disabled and it is the responsibility of the firmware integrator to determine whether this is acceptable.
+For a compartment to run code with interrupts disabled, the linker and loader must have explicitly granted it these rights when initializing capabilities, and so it is possible for the firmware integrator to audit the compartment graph.
+
+This is intended to give flexibility for system integrators with different levels of real-time requirements.
+At one extreme, a hard-realtime control loop can run in a realtime-priority thread, with interrupts disabled except at explicit yield points.
+Other threads in such a system would not be allowed to call any compartment entry points that can invoke functions that run with interrupts disabled and so the realtime-priority thread can always resume in the context-switch time.
+A somewhat softer realtime system may allow a small number of functions to be invoked from compartments that are exposed to lower-priority threads.
+These functions would be audited to ensure that their worst-case execution time didn't cause realtime components to miss their guarantees.
+At the weakest extreme, global forward progress is purely a best-effort objective and any compartment may be allowed to call functions that have no guarantees on bounded execution time and run with interrupts disabled.
+
+We expect that compartments may be provided by untrusted third parties and so it is important that every cross-compartment interaction is amenable to auditing.
+In particular, the linker can see everything that the loader will set up and the loader is required to explicitly grant access to a compartment for every:
+
+\begin{itemize}
+	\item MMIO region that a compartment has access to.
+	\item Cross-compartment entry point that a compartment exposes (and its interrupt status on entry).
+	\item Internal function that a compartment may run with interrupts disabled.
+	\item Cross-compartment call that a compartment may perform to another compartment.
+	\item Shared library routine that a compartment may invoke.
+\end{itemize}
+
+This is sufficient to retrieve a complete graph of cross-compartment communication, including which compartments may be running with interrupts disabled.
+This provides tools for firmware integrators to write policies such as:
+
+\begin{itemize}
+	\item Only the specific code that the regulator approved may communicate directly with this device.
+	\item Any code may run on the device but only the TLS compartment may talk to the network stack and only a compartment that exposes a small set of well-defined APIs may call the TLS stack.
+	\item There must be no interaction between any of the compartments managing service A and the compartments managing service B on the device, except yielding via the scheduler.
+\end{itemize}
+
+\section{Compartments define spatial ownership}
+
+At its most reductionist, a \cherimcuos{} compartment is defined by two registers:
+
+\begin{description}
+	\item[\PCC] is the program-counter capability, which is used to reach code and read-only globals.
+	\item[\CGP] is the capability global pointer, which is used to reach read-write globals.
+\end{description}
+
+These define a set of code and data that represents a compartment.
+A compartment is a single security context.
+While running in a compartment, any code in the memory reachable by \PCC{} may be executed, any data in that memory may be read, and any data in the globals reachable from \CGP{} may be read or written.
+
+Note, in particular, that compartments are responsible for enforcing an object abstraction on top of their global memory.
+The C/C++ compiler will automatically insert bounds when the address of a global is taken but an assembly programmer in a compartment is able to reach any globals.
+Our security model assumes that all code within a compartment trusts all other code within that compartment.
+
+\section{Threads define temporal ownership}
+
+A \cherimcuos{} thread is a schedulable entity that owns a stack, a trusted stack, and a register set.
+When a thread is scheduled, it owns the microcontroller's register file.
+When it is suspended, the register file is stored in a register save area.
+
+Each thread is isolated from other threads.
+The \cherimcuisa{} provides a simple 2-bit information-flow enforcement mechanism in the form of the global bit and the store-local permission.
+Capabilities without the global bit can be stored only via capabilities that have the store-local permission.
+In \cherimcuos{}, only three types of memory have the store-local permission:
+
+\begin{description}[before={\renewcommand\makelabel[1]{\textbf{##1},}}]
+	\item[Stacks] reachable from a running thread's \CSP{} and any capabilities derived from this (address-taken stack allocations).
+	\item[Register save areas] reachable only from a special capability register (SCR) that are used to store a thread's state on context switch.
+	\item[Trusted stacks] reachable only from a SCR, which are used to save and restore the stack pointer on compartment switch (more on this later).
+\end{description}
+
+Of these, normal compartment code has access only to the stack.
+The latter two are a single allocation that is reached via a SCR.
+The switcher is the only code that runs (after the loader has exited) with the rights to access this SCR.
+Threads' register files and stacks dynamically define a set of reachable objects.
+\nwfnote{That last sentence is a bit of a non-sequitur for this paragraph.}
+
+\section{Execution at the intersection of threads and compartments}
+
+Threads do not own code and compartments do not own a register file.
+Execution requires (at least) both of these and happens when a thread is scheduled to run within a specific compartment.
+Each thread starts at an entry point within a compartment and execution continues within that compartment until either the thread calls another compartment or a context switch invokes another thread.
+
+This means that running code always has access to the code for the current compartment, the globals for the current compartment, the part of a thread's stack and register state associated with the current compartment invocation..
+Two threads might be in the same compartment at the same time (one of them preempted or yielded, the other running), if the compartment permits this.
+If two threads enter the same compartment (either at the same time or sequentially) then they will see the same set of globals and can use them to communicate.
+
+\nwfnote{Perhaps this sentence should begin ``The loader ensures that globals'' or such... and it's not just caps derived from \CGP{} but also those (transitively) reachable from it, right?}
+Globals (more specifically, capabilities derived from the value in the \CGP{} register) do not have store-local and so it is not possible to construct a capability that is reachable from a global and which points to a stack allocation.
+This gives strong cross-thread isolation.
+If a thread enters a compartment that is compromised, a thread running compromised code within that compartment cannot tamper with the victim thread's stack or register file and must use data-oriented attacks from data reachable from globals.
+
+\section{Compartment switches enforce compartment isolation}
+
+Cross-compartment calls require that a thread loses access to one compartment and gains access to another.
+CHERI provides a \textit{sealing} mechanism to build this kind of model.
+We use this with an explicit compartment switcher to build a robust compartment invocation mechanism for embedded systems.
+
+When a thread wishes to invoke another compartment, it loads two capabilities from its import table (see Chapter~\ref{chap:abi}).
+The first is a sealed capability to a structure describing the entry point in the callee.
+The second is a \textit{sentry} capability to the compartment switcher.
+The sealed capability is passed in a register when the sentry capability is called.
+
+A CHERI sentry is a capability that can be jumped to but cannot be used for any other operations.
+The \cherimcuisa{} extends this by allowing different kinds of sentry to control interrupt state.
+The sentry for the compartment switcher implicitly disables interrupts on entry to the switcher, which makes it easier to reason about the execution flow within the switcher.
+
+The compartment switch routine unseals the target capability and uses it to find the \PCC{} and \CGP{} of the target compartment, and the offset within the \PCC{}.
+It can then construct a target to invoke.
+In addition, it reads the number of registers that the callee expects to have passed (which it uses to zero unused argument registers) and the interrupt status for the callee (which it uses to reenable interrupts immediately prior to invocation, if required).
+The RV32E ABI defines only two callee-save registers.
+The switcher saves these onto the trusted stack and then zeros all non-argument registers except for \CGP{}  and \CSP{}, which have special handling.
+
+In addition to these steps, the compartment switcher is responsible for preventing the stack from being used to leak data between compartments (other than via explicit arguments).
+This requires several steps.
+First, the stack passed in the \CSP{} register must be shrunk to allow CHERI's spatial bounds protection to prevent any access by the callee to the caller's portion of the stack.
+Second, both before a call and before completing the return transition, the compartment switcher zeroes the portion of the stack that is made available to the callee.
+Zeroing the stack seems expensive but recall that in embedded systems a 2 KiB stack is considered \textit{very} large.
+Our stacks are typically 1 KiB.
+With a 33-bit memory bus, we need 256 stores (in the worst case) to zero the whole thing.
+That's more expensive than a function call, but not vastly so.
+Additionally, the hardware provides a stack high water mark (see \cref{sec:shwm}) to minimise the amount of zeroing required.
+\nwfnote{Perhaps a footnote referencing \cite{huyghebaert:uninitcaps} as a possible architectural extension to speed this up?
+(Of note, if not proposed in the paper, csetbounds on an uninit cap could always give an initialized capability, which should limit the impact on the compiler?)}
+
+At the end of a compartment transition, the new compartment has access to:
+
+\begin{itemize}
+	\item Its own code (\PCC)
+	\item Its own globals (\CGP)
+	\item A portion of the thread's stack, excluding any frames owned by the caller, and full of zeroes.
+	\item Any memory pointed to by argument capability registers, passed explicitly from the caller.
+\end{itemize}
+
+On return, any temporary state is cleared and the caller has access only to explicit return capabilities.
+
+This does not prevent one compartment from having access to another compartment's globals, but there are legitimate reasons for wanting this.
+For example, a compartment may derive a read-only (no store permission) capability to one of its globals and use that to cheaply broadcast state updates to subscribers.
+
+\section{Context switches enforce thread isolation}
+
+Context switches happen as a result of an interrupt (including synchronous aborts / exceptions).
+The context switcher code saves the register file into a save area pointed to by a SCR.
+The register save area and the trusted stack are both reached by the same SCR and the two switchers (thread and compartment) are the only code in the system that runs with permission to access this register after the loader has finished.
+
+The context switch routine (part of the switcher's approximately 300 instructions) is the only code that is able to violate thread isolation.
+It has access to two threads simultaneously:
+
+\begin{itemize}
+	\item The stack pointed to by \CSP{} on entry to the interrupt handler.
+	\item The stack that the scheduler will use, loaded from a read-only global in the switcher's \PCC{}.
+\end{itemize}
+
+Before invoking the scheduler, the switcher will seal the capability to the register save area (from which the stashed \CSP{} is reachable) and pass it as an argument into the scheduler.
+The scheduler is therefore in the TCB for availability but, crucially, not for confidentiality or integrity.
+
+The scheduler runs with interrupts disabled and selects the next thread to run, returning a (sealed) capability to the register save area to the switcher.
+This must be sealed with the object type that the switcher expects.
+The loader guarantees that nothing except the switcher has a permit-seal capability for that type and so the scheduler is able only to provide register save areas that were previously provided by the loader or the switcher.
+
+The current \cherimcuos{} scheduler is a very simple priority scheduler that does round-robin scheduling within a priority level.
+A more complex one could be added for use cases that need something more complex without changing the security model.
+Conversely, an even simpler scheduler that exposes a less rich set of inter-thread communication primitives could be used for safety-critical systems.
+
+The scheduler is a compartment just like any other and so can expose more complex scheduling operations such as message queues as cross-compartment calls that then explicitly yield.
+
+\section{Adding shared libraries}
+
+In a compartmentalized system it is very common to have routines that are required from many different compartments.
+This is trivial to support by duplicating the code into all compartments that use it.
+On large systems with a memory-management unit it's possible to logically duplicate the code in the virtual address space without duplicating it in the physical address space.
+This is not possible on a system such as ours, without any virtual memory support.
+
+Instead, \cherimcuos{} provides a shared-library abstraction that is designed to work in concert with our compartmentalization model.
+A shared library is much like half of a compartment: it may contain code and read-only data (\PCC) but may not contain read-write globals and so runs with the \CGP{} of the caller.
+A function in a shared library runs with the context of the caller and so invoking a shared-library function does not need to go via the compartment switcher.
+
+Cross-library calls, as with cross-compartment calls, must change \PCC{} to a specific location in another block of code.
+This is enforced by the loader providing callers with a sentry capability to the jump target.
+This prevents the caller from being able to jump to arbitrary points in a shared library.
+It also allows shared libraries to expose routines that run with interrupts disabled.
+For example, on a core that doesn't provide native atomics, we can expose atomic-increment functions that perform a simple read-modify-write with interrupts disabled, without having to go via the compartment switcher.
+
+

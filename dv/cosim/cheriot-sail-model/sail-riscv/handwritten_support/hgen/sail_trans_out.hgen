@@ -1,0 +1,27 @@
+| ("StopFetching", [])            -> `RISCVStopFetching
+| ("ThreadStart", [])             -> `RISCVThreadStart
+
+| ("UTYPE", [imm; rd; op])        -> `RISCVUTYPE(translate_out_simm20 imm, translate_out_ireg rd, translate_out_uop op)
+| ("JAL", [imm; rd])              -> `RISCVJAL(translate_out_simm21 imm, translate_out_ireg  rd)
+| ("JALR", [imm; rs; rd])         -> `RISCVJALR(translate_out_simm12 imm, translate_out_ireg rs, translate_out_ireg rd)
+| ("BTYPE", [imm; rs2; rs1; op])  -> `RISCVBType(translate_out_simm13 imm, translate_out_ireg rs2, translate_out_ireg rs1, translate_out_bop op)
+| ("ITYPE", [imm; rs1; rd; op])   -> `RISCVIType(translate_out_simm12 imm, translate_out_ireg rs1, translate_out_ireg rd, translate_out_iop op)
+| ("SHIFTIOP", [imm; rs; rd; op]) -> `RISCVShiftIop(translate_out_imm6 imm, translate_out_ireg rs, translate_out_ireg rd, translate_out_sop op)
+| ("RTYPE", [rs2; rs1; rd; op])   -> `RISCVRType (translate_out_ireg rs2, translate_out_ireg rs1, translate_out_ireg rd, translate_out_rop op)
+| ("LOAD", [imm; rs; rd; unsigned; width; aq; rl])
+                                  -> `RISCVLoad(translate_out_simm12 imm, translate_out_ireg rs, translate_out_ireg rd, translate_out_bool unsigned, translate_out_wordWidth width, translate_out_bool aq, translate_out_bool rl)
+| ("STORE", [imm; rs; rd; width; aq; rl])
+                                  -> `RISCVStore(translate_out_simm12 imm, translate_out_ireg rs, translate_out_ireg rd, translate_out_wordWidth width, translate_out_bool aq, translate_out_bool rl)
+| ("ADDIW", [imm; rs; rd])        -> `RISCVADDIW(translate_out_simm12 imm, translate_out_ireg rs, translate_out_ireg rd)
+| ("SHIFTW", [imm; rs; rd; op])   -> `RISCVSHIFTW(translate_out_imm5 imm, translate_out_ireg rs, translate_out_ireg rd, translate_out_sop op)
+| ("RTYPEW", [rs2; rs1; rd; op])  -> `RISCVRTYPEW(translate_out_ireg rs2, translate_out_ireg rs1, translate_out_ireg rd, translate_out_ropw op)
+| ("FENCE", [0; pred; succ])      -> `RISCVFENCE(translate_out_imm4 pred, translate_out_imm4 succ)
+| ("FENCE", [1; pred; succ])      -> `RISCVFENCE_TSO(translate_out_imm4 pred, translate_out_imm4 succ)
+| ("FENCE", [_; pred; succ])      -> failwith "Unknown fm_mode in sail translate out"
+| ("FENCEI", [])                  -> `RISCVFENCEI
+| ("LOADRES", [aq; rl; rs1; width; rd])
+                                  -> `RISCVLoadRes(translate_out_bool aq, translate_out_bool rl, translate_out_ireg rs1, translate_out_wordWidth width, translate_out_ireg rd)
+| ("STORECON", [aq; rl; rs2; rs1; width; rd])
+                                  -> `RISCVStoreCon(translate_out_bool aq, translate_out_bool rl, translate_out_ireg rs2, translate_out_ireg rs1, translate_out_wordWidth width, translate_out_ireg rd)
+| ("AMO", [op; aq; rl; rs2; rs1; width; rd])
+                                  -> `RISCVAMO(translate_out_amoop op, translate_out_bool aq, translate_out_bool rl, translate_out_ireg rs2, translate_out_ireg rs1, translate_out_wordWidth width, translate_out_ireg rd)

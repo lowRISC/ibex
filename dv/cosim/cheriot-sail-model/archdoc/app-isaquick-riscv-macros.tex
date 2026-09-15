@@ -1,0 +1,46 @@
+\input{app-isaquick-table-macros}
+
+\makeatletter
+\def\rvcherienctablecols{4}
+\def\rvcherienctablefontsize{\normalsize}
+
+% class count
+\newcommand{\@rvcherimakeenctablecmd}[2]{%
+  % [cols]
+  \ea\NewDocumentCommand\ea{\csname rvcherienctable#1\endcsname}{o}{%
+    \IfValueTF{##1}{%
+      \@cherienctable{##1}{@rvcheriencusetablestr@#1}{#2}%
+    }{%
+      \ea\@cherienctable\ea{\rvcherienctablecols}{@rvcheriencusetablestr@#1}{#2}%
+    }%
+  }%
+}
+\@rvcherimakeenctablecmd{top}{8}
+\@rvcherimakeenctablecmd{srcsrcdest}{128}
+\@rvcherimakeenctablecmd{srcsrc}{32}
+\@rvcherimakeenctablecmd{src}{32}
+\@rvcherimakeenctablecmd{srcdest}{32}
+\@rvcherimakeenctablecmd{dest}{32}
+\@rvcherimakeenctablecmd{expload}{32}
+\@rvcherimakeenctablecmd{expstore}{32}
+
+\let\rvcheriasminsnref\insnriscvref
+\let\rvcheriasminsnnoref\insnnoref
+\providecommand{\rvcheriasmfmt}{}
+\renewcommand{\rvcheriasmfmt}[2][]{%
+  ~\raiseforbf{%
+    \textsf{\footnotesize{#2}}%
+    \ifthenelse{\equal{#1}{}}{%
+    }{%
+      ~{\textit{\scriptsize{(#1)}}}%
+    }%
+  }%
+}
+
+\newcommand{\rvcheriisaquick}[1]{%
+  \rvcheribitbox{#1}~\rvcheriasm{#1}%
+}
+
+\newcommand{\riscvbitboxaq}{\rotateinbitbox{\small aq}}
+\newcommand{\riscvbitboxrl}{\rotateinbitbox{\small rl}}
+\makeatother

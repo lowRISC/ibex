@@ -1,0 +1,11 @@
+[package]
+name = "sail-coverage"
+version = "0.1.0"
+authors = ["Alasdair <alasdair.armstrong@cl.cam.ac.uk>"]
+edition = "2018"
+
+[dependencies]
+lazy_static = "1.4.0"
+
+[lib]
+crate-type = ["staticlib"]

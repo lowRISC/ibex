@@ -51,7 +51,306 @@
     PMPEnable: 1
   timeout_s: 300
 
+# CHERIoT-aware C tests (capability SP init before _init).
+# Uses crt_cheriot.S instead of crt.S. After computing the integer SP, it
+# reads DDC into c2 (cspecialr c2, ddc) and points c2's cursor at the integer
+# SP (csetaddr c2, c2, x2), so that _init's first c.cscsp store does not
+# fault. Only meaningful with +enable_cheriot_seq=1 (see sim_opts below),
+# which asserts cheriot_enable_i and brings up the CHERIoT-Sail cosim oracle
+# alongside Spike -- see ibex_cosim_scoreboard.sv.
+- config: cheriot-c-tests
+  ld_script: ../../../../vendor/riscv-isa-sim/tests/mseccfg/mseccfg_test.ld
+  includes: .
+  gcc_opts: -march=rv32imc -O2 -fno-builtin -fno-stack-protector
+            ../../../vendor/riscv-isa-sim/tests/mseccfg/crt_cheriot.S
+            ../../../vendor/riscv-isa-sim/tests/mseccfg/syscalls.c
+            -mcmodel=medany -static -nostdlib -nostartfiles -lgcc
+  rtl_test: core_ibex_base_test
+  rtl_params:
+    PMPEnable: 1
+  timeout_s: 300
+
 # Custom directed tests
+
+- test: cheriot_null_cap
+  desc: >
+    CHERIoT capability property checks adapted from
+    cheri-c-tests/clang_purecap_null.c (CTSRD/Cambridge). Uses raw
+    .word-encoded CHERIoT instructions (cgettag, cspecialr) compiled via the
+    standard rv32imc toolchain. Checks: (1) an integer-zero register has
+    capability tag = 0; (2) MTCC has tag = 1; (3) MTDC has tag = 1.
+  iterations: 1
+  test_srcs: cheriot_null_cap/cheriot_null_cap.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_cap_perms
+  desc: >
+    CHERIoT capability permission checks inspired by
+    cheri-c-tests/clang_purecap_init.c (CTSRD/Cambridge). Verifies that
+    code capabilities have execute permission and data capabilities do not,
+    using cgetperm on the reset values of MTCC (execution root, perms=0x1EB)
+    and MTDC (memory data root, perms=0x07F). Tests: (1) MTCC tag=1;
+    (2) MTCC permit_execute (bit 8) is set; (3) MTDC tag=1;
+    (4) MTDC permit_execute (bit 8) is clear; (5) MTDC permit_load (bit 5)
+    is set; (6) MTDC permit_store (bit 2) is set.
+  iterations: 1
+  test_srcs: cheriot_cap_perms/cheriot_cap_perms.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_cap_base
+  desc: >
+    CHERIoT capability base address test. Verifies that MTCC, MTDC, and
+    MScratchC all have base address = 0 at reset using CGetBase (funct7=0x7F,
+    rs2=2, .word 0xFE25055B) -- an instruction not exercised by earlier
+    tests. All three root capabilities cover the full 4 GB address space
+    (base=0, length=2^32). Tests: (1) MTCC base=0; (2) MTDC base=0;
+    (3) MScratchC base=0.
+  iterations: 1
+  test_srcs: cheriot_cap_base/cheriot_cap_base.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_mscratchc_seal
+  desc: >
+    MScratchC (SCR 30) resets to CPERMS_TS, the seal root capability, not a
+    general-purpose scratch register. Checks expand_perms(CPERMS_TS) via
+    cgetperm: GL(0)=1, US(9)=1, SE(10)=1, U0(11)=1, all else clear
+    (in particular EX(8)=0 -- not executable). Tests: (1) tag=1;
+    (2) permit_seal set; (3) permit_unseal set; (4) permit_execute clear;
+    (5) global set.
+  iterations: 1
+  test_srcs: cheriot_mscratchc_seal/cheriot_mscratchc_seal.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_cap_len
+  desc: >
+    CGetLen (funct7=0x7F, rs2=3) on the three reset root capabilities.
+    MTCC/MTDC/MScratchC all cover the full 4GB address space at reset
+    (base=0, top=2^32), which overflows a 32-bit register; cheriot_cap_length
+    saturates to 0xFFFFFFFF when top33[32]=1. Tests: (1) MTCC length=
+    0xFFFFFFFF; (2) MTDC length=0xFFFFFFFF; (3) MScratchC length=0xFFFFFFFF.
+  iterations: 1
+  test_srcs: cheriot_cap_len/cheriot_cap_len.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_cap_type
+  desc: >
+    CGetType (funct7=0x7F, rs2=1) on the three reset root capabilities.
+    All three are unsealed at reset, so CGetType must return 0
+    (OTYPE_UNSEALED) for each. Tests: (1) MTCC type=0; (2) MTDC type=0;
+    (3) MScratchC type=0.
+  iterations: 1
+  test_srcs: cheriot_cap_type/cheriot_cap_type.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_cap_addr
+  desc: >
+    CGetAddr (funct7=0x7F, rs2=0x0F -- note: not 0x05) on the three reset
+    root capabilities. At reset all three have base=0, so CGetAddr must
+    return 0 for each. Tests: (1) MTCC addr=0; (2) MTDC addr=0;
+    (3) MScratchC addr=0.
+  iterations: 1
+  test_srcs: cheriot_cap_addr/cheriot_cap_addr.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_intcap_arith
+  desc: >
+    Any integer ALU op writing a register clears its capability tag --
+    the core CHERI guarantee that a capability cannot be forged by integer
+    arithmetic. Exercises addi/add/sub/andi/ori/xori/slli/mul, checking
+    cgettag=0 after each. Tests: (1) li/addi; (2) add; (3) sub; (4) andi;
+    (5) ori; (6) xori; (7) slli; (8) mul.
+  iterations: 1
+  test_srcs: cheriot_intcap_arith/cheriot_intcap_arith.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_andperm
+  desc: >
+    CAndPerm (funct7=0x0D) narrows a capability's permission field without
+    clearing the tag (unsealed capabilities: narrowing permissions is always
+    safe/monotone). Applies mask=0xFF to MTCC (perms=0x1EB), clearing EX
+    (bit 8) while preserving GL (bit 0). Tests: (1) tag still 1 after
+    CAndPerm; (2) EX now clear; (3) GL still set.
+  iterations: 1
+  test_srcs: cheriot_andperm/cheriot_andperm.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_ccleartag
+  desc: >
+    CClearTag (funct7=0x7F, rs2=0x0B) explicitly revokes a capability's tag
+    while preserving its address, the deliberate counterpart to the
+    automatic tag-clearing tested in cheriot_intcap_arith. Tests: (1) MTCC
+    tag=1 before CClearTag; (2) tag=0 after; (3) address unchanged (still 0)
+    after.
+  iterations: 1
+  test_srcs: cheriot_ccleartag/cheriot_ccleartag.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_cinc_addr
+  desc: >
+    CIncAddr (funct7=0x11) adds an integer offset to a capability's cursor;
+    the tag stays 1 as long as the new cursor is within [base, top). Applies
+    +4 to MTCC (full 4GB range). Tests: (1) cursor now 4; (2) base
+    unchanged (0); (3) tag still 1 (in-bounds).
+  iterations: 1
+  test_srcs: cheriot_cinc_addr/cheriot_cinc_addr.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_csetaddr
+  desc: >
+    CSetAddr (funct7=0x10) sets a capability's cursor to an absolute address
+    from an integer register (vs CIncAddr's relative offset). Tag preserved
+    iff the new address is in [base, top). Sets MTCC's cursor to 0x1000 then
+    back to 0. Tests: (1) cursor=0x1000; (2) base unchanged (0); (3) tag
+    still 1; (4) cursor resettable to 0.
+  iterations: 1
+  test_srcs: cheriot_csetaddr/cheriot_csetaddr.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_csub
+  desc: >
+    CSub (funct7=0x14) computes an integer cursor difference between two
+    capability registers (cs1.cursor - cs2.cursor), the canonical CHERIoT
+    pointer-difference idiom. Tests: (1) CSub(MTCC, MTCC)=0; (2)
+    CSub(MTCC+16, MTCC)=16 after CIncAddr.
+  iterations: 1
+  test_srcs: cheriot_csub/cheriot_csub.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_setbounds
+  desc: >
+    CSetBounds (funct7=0x08) narrows a capability's bounds to
+    [cursor, cursor+len). Tests: (1) CGetLen=256 after
+    CSetBounds(MTDC,256); (2) CGetBase=0; (3) tag=1 (sub-region
+    contained in original bounds); (4) CGetAddr (cursor) unchanged.
+  iterations: 1
+  test_srcs: cheriot_setbounds/cheriot_setbounds.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+# cheriot_cap_readback: KNOWN FAILING -- kept in the testlist deliberately so
+# a regression run surfaces the moment it starts passing. Register-limit bug
+# fixed and the fcov InstrCategoryLoadCorrect/StoreCorrect gap fixed
+# (REQ_CFI_07), but it still hits ibex_core.sv's NoMemResponseWithoutPendingAccess
+# assertion on the CSC response -- see tickets.md for the open RTL-timing
+# question. Repro: make uvm-test-xlm TEST=cheriot_cap_readback SEED=1 ITERATIONS=1 COVERAGE=0
+- test: cheriot_cap_readback
+  desc: >
+    Field-by-field CSC/CLC round-trip check: stores a capability (MTDC,
+    then MTCC) to memory and reloads it, verifying tag/perm/base/len/
+    addr/type are all preserved exactly, and that an integer store to
+    the same slot clears the tag on reload (revocation). KNOWN FAILING:
+    see tickets.md, NoMemResponseWithoutPendingAccess RTL-timing question.
+  iterations: 1
+  test_srcs: cheriot_cap_readback/cheriot_cap_readback.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_pcc
+  desc: >
+    Program Counter Capability (PCC) properties via AUIPCC (opcode=0x17,
+    decoded as CAUIPCC under cheriot_enable_i). Tests: (1) PCC tag=1;
+    (2) PCC has execute permission (EX, bit 8); (3) PCC has global
+    permission (GL, bit 0).
+  iterations: 1
+  test_srcs: cheriot_pcc/cheriot_pcc.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_cincaddrimm
+  desc: >
+    CIncAddrImm (funct3=001), the immediate-operand sibling of CIncAddr.
+    Tests: (1) CGetAddr after +4 immediate increment; (2) base unchanged;
+    (3) tag preserved (in-bounds increment on MTCC).
+  iterations: 1
+  test_srcs: cheriot_cincaddrimm/cheriot_cincaddrimm.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_setboundsimm
+  desc: >
+    CSetBoundsImm (funct3=010), the immediate-operand sibling of
+    CSetBounds. Tests: (1) CGetLen=256 after CSetBoundsImm(MTDC,256);
+    (2) CGetBase=0; (3) tag=1; (4) CGetAddr (cursor) unchanged.
+  iterations: 1
+  test_srcs: cheriot_setboundsimm/cheriot_setboundsimm.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_setboundsexact
+  desc: >
+    CSetBoundsExact (funct7=0x09) clears the tag instead of rounding up
+    when the requested bounds aren't exactly representable. Tests:
+    (1)-(2) len=256 (exact) succeeds with tag=1, CGetLen=256;
+    (3) len=300 (not exactly representable) clears the tag.
+  iterations: 1
+  test_srcs: cheriot_setboundsexact/cheriot_setboundsexact.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_setboundsrndn
+  desc: >
+    CSetBoundsRoundDown (funct7=0x0a) rounds the requested length DOWN
+    (result subset of request) instead of UP like plain CSetBounds
+    (result superset of request). Tests: (1) length <= requested;
+    (2) base unchanged; (3) tag=1; (4) round-down length strictly less
+    than plain CSetBounds's round-up length for the same non-power-of-two
+    request, proving the two take genuinely different datapaths.
+  iterations: 1
+  test_srcs: cheriot_setboundsrndn/cheriot_setboundsrndn.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_cap_high
+  desc: >
+    CGetHigh/CSetHigh (funct7=0x7f rs2=0x17 / funct7=0x16) round-trip a
+    capability's packed non-address metadata through the CHERIoT memory
+    representation. Tests: (1) tag is always cleared by CSetHigh (it can
+    never mint a valid capability); (2)-(5) perm/base/len/otype
+    round-trip correctly; (6) address is taken from cs1's cursor, not the
+    "high" word.
+  iterations: 1
+  test_srcs: cheriot_cap_high/cheriot_cap_high.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_cseal_cunseal
+  desc: >
+    CSeal/CUnseal (funct7=0x0b/0x0c) round-trip an executable capability
+    (MTCC) through a sentry seal using MScratchC (ROOT_CAP_TS, the
+    dedicated sealing root with SE/US permission) as the sealing
+    authority. Tests: (1)-(2) CSeal succeeds (tag=1, otype=1=
+    OTYPE_SENTRY_II_FWD); (3) original cs1 untouched; (4)-(5) CUnseal
+    succeeds (tag=1, otype=0); (6) permissions preserved round-trip.
+  iterations: 1
+  test_srcs: cheriot_cseal_cunseal/cheriot_cseal_cunseal.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
+
+- test: cheriot_cjalr_sentry
+  desc: >
+    CJALR compartment call/return through a real interrupt-toggling
+    sentry (OTYPE_SENTRY_IE_FWD), not just the implicit unsealed-jump
+    path exercised by crt boot code elsewhere. Tests: (1) mstatus.MIE
+    set on entry; (2) CJALR mints a real tagged backward sentry in ra;
+    (3) mstatus.MIE restored to its pre-call value on return via that
+    sentry; (4) the callee actually executed.
+  iterations: 1
+  test_srcs: cheriot_cjalr_sentry/cheriot_cjalr_sentry.S
+  sim_opts: "+enable_cheriot_seq=1"
+  config: cheriot-c-tests
 
 - test: empty
   desc: >

@@ -1,0 +1,98 @@
+let translate_out_big_bit = function
+  | (name, Bvector _, bits) -> IInt.integer_of_bit_list bits
+  | _ -> assert false
+
+let translate_out_int inst = (Nat_big_num.to_int (translate_out_big_bit inst))
+let translate_out_signed_int inst bits =
+    let i = (Nat_big_num.to_int (translate_out_big_bit inst)) in
+    if (i >= (1 lsl (bits - 1))) then
+    (i - (1 lsl bits)) else
+    i
+
+let translate_out_ireg ireg = IReg (int_to_ireg (translate_out_int ireg))
+
+let translate_out_simm21 imm = translate_out_signed_int imm 21
+let translate_out_simm20 imm = translate_out_signed_int imm 20
+let translate_out_simm13 imm = translate_out_signed_int imm 13
+let translate_out_simm12 imm = translate_out_signed_int imm 12
+let translate_out_imm6 imm = translate_out_int imm
+let translate_out_imm5 imm = translate_out_int imm
+let translate_out_imm4 imm = translate_out_int imm
+
+let translate_out_bool = function
+  | (name, Bit, [Bitc_one])  -> true
+  | (name, Bit, [Bitc_zero]) -> false
+  | _ -> assert false
+
+let translate_out_enum (name,_,bits) =
+    Nat_big_num.to_int (IInt.integer_of_bit_list bits)
+
+let translate_out_wordWidth w =
+    match translate_out_enum w with
+    | 0 -> RISCVBYTE
+    | 1 -> RISCVHALF
+    | 2 -> RISCVWORD
+    | 3 -> RISCVDOUBLE
+    | _ -> failwith "Unknown wordWidth in sail translate out"
+
+let translate_out_uop op = match translate_out_enum op with
+    | 0 -> RISCVLUI
+    | 1 -> RISCVAUIPC
+    | _ -> failwith "Unknown uop in sail translate out"
+
+let translate_out_bop op = match translate_out_enum op with
+| 0 -> RISCVBEQ
+| 1 -> RISCVBNE
+| 2 -> RISCVBLT
+| 3 -> RISCVBGE
+| 4 -> RISCVBLTU
+| 5 -> RISCVBGEU
+| _ -> failwith "Unknown bop in sail translate out"
+
+let translate_out_iop op = match translate_out_enum op with
+| 0 -> RISCVADDI
+| 1 -> RISCVSLTI
+| 2 -> RISCVSLTIU
+| 3 -> RISCVXORI
+| 4 -> RISCVORI
+| 5 -> RISCVANDI
+| _ -> failwith "Unknown iop in sail translate out"
+
+let translate_out_sop op = match translate_out_enum op with
+| 0 -> RISCVSLLI
+| 1 -> RISCVSRLI
+| 2 -> RISCVSRAI
+| _ -> failwith "Unknown sop in sail translate out"
+
+let translate_out_rop op = match translate_out_enum op with
+| 0 -> RISCVADD
+| 1 -> RISCVSUB
+| 2 -> RISCVSLL
+| 3 -> RISCVSLT
+| 4 -> RISCVSLTU
+| 5 -> RISCVXOR
+| 6 -> RISCVSRL
+| 7 -> RISCVSRA
+| 8 -> RISCVOR
+| 9 -> RISCVAND
+| _ -> failwith "Unknown rop in sail translate out"
+
+let translate_out_ropw op = match translate_out_enum op with
+| 0 -> RISCVADDW
+| 1 -> RISCVSUBW
+| 2 -> RISCVSLLW
+| 3 -> RISCVSRLW
+| 4 -> RISCVSRAW
+| _ -> failwith "Unknown ropw in sail translate out"
+
+let translate_out_amoop op = match translate_out_enum op with
+| 0 -> RISCVAMOSWAP
+| 1 -> RISCVAMOADD
+| 2 -> RISCVAMOXOR
+| 3 -> RISCVAMOAND
+| 4 -> RISCVAMOOR
+| 5 -> RISCVAMOMIN
+| 6 -> RISCVAMOMAX
+| 7 -> RISCVAMOMINU
+| 8 -> RISCVAMOMAXU
+| _ -> failwith "Unknown amoop in sail translate out"

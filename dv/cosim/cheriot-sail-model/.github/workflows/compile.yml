@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: [ubuntu-24.04]
+    container: ghcr.io/cheriot-platform/sail-latex:latest
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@HEAD
+      with:
+        submodules: true
+    - name: Build simulators
+      run: |
+        export HOME=/root/
+        eval $(opam env) && make csim
+        mkdir install
+        cp c_emulator/cheriot_sim install
+        cp LICENSE install/LICENCE-cheriot-sail
+        cp sail-riscv/LICENCE install/LICENCE-sail-riscv
+    - name: Build arch doc
+      run: |
+        export HOME=/root/
+        eval $(opam env) && make -C archdoc
+        cp archdoc/cheriot-architecture.pdf install
+        mkdir -p _site/
+        cp archdoc/cheriot-architecture.pdf _site/
+    - name: Upload simulator artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: cheriot_sim
+        path: install/
+    - name: Upload pages artifact
+      uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    # Run only when landing, not as part of a PR
+    if: ${{ github.event_name == 'push' }}
+
+    # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: [ubuntu-24.04]
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

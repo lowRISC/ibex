@@ -1,0 +1,39 @@
+This directory contains some sample OS images and support files built
+for the basic platform implemented by the model.  They were built with
+toolchains that emitted illegal instructions, and require the model to
+be patched to boot them:
+
+```
+patch -p1 < os-boot/os-boot-patch.diff
+```
+
+The device-tree for the 64-bit Sail model is described in `rv64-64mb.dts`.  This file
+can be generated using:
+```
+./ocaml_emulator/riscv_ocaml_sim_RV64 -dump-dts > os-boot/rv64-64mb.dts
+```
+
+The device-tree binary for OS boots can be compiled from that source file:
+```
+dtc < os-boot/rv64-64mb.dts > os-boot/rv64-64mb.dtb
+```
+
+The 64-bit Linux image can then be booted as:
+```
+./c_emulator/riscv_sim_RV64 -b os-boot/rv64-64mb.dtb -t /tmp/console.log os-boot/linux-rv64-64mb.bbl > >(gzip -c - > /tmp/exec-trace.log.gz) 2>&1
+tail -f /tmp/console.log
+```
+
+The 64-bit FreeBSD image requires hardware PTE update support (`-d`):
+```
+./c_emulator/riscv_sim_RV64 -d -b os-boot/rv64-64mb.dtb -t /tmp/console.log os-boot/freebsd-rv64.bbl > >(gzip -c - > /tmp/exec-trace.log.gz) 2>&1
+```
+
+The 64-bit seL4 image runs its test-suite and requires more memory (`-z`):
+```
+dtc < os-boot/rv64-2gb.dts > os-boot/rv64-2gb.dtb
+./c_emulator/riscv_sim_RV64 -z 2048 -b os-boot/rv64-2gb.dtb -t /tmp/console.log os-boot/sel4-rv64.bbl > >(gzip -c - > /tmp/exec-trace.log.gz) 2>&1
+```
+
+Note that the consistency of the `-z` argument and the contents of the
+DTB have to be ensured manually for now.

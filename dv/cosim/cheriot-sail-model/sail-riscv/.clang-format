@@ -1,0 +1,11 @@
+Language: Cpp
+BasedOnStyle: WebKit
+AlignArrayOfStructures: Left
+AlignAfterOpenBracket: Align
+AllowShortFunctionsOnASingleLine: Empty
+ColumnLimit: 80
+Cpp11BracedListStyle: true
+IndentWidth: 2
+PointerAlignment: Right
+SortIncludes: Never
+AlignTrailingComments: true

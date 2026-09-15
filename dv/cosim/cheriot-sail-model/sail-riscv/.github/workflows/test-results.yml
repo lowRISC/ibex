@@ -1,0 +1,51 @@
+name: Publish test results
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+    - completed
+
+jobs:
+  publish-test-results:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion != 'skipped'
+    steps:
+    - name: Download artifacts
+      uses: actions/github-script@v6
+      with:
+        script: |
+          var fs = require('fs');
+          var artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+             owner: context.repo.owner,
+             repo: context.repo.repo,
+             run_id: ${{github.event.workflow_run.id }},
+          });
+          var matchArtifacts = artifacts.data.artifacts.filter((artifact) => {
+            return artifact.name == 'tests.xml' || artifact.name == 'event.json'
+          });
+          var count = matchArtifacts.length;
+          for (var i = 0; i < count; i++) {
+            var matchArtifact = matchArtifacts[i];
+            var download = await github.rest.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+            var name = matchArtifact.name;
+            var dest = name + '.zip'
+            fs.writeFileSync('${{github.workspace}}/' + dest, Buffer.from(download.data));
+            console.log("Downloaded", name, "as", dest);
+          }
+    - name: Extract test results
+      run: unzip tests.xml.zip
+    - name: Extract event payload
+      run: unzip event.json.zip
+    - name: Publish test results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      with:
+        commit: ${{ github.event.workflow_run.head_sha }}
+        event_file: event.json
+        event_name: ${{ github.event.workflow_run.event }}
+        files: tests.xml

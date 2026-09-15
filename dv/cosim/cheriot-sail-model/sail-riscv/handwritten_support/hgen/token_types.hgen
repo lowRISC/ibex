@@ -1,0 +1,24 @@
+type token_UTYPE    = {op : riscvUop }
+type token_JAL      = unit
+type token_JALR     = unit
+type token_BType    = {op : riscvBop }
+type token_IType    = {op : riscvIop }
+type token_ShiftIop = {op : riscvSop }
+type token_RTYPE    = {op : riscvRop }
+type token_Load     = {unsigned: bool; width : wordWidth; aq: bool; rl: bool }
+type token_Store    = {width : wordWidth; aq: bool; rl: bool }
+type token_ADDIW    = unit
+type token_SHIFTW   = {op : riscvSop }
+type token_RTYPEW   = {op : riscvRopw }
+type token_FENCE    = unit
+type token_FENCETSO = unit
+type token_FENCEI   = unit
+type token_LoadRes  = {width : wordWidth; aq: bool; rl: bool }
+type token_StoreCon = {width : wordWidth; aq: bool; rl: bool }
+type token_AMO      = {width : wordWidth; aq: bool; rl: bool; op: riscvAmoop }
+
+type token_FENCEOPTION = Fence_R | Fence_W | Fence_RW
+
+(* pseudo-ops *)
+
+type token_LI = unit

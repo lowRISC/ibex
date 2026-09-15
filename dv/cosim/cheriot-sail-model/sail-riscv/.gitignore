@@ -1,0 +1,9 @@
+/generated_definitions
+
+# global things
+
+_build/
+_sbuild/
+*.o
+*.a
+/z3_problems

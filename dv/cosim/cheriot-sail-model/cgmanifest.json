@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json.schemastore.org/component-detection-manifest.json",
+  "Registrations": [
+    {
+      "component": {
+        "type": "git",
+        "git": {
+          "repositoryUrl": "https://github.com/CTSRD-CHERI/sail-cheri-riscv.git",
+          "commitHash": "41454cad0ef41ec8e367be22f721517818224fc6"
+        }
+      }
+    },
+    {
+      "component": {
+        "type": "git",
+        "git": {
+          "repositoryUrl": "https://github.com/riscv/sail-riscv.git",
+          "commitHash": "4d05aa1698a0003a4f6f99e1380c743711c32052"
+        }
+      }
+    }
+  ],
+  "Version": 1
+}

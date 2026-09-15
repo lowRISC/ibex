@@ -1,0 +1,5 @@
+session "Sail-Manual" = "Sail-RISC-V-Duopod" +
+  options [document = pdf, document_output = "output"]
+  theories
+    Manual
+  document_files "root.tex" "Sail_session_graph.pdf"

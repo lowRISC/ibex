@@ -1,0 +1,19 @@
+session "Sail" = "LEM" +
+  options [browser_info, document = pdf, document_output = "output"]
+  sessions
+    "HOL-Eisbach"
+  theories
+    Sail2_values_lemmas
+    Sail2_prompt
+    Sail2_state_lemmas
+    Sail2_operators_mwords_lemmas
+    Sail2_operators_bitlists
+    Sail2_concurrency_interface_mwords
+    Sail2_concurrency_interface_bitlists
+    Sail2_concurrency_interface_lemmas
+    Sail2_monadic_combinators_lemmas
+    Sail2_string
+    Sail2_undefined
+    Sail2_undefined_concurrency_interface
+    Hoare
+  document_files "root.tex"

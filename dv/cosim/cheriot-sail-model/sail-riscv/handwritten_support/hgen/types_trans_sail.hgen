@@ -1,0 +1,57 @@
+let translate_enum enum_values name value =
+  let rec bit_count n =
+    if n = 0 then 0
+    else 1 + (bit_count (n lsr 1)) in
+  let rec find_index element = function
+    | h::tail -> if h = element then 0 else 1 + (find_index element tail)
+    | _ -> failwith "translate_enum could not find value"
+    in
+  let size = bit_count (List.length enum_values) in
+  let index = find_index value enum_values in
+  (name, Range0 (Some size),  IInt.bit_list_of_integer size (Nat_big_num.of_int index))
+
+let translate_uop = translate_enum [RISCVLUI; RISCVAUIPC]
+
+let translate_bop = translate_enum [RISCVBEQ; RISCVBNE; RISCVBLT; RISCVBGE; RISCVBLTU; RISCVBGEU] (* branch ops *)
+
+let translate_iop = translate_enum [RISCVADDI; RISCVSLTI; RISCVSLTIU; RISCVXORI; RISCVORI; RISCVANDI] (* immediate ops *)
+
+let translate_sop = translate_enum [RISCVSLLI; RISCVSRLI; RISCVSRAI] (* shift ops *)
+
+let translate_rop = translate_enum [RISCVADD; RISCVSUB; RISCVSLL; RISCVSLT; RISCVSLTU; RISCVXOR; RISCVSRL; RISCVSRA; RISCVOR; RISCVAND] (* reg-reg ops *)
+
+let translate_ropw = translate_enum [RISCVADDW; RISCVSUBW; RISCVSLLW; RISCVSRLW; RISCVSRAW] (* reg-reg 32-bit ops *)
+
+let translate_amoop = translate_enum [RISCVAMOSWAP; RISCVAMOADD; RISCVAMOXOR; RISCVAMOAND; RISCVAMOOR; RISCVAMOMIN; RISCVAMOMAX; RISCVAMOMINU; RISCVAMOMAXU]
+
+let translate_width = translate_enum [RISCVBYTE; RISCVHALF; RISCVWORD; RISCVDOUBLE]
+
+let translate_reg name value =
+    (name, Bvector (Some 5), bit_list_of_integer 5 (Nat_big_num.of_int (reg_to_int value)))
+
+let translate_imm21 name value =
+    (name, Bvector (Some 21), bit_list_of_integer 21 (Nat_big_num.of_int value))
+
+let translate_imm20 name value =
+    (name, Bvector (Some 20), bit_list_of_integer 20 (Nat_big_num.of_int value))
+
+let translate_imm16 name value =
+    (name, Bvector (Some 16), bit_list_of_integer 16 (Nat_big_num.of_int value))
+
+let translate_imm13 name value =
+    (name, Bvector (Some 13), bit_list_of_integer 13 (Nat_big_num.of_int value))
+
+let translate_imm12 name value =
+    (name, Bvector (Some 12), bit_list_of_integer 12 (Nat_big_num.of_int value))
+
+let translate_imm6 name value =
+    (name, Bvector (Some 6), bit_list_of_integer 6 (Nat_big_num.of_int value))
+
+let translate_imm5 name value =
+    (name, Bvector (Some 5), bit_list_of_integer 5 (Nat_big_num.of_int value))
+
+let translate_imm4 name value =
+    (name, Bvector (Some 4), bit_list_of_integer 4 (Nat_big_num.of_int value))
+
+let translate_bool name value =
+  (name, Bit, [if value then Bitc_one else Bitc_zero])

@@ -1,0 +1,70 @@
+\chapter{C/C++ language and toolchain extensions}
+\label{chap:language}
+
+In addition to the existing CHERI C/C++ extensions, we define a small number of additional extensions that are specific to \cherimcu{}.
+CHERI C is already able to compile most existing embedded code that we have tried with no modifications.
+Embedded code has to tolerate targets with Harvard architectures, different pointer sizes for different types of data, different memory banks, and so on.
+In comparison, a CHERI target is far more like a conventional ISA.
+
+We have not had to change the CHERI C model at all for code running within a compartment.
+Our extensions are focused on supporting the compartmentalization model.
+
+\section{Specifying compartments}
+
+We have added an attribute to specify the compartment that implements a given function.
+This is used in conjunction with the \flag{-cheri-compartment=} flag passed to the compiler, which specifies the compartment in which the current compilation unit will end up.
+The compiler will raise an error if the compartment name for the current compilation unit does not match the name of a function that has an implementation.
+For example, if a header file contains the following declarations:
+
+\begin{ccodelisting}
+__attribute__((cheriot_compartment("example"))) void foo(int);
+__attribute__((cheriot_compartment("other"))) void bar(void);
+\end{ccodelisting}
+
+If \ccode{foo} is implemented then the compiler must be invoked with \flag{-cheri-compartment=example}.
+Any call to \ccode{bar} will then be treated as a cross-domain call.
+
+This mechanism allows lightweight annotations on functions that are exposed across compilation units.
+Software that already supports a DLL-style linkage model may have macros on public functions for using this.
+Other software can easily maintain these annotations for CHERI targets with a macro that expands to nothing for non-CHERI targets.
+
+Adding \ccode{__attribute__((cheriot_ccallback))} to a function marks it as a cross-compartment callback.
+Taking the address of such a function will give a pointer that can be passed across compartments and allow the recipient to recursively invoke this compartment.
+
+\section{Exposing library calls}
+
+Adding \ccode{__attribute__((cheriot_libcall))} to a function marks it as a library call.
+The compiler will always generate an indirect call (via a sealing capability from the import table) for all library functions, unless the callee and caller are in the same compilation unit and have compatible interrupt states.
+
+All of the functions that the compiler may insert calls to (such as \ccode{memcpy},\ccode{`__cxa_guard_acquire}, and so on) are assumed to implicitly carry this attribute.
+The compiler must be able to insert calls to these without knowing the name of the library that provides them and so this attribute provides a single flat namespace for all such functions.
+
+\section{Controlling interrupt state}
+
+The \ccode{cheriot_interrupt_state} attribute controls whether, during execution of the function, interrupts are enabled, disabled, or in whatever state there were for the caller.
+It takes a single argument, which must be either \ccode{enabled}, \ccode{disabled}, or \ccode{inherited}.
+The attribute can also be written as a C++11 / C2x-style attribute.
+For example:
+
+\begin{ccodelisting}
+// This function runs with interrupts disabled
+[[cheriot::interrupt_state(disabled)]]
+int disabled(void);
+// This function runs with interrupts enabled
+__attribute__((cheriot_interrupt_state(enabled)))
+int enabled(void);
+// This function runs with whatever interrupt state the caller has.
+__attribute__((cheriot_interrupt_state(inherit)))
+int inherit(void);
+\end{ccodelisting}
+
+All functions that are not exposed across compartment boundaries (including library calls) default to \ccode{inherit}.
+Cross-compartment calls default to \ccode{enabled} and must be set to either \ccode{enabled} or \ccode{disabled}.
+
+\section{Linking compartments}
+
+The version of LLD used with \cherimcu{} provides a \flag{-compartment} flag for linking compartments.
+This is somewhat similar to \flag{-r}, which creates a relocatable object file.
+Linking in this mode marks all symbols except for those in the export table as local.
+Unlike \flag{-r}, COMDATs are merged when linking a compartment.
+In other respects, this is identical to \flag{-r}: relocations are not processed and will be handled in the final link step.

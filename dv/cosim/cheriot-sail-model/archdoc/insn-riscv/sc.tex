@@ -1,0 +1,24 @@
+\clearpage
+\phantomsection
+\addcontentsline{toc}{subsection}{CSC}
+\insnriscvlabel{sc}
+\insnriscvlabel{csc}
+\subsection*{CSC}
+
+\subsubsection*{Format}
+
+\noindent\rvcheriasmfmt{\rvcheriasminsnref{CSC} cs2, imm(cs1)}
+
+\begin{center}
+\begin{bytefield}{32}
+	\bitheader[endianness=big]{0,6,7,11,12,14,15,19,20,24,25,31}\\
+	\bitbox{7}{imm[11:5]}
+	\bitbox{5}{cs2}
+	\bitbox{5}{cs1}
+	\bitbox{3}{0x3}
+	\bitbox{5}{imm[4:0]}
+	\bitbox{7}{0x23}
+\end{bytefield}
+\end{center}
+
+\sailRISCVisarefbody{StoreCapImm}

@@ -1,0 +1,63 @@
+(** RV32I (and RV64I) ***********************************************)
+"lui"   , UTYPE { op=RISCVLUI   };
+"auipc" , UTYPE { op=RISCVAUIPC };
+
+"jal",  JAL ();
+"jalr", JALR ();
+
+"beq",  BTYPE {op=RISCVBEQ};
+"bne",  BTYPE {op=RISCVBNE};
+"blt",  BTYPE {op=RISCVBLT};
+"bge",  BTYPE {op=RISCVBGE};
+"bltu", BTYPE {op=RISCVBLTU};
+"bgeu", BTYPE {op=RISCVBGEU};
+
+"addi",  ITYPE {op=RISCVADDI};
+"stli",  ITYPE {op=RISCVSLTI};
+"sltiu", ITYPE {op=RISCVSLTIU};
+"xori",  ITYPE {op=RISCVXORI};
+"ori",   ITYPE {op=RISCVORI};
+"andi",  ITYPE {op=RISCVANDI};
+
+"add",  RTYPE {op=RISCVADD};
+"sub",  RTYPE {op=RISCVSUB};
+"sll",  RTYPE {op=RISCVSLL};
+"slt",  RTYPE {op=RISCVSLT};
+"sltu", RTYPE {op=RISCVSLT};
+"xor",  RTYPE {op=RISCVXOR};
+"srl",  RTYPE {op=RISCVSRL};
+"sra",  RTYPE {op=RISCVSRA};
+"or",   RTYPE {op=RISCVOR};
+"and",  RTYPE {op=RISCVAND};
+
+"fence",     FENCE ();
+"fence.tso", FENCETSO ();
+"fence.i",   FENCEI ();
+
+(** RV64I (in addition to RV32I) ************************************)
+
+"addiw", ADDIW ();
+
+"addw", RTYPEW {op=RISCVADDW};
+"subw", RTYPEW {op=RISCVSUBW};
+"sllw", RTYPEW {op=RISCVSLLW};
+"srlw", RTYPEW {op=RISCVSRLW};
+"sraw", RTYPEW {op=RISCVSRAW};
+
+"slli", SHIFTIOP {op=RISCVSLLI};
+"srli", SHIFTIOP {op=RISCVSRLI};
+"srai", SHIFTIOP {op=RISCVSRAI};
+
+"slliw", SHIFTW {op=RISCVSLLI};
+"srliw", SHIFTW {op=RISCVSRLI};
+"sraiw", SHIFTW {op=RISCVSRAI};
+
+(** RV32A (and RV64A) ***********************************************)
+
+"r",  FENCEOPTION Fence_R;
+"w",  FENCEOPTION Fence_W;
+"rw", FENCEOPTION Fence_RW;
+
+(** pseudo instructions *********************************************)
+
+"li", LI ()

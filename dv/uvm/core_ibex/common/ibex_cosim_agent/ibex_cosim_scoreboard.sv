@@ -4,11 +4,17 @@
 
 `include "spike_cosim_dpi.svh"
 `include "cosim_dpi.svh"
+`include "cheriot_sail_cosim_dpi.svh"
 
 class ibex_cosim_scoreboard extends uvm_scoreboard;
   chandle cosim_handle;
 
   core_ibex_cosim_cfg cfg;
+
+  // Whether this test runs the DUT with cheriot_enable_i asserted.  The
+  // CHERIoT-Sail oracle models CHERIoT unconditionally, so it is only a valid
+  // reference when the DUT is in CHERIoT mode too -- see the gates below.
+  bit cheriot_seq_en;
 
   uvm_tlm_analysis_fifo #(ibex_rvfi_seq_item)       rvfi_port;
   uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item)   dmem_port;
@@ -81,6 +87,18 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
     if (cosim_handle == null) begin
       `uvm_fatal(`gfn, "Could not initialise cosim")
     end
+
+    // The CHERIoT-Sail oracle models CHERIoT unconditionally, so it is only a
+    // valid reference when the DUT is running with cheriot_enable_i asserted
+    // (see cfg.enable_cheriot_seq plumbing in core_ibex_env_cfg/base_test).
+    // Gated on cfg.secure_ibex too, matching the config the CHERIoT directed
+    // tests run under (opentitan: SecureIbex=1) -- see ibex-private's history
+    // for why cfg.secure_ibex alone is not a valid CHERIoT-mode gate.
+    void'($value$plusargs("enable_cheriot_seq=%0b", cheriot_seq_en));
+    if (cfg.secure_ibex && cheriot_seq_en) begin
+      cheriot_sail_cosim_init(cfg.start_pc);
+      `uvm_info(`gfn, "CHERIoT-Sail oracle initialised", UVM_LOW)
+    end
   endfunction
 
   protected function void cleanup_cosim();
@@ -88,6 +106,12 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
         spike_cosim_release(cosim_handle);
      end
      cosim_handle = null;
+     // Same gate as the init above, so cleanup is never called on an oracle
+     // that was never initialised. Safe on the first call from init_cosim(),
+     // where cheriot_seq_en is still 0 and nothing has been set up yet.
+     if (cfg != null && cfg.secure_ibex && cheriot_seq_en) begin
+       cheriot_sail_cosim_cleanup();
+     end
   endfunction
 
   virtual task run_phase(uvm_phase phase);
@@ -170,6 +194,19 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
           `uvm_info(`gfn, get_cosim_error_str(), UVM_LOW)
         end else begin
           `uvm_fatal(`gfn, get_cosim_error_str())
+        end
+      end
+
+      // Must match the gate on cheriot_sail_cosim_init() above: stepping an
+      // oracle that was never initialised, or comparing a CHERIoT model
+      // against a DUT running plain RV32, both produce spurious mismatches.
+      if (cfg.secure_ibex && cheriot_seq_en && !rvfi_instr.trap) begin
+        automatic bit cheri_we  = (rvfi_instr.rd_addr != 5'h0) && !rvfi_instr.rf_wr_suppress;
+        automatic bit cheri_tag = rvfi_instr.rd_wcap[32];
+        if (cheriot_sail_cosim_step(rvfi_instr.insn, rvfi_instr.pc,
+                                    cheri_we, rvfi_instr.rd_addr, cheri_tag) != 0) begin
+          // UVM_ERROR (not FATAL) so simulation continues to collect all mismatches
+          `uvm_error(`gfn, get_cheriot_sail_error_str())
         end
       end
     end
@@ -339,6 +376,15 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
 
       return error;
   endfunction : get_cosim_error_str
+
+  function string get_cheriot_sail_error_str();
+    string error = "CHERIoT-Sail mismatch ";
+    for (int i = 0; i < cheriot_sail_cosim_get_num_errors(); ++i) begin
+      error = {error, cheriot_sail_cosim_get_error(i), "\n"};
+    end
+    cheriot_sail_cosim_clear_errors();
+    return error;
+  endfunction : get_cheriot_sail_error_str
 
   function void final_phase(uvm_phase phase);
     super.final_phase(phase);

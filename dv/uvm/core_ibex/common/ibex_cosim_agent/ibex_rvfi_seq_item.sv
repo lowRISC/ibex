@@ -5,9 +5,11 @@
 class ibex_rvfi_seq_item extends uvm_sequence_item;
   bit        irq_only;
   bit        trap;
+  bit [31:0] insn;
   bit [31:0] pc;
   bit [4:0]  rd_addr;
   bit [31:0] rd_wdata;
+  bit [32:0] rd_wcap;
   bit [63:0] order;
   bit [31:0] pre_mip;
   bit [31:0] post_mip;
@@ -23,9 +25,11 @@ class ibex_rvfi_seq_item extends uvm_sequence_item;
 
   `uvm_object_utils_begin(ibex_rvfi_seq_item)
     `uvm_field_int (trap, UVM_DEFAULT)
+    `uvm_field_int (insn, UVM_DEFAULT)
     `uvm_field_int (pc, UVM_DEFAULT)
     `uvm_field_int (rd_addr, UVM_DEFAULT)
     `uvm_field_int (rd_wdata, UVM_DEFAULT)
+    `uvm_field_int (rd_wcap, UVM_DEFAULT)
     `uvm_field_int (order, UVM_DEFAULT)
     `uvm_field_int (pre_mip, UVM_DEFAULT)
     `uvm_field_int (post_mip, UVM_DEFAULT)

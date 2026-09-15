@@ -1,0 +1,67 @@
+\ifcsname @def@riscv@insns@tex\endcsname
+  \ea\endinput
+\fi
+\ea\gdef\csname @def@riscv@insns@tex\endcsname{1}
+
+\input{def-riscv-insns-macros}
+
+\rvcherisubclass{top}{0}{Two Source \& Dest}
+
+\rvcherisubclass{srcsrcdest}{7C}{Stores}
+\rvcherisubclass{srcsrcdest}{7D}{Loads}
+\rvcherisubclass{srcsrcdest}{7E}{Two Source}
+\rvcherisubclass{srcsrcdest}{7F}{Source \& Dest}
+
+\rvcherisubclass{srcsrc}{1F}{One Source}
+
+\rvcherisubclass{srcdest}{1F}{Dest-Only}
+
+\rvcherisrcdest[name=CGetPerm]{0}{rd}{cs1}
+\rvcherisrcdest[name=CGetType]{1}{rd}{cs1}
+\rvcherisrcdest[name=CGetBase]{2}{rd}{cs1}
+\rvcherisrcdest[name=CGetLen]{3}{rd}{cs1}
+\rvcherisrcdest[name=CGetTag]{4}{rd}{cs1}
+\rvcherisrcdest[name=CGetAddr]{F}{rd}{cs1}
+\rvcherisrcdest[name=CGetHigh]{17}{rd}{cs1}
+\rvcherisrcdest[name=CGetTop]{18}{rd}{cs1}
+
+\rvcherisrcsrcdest[name=CSeal]{B}{cd}{cs1}{cs2}
+\rvcherisrcsrcdest[name=CUnseal]{C}{cd}{cs1}{cs2}
+\rvcherisrcsrcdest[name=CAndPerm]{D}{cd}{cs1}{rs2}
+\rvcherisrcsrcdest[name=CSetAddr]{10}{cd}{cs1}{rs2}
+\rvcherisrcsrcdest[name=CIncAddr]{11}{cd}{cs1}{rs2}
+\rvcherisrcsrcdestimm[name=CIncAddrImm]{1}{cd}{cs1}{imm}
+\rvcherisrcsrcdest[name=CSetBounds]{8}{cd}{cs1}{rs2}
+\rvcherisrcsrcdest[name=CSetBoundsExact]{9}{cd}{cs1}{rs2}
+\rvcherisrcsrcdest[name=CSetBoundsRoundDown]{A}{cd}{cs1}{rs2}
+\rvcherisrcsrcdestimm[name=CSetBoundsImm]{2}{cd}{cs1}{uimm}
+\rvcherisrcsrcdest[name=CSetHigh]{16}{cd}{cs1}{rs2}
+\rvcherisrcdest[name=CClearTag]{B}{cd}{cs1}
+% \rvcherisrcsrcdest[name=CRelocate,noref,tablesuffix=\rvcherireservedfootnotemark]{15}{cd}{cs1}{rs2}
+
+\rvcherisrcsrcdest[name=CSub]{14}{rd}{cs1}{cs2}
+\rvcherisrcdest[name=CMove]{A}{cd}{cs1}
+
+\rvcherisrcsrcdest[name=CTestSubset]{20}{rd}{cs1}{cs2}
+\rvcherisrcsrcdest[name=CSetEqualExact,shortname=CSEQX]{21}{rd}{cs1}{cs2}
+
+\rvcheriscr[name=CSpecialRW]{1}{cd}{scr}{cs1}
+
+\rvcherisrcdest[name=CRoundRepresentableLength,shortname=CRRL]{8}{rd}{rs1}
+\rvcherisrcdest[name=CRepresentableAlignmentMask,shortname=CRAM]{9}{rd}{rs1}
+
+% \rvcheriexploadres[name=LR.B.CAP,noref,tablesuffix=\rvcheriatomicfootnotemark]{18}{rd}{cs1}
+% \rvcheriexploadres[name=LR.H.CAP,noref,tablesuffix=\rvcheriatomicfootnotemark]{19}{rd}{cs1}
+% \rvcheriexploadres[name=LR.W.CAP,noref,tablesuffix=\rvcheriatomicfootnotemark]{1A}{rd}{cs1}
+% \rvcheriexploadres[name=LR.C.CAP,restriction=RV32,noref,tablesuffix=\rvcheriatomicfootnotemark,notable]{1B}{cd}{cs1}
+% \rvcheriexploadres[name=LR.D.CAP,restriction=RV64/128,noref,tablesuffix=\rvcheriatomicfootnotemark]{1B}{rd}{cs1}
+% \rvcheriexploadres[name=LR.C.CAP,restriction=RV64,noref,tablesuffix=\rvcheriatomicfootnotemark,notable]{1C}{cd}{cs1}
+% \rvcheriexploadres[name=LR.Q.CAP,restriction=RV128,noref,tablesuffix=\rvcheriatomicfootnotemark]{1C}{rd}{cs1}
+
+% \rvcheriexpstorecond[name=SC.B.CAP,noref,tablesuffix=\rvcheriatomicfootnotemark]{18}{rd}{rs2}{cs1}
+% \rvcheriexpstorecond[name=SC.H.CAP,noref,tablesuffix=\rvcheriatomicfootnotemark]{19}{rd}{rs2}{cs1}
+% \rvcheriexpstorecond[name=SC.W.CAP,noref,tablesuffix=\rvcheriatomicfootnotemark]{1A}{rd}{rs2}{cs1}
+% \rvcheriexpstorecond[name=SC.C.CAP,restriction=RV32,noref,tablesuffix=\rvcheriatomicfootnotemark,notable]{1B}{cd}{cs2}{cs1}
+% \rvcheriexpstorecond[name=SC.D.CAP,restriction=RV64/128,noref,tablesuffix=\rvcheriatomicfootnotemark]{1B}{rd}{rs2}{cs1}
+% \rvcheriexpstorecond[name=SC.C.CAP,restriction=RV64,noref,tablesuffix=\rvcheriatomicfootnotemark,notable]{1C}{cd}{cs2}{cs1}
+% \rvcheriexpstorecond[name=SC.Q.CAP,restriction=RV128,noref,tablesuffix=\rvcheriatomicfootnotemark]{1C}{rd}{rs2}{cs1}

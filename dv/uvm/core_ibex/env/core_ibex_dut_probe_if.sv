@@ -19,6 +19,7 @@ interface core_ibex_dut_probe_if(input logic clk);
   logic                              mret;
   ibex_pkg::ibex_mubi_t              fetch_enable;
   ibex_pkg::ibex_mubi_t              mcounteren_writable;
+  ibex_pkg::ibex_mubi_t              cheriot_enable;
   logic                              core_sleep;
   logic                              alert_minor;
   logic                              alert_major_internal;
@@ -61,6 +62,7 @@ interface core_ibex_dut_probe_if(input logic clk);
     output fetch_enable;
     output debug_req;
     output mcounteren_writable;
+    output cheriot_enable;
     input reset;
     input illegal_instr;
     input ecall;
@@ -95,6 +97,7 @@ interface core_ibex_dut_probe_if(input logic clk);
   initial begin
     debug_req           = 1'b0;
     mcounteren_writable = ibex_pkg::IbexMuBiOn;
+    cheriot_enable      = ibex_pkg::IbexMuBiOff;
   end
 
   `DV_CREATE_SIGNAL_PROBE_FUNCTION(signal_probe_rf_ren_a, rf_ren_a)

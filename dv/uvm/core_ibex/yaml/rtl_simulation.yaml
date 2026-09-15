@@ -270,10 +270,13 @@
     cosim_opts: >
       -f <core_ibex>/ibex_dv_cosim_dpi.f
       -I<IBEX_ROOT>/dv/cosim
+      -I<IBEX_ROOT>/dv/cosim/cheriot_sail
       <ISS_LIBS>
+      -L<IBEX_ROOT>/dv/cosim/cheriot_sail -lcheriotsail_rvfi
       <ISS_CFLAGS>
       <EXTRA_COSIM_CFLAGS>
       <ISS_LDFLAGS>
+      -Wld,-Xlinker,-rpath,-Xlinker,<IBEX_ROOT>/dv/cosim/cheriot_sail
       -lstdc++
   sim:
     cmd:

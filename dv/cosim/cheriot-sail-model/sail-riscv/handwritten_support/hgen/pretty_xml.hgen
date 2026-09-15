@@ -1,0 +1,143 @@
+| `RISCVThreadStart -> ("op_thread_start", [])
+
+| `RISCVStopFetching -> ("op_stop_fetching", [])
+
+| `RISCVUTYPE(imm, rd, op) ->
+    ("op_U_type",
+      [ ("op",   pp_riscv_uop op);
+        ("uimm", sprintf "%d" imm);
+        ("dest", pp_reg rd);
+      ])
+
+| `RISCVJAL(imm, rd) ->
+    ("op_jal",
+      [ ("offset", sprintf "%d" imm);
+        ("dest",   pp_reg rd);
+      ])
+
+| `RISCVJALR(imm, rs1, rd) ->
+    ("op_jalr",
+      [ ("offset", sprintf "%d" imm);
+        ("base",   pp_reg rs1);
+        ("dest",   pp_reg rd);
+      ])
+
+| `RISCVBType(imm, rs2, rs1, op) ->
+    ("op_branch",
+      [ ("op",     pp_riscv_bop op);
+        ("offset", sprintf "%d" imm);
+        ("src2",   pp_reg rs2);
+        ("src1",   pp_reg rs1);
+      ])
+
+| `RISCVIType(imm, rs1, rd, op) ->
+    ("op_I_type",
+      [ ("op",   pp_riscv_iop op);
+        ("iimm", sprintf "%d" imm);
+        ("src",  pp_reg rs1);
+        ("dest", pp_reg rd);
+      ])
+
+| `RISCVShiftIop(imm, rs1, rd, op) ->
+    ("op_IS_type",
+      [ ("op",     pp_riscv_sop op);
+        ("shamt",  sprintf "%d" imm);
+        ("src",    pp_reg rs1);
+        ("dest",   pp_reg rd);
+      ])
+
+| `RISCVSHIFTW(imm, rs1, rd, op) ->
+    ("op_ISW_type",
+      [ ("op",    pp_riscv_sop op);
+        ("shamt", sprintf "%d" imm);
+        ("src",   pp_reg rs1);
+        ("dest",  pp_reg rd);
+      ])
+
+| `RISCVRType (rs2, rs1, rd, op) ->
+    ("op_R_type",
+      [ ("op",   pp_riscv_rop op);
+        ("src2", pp_reg rs2);
+        ("src1", pp_reg rs1);
+        ("dest", pp_reg rd);
+      ])
+
+| `RISCVLoad(imm, rs1, rd, unsigned, width, aq, rl) ->
+    ("op_load",
+      [ ("aq",       if aq then "true" else "false");
+        ("rl",       if rl then "true" else "false");
+        ("width",    pp_word_width width);
+        ("unsigned", if unsigned then "true" else "false");
+        ("base",     pp_reg rs1);
+        ("offset",   sprintf "%d" imm);
+        ("dest",     pp_reg rd);
+      ])
+
+| `RISCVStore(imm, rs2, rs1, width, aq, rl) ->
+    ("op_store",
+      [ ("aq",       if aq then "true" else "false");
+        ("rl",       if rl then "true" else "false");
+        ("width",    pp_word_width width);
+        ("src",      pp_reg rs2);
+        ("base",     pp_reg rs1);
+        ("offset",   sprintf "%d" imm);
+      ])
+
+| `RISCVADDIW(imm, rs1, rd) ->
+    ("op_addiw",
+      [ ("iimm",  sprintf "%d" imm);
+        ("src",   pp_reg rs1);
+        ("dest",  pp_reg rd);
+      ])
+
+| `RISCVRTYPEW(rs2, rs1, rd, op) ->
+    ("op_RW_type",
+      [ ("op",   pp_riscv_ropw op);
+        ("src2", pp_reg rs2);
+        ("src1", pp_reg rs1);
+        ("dest", pp_reg rd);
+      ])
+
+| `RISCVFENCE(pred, succ) ->
+    ("op_fence",
+      [ ("pred", pp_riscv_fence_option pred);
+        ("succ", pp_riscv_fence_option succ);
+      ])
+
+| `RISCVFENCE_TSO(pred, succ) ->
+    ("op_fence_tso",
+      [ ("pred", pp_riscv_fence_option pred);
+        ("succ", pp_riscv_fence_option succ);
+      ])
+
+| `RISCVFENCEI -> ("op_fence_i", [])
+
+| `RISCVLoadRes(aq, rl, rs1, width, rd) ->
+    ("op_lr",
+      [ ("aq",    if aq then "true" else "false");
+        ("rl",    if rl then "true" else "false");
+        ("width", pp_word_width width);
+        ("addr",  pp_reg rs1);
+        ("dest",  pp_reg rd);
+      ])
+
+| `RISCVStoreCon(aq, rl, rs2, rs1, width, rd) ->
+    ("op_sc",
+      [ ("aq",    if aq then "true" else "false");
+        ("rl",    if rl then "true" else "false");
+        ("width", pp_word_width width);
+        ("addr",  pp_reg rs1);
+        ("src",   pp_reg rs2);
+        ("dest",  pp_reg rd);
+      ])
+
+| `RISCVAMO(op, aq, rl, rs2, rs1, width, rd) ->
+    ("op_amo",
+      [ ("op",    pp_riscv_amo_op_part op);
+        ("aq",    if aq then "true" else "false");
+        ("rl",    if rl then "true" else "false");
+        ("width", pp_word_width width);
+        ("src",   pp_reg rs2);
+        ("addr",  pp_reg rs1);
+        ("dest",  pp_reg rd);
+      ])

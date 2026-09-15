@@ -1,0 +1,84 @@
+\documentclass[tikz]{standalone}
+\input{preamble} % include all the common macros and font settings
+
+\begin{document}
+\begin{tikzpicture}
+
+        \node[draw] (pcode) at (9.5,2) {class code} ;
+
+        \matrix (pgtm) at (7,0) [matrix of nodes, inner sep=1pt, row sep=0pt, draw] {
+                unsealing right \\
+                method 1 guard \\
+                method 2 guard \\
+        };
+        \path (pgtm-1-1.south) -- (pgtm-2-1.north) coordinate (x) [midway] ; \draw (x -| pgtm.west) -- (x -| pgtm.east);
+        \path (pgtm-2-1.south) -- (pgtm-3-1.north) coordinate (x) [midway] ; \draw (x -| pgtm.west) -- (x -| pgtm.east);
+
+        \draw [->,dotted] (pgtm-1-1.east -| pgtm.east) -| (pcode.south west) ;
+        \draw [->] (pgtm-2-1 -| pgtm.east) -| ([xshift=3pt]pcode.south) ;
+        \draw [->] (pgtm-3-1 -| pgtm.east) -| ([xshift=8pt]pcode.south) ;
+
+        \matrix (pvtm) at ([xshift=-15pt]pgtm.south west) [anchor=south east, matrix of nodes, inner sep=1pt, row sep=0pt, draw] {
+                method 1 sentry\vphantom{guard} \\
+                method 2 sentry\vphantom{guard} \\
+        } ;
+        \path (pvtm-1-1.south) -- (pvtm-2-1.north) coordinate (x) [midway] ; \draw (x -| pvtm.west) -- (x -| pvtm.east);
+
+	\node [above=2pt of pvtm.north west,anchor=south west,inner sep=0pt] {\emph{VTable}:} ;
+
+        \draw [->] (pvtm-1-1 -| pvtm.east) -- (pgtm-2-1 -| pgtm.west);
+        \draw [->] (pvtm-2-1 -| pvtm.east) -- (pgtm-3-1 -| pgtm.west);
+
+        \matrix (o) at (0,0.5) [matrix of nodes, inner sep=1pt, row sep=0pt, align=center] {
+                type token \\
+                instance data \\
+                {\vphantom{x}} \\
+                {\vphantom{x}} \\
+                {\vphantom{x}} \\
+        } ;
+
+        \matrix (oh) [matrix of nodes, inner sep=1pt, row sep=0pt, draw, above=2 pt of o.north, anchor=south] {
+                VTable capability \\
+                |[align=center]{ sealed RW \\ data capability };| \\
+        } ;
+        \path (oh-1-1.south) -- (oh-2-1.north) coordinate (x) [midway] ; \draw (x -| oh.west) -- (x -| oh.east);
+
+        \draw [->] (oh-1-1 -| oh.east) -| ([xshift=-10pt]pvtm.north west) -- (pvtm.north west) ;
+
+        \node (ofit) [draw,inner sep=0pt,outer sep=0pt,fit=(o-1-1.west -| oh.west)(o-1-1.east -| oh.east)(o)] {} ;
+        \path (o-1-1.south) -- (o-2-1.north) coordinate (x) [midway] ;
+        \draw (x -| ofit.west) -- (x -| ofit.east);
+
+        \draw [->,dotted] (o-1-1 -| ofit.east) -| (pcode.south west) ;
+
+	\draw [->] (oh-2-1 -| oh.east) -- +(5pt,0) |- (ofit.north east);
+
+        \draw [decorate,decoration={brace,amplitude=10pt,mirror},xshift=0,yshift=-4pt]
+        ([yshift=-10pt,xshift=-5pt]pvtm.south -| ofit.west) -- ([yshift=-10pt,xshift=5pt]pvtm.south -| ofit.east)
+        node [midway,below=10pt] {Per instance} ;
+
+        \matrix (pgtc) [matrix of nodes, inner sep=1pt, row sep=0pt, draw, above=55pt of pgtm.north, anchor=south east] {
+                constructor guard \\
+                sealing capability \\
+        };
+        \path (pgtc-1-1.south) -- (pgtc-2-1.north) coordinate (x) [midway] ; \draw (x -| pgtc.west) -- (x -| pgtc.east);
+
+        \draw [->,dotted] (pgtc-2-1 -| pgtc.east) -| (pcode.north west) ;
+        \draw [->] (pgtc-1-1 -| pgtc.east) -| ([xshift=-3pt]pcode.north) ;
+
+        \draw [decorate,decoration={brace,amplitude=10pt,mirror},xshift=0,yshift=-4pt]
+        ([yshift=-10pt,xshift=-5pt]pvtm.south west) -- ([yshift=-10pt,xshift=5pt]pvtm.south -| pcode.east)
+        node [midway,below=10pt] {Per class} ;
+
+        \node [anchor=east] (csentry) at ([xshift=-30pt]pgtc-1-1 -| oh.west) {constructor sentry} ;
+        \draw [->] (csentry.east) -- (pgtc-1-1 -| pgtc.west) ;
+
+        \node [anchor=east] (optr) at (csentry.east |- oh.north west) {object capability} ;
+        \draw [->] (optr.east) -- (oh.north west) ;
+
+        \draw [decorate,decoration={brace,amplitude=10pt,mirror},xshift=0,yshift=-4pt]
+        ([yshift=-10pt,xshift=-5pt]pvtm.south -| csentry.west) -- ([yshift=-10pt,xshift=5pt]pvtm.south -| optr.east)
+        node [midway,below=10pt] {Held by caller} ;
+
+  \end{tikzpicture}
+\end{document}

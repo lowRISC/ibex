@@ -1,0 +1,38 @@
+\chapter{Potential revised bound encoding}
+
+Here we describe some possible improvements to bounds encoding described in \cref{sec:bounds}.
+In particular we seek to get a more efficient encoding (greater precision, fewer unusable encodings), and to reduce the complexity of the set bounds operation without using any more bits or excessive hardware complexity.
+The proposed encoding is a minor alteration to the existing one based on two observations:
+\begin{enumerate}
+\item That incrementing $T$ in the set bounds operation would not be necessary if the lower $e$ bits of top were decoded as ones, instead of zeros.
+\item That zero length capabilities are of little use, and potentially even harmful (see \cref{sec:zerolengthcaps})
+\end{enumerate}
+As such we consider revising the existing bounds decoding as follows (note ones instead of zeros in low bits of top):
+\begin{center}
+{
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{r|c|c|c|}
+\cline{2-4}
+address, $a =$ & $a_\text{top} = a[31:e+9]$ & $a_\text{mid} = a[e+8:e]$  & $a_\text{low} = a[e-1:0]$ \\ \cline{2-4}
+base, $b =$    & $a_\text{top}+c_\text{b}$   & $B $ & $0$ \\ \cline{2-4}
+top, $t =$     & $a_\text{top}+c_\text{t}$   & $T $ & $1\dots{}1$ \\ \cline{2-4}
+\end{tabular}
+}
+\end{center}
+and further redefine the decoded top to be an \emph{inclusive} bound instead of exclusive.
+The corrections $c_b$ and $c_t$ remain the same.
+This has a number of consequences:
+\begin{itemize}
+    \item The set bounds implementation no longer has to increment the value of $T$ if the requested top is not exactly represented because the decoding naturally rounds up as desired. 
+    This may slightly simplify the implementation.
+    \item The smallest length encodable for a given $e$ is $2^e$ (when $B=T$). Zero length capabilities are no longer supported.
+    \item The largest length encodable for a given $e$ is $2^{e+9}$ (when $T-B=2^9-1$).
+    However in this case the representable range is equal to the dereferenceable range, so it may be necessary to limit the maximum value of $T-B$ to $2^9 - 2$.
+    This would ensure that `one past the end' remains within representable range, but would make the maximum \emph{usable} length $511 * 2^e$, which is the same as the current encoding.
+    \item Bounds can be set to the entire address space using $B=0$, $T=2^9-1$, $e=23$. 
+    This means the maximum exponent is smaller by one and therefore the worst case granularity is now $2^{23}$, or 8 MiB instead of 16 MiB.
+\end{itemize}
+To retain software compatibility we do not propose to change the architectural definition of \ctop{}, therefore \insnriscvref{CGetLen} would have to take account of the inclusive top value (possibly by adding one to the result) and \insnriscvref{CSetBounds} would have to subtract one from the requested length prior to encoding.
+Other instructions will have to adjust bounds checks accordingly.
+
+We have not yet fully evaluated this encoding to see if it is an overall improvement, but include it here for consideration.

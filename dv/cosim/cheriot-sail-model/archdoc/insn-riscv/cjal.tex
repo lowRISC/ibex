@@ -1,0 +1,23 @@
+\clearpage
+\phantomsection
+\addcontentsline{toc}{subsection}{CJAL}
+\insnriscvlabel{cjal}
+\subsection*{CJAL}
+
+\subsubsection*{Format}
+
+\rvcheriasmfmt{\rvcheriasminsnnoref{CJAL} cd, imm}
+
+\begin{center}
+\begin{bytefield}{32}
+	\bitheader[endianness=big]{0,6,7,11,12,19,20,21,30,31}\\
+	\bitbox{1}{\rotateinbitbox{\scriptsize i[20]}}
+	\bitbox{10}{imm$_{[10:1]}$}
+	\bitbox{1}{\rotateinbitbox{\scriptsize i[11]}}
+	\bitbox{8}{imm$_{[19:12]}$}
+	\bitbox{5}{cd}
+	\bitbox{7}{0x6f}
+\end{bytefield}
+\end{center}
+
+\sailRISCVisarefbody{CJAL}

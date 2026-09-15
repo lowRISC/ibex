@@ -1,0 +1,122 @@
+digraph {
+margin=0
+
+subgraph cluster_seal {
+label="sealing"
+margin=8
+0
+U0
+SE
+US
+SE_U0
+U0_US
+SE_US
+SE_U0_US [xlabel=<⊤<sub>S</sub>>]
+}
+
+subgraph cluster_mem_data {
+label="mem-rw"
+margin=8
+subgraph cluster_mem_wo_cap {
+label="mem-cap-wo"
+margin=8
+MC_SD
+}
+SD
+LD
+LD_SD
+}
+subgraph cluster_mem_ro_cap {
+label="mem-cap-ro";
+margin=8
+LD_MC
+LD_LG_MC
+LD_LM_MC
+LD_LG_LM_MC
+}
+subgraph cluster_mem_rw_cap {
+label="mem-cap-rw";
+margin=8
+LD_MC_SD
+LD_LG_MC_SD
+LD_LM_MC_SD
+LD_MC_SD_SL
+LD_LG_LM_MC_SD
+LD_LG_MC_SD_SL
+LD_LM_MC_SD_SL
+LD_LG_LM_MC_SD_SL [xlabel=<⊤<sub>M</sub>>]
+}
+
+subgraph cluster_exe {
+label="exe";
+margin=8
+EX_LD_MC
+EX_LD_LG_MC
+EX_LD_LM_MC
+EX_LD_LG_LM_MC
+EX_LD_MC_SR
+EX_LD_LG_MC_SR
+EX_LD_LM_MC_SR
+EX_LD_LG_LM_MC_SR [xlabel=<⊤<sub>X</sub>>]
+}
+
+SD -> 0 [label="SD", fontsize=10]
+LD -> 0 [label="LD", fontsize=10]
+US -> 0 [label="US", fontsize=10]
+SE -> 0 [label="SE", fontsize=10]
+U0 -> 0 [label="U0", fontsize=10]
+LD_SD -> SD [label="LD", fontsize=10]
+LD_SD -> LD [label="SD", fontsize=10]
+LD_MC -> LD [label="MC", fontsize=10]
+SE_US -> US [label="SE", fontsize=10]
+U0_US -> US [label="U0", fontsize=10]
+SE_US -> SE [label="US", fontsize=10]
+SE_U0 -> SE [label="U0", fontsize=10]
+U0_US -> U0 [label="US", fontsize=10]
+SE_U0 -> U0 [label="SE", fontsize=10]
+LD_MC_SD -> LD_SD [label="MC", fontsize=10]
+LD_MC_SD -> LD_MC [label="SD", fontsize=10]
+LD_LM_MC -> LD_MC [label="LM", fontsize=10]
+LD_LG_MC -> LD_MC [label="LG", fontsize=10]
+EX_LD_MC -> LD_MC [label="EX", fontsize=10]
+SE_U0_US -> SE_US [label="U0", fontsize=10]
+SE_U0_US -> U0_US [label="SE", fontsize=10]
+SE_U0_US -> SE_U0 [label="US", fontsize=10]
+LD_MC_SD_SL -> LD_MC_SD [label="SL", fontsize=10]
+LD_LM_MC_SD -> LD_MC_SD [label="LM", fontsize=10]
+LD_LG_MC_SD -> LD_MC_SD [label="LG", fontsize=10]
+LD_LM_MC_SD -> LD_LM_MC [label="SD", fontsize=10]
+LD_LG_LM_MC -> LD_LM_MC [label="LG", fontsize=10]
+EX_LD_LM_MC -> LD_LM_MC [label="EX", fontsize=10]
+LD_LG_MC_SD -> LD_LG_MC [label="SD", fontsize=10]
+LD_LG_LM_MC -> LD_LG_MC [label="LM", fontsize=10]
+EX_LD_LG_MC -> LD_LG_MC [label="EX", fontsize=10]
+EX_LD_MC_SR -> EX_LD_MC [label="SR", fontsize=10]
+EX_LD_LM_MC -> EX_LD_MC [label="LM", fontsize=10]
+EX_LD_LG_MC -> EX_LD_MC [label="LG", fontsize=10]
+EX_LD_LM_MC_SR -> EX_LD_MC_SR [label="LM", fontsize=10]
+EX_LD_LG_MC_SR -> EX_LD_MC_SR [label="LG", fontsize=10]
+LD_LM_MC_SD_SL -> LD_MC_SD_SL [label="LM", fontsize=10]
+LD_LG_MC_SD_SL -> LD_MC_SD_SL [label="LG", fontsize=10]
+LD_LM_MC_SD_SL -> LD_LM_MC_SD [label="SL", fontsize=10]
+LD_LG_LM_MC_SD -> LD_LM_MC_SD [label="LG", fontsize=10]
+LD_LG_MC_SD_SL -> LD_LG_MC_SD [label="SL", fontsize=10]
+LD_LG_LM_MC_SD -> LD_LG_MC_SD [label="LM", fontsize=10]
+LD_LG_LM_MC_SD -> LD_LG_LM_MC [label="SD", fontsize=10]
+EX_LD_LG_LM_MC -> LD_LG_LM_MC [label="EX", fontsize=10]
+EX_LD_LM_MC_SR -> EX_LD_LM_MC [label="SR", fontsize=10]
+EX_LD_LG_LM_MC -> EX_LD_LM_MC [label="LG", fontsize=10]
+EX_LD_LG_MC_SR -> EX_LD_LG_MC [label="SR", fontsize=10]
+EX_LD_LG_LM_MC -> EX_LD_LG_MC [label="LM", fontsize=10]
+EX_LD_LG_LM_MC_SR -> EX_LD_LM_MC_SR [label="LG", fontsize=10]
+EX_LD_LG_LM_MC_SR -> EX_LD_LG_MC_SR [label="LM", fontsize=10]
+LD_LG_LM_MC_SD_SL -> LD_LM_MC_SD_SL [label="LG", fontsize=10]
+LD_LG_LM_MC_SD_SL -> LD_LG_MC_SD_SL [label="LM", fontsize=10]
+LD_LG_LM_MC_SD_SL -> LD_LG_LM_MC_SD [label="SL", fontsize=10]
+EX_LD_LG_LM_MC_SR -> EX_LD_LG_LM_MC [label="SR", fontsize=10]
+
+
+LD_MC_SD -> MC_SD  [label="LD", fontsize=10]
+MC_SD -> SD [label="MC", fontsize=10]
+
+}

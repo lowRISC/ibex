@@ -1,0 +1,100 @@
+\documentclass[tikz]{standalone}
+\input{preamble} % include all the common macros and font settings
+
+\colorlet{fred}{red!60}
+\colorlet{fgreen}{olive!40!green}
+\colorlet{famber}{orange!60}
+\colorlet{dred}{red!60}
+\colorlet{dgreen}{olive!40!green}
+\colorlet{damber}{orange!80}
+
+\begin{document}
+
+\begin{tikzpicture}[x=\linewidth/15,y=\linewidth/15]
+
+% parameter coordinates
+\coordinate (redbl) at (0,0);
+\coordinate (redtr) at (1,7);
+\coordinate (repbl) at (0,12 / 16 * 7 / 2);
+\coordinate (reptr) at (1,28 / 16 * 7 / 2);
+\coordinate (derbl) at (0.3,14 / 16 * 7 / 2); % Not to scale, but close, so example labels don't merge
+\coordinate (dertr) at (1  ,20 / 16 * 7 / 2);
+\def\extextx{-4}     % Example Text X
+\def\slubracex{-2.25}% Space {L,U} brace X
+\def\sluseplx{-2}    % Space {L,U} sep left X
+\def\sluarrx{-1.5}   % Space {L,U} arrow X
+\def\srseplx{-1}     % Space R sep left X
+\def\srarrx{-0.5}    % Space R arrow X
+\def\rlabelx{-0.3}   % R phase label x
+\def\sdseplx{0.3}    % Space D sep left X
+\def\sdseprx{1.5}    % Space D sep right X
+\def\srseprx{1.5}    % Space R sep right X
+\def\sluseprx{2}     % Space {L,U} sep right X
+\def\srbracex{2.25}  % Space R brace X
+\def\sdbracex{2.5}   % Space D brace X
+
+% central rectangles
+\filldraw[pattern=crosshatch, pattern color=fred, draw=dred, thick] (redbl) rectangle coordinate (redc) (redtr);
+\draw[preaction={fill, white}, pattern=north west lines, pattern color=famber, draw=damber, thick] (repbl) rectangle (reptr);
+\draw[preaction={fill, white}, pattern=north east lines, pattern color=fgreen, draw=dgreen, thick] (derbl) rectangle (dertr);
+
+% dereferencable region (space D) labels
+\coordinate (sdseplx) at (\sdseplx,0);
+\coordinate (sdseprx) at (\sdseprx,0);
+\draw[dgreen] (sdseplx |- derbl) -- (sdseprx |- derbl) node [pos=1,anchor=base west] {$b$};
+\draw[dgreen] (sdseplx |- dertr) -- (sdseprx |- dertr) node [pos=1,anchor=base west] {$t$};
+\coordinate (sdbracex) at (\sdbracex,0);
+\draw[dgreen,decoration={brace,mirror},decorate] (sdbracex |- derbl) -- (sdbracex |- dertr) node [midway,anchor=west,align=left,xshift=5pt] {dereferenceable\\region};
+
+% represenatable region (space R) labels
+\coordinate (srseplx) at (\srseplx,0);
+\coordinate (srseprx) at (\srseprx,0);
+\coordinate (srarrx) at (\srarrx,0);
+\draw[damber] (srseplx |- repbl) -- (srseprx |- repbl) node [pos=1,anchor=base west] {$r_b$};
+\draw[damber] (srseplx |- reptr) -- (srseprx |- reptr) node [pos=1,anchor=base west] {$r_t$};
+\draw[<->,thick,damber] (srarrx |- repbl) -- (srarrx |- reptr) node [midway,left]{$s$};
+\coordinate (srbracex) at (\srbracex,0);
+\draw[damber,decoration={brace,mirror,aspect=.85},decorate] (srbracex |- repbl) -- (srbracex |- reptr) node [pos=.85,anchor=west,align=left,xshift=5pt] {representable\\space, $space_\text{R}$};
+
+\coordinate (rlabelx) at (\rlabelx,0);
+\draw[<->,thick,dashed,damber] (rlabelx |- redbl) -- (rlabelx |- repbl) node [midway,left=-2pt] {\footnotesize $R 2^{E}$} ;
+
+\coordinate (multextbase) at ({(\sluseprx,0)} |- redbl);
+\node[anchor=base west,inner sep=0pt,black,align=left] at ($(multextbase)+(0.25,0)$) {multiple of $s = 2^{E+14}$};
+
+\coordinate (extextx) at (\extextx,0);
+\node[anchor=base east,gray] (exbase) at (extextx |- redbl) {\footnotesize\texttt{0x10000}};
+\draw[dotted,gray] (exbase.base east) -- ({(\sluseplx,0)} |- redbl) ;
+\node[anchor=base east,gray] (exsmid) at (extextx |- redc) {\footnotesize\texttt{0x20000}};
+\draw[dotted,gray] (exsmid.base east) -- ({(\sluseplx,0)} |- redc);
+\node[anchor=north,gray,inner sep=0pt] (exshi) at (redtr -| exsmid) {\footnotesize\texttt{0x30000}};
+\draw[dotted,gray] (exshi.north east -| exsmid.east) -- ({(\sluseplx,0)} |- redtr);
+
+\node[anchor=base east,gray] (exrb) at (extextx |- repbl) {\footnotesize\texttt{0x1C000}};
+\draw[dotted,gray] (exrb.base east) -- ({(\srseplx,0)} |- repbl);
+
+\node[anchor=base east,gray] (exrb) at (extextx |- derbl) {\footnotesize\texttt{0x1E000}};
+\draw[dotted,gray] (exrb.base east) -- ({(\sdseplx,0)} |- derbl);
+
+\node[anchor=base east,gray] (exrb) at (extextx |- dertr) {\footnotesize\texttt{0x24000}};
+\draw[dotted,gray] (exrb.base east) -- ({(\sdseplx,0)} |- dertr);
+
+\node[anchor=base east,gray] (exrb) at (extextx |- reptr) {\footnotesize\texttt{0x2C000}};
+\draw[dotted,gray] (exrb.base east) -- ({(\srseplx,0)} |- reptr);
+
+% space L,U partiton lines
+\draw[black] ({(\sluseplx,0)} |- redbl) -- ({(\sluseprx,0)} |- redbl);
+\draw[black] ({(\sluseplx,0)} |- redc)  -- ({(\sluseprx,0)} |- redc);
+\draw[black] ({(\sluseplx,0)} |- redtr) -- ({(\sluseprx,0)} |- redtr);
+\draw[<->,thick,black,xshift=-.5pt] ({(\sluarrx,0)} |- redbl) -- ({(\sluarrx,0)} |- redc) node [midway,left] {$s$} ;
+\draw[<->,thick,black,xshift=.5pt] ({(\sluarrx,0)} |- redc) -- ({(\sluarrx,0)} |- redtr) node [midway,left] {$s$} ;
+
+% space label braces
+\coordinate (spacebraceb) at ({(\slubracex,0)}  |- redbl);
+\coordinate (spacebracem) at (spacebraceb |- redc);
+\coordinate (spacebracet) at (spacebraceb |- redtr);
+\draw[decoration={brace},decorate] (spacebraceb) -- (spacebracem) node [midway,left] {$space_\text{L}$};
+\draw[decoration={brace},decorate] (spacebracem) -- (spacebracet) node [midway,left] {$space_\text{U}$};
+
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,928 @@
+\newglossaryentry{abstract capability}
+{
+  name=abstract capability,
+  description={
+%     Abstract capabilities maintain the appearance of capability
+%     lifespan across operations that violate architectural \gls{capability
+%     provenance}.
+%     For example, abstract capabilities remain valid despite an OS kernel
+%     swapping them to and from disk, which requires that any architectural
+%     \gls{capability} in the swapped memory have its \gls{capability tag}
+%     restored through re-derivation
+    Abstract capabilities are a conceptual abstraction that overlays the
+    concrete capabilities of the architecture to describe the intended
+    maintenance of capability lifespan across operations that violate
+    architectural \gls{capability provenance}.
+    For example, if an OS kernel
+    swaps a page containing a capability to and from disk, 
+    it will have to have its \gls{capability tag}
+    restored through re-derivation, so there is no longer an
+    architectural provenance relationship between the two, but for
+    application-level reasoning it is sometimes useful to regard there
+    to be one}
+}
+
+\newglossaryentry{address}
+{
+  name=address,
+  description={An integer address suitable for dereference within an address
+    space.
+    In \gls{CHERI-MIPS}, \glspl{capability} are always interpreted in terms of
+    \glspl{virtual address}.
+    In \gls{CHERI-RISC-V}, \glspl{capability} may be interpreted as
+    \glspl{virtual address} -- or \glspl{physical address} when operating in
+    Machine Mode}
+}
+
+\longnewglossaryentry{capability}
+{
+  name=capability,
+  plural=capabilities,
+}
+{
+  A capability contains an \gls{address}, \gls{capability bounds}
+  describing a range of bytes within which addresses may be
+  \glslink{dereference}{dereferenced}, \gls{capability permissions}
+  controlling the forms of dereference that may be permitted (e.g., load or
+  store), a \gls{capability tag} protecting \gls{capability validity}
+  (integrity and \gls{capability provenance}), and a \gls{capability object type}
+  indicating whether it is a \gls{sealed capability}
+  (and, if so, under which \gls{capability object type} they are sealed)
+  or \gls{unsealed capability}.
+  The address embedded within a capability may be a \gls{virtual address} or
+  a \glspl{physical address} depending on the current addressing mode; when
+  used to authorize (un)sealing, the address is instead a
+  \gls{capability object type}.
+
+  In CHERI, capabilities are used to implement \glspl{pointer} with additional
+  protections in aid of \gls{fine-grained memory protection},
+  \gls{control-flow robustness}, and other higher-level protection models such
+  as \gls{software compartmentalization}.
+  Unlike a \gls{fat pointer}, capabilities are subject to
+  \gls{capability provenance}, ensuring that they are derived from a prior
+  valid capability only via valid manipulations, and \gls{capability
+  monotonicity}, which ensures that manipulation can lead only to
+  non-increasing rights.
+  CHERI capabilities provide strong compatibility with C-language pointers and
+  Memory Management Unit (MMU)-based system-software designs, by virtue of
+  its \gls{hybrid capability model}.
+
+  Architecturally, a capability can be viewed as an \gls{address} equal to the
+  sum of the \gls{capability base} and \gls{capability offset}, as well as
+  associated metadata.
+%\psnote{Perhaps this base/offset view should now be de-emphasised?  It's
+%arguably  implementation detail in any case}
+  Dereferencing a capability is done relative to that address.
+%  The implementation may choose to store the pre-computed address
+%  combining the base and offset, to avoid an implied addition on each memory
+%  access, and to similarly store the base and length as pre-computed
+%  addresses.
+  The size of an in-memory capability may be smaller than the sum of its
+  architectural fields (such as base, offset, and permissions) if a
+  \gls{compressed capability} mechanism, such as \gls{CHERI Concentrate}, is
+  used.
+
+  In the ISA, capabilities may be used explicitly via \gls{capability-based
+  instructions}, an application of the \gls{principle of intentional use},
+  but also implicitly using \glslink{legacy instructions}{legacy load
+  and store instructions} via the \gls{default data capability}, and
+  instruction fetch via the \gls{program-counter capability}.
+  A capability is either sealed or unsealed, controlling whether it has
+  software-defined or instruction-set-defined behavior, and whether or not its
+  fields are immutable.
+
+  Capabilities may be held in a \gls{capability register} in a dedicated
+  \gls{capability register file}, a \gls{merged register file}, or a
+  suitably aligned \gls{tagged memory}.
+}
+
+\newglossaryentry{capability base}
+{
+  name=capability base,
+  description={The lower of the two \gls{capability bounds}, from which
+    the \gls{address} of a \gls{capability} can be calculated by using
+    the \gls{capability offset}}
+}
+
+\newglossaryentry{capability bounds}
+{
+  name=capability bounds,
+  description={Upper and lower bounds, associated with each
+    \gls{capability}, describing a range of \glspl{address} that may
+    be \glslink{dereference}{dereferenced} via the capability.
+    Architecturally, bounds are with respect to the \gls{capability base},
+    which provides the lower bound, and \gls{capability length}, which
+    provides the upper bound when added to the base.
+    The bounds may be empty, connoting no right to dereference at any
+    address.
+    The address of a capability may float outside of the
+    dereferenceable bounds; with a \gls{compressed capability}, it may not
+    be possible to represent all possible \glslink{out of
+      bounds}{out-of-bounds} addresses.
+    Bounds may be manipulated subject to \gls{capability monotonicity}
+    using \gls{capability-based instructions}}
+}
+
+\newglossaryentry{capability length}
+{
+  name=capability length,
+  description={The distance between the lower and upper \gls{capability
+    bounds}}
+}
+
+\newglossaryentry{capability monotonicity}
+{
+  name=capability monotonicity,
+  description={Capability monotonicity is a property of the instruction set
+    that any requested manipulation of a \gls{capability}, whether in a
+    \gls{capability register} or in memory, either leads to strictly
+    non-increasing rights, clearing of the \gls{capability tag}, or a
+    hardware exception.    
+    \knnote{I presume that the ``rights'' of a capability are
+    determined by its permissions and its bounds, but not by its
+    sealedness. In other words, increasing the permissions or bounds
+    of a capability would increase its rights, but unsealing a
+    capability would not increase its right. If this is correct,
+    perhaps it could help to explicitly state this here.}    
+    Controlled violation of monotonicity can be achieved via the exception
+    delivery mechanism, which grants rights to additional capability
+    register, and also by the \gls{CInvoke} instruction, which may
+    unseal (and jump to) suitably checked \glspl{sealed
+    capability}.
+    \knnote{The exception delivery mechanism and the CCall instruction
+    do not violate monotonicity, since they do not increase the rights of
+    any capability. They do violate the monotonicity of the set of
+    reachable rights (see \ref{sec:model-monotonicity}), because an
+    exception makes a capability reachable that might not have been
+    reachable before (namely the KCC) and the CCall instruction
+    unseals capabilities without needing a capability that has the
+    authority to unseal them. Perhaps it would be worth creating a
+    glossary entry for the set of reachable rights, and mention that
+    this set is monotonic as long as no exceptions are raised or
+    CCalls are executed.}}
+}
+
+\newglossaryentry{capability object type}
+{
+  name=capability object type,
+  description={In addition to \glslink{fat pointer}{fat-pointer} metadata such
+    as \gls{capability bounds} and \gls{capability permissions}, \glspl{capability} also contain an integer object type.
+    The object type space is partitioned into a range of non-reserved and
+    \gls{reserved capability object type} types.
+    The \glspl{reserved capability object type} are hardware-interpreted and
+    include \glspl{unsealed capability} or \glspl{sealed entry capability}.
+    If the object type is one of the non-\glspl{reserved capability object type},
+    the capability is a \gls{sealed capability with an object type}.
+    For \glspl{sealed capability with an object type}, the object type is set during a
+    sealing operation to the \gls{address} of the \gls{sealing capability}.
+    Object types can be used to link a sealed \gls{code capability} and a
+    sealed \gls{data capability} when used with \gls{CInvoke} to implement a
+    software object model or to implement software-defined tokens of authority}
+}
+
+\newglossaryentry{capability offset}
+{
+  name=capability offset,
+  description={The distance between \gls{capability base} and the
+    \gls{address} accessed when the \gls{capability} is used as a \gls{pointer}}
+}
+
+\newglossaryentry{capability permissions}
+{
+  name=capability permissions,
+  description={A bitmask, associated with each \gls{capability},
+    describing a set of ISA- or software-defined operations that may be
+    performed via the capability.
+    ISA-defined permissions include load data, store data, instruction fetch,
+    load capability, and store capability.
+    Permissions may be manipulated subject to \gls{capability monotonicity}
+    using \gls{capability-based instructions}}
+}
+
+\newglossaryentry{capability provenance}
+{
+  name=capability provenance,
+  description={
+% The property that, following manipulation, a \gls{capability}
+%     remains valid for use only if it is derived from another valid capability
+%     using a valid capability operation.
+%     Provenance is implemented using a \gls{capability tag} combined with
+%     \gls{capability monotonicity}, and will be preserved whether a
+%     capability is held in a \gls{capability register} or \gls{tagged memory},
+%     subject to suitable use of \gls{capability-based instructions}
+The property that a valid-for-use \gls{capability} can only be
+    constructed by deriving it from another valid capability
+    using a valid capability operation.
+% PS: not totally clear what a ``valid capability operation'' is.  An
+% execution of a capability instruction that doesn't raise an exception?
+    Provenance is implemented using a \gls{capability tag} combined with
+    \gls{capability monotonicity}, 
+% PS: the text (both previous version and mine) defines provenance as
+% a property of the architecture, not ``the provenance of a
+% capability'' as the source capability or derivation chain, so we
+% can't say ``will be preserved'' like the text did. 
+% Maybe we should define that more explicit notion of provenance, and
+% replace this glossary entry with one for ``capability provenance
+% preservation'', but I've not for now. 
+irrespective of 
+%
+whether a
+    capability is held in a \gls{capability register} or \gls{tagged memory}}
+% PS: surely ``capability provenance'' should hold universally, not only
+%    ``subject to suitable use of \gls{capability-based instructions''?
+}
+
+\newglossaryentry{capability register}
+{
+  name=capability register,
+  description={A capability register is an architectural register able to hold
+    a \gls{capability} including its \gls{capability tag}, \gls{address},
+    other \glslink{fat pointer}{fat-pointer} metadata such as
+    its \gls{capability bounds} and \gls{capability permissions}, and optional
+    \gls{capability object type}.
+    Capability registers may be held in a \gls{capability register file}, a
+    \gls{merged register file}, or be a \gls{special capability register}
+    accessed by dedicated instructions.
+    A capability register might be a dedicated register intended primarily for
+    capability-related operations (e.g., the capability registers described
+    in \gls{CHERI-MIPS}), or a general-purpose integer
+    register that has been extended with capability metadata (such as the
+    \gls{program-counter capability}, or the capability registers described in
+    \gls{CHERI-RISC-V} when using a merged register file).
+    Capability registers must be used to retain tag bits on capabilities
+    transiting through memory, as only \gls{capability-based instructions}
+    enforce \gls{capability provenance} and \gls{capability monotonicity}}
+}
+
+\newglossaryentry{capability register file}
+{
+  name=capability register file,
+  description={The capability register file is a register file dedicated to
+    holding general-purpose \glspl{capability}, in contrast to a \gls{merged
+    register file}, in which general-purpose integer registers are extended to
+    be able to hold tagged capabilities.
+    Some general-purpose capability registers have well-known conventions for
+    their use in software, including the \gls{return capability} and the
+    \gls{stack capability}}
+}
+
+\newglossaryentry{capability tag}
+{
+  name=capability tag,
+  description={A capability tag is a 1-bit integrity tag associated with each
+    \gls{capability register}, and also with each capability-sized,
+    capability-aligned location in memory.
+    If the tag is set, the \gls{capability} is valid and can be
+    \glslink{dereference}{dereferenced} via the ISA.
+    If the tag is clear, then the capability is invalid and cannot be
+    dereferenced via the ISA.
+    Tags are preserved 
+by ISA
+operations that conform to \gls{capability
+    provenance} and \gls{capability monotonicity} rules -- for example,
+    that any attempted modification of \gls{capability bounds} leads to
+    non-increasing bounds,
+%was ``writes'', not ``bounds'' - presume just a typo?
+ and that in-memory capabilities are written only
+    via capability stores, not data stores -- otherwise, tags are cleared}
+%
+%    Subject to these constraints, tags will be preserved by
+%    \gls{capability-based instructions}
+}
+
+\newglossaryentry{capability validity}
+{
+  name=capability validity,
+  description={A \gls{capability} is valid if its \gls{capability tag}
+    is set, which permits use of the capability subject to its
+    \gls{capability bounds}, \gls{capability permissions}, and so on.
+    Attempts to \gls{dereference} a capability without a tag set will lead
+    to a hardware exception}
+}
+
+\newglossaryentry{capability-based instructions}
+{
+  name=capability-based instructions,
+  description={These instructions accept capabilities as operands, allowing
+    capabilities to be loaded from and stored memory, manipulated subject to
+    \gls{capability provenance} and \gls{capability monotonicity} rules,
+    and used for a variety of operations such as loading and storing data and
+    capabilities, as branch targets, and to retrieve and manipulate capability
+    fields -- subject to \gls{capability permissions}}
+}
+
+\longnewglossaryentry{CInvoke}
+{
+  name=CInvoke
+}
+{
+  The \insnref{CInvoke} instruction is a source of controlled
+  non-monotonicity in the \gls{CHERI-MIPS} and \gls{CHERI-RISC-V} ISAs.
+\psnote{See Kyndylan's note for capability monotonicity}
+  It can directly enter any userspace domain described by a pair
+  of sealed capabilities with the \emph{Permit\_CInvoke} permission set.
+  In particular, it can
+  safely enter userspace domain-transition code
+  described by the sealed \gls{code capability} while also unsealing
+  the sealed \gls{data capability}.
+  The sealed operand \glspl{capability register}
+  are checked for suitable properties and correspondence, and the userspace
+  domain-transition routine can store any return information, perform further error
+  checking, and so on.
+}
+
+\newglossaryentry{CHERI Concentrate}
+{
+  name=CHERI Concentrate,
+  description={CHERI Concentrate is a specific \gls{compressed capability}
+    format that represents a 64-bit \gls{address} with full precision, and
+    \gls{capability bounds} relative to that address with reduced precision.
+    Bounds have a floating-point representation, requiring that as the size of
+    a bounded object increases, greater alignment of its \gls{capability base}
+    and \gls{capability length} are required.
+    CHERI Concentrate is the successor compression format to \gls{CHERI-128}}
+}
+
+\newglossaryentry{CHERI-128}
+{
+  name=CHERI-128,
+  description={CHERI-128 is a specific \gls{compressed capability} format that
+    represents a 64-bit \gls{address} with full precision, and
+    \gls{capability bounds} relative to that address with reduced precision.
+    Bounds have a floating-point representation, requiring that as the size of
+    a bounded object increases, greater alignment of its \gls{capability base}
+    and \gls{capability length} are required.
+    CHERI-128 has been replaced with \gls{CHERI Concentrate}}
+}
+
+\newglossaryentry{CHERI-MIPS}
+{
+  name=CHERI-MIPS,
+  description={An application of the CHERI protection model to the 64-bit MIPS
+    ISA}
+}
+
+\newglossaryentry{CHERI-RISC-V}
+{
+  name=CHERI-RISC-V,
+  description={An application of the CHERI protection model to the RISC-V ISA}
+}
+
+\newglossaryentry{CHERI-x86-64}
+{
+  name=CHERI-x86-64,
+  description={An application of the CHERI protection model to the x86-64 ISA}
+}
+
+\newglossaryentry{code capability}
+{
+  name=code capability,
+  plural=code capabilities,
+  description={A \gls{capability} whose \gls{capability permissions} have been
+    configured to permit instruction fetch (i.e., execute) rights; typically,
+    write permission will not be granted via an executable capability, in
+    contrast to a \gls{data capability}.
+    Code capabilities are used to implement \gls{control-flow robustness} by
+    constraining the available branch and jump targets}
+}
+
+\newglossaryentry{compressed capability}
+{
+  name=compressed capability,
+  plural=compressed capabilities,
+  description={A \gls{capability} whose \gls{capability bounds} are
+    compressed with respect to its \gls{address}, allowing its
+    in-memory footprint to be reduced -- e.g., to 128 bits, rather than the
+    roughly
+    architectural 256 bits visible to the instruction set when a capability
+    is loaded into a register file.
+    Certain architecturally valid \glslink{out of bounds}{out-of-bounds}
+    addresses may not be \glslink{representable
+    capability}{representable} with capability compression; operations leading
+     to \glslink{unrepresentable capability}{unrepresentable capabilities}
+    will clear the \gls{capability tag} or throw an exception in order to
+    ensure continuing \gls{capability monotonicity}.
+    \gls{CHERI-128} and \gls{CHERI Concentrate} are specific compressed
+    capability models that select particular points in the tradeoff space
+    around in-memory capability size, bounds alignment requirements, and
+    representability}
+}
+
+\newglossaryentry{control-flow robustness}
+{
+  name=control-flow robustness,
+  description={The use of \glspl{code capability} to constrain the set of
+    available branch and jump targets for executing code, such that the
+    potential for attacker manipulation of the \gls{program-counter
+    capability} to simulate injection of arbitrary code is severely
+    constrained; a form of \gls{vulnerability mitigation} implemented via
+    the \gls{principle of least privilege}}
+}
+
+\newglossaryentry{data capability}
+{
+  name=data capability,
+  plural=data capabilities,
+  description={A \gls{capability} whose \gls{capability permissions} have been
+    configured to permit data load and store, but not instruction fetch (i.e.,
+    execute) rights; in contrast to a \gls{code capability}}
+}
+
+\newglossaryentry{default data capability}
+{
+  name=default data capability (\DDC{}),
+  description={A \gls{special capability register} constraining
+    \glslink{legacy instructions}{legacy} non-\gls{capability-based
+    instructions} that load and store data without awareness of the capability
+    model.
+    Any attempts to load and store will be relocated relative to the default
+    data capability's \gls{capability base} and \gls{capability offset}, and
+    controlled by its \gls{capability bounds} and \gls{capability
+    permissions}.
+    Use of the default data capability  violates the \gls{principle of
+    intentional use}, but permits compatibility with legacy software.
+    A suitably configured default data capability will prevent the use of
+    non-capability-based load and store instructions}
+}
+
+\newglossaryentry{dereference}
+{
+  name=dereference,
+  description={Dereferencing a \gls{address} means that it is the
+    target address for a load, store, or instruction fetch.
+    A \gls{capability} may be dereferenced only subject to it being valid
+    -- i.e., that its \gls{capability tag} is present --  and is also subject
+    to appropriate checks of its \gls{capability bounds}, \gls{capability permissions}, and
+    so on.
+    Dereference may occur as a result of explicit use of a capability via
+    \gls{capability-based instructions}, or implicitly as a result of the
+    \gls{program-counter capability} or \gls{default data capability}}
+}
+
+\newglossaryentry{exception program-counter capability}
+{
+  name=exception program-counter capability (\EPCC{}),
+  description={A \gls{special capability register} into which the running
+    \gls{program-counter capability} will be moved into on an exception, and
+    whose value will be moved back into the program-counter capability on
+    exception return}
+}
+
+\newglossaryentry{fat pointer}
+{
+  name=fat pointer,
+  description={A \gls{pointer} (\gls{address}) that has been extended
+    with additional metadata such as \gls{capability bounds} and
+    \gls{capability permissions}.
+    In conventional fat-pointer designs, fat pointers to not have a notion of
+    sealing (i.g., as in \glspl{sealed capability} and \glspl{unsealed
+    capability}), nor rules implementing \gls{capability provenance} and
+    \gls{capability monotonicity}}
+}
+
+\newglossaryentry{fine-grained memory protection}
+{
+  name=fine-grained memory protection,
+  description={The granular description of available code and data in which
+    \gls{capability bounds} and \gls{capability permissions} are made as
+    small as possible, in order to limit the potential effects of software
+    bugs and vulnerabilities.
+    This approach applies both to \glspl{code capability} and \glspl{data
+    capability}, offering effective \gls{vulnerability mitigation} via
+    techniques such as \gls{control-flow robustness}, as well as supporting
+    higher-level mitigation techniques such as \gls{software
+    compartmentalization}.
+    Fine-grained memory protection will typically be driven by the goal of
+    implementing the \gls{principle of least privilege}}
+}
+
+\newglossaryentry{hybrid capability model}
+{
+  name=hybrid capability model,
+  description={A \gls{capability} model in which not all interfaces to use or
+    manipulate capabilities conform to the \gls{principle of intentional
+    use}, such that legacy software is able to execute around, or within,
+    capability-constrained environments, as well as other features required
+    to improve compatibility with conventional software designs permitting
+    easier incremental adoption of a capability-system model.
+    In CHERI, composition of the capability-system model with the conventional
+    Memory Management Unit (MMU), the support for \gls{legacy instructions}
+    via the \gls{program-counter capability} and \gls{default data
+    capability}, and strong compatibility with the C-language \gls{pointer}
+    model, all constitute hybrid aspects of its design, in comparison to a
+    more pure capability-system model that might elide those behaviors at a
+    cost to compatibility and adoptability}
+}
+
+\newglossaryentry{principle of intentional use}
+{
+  name=principle of intentional use,
+  description={A design principle in capability systems in which rights are
+    always explicitly, rather than implicitly exercised.
+    This arises in the CHERI instruction set through explicit \gls{capability}
+    operands to \gls{capability-based instructions}, which contributes to the
+    effectiveness of \gls{fine-grained memory protection} and
+    \gls{control-flow robustness}.
+    When applied, the principle limits not just the rights available in the
+    presence of a software vulnerability, but the extent to which software can
+    be manipulated into using rights in an unintended (and exploitable)
+    manner}
+}
+
+\newglossaryentry{invoked data capability}
+{
+  name=invoked data capability (\IDC{}),
+  plural=invoked data capabilities,
+  description={A capability register reserved by convention to hold the
+    unsealed \gls{data capability} on the callee side of \gls{CInvoke}.
+    Typically, for the caller side, this will point at a frame on the caller
+    stack sufficient to safely restore any caller state.
+    On the callee side, the invoked data capability will be a data capability
+    describing the object's internal state}
+}
+
+\newglossaryentry{kernel code capability}
+{
+  name=kernel code capability (\KCC{}),
+  description={A \gls{special capability register} reserved to hold a
+    privileged \gls{code capability} for use by the kernel during exception
+    handling.
+    This value will be installed in the \gls{program-counter capability} on
+    exception entry, with the previous value of the program-counter
+    capability stored in the \gls{exception program-counter capability}}
+}
+
+\newglossaryentry{kernel data capability}
+{
+  name=kernel data capability (\KDC{}),
+  description={A \gls{special capability register} reserved to hold a
+    privileged \gls{data capability} for use by the kernel during exception
+    handling.
+    Typically, this will refer either to the data segment for a microkernel
+    intended to field exceptions, or for the full kernel.
+    Kernels compiled to primarily use \gls{legacy instructions} might install
+    this in the \gls{default data capability} for the duration of kernel
+    execution.
+    Use of this register is controlled by \gls{capability permissions} on
+    the currently executing \gls{program-counter capability}}
+}
+
+\newglossaryentry{kernel reserved capabilities}
+{
+  name=kernel reserved capabilities,
+  description={These \glspl{capability}, modeled on the MIPS kernel reserved
+    registers, are set aside for use by a \gls{CHERI-MIPS} operating-system
+    kernel in
+    exception handling -- in particular, in allowing userspace registers to
+    be saved so that the kernel context can be installed.
+    As with the MIPS registers, the userspace ABI is not able to use
+    capability registers set aside for kernel use; unlike the MIPS registers,
+    the kernel reserved capabilities are available for use in the ISA only
+    with a suitably authorized \gls{program-counter capability} installed.
+    Due to a different exception-handling model in \gls{CHERI-RISC-V}, that
+    ISA does not have kernel reserved capabilities}
+}
+
+\newglossaryentry{legacy instructions}
+{
+  name=legacy instructions,
+  description={Legacy instructions are those that accept integer addresses,
+    rather than capabilities, as their operands, requiring use of the
+    \gls{default data capability} for loads and stores, or that explicitly set
+    the program counter to a address, rather than doing setting the
+    \gls{program-counter capability}.
+    These instructions allow legacy binaries (those compiled without CHERI
+    awareness) to execute, but only without the benefits of
+    \gls{fine-grained memory protection}, granular \gls{control-flow
+    robustness}, or more efficient \gls{software compartmentalization}.
+    While still constrained, these instructions do not conform to the
+    \gls{principle of intentional use}}
+}
+
+\newglossaryentry{merged register file}
+{
+  name=merged register file,
+  description={A single general-purpose register file able to hold both
+    integer and tagged \gls{capability} values.
+    In \gls{CHERI-MIPS}, a dedicated \gls{capability register file} is used,
+    separate from the general-purpose integer register file.
+    In \gls{CHERI-RISC-V} and \gls{Morello}, a merged register file is supported, reducing the
+    amount of control logic required for a separate register file}
+}
+
+\newglossaryentry{Morello}
+{
+  name=Morello,
+  description={An application of the CHERI protection model to the ARMv8-A architecture}
+}
+
+\newglossaryentry{out of bounds}
+{
+  name=out of bounds,
+  description={When a \gls{capability}'s \gls{capability offset} falls outside
+    of its \gls{capability bounds}, it is out of bounds, and cannot be
+    \glslink{dereference}{dereferenced}.
+    Even if a capability's offset is in bounds, the width of a data access may
+    cause a load, store, or instruction fetch to fall out of bounds, or the
+    further offset introduced via a register index or immediate operand to an
+    instruction.
+%    With 256-bit capabilities, all out-of-bounds pointers are
+%    \glspl{representable capability}.
+    With \glspl{compressed capability}, if an instruction shifts the offset
+    too far out of bounds, this may result in an \gls{unrepresentable
+    capability}, leading to the \gls{capability tag} being cleared, or an
+    exception being thrown}
+}
+
+\newglossaryentry{physical address}
+{
+  name=physical address,
+  plural=physical addresses,
+  description={An \gls{address} that is passed directly to the memory
+    hierarchy without \glslink{virtual address}{virtual-address} translation.
+    In \gls{CHERI-MIPS}, \glspl{capability} contain only virtual addresses.
+    In \gls{CHERI-RISC-V}, \glspl{capability} addresses may be interpreted as
+    physical addresses in Machine Mode}
+}
+
+\newglossaryentry{pointer}
+{
+  name=pointer,
+  description={A pointer is a language-level reference to a memory object.
+    In conventional ISAs, a pointer is typically represented as an
+    \gls{address}.
+    In CHERI, pointers can be represented either as an address
+    indirected via the \gls{default data capability} or \gls{program-counter
+    capability}, or as a \gls{capability}.
+    In the latter cases, its integrity and \gls{capability provenance} are
+    protected by the \gls{capability tag}, and its use is limited by
+    \gls{capability bounds} and \gls{capability permissions}.
+    \Gls{capability-based instructions} preserve the tag as required across
+    both \glspl{capability register} and \gls{tagged memory}, and also
+    enforce \gls{capability monotonicity}: legitimate operations on the
+    pointer cannot broaden the set of rights described by the capability}
+}
+
+\newglossaryentry{principle of least privilege}
+{
+  name=principle of least privilege,
+  description={A principle of software design in which the set of rights
+    available to running code is minimized to only those required for it to
+    function, often with the aim of \gls{vulnerability mitigation}.
+    In CHERI, this concept applies via fine-grained memory protection for
+    both data and code, and also higher-level \gls{software
+    compartmentalization}}
+}
+
+\newglossaryentry{program-counter capability}
+{
+  name=program-counter capability (\PCC{}),
+  description={A \gls{special capability register} that extends the existing
+    program counter to include
+    \gls{capability} metadata such as a \gls{capability tag}, \gls{capability
+    bounds}, and \gls{capability permissions}.
+    The program-counter capability ensures that instruction fetch occurs only
+    subject to capability protections.
+    When an exception fires, the value of the program-counter capability will
+    be moved to the \gls{exception program-counter capability}, and the value
+    of the \gls{kernel data capability} moved into the program-counter
+    capability.
+    On exception return, the value of the exception program-counter capability
+    will be moved into the program-counter capability}
+}
+
+\newglossaryentry{representable capability}
+{
+  name=representable capability,
+  plural=representable capabilities,
+  description={A \gls{compressed capability} whose \gls{capability offset}
+    is representable with respect to its \gls{capability bounds}; this
+    does not imply that the offset is ``within bounds'', but does require
+    that it be within some broader window around the bounds}
+}
+
+\newglossaryentry{reserved capability object type}
+{
+  name=reserved capability object type,
+  plural=reserved capability object types,
+  description={Certain \glspl{capability object type} are not available for software use and instead have hardware-defined semantics.
+  On \gls{CHERI-MIPS} and \gls{CHERI-RISC-V}, all negative \glspl{capability object type} are
+  reserved: \glspl{unsealed capability} use the value $2^{64}-1$ and \glspl{sealed entry capability}
+  have an object type of $2^{64}-2$.
+  The remaining \glspl{capability object type} are used for \glspl{sealed capability with an object type}}
+}
+
+\newglossaryentry{return capability}
+{
+  name=return capability,
+  plural=return capabilities,
+  description={A \gls{capability} designated as the destination for the
+    return address when using a capability jump-and-link instruction.
+    A degree of \gls{control-flow robustness} is provided due to
+    \gls{capability bounds}, \gls{capability permissions}, and the
+    \gls{capability tag} on the resulting capability, which limits sites that
+    may be jumped back to using the return capability}
+}
+
+\newglossaryentry{sealed capability}
+{
+  name=sealed capability,
+  plural=sealed capabilities,
+  description={A sealed \gls{capability} is one whose \gls{capability object type}
+    is not equal to the unsealed object type ($2^{64}-1$ for \gls{CHERI-MIPS} and \gls{CHERI-RISC-V}).
+    A sealed capability's \gls{address}, \gls{capability bounds},
+    \gls{capability permissions}, and other fields are immutable -- i.e.,
+    cannot be modified using \gls{capability-based instructions}.
+    A sealed capability cannot be directly \glslink{dereference}{dereferenced}
+    using the instruction set, and must be unsealed before it can be used.
+    This can be used to implement non-monotonic domain transition, as a
+    sealed capability may carry rights not otherwise present in the
+    \gls{capability register file}.
+    Two types exist: \glspl{sealed capability with an object type} and
+    \glspl{sealed entry capability}.
+    They have different properties catering to different use cases}
+}
+
+\newglossaryentry{sealed capability with an object type}
+{
+  name=sealed capability with an object type,
+  plural=sealed capabilities with object types,
+  description={A \gls{sealed capability} whose \gls{capability object type}
+    is not one of the \glspl{reserved capability object type}.
+    These sealed capability have a \gls{capability object type} derived
+    from their \glspl{sealing capability}'s \gls{address}.
+    CHERI's sealing feature allows capabilities to be used to describe
+    software-defined objects, permitting implementation of encapsulation.
+    Unsealing can be performed using the \gls{CInvoke} instruction, or
+    using the \insnref{CUnseal} instruction combined with a suitable
+    \gls{sealing capability}.
+    Sealed capabilities with object types provide the necessary architectural
+    encapsulation support to efficiently implement fine-grained
+    compartmentalization using an object-oriented model}
+}
+
+\newglossaryentry{sealed entry capability}
+{
+  name=sealed entry capability,
+  plural=sealed entry capabilities,
+  description={A sealed entry \gls{capability} (also known as
+    \gls{sentry capability}) is a \gls{sealed capability}
+    whose \gls{capability object type} is set to the sentry \gls{reserved capability object type} ($2^{64}-2$ for \gls{CHERI-MIPS} and \gls{CHERI-RISC-V}).
+    Sealed entry capabilities are commonly referred to as \glspl{sentry
+    capability}.
+    Sealed entry capabilities are do not support linking sealed code and
+    data capabilities, unlike \glspl{sealed capability with an object type}.
+    A sealed entry capability is unsealed by jumping to it using a regular
+    capability jump instruction}
+}
+
+\newglossaryentry{sealing capability}
+{
+  name=sealing capability,
+  plural=sealing capabilities,
+  description={A sealing capability is one with the \cappermSeal 
+    permission, allowing it to be used to create \glspl{sealed capability}
+    using a \gls{capability object type} set to the sealing capability's
+    \gls{address}, and subject to its bounds}
+}
+
+\newglossaryentry{sentry capability}
+{
+  name=sentry capability,
+  plural=sentry capabilities,
+  description={Sentry capability is a convenient shorthand for a
+    \gls{sealed entry capability}}
+}
+
+\newglossaryentry{software compartmentalization}
+{
+  name=software compartmentalization,
+  description={The configuration of \glspl{code capability} and \glspl{data
+    capability} available via the \gls{capability register file} or
+    \gls{merged register file}, accessible \glspl{special capability
+    register}, and \gls{tagged memory} such that software components can be
+    isolated from one another, enabling \gls{vulnerability mitigation} via the
+    application of the \gls{principle of least privilege} at the application
+    layer.
+    One approach to implementing software compartmentalization on CHERI is to
+    use \gls{CInvoke} to jump into sealed code
+    and data capabilities describing a trusted intermediary and destination
+    protection domain}
+}
+
+\newglossaryentry{stack capability}
+{
+  name=stack capability,
+  plural=stack capabilities,
+  description={A \gls{capability} referring to the current stack, whose
+    \gls{capability bounds} are suitably configured to allow access only to
+    the remaining stack available to allocate at a given point in execution}
+}
+
+\newglossaryentry{special capability register}
+{
+  name=special capability register,
+  description={Special capability registers have special architectural
+    meanings, and include the \gls{program-counter capability}, the
+    \gls{default data capability}, the \gls{exception program-counter
+    capability}, the \gls{kernel code capability}, and the \gls{kernel data
+    capability}.
+    Not all registers are accessible at all times; for example, some may be
+    available only in certain rings, or when \PCC{} has the
+    Access\_System\_Registers permission set}
+}
+
+\newglossaryentry{tagged memory}
+{
+  name=tagged memory,
+  description={Tagged memory associates a 1-bit \gls{capability tag} with
+    each \gls{capability}-aligned, capability-sized word in memory.
+    \Gls{capability-based instructions} that load and store capabilities
+    maintain the tag as the capability transits between memory and the
+    \gls{capability register file}, tracking \gls{capability provenance}.
+    When data stores (i.e., stores of non-capabilities), the tag on the
+    memory location will be atomically cleared, ensuring the integrity of
+    in-memory capabilities}
+}
+
+\newglossaryentry{trusted computing base}
+{
+  name=Trusted Computing Base (TCB),
+  description={The subset of hardware and software that is critical to the
+    security of a system;
+    in secure system designs, there is often a goal to minimize the size of
+    the TCB in order to minimize the opportunity for exploitable software
+    vulnerabilities}
+}
+
+\newglossaryentry{trusted stack}
+{
+  name=trusted stack,
+  description={Some software-defined object-capability models offer strong
+    call-return semantics -- i.e., that if a return is issued by an invoked
+    object, or an uncaught exception is generated, then the appropriate caller
+    will be returned to -- exactly once.
+    This can be implemented via a trusted stack, maintained by the software
+    \gls{trusted computing base} via one or more handlers invoked by \gls{CInvoke}.
+    A trusted stack for an object-oriented model will likely maintain at least
+    the caller's \gls{program-counter capability} and \gls{invoked data
+    capability} to be restored on return}
+}
+
+\newglossaryentry{unrepresentable capability}
+{
+  name=unrepresentable capability,
+  plural=unrepresentable capabilities,
+  description={A \gls{compressed capability} whose \gls{capability offset} is
+    sufficiently outside of its \gls{capability bounds} that the combined
+    \gls{pointer} value and bounds cannot be represented in the compressed format;
+    constructing an unrepresentable capability will lead to the tag being
+    cleared (and information loss) or an exception, rather than a violation
+    of \gls{capability provenance} or \gls{capability monotonicity}}
+}
+
+\newglossaryentry{unsealed capability}
+{
+  name=unsealed capability,
+  plural=unsealed capabilities,
+  description={An unsealed \gls{capability} is one whose \gls{capability object type}
+    is the unsealed object type ($2^{64}-1$ for \gls{CHERI-MIPS} and \gls{CHERI-RISC-V}).
+    Its remaining capability fields are mutable, subject to \gls{capability
+    provenance} and \gls{capability monotonicity} rules.
+    These capabilities have hardware-defined behaviors -- i.e., subject to
+    \gls{capability bounds}, \gls{capability permissions}, and so on,
+    can be \glslink{dereference}{dereferenced}}
+}
+
+\newglossaryentry{virtual address}
+{
+  name=virtual address,
+  plural=virtual addresses,
+  description={An integer \gls{address} translated by the Memory Management
+    Unit (MMU) into a \gls{physical address} for the purposes of load, store,
+    and instruction fetch.
+    \Glspl{capability} embed an address, represented in the instruction
+    set as the sum of the \gls{capability base} and \gls{capability offset},
+    as well as \gls{capability bounds} relative to the address.
+    The integer addresses passed to \glslink{legacy instructions}{legacy load
+    and store instructions} that would previously have been interpreted as
+    virtual addresses are, with CHERI, transformed (and checked) using the
+    \gls{default data capability}.
+    Similarly, the integer addresses passed to legacy branch and jump
+    instructions are transformed (and checked) using the \gls{program-counter
+    capability}.
+    This in effect introduces a further relocation of legacy addresses prior
+    to virtual address translation}
+}
+
+\newglossaryentry{vulnerability mitigation}
+{
+  name=vulnerability mitigation,
+  description={A set of techniques limiting the effectiveness of the attacker
+    to exploit a software vulnerability, typically achieved through use of
+    the \gls{principle of least privilege} to constrain injection of
+    arbitrary code, control of the \gls{program-counter capability} via
+    \gls{control-flow robustness} using \glspl{code capability}, minimization of
+    data rights granted via available \glspl{data capability}, and higher-level
+    \gls{software compartmentalization}}
+}

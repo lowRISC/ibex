@@ -1,0 +1,538 @@
+{
+\setlength{\parindent}{0cm}
+
+\input{def-riscv-insns}
+\input{app-isaquick-riscv-macros}
+
+\chapter{Instruction encoding summary}
+\label{app:isaquick-riscv}
+
+	\section{Primary new instructions}
+
+		The RISC-V specification reserves 4 major opcodes for extensions: 11 (0xb / 0b0001011), 43 (0x2b / 0b0101011), 91 (0x5b / 0b1011011), and 123 (0x7b / 0b1111011).
+		The proposed CHERI encodings use major opcode 0x5b for all capability instructions.
+
+		All register-register operations use the RISC-V R-type or I-type encoding formats.
+	\optype{Capability-Inspection}
+
+		\rvcheriheader
+		\rvcheriisaquick{CGetPerm}
+
+		\rvcheriisaquick{CGetType}
+
+		\rvcheriisaquick{CGetBase}
+
+		\rvcheriisaquick{CGetLen}
+
+		\rvcheriisaquick{CGetTag}
+
+		\rvcheriisaquick{CGetAddr}
+
+		\rvcheriisaquick{CGetHigh}
+
+		\rvcheriisaquick{CGetTop}
+
+	\optype{Capability-Modification}
+
+		\rvcheriheader
+		\rvcheriisaquick{CSeal}
+
+		\rvcheriisaquick{CUnseal}
+
+		\rvcheriisaquick{CAndPerm}
+
+		\rvcheriisaquick{CSetAddr}
+
+		\rvcheriisaquick{CIncAddr}
+
+		\rvcheriisaquick{CIncAddrImm}
+
+		\rvcheriisaquick{CSetBounds}
+
+		\rvcheriisaquick{CSetBoundsExact}
+
+		\rvcheriisaquick{CSetBoundsRoundDown}
+
+		\rvcheriisaquick{CSetBoundsImm}
+
+		\rvcheriisaquick{CSetHigh}
+
+		\rvcheriisaquick{CClearTag}
+
+		\texttt{CSetBoundsExact} may not be required.
+
+	\optype{Pointer-Arithmetic}
+
+		\rvcheriheader
+
+		\jwnote{We do not need CSub, since a standard Sub will return the difference between two capabilities.}
+
+		\jrtcnote{We do need a separate CSub with a split register file though,
+		so we define one that should be used even with a merged register file.}
+
+		\rvcheriisaquick{CSub}
+
+		\rvcheriisaquick{CMove}
+
+	\optype{Pointer-Comparison}
+
+		\rvcheriheader
+
+		\rvcheriisaquick{CTestSubset}
+
+		\rvcheriisaquick{CSetEqualExact}
+
+	\optype{Special Capabilty Register Access}
+	\rvcheriheader
+
+		\rvcheriisaquick{CSpecialRW}
+
+	\optype{Adjusting to Compressed Capability Precision}
+	\rvcheriheader
+
+		\rvcheriisaquick{CRoundRepresentableLength}
+
+		\rvcheriisaquick{CRepresentableAlignmentMask}
+
+	\section{Modifications to existing RISC-V instructions}
+	\optype{Control-Flow}
+
+	No special new control flow instructions are added, although RISC-V \texttt{JAL} / \texttt{JALR} become capability instructions \rvcheriasminsnref{CJAL}  / \rvcheriasminsnref{CJALR}.
+
+	\optype{Memory-Access}
+	\label{quickref:mem}
+
+	\vspace{1.5ex}
+
+The standard RV32 load and store instructions are modified to take a capability
+as the base address:\\
+
+		\begin{bytefield}{32}
+			\bitheader[endianness=big]{0,6,7,11,12,14,15,19,20,24,25,31}\\
+			\bitbox{12}{imm[11:0]}
+			\bitbox{5}{cs1}
+			\bitbox{3}{op}
+			\bitbox{5}{rd}
+			\bitbox{7}{0x3}
+		\end{bytefield}
+		\rvcheriasmfmt{CL[BHW][U] rd, imm(cs1)}
+
+		\begin{bytefield}{32}
+			\bitbox{7}{imm[11:5]}
+			\bitbox{5}{rs2}
+			\bitbox{5}{cs1}
+			\bitbox{3}{op}
+			\bitbox{5}{imm[4:0]}
+			\bitbox{7}{0x23}
+		\end{bytefield}
+		\rvcheriasmfmt{CS[BHW] rs2, imm(cs1)}\\
+
+The RV64 instructions \texttt{LD} and \texttt{SD} are reused to behave as load capability (\texttt{LC}) and store capability (\texttt{SC}) respectively:\\
+
+		\begin{bytefield}{32}
+			\bitheader[endianness=big]{0,6,7,11,12,14,15,19,20,24,25,31}\\
+			\bitbox{12}{imm}
+			\bitbox{5}{cs1}
+			\bitbox{3}{0x3}
+			\bitbox{5}{cd}
+			\bitbox{7}{0x3}
+		\end{bytefield}
+		\rvcheriasmfmt[RV32]{\rvcheriasminsnref{CLC} cd, imm(cs1)}
+
+		\begin{bytefield}{32}
+			\bitbox{7}{imm[11:5]}
+			\bitbox{5}{cs2}
+			\bitbox{5}{cs1}
+			\bitbox{3}{0x3}
+			\bitbox{5}{imm[4:0]}
+			\bitbox{7}{0x23}
+		\end{bytefield}
+		\rvcheriasmfmt[RV32]{\rvcheriasminsnref{CSC} cs2, imm(cs1)}\\
+
+% 	\optype{Atomic Memory-Access}
+
+% When using 64-bit capabilities in RV32, the RV64A instructions \texttt{LR.D}, \texttt{SC.D} and \texttt{AMOSWAP.D} are reused to behave as \texttt{LR.C}, \texttt{SC.C} and \texttt{AMOSWAP.C} respectively.\\
+
+% 		\begin{bytefield}{32}
+% 			\bitheader[endianness=big]{0,6,7,11,12,14,15,19,20,24,25,26,27,31}\\
+% 			\bitbox{5}{0x2}
+% 			\bitbox{1}{\riscvbitboxaq}
+% 			\bitbox{1}{\riscvbitboxrl}
+% 			\bitbox{5}{0x0}
+% 			\bitbox{5}{rs1}
+% 			\bitbox{3}{0x3}
+% 			\bitbox{5}{cd}
+% 			\bitbox{7}{0x2f}
+% 		\end{bytefield}
+% 		\rvcheriasmfmt[RV32]{\rvcheriasminsnnoref{LR.C} cd, rs1}
+
+% 		\begin{bytefield}{32}
+% 			\bitbox{5}{0x3}
+% 			\bitbox{1}{\riscvbitboxaq}
+% 			\bitbox{1}{\riscvbitboxrl}
+% 			\bitbox{5}{cs2}
+% 			\bitbox{5}{rs1}
+% 			\bitbox{3}{0x3}
+% 			\bitbox{5}{rd}
+% 			\bitbox{7}{0x2f}
+% 		\end{bytefield}
+% 		\rvcheriasmfmt[RV32]{\rvcheriasminsnnoref{SC.C} rd, cs2, rs1}
+
+% 		\begin{bytefield}{32}
+% 			\bitbox{5}{0x1}
+% 			\bitbox{1}{\riscvbitboxaq}
+% 			\bitbox{1}{\riscvbitboxrl}
+% 			\bitbox{5}{cs2}
+% 			\bitbox{5}{rs1}
+% 			\bitbox{3}{0x3}
+% 			\bitbox{5}{cd}
+% 			\bitbox{7}{0x2f}
+% 		\end{bytefield}
+% 		\rvcheriasmfmt[RV32]{\rvcheriasminsnnoref{AMOSWAP.C} cd, cs2, rs1}
+%
+% We do not provide any of the other AMOs at this point when operating on
+% capability values, as they generally make sense only when operating on integer
+% values.
+
+% Since capabilities have precise bounds, sub-word atomics cannot be implemented
+% using word-sized atomics. To avoid unnecessary complexity compared with a
+% non-CHERI RISC-V implementation, we define only \texttt{LR.B}, \texttt{SC.B},
+% \texttt{LR.H} and \texttt{SC.H}, without any of the corresponding AMOs. We also
+% only require these to be present in capability mode, but implementations may
+% choose to always provide them for simplicity.
+
+% 		\begin{bytefield}{32}
+% 			\bitheader[endianness=big]{0,6,7,11,12,14,15,19,20,24,25,26,27,31}\\
+% 			\bitbox{5}{0x2}
+% 			\bitbox{1}{\riscvbitboxaq}
+% 			\bitbox{1}{\riscvbitboxrl}
+% 			\bitbox{5}{0x0}
+% 			\bitbox{5}{rs1}
+% 			\bitbox{3}{0x0}
+% 			\bitbox{5}{rd}
+% 			\bitbox{7}{0x2f}
+% 		\end{bytefield}
+% 		\rvcheriasmfmt{\rvcheriasminsnnoref{LR.B} rd, rs1}
+
+% 		\begin{bytefield}{32}
+% 			\bitbox{5}{0x3}
+% 			\bitbox{1}{\riscvbitboxaq}
+% 			\bitbox{1}{\riscvbitboxrl}
+% 			\bitbox{5}{rs2}
+% 			\bitbox{5}{rs1}
+% 			\bitbox{3}{0x0}
+% 			\bitbox{5}{rd}
+% 			\bitbox{7}{0x2f}
+% 		\end{bytefield}
+% 		\rvcheriasmfmt{\rvcheriasminsnnoref{SC.B} rd, rs2, rs1}
+
+% 		\begin{bytefield}{32}
+% 			\bitbox{5}{0x2}
+% 			\bitbox{1}{\riscvbitboxaq}
+% 			\bitbox{1}{\riscvbitboxrl}
+% 			\bitbox{5}{0x0}
+% 			\bitbox{5}{rs1}
+% 			\bitbox{3}{0x1}
+% 			\bitbox{5}{rd}
+% 			\bitbox{7}{0x2f}
+% 		\end{bytefield}
+% 		\rvcheriasmfmt{\rvcheriasminsnnoref{LR.H} rd, rs1}
+
+% 		\begin{bytefield}{32}
+% 			\bitbox{5}{0x3}
+% 			\bitbox{1}{\riscvbitboxaq}
+% 			\bitbox{1}{\riscvbitboxrl}
+% 			\bitbox{5}{rs2}
+% 			\bitbox{5}{rs1}
+% 			\bitbox{3}{0x1}
+% 			\bitbox{5}{rd}
+% 			\bitbox{7}{0x2f}
+% 		\end{bytefield}
+% 		\rvcheriasmfmt{\rvcheriasminsnnoref{SC.H} rd, rs2, rs1}
+
+\optype{Address Construction}
+The \asm{AUIPC} instruction is replaced by \asm{AUIPCC}, which derives capabilities from \PCC{}.
+Our ABI also requires a new instruction, \asm{AUICGP}, that is similar to \asm{AUIPCC} but derives from \asm{\$c3} (\asm{\$cgp}).
+This required allocating a new major opcode, although we expect that further support for linker relaxation may remove the need for \asm{AUICGP}. \\
+
+	\begin{bytefield}{32}
+	\bitheader[endianness=big]{0,6,7,11,12,31}\\
+	\bitbox{20}{imm[31:12]}
+	\bitbox{5}{cd}
+	\bitbox{7}{0x17}
+	\end{bytefield}
+	\rvcheriasmfmt{\rvcheriasminsnref{AUIPCC} cd, imm}
+
+
+	\begin{bytefield}{32}
+		\bitbox{20}{imm[31:12]}
+		\bitbox{5}{cd}
+		\bitbox{7}{0x7b}
+	\end{bytefield}
+	\rvcheriasmfmt{\rvcheriasminsnref{AUICGP} cd, imm}
+
+% 	\section{Assembly Programming}
+
+% 	\subsection{Capability Register ABI Names}
+
+% 	Table~\ref{table:riscv-register-names} lists the ABI names of
+% 	the capability registers.  The ABI names follow from the ABI
+% 	names of the RISC-V \textbf{x} registers.  All capability registers are
+% 	Caller-Save in the hybrid ABI.	Capability registers follow
+% 	the same save requirements as \textbf{x} registers in the purecap ABI.
+
+% \begin{table}[h]
+% \begin{center}
+% \begin{tabular}{lllll}
+% \toprule
+% Register & ABI Name & Description						& Hybrid Saver & Purecap Saver \\
+% \midrule
+% c0	& cnull		& NULL pointer					& -		& - \\
+% c1	& cra		& Return address					& Caller	& Caller \\
+% c2	& csp		& Stack pointer					& Caller	& Callee \\
+% c3	& cgp		& Global pointer					& -		& - \\
+% c4	& ctp		& Thread pointer					& -		& - \\
+% c5	& ct0		& Temporary/alternate link register	& Caller	& Caller \\
+% c6-7 & ct1-2		& Temporaries						& Caller	& Caller \\
+% c8	& cs0/cfp	& Saved register/frame pointer		& Caller	& Callee \\
+% c9	& cs1		& Saved register					& Caller	& Callee \\
+% c10-11 & ca0-1	& Function arguments/return values	& Caller	& Caller \\
+% c12-17 & ca2-7	& Function arguments				& Caller	& Caller \\
+% c18-27 & cs2-11	& Saved registers					& Caller	& Callee \\
+% c28-31 & ct3-6	& Temporaries						& Caller	& Caller \\
+% \bottomrule
+% \end{tabular}
+% \end{center}
+% \caption{Assembler mnemonics for CHERI RISC-V capability registers}
+% \label{table:riscv-register-names}
+% \end{table}
+
+% 	\subsection{Capability Encoding Mode Instructions}
+
+% 	Table~\ref{table:riscv-capmode-instructions} lists uncompressed
+% 	instructions which change semantics under capability mode.
+% 	Table~\ref{table:riscv-capmode-instructions-rvc} lists compressed
+% 	instructions which change semantics under capability mode.
+
+% \begin{table}
+% \begin{center}
+% \begin{tabular}{ll}
+% \toprule
+% Integer Instruction		& Capability Instruction \\
+% \midrule
+% \texttt{l\{b|h|w|d\}[u] rd, offset(rs1)} & \texttt{cl\{b|h|w|d\}[u] rd, offset(cs1)} \\
+% \texttt{lc cd, offset(rs1)} & \texttt{clc cd, offset(cs1)} \\
+% \texttt{s\{b|h|w|d\} rs2, offset(rs1)} & \texttt{cs\{b|h|w|d\} rs2, offset(cs1)} \\
+% \texttt{sc rs2, offset(rs1)} & \texttt{csc cs2, offset(cs1)} \\
+% \texttt{fl\{h|w|d|q\} fd, offset(rs1)} & \texttt{cfl\{h|w|d|q\} fd, offset(cs1)} \\
+% \texttt{fs\{h|w|d|q\} fs2, offset(rs1)} & \texttt{cfs\{h|w|d|q\} fs2, offset(cs1)} \\
+% \texttt{lr.\{b|h|w|d\} rd, (rs1)} & \texttt{clr.\{b|h|w|d\} rd, (cs1)} \\
+% \texttt{lr.c cd, (rs1)} & \texttt{clr.c cd, (cs1)} \\
+% \texttt{sc.\{b|h|w|d\} rd, rs2, (rs1)} & \texttt{csc.\{b|h|w|d\} rd, rs2, (cs1)} \\
+% \texttt{sc.c cd, cs2, (rs1)} & \texttt{csc.c cd, cs2, (cs1)} \\
+% \texttt{amo<op>.\{w|d\}[.order] rd, rs2, (rs1)} & \texttt{camo<op>.\{w|d\}[.order] rd, rs2, (cs1)} \\
+% \texttt{amo<op>.c[.order] cd, cs2, (rs1)} & \texttt{camo<op>.c[.order] cd, cs2, (cs1)} \\
+% \texttt{auipc rd, offset} & \texttt{auipcc cd, offset} \\
+% \bottomrule
+% \end{tabular}
+% \end{center}
+% \caption{Uncompressed Instructions Dependent on Encoding Mode}
+% \label{table:riscv-capmode-instructions}
+% \end{table}
+
+% \begin{table}
+% \begin{center}
+% \begin{tabular}{lll}
+% \toprule
+% Integer Instruction		& Capability Instruction & ISA \\
+% \midrule
+% \texttt{c.jr rs1} & \texttt{c.cjr cs1} & - \\
+% \texttt{c.jalr rs1} & \texttt{c.cjalr cs1} & - \\
+% \texttt{c.l\{w|d\} rd, offset(rs1)} & \texttt{c.cl\{w|d\} rd, offset(cs1)} & - \\
+% \texttt{c.l\{w|d\}sp rd, offset(sp)} & \texttt{c.cl\{w|d\}sp rd, offset(csp)} & - \\
+% \texttt{c.s\{w|d\} rs2, offset(rs1)} & \texttt{c.cs\{w|d\} rs2, offset(cs1)} & - \\
+% \texttt{c.s\{w|d\}sp rs2, offset(sp)} & \texttt{c.cs\{w|d\}sp rs2, offset(csp)} & - \\
+% \texttt{c.flw fd, offset(rs1)} & \texttt{c.clc cd, offset(cs1)} & RV32 \\
+% \texttt{c.flwsp fd, offset(sp)} & \texttt{c.clcsp cd, offset(csp)} & RV32 \\
+% \texttt{c.fsw fs2, offset(rs1)} & \texttt{c.csc cs2, offset(cs1)} & RV32 \\
+% \texttt{c.fswsp fs2, offset(sp)} & \texttt{c.cscsp cs2, offset(csp)} & RV32 \\
+% \texttt{c.fld fd, offset(rs1)} & \texttt{c.cfld fd, offset(cs1)} & RV32 \\
+% \texttt{c.fldsp fd, offset(sp)} & \texttt{c.cfldsp fd, offset(csp)} & RV32 \\
+% \texttt{c.fsd fs2, offset(rs1)} & \texttt{c.cfsd fs, offset(cs1)} & RV32 \\
+% \texttt{c.fsdsp fs2, offset(sp)} & \texttt{c.cfsdsp fs, offset(csp)} & RV32 \\
+% \texttt{c.fld fd, offset(rs1)} & \texttt{c.clc cd, offset(cs1)} & RV64 \\
+% \texttt{c.fldsp fd, offset(sp)} & \texttt{c.clcsp cd, offset(csp)} & RV64 \\
+% \texttt{c.fsd fs2, offset(rs1)} & \texttt{c.csc cs, offset(cs1)} & RV64 \\
+% \texttt{c.fsdsp fs2, offset(sp)} & \texttt{c.cscsp cs, offset(csp)} & RV64 \\
+% \bottomrule
+% \end{tabular}
+% \end{center}
+% \caption{Compressed Instructions Dependent on Encoding Mode}
+% \label{table:riscv-capmode-instructions-rvc}
+% \end{table}
+
+% 	Table~\ref{table:riscv-capmode-pseudo-remove} lists psuedoinstructions
+% 	removed in capability mode.
+% 	Table~\ref{table:riscv-capmode-pseudo-add} lists psuedoinstructions
+% 	added in capability mode.
+
+% \begin{table}
+% \begin{center}
+% \begin{tabular}{ll}
+% \toprule
+% Pseudoinstruction	& Meaning \\
+% \midrule
+% \texttt{la rd, symbol} & Load address \\
+% \texttt{lla rd, symbol} & Load local address \\
+% \texttt{l\{b|h|w|d\} rd, symbol} & Load global \\
+% \texttt{s\{b|h|w|d\} rd, symbol, rt} & Store global \\
+% \texttt{fl\{w|d\} rd, symbol, rt} & Floating-point load global \\
+% \texttt{fs\{w|d\} rd, symbol, rt} & Floating-point store global \\
+% \midrule
+% \texttt{call symbol} & Call far-away subroutine \\
+% \texttt{tail symbol} & Tail call far-away subroutine \\
+% \bottomrule
+% \end{tabular}
+% \end{center}
+% \caption{Pseudoinstructions Removed in Capability Mode}
+% \label{table:riscv-capmode-pseudo-remove}
+% \end{table}
+
+% \begin{sidewaystable}
+% \begin{center}
+% \begin{tabular}{lll}
+% \toprule
+% Pseudoinstruction	& Base Instruction(s)	& Meaning \\
+% \midrule
+% \texttt{clgc cd, sym} &
+%   \begin{tabular}{@{}l@{}}
+%   \texttt{1: auipcc cd, \%captab\_pcrel\_hi(sym)} \\ \texttt{\ \ \ \ clc cd, \%pcrel\_lo(1b)(cd)}
+%   \end{tabular}
+%  & Load from capability table \\
+% \texttt{cllc cd, sym} &
+%   \begin{tabular}{@{}l@{}}
+%   \texttt{1: auipcc cd, \%pcrel\_hi(sym)} \\ \texttt{\ \ \ \ cincoffset cd, cd, \%pcrel\_lo(1b)}
+%   \end{tabular}
+%  & Load PCC-relative capability \\
+% \midrule
+% \texttt{cjr cs} & \texttt{cjalr cnull, cs} & Jump to capability \\
+% \texttt{cjalr cs} & \texttt{cjalr cra, cs} & Jump to capability and link \\
+% \texttt{cret} & \texttt{cjalr cnull, cra} & Return to capability \\
+% \midrule
+% \texttt{cspecialr cd, scr} & \texttt{cspecialrw cd, scr, cnull} & Read special capability register \\
+% \texttt{cspecialw scr, cs} & \texttt{cspecialrw cnull, scr, cs} & Write special capability register \\
+% \bottomrule
+% \end{tabular}
+% \end{center}
+% \caption{Pseudoinstructions Added in Capability Mode}
+% \label{table:riscv-capmode-pseudo-add}
+% % TODO: should the hyperrefs for these pseudos link to CJALR instead?
+% \insnriscvlabel{cjr}
+% \insnriscvlabel{cret}
+% \insnriscvlabel{cspecialr}
+% \insnriscvlabel{cspecialw}
+% \insnriscvlabel{cllc}
+% \insnriscvlabel{clgc}
+% \end{sidewaystable}
+
+	\section{Encoding Summary}
+
+	The \cherimcuisa{} shares encodings with CHERI-RISC-V.
+	The general-purpose instructions use the 0x5b major opcode and use the RISC-V R-type or I-type encoding formats.
+	CHERI-RISC-V uses the funct3 field from bits 14-12 as a top-level opcode, and funct7 as a secondary
+	opcode for standard 3-register operand instructions.
+	Two-register operand instructions and single-register operand instructions are a subset
+	of the 3-register operand encodings.
+
+	\subsection*{Top-level encoding allocation (funct3 field)}
+	{\rvcherienctablefontsize
+	\rvcherienctabletop
+	}
+
+	\subsection*{Two Source \& Dest encoding allocation (funct7 field)}
+	All three-register-operand (two sources, one destination) CHERI-RISC-V instructions use the RISC-V R-type encoding format, with the same funct field stored in funct7 and a 0 value in funct3.
+
+	\vspace{1em}
+
+	\rvcherirawbitbox{srcsrcdest}{func}{cd}{cs1}{rs2/cs2}
+
+	\vspace{1em}
+
+	{\rvcherienctablefontsize
+	\def\rvcherireservedfootnotemark{$^\dagger$}
+	\rvcherienctablesrcsrcdest\\\\
+	\footnotesize
+	$^\dagger$Reserved for future use.
+	}
+
+	\clearpage
+	\subsection*{Two Source encoding allocation  (rd field)}
+	There are currently no two source instructions but they would be of the following form:
+	\vspace{1em}
+
+	\rvcheriheader
+	\rvcherirawbitbox{srcsrc}{func}{rs1/cs1}{rs2/cs2}
+
+	\vspace{1em}
+
+	{\rvcherienctablefontsize
+	\def\rvcherireservedfootnotemark{$^\dagger$}
+	\rvcherienctablesrcsrc\\\\
+	\footnotesize
+	$^\dagger$Reserved for future use.
+	}
+
+	\vspace{1em}
+
+	\subsection*{One Source encoding allocation (rs2 field)}
+	There are currently no one source instructions but they would be of the following form:
+
+	\vspace{1em}
+
+	\rvcheriheader
+	\rvcherirawbitbox{src}{func}{rs1/cs1}
+
+	\vspace{1em}
+
+	{\rvcherienctablefontsize
+	\def\rvcherireservedfootnotemark{$^\dagger$}
+	\rvcherienctablesrc\\\\
+	\footnotesize
+	$^\dagger$Reserved for future use.
+	}
+
+	\vspace{1em}
+
+	\subsection*{Source \& Dest encoding allocation (rs2 field)}
+	Source \& Dest instructions are of the following form:
+
+	\vspace{1em}
+
+	\rvcheriheader
+	\rvcherirawbitbox{srcdest}{func}{rd/cd}{rs1/cs1}
+
+	\vspace{1em}
+
+	{\rvcherienctablefontsize
+	\def\rvcherireservedfootnotemark{$^\dagger$}
+	\rvcherienctablesrcdest\\\\
+	\footnotesize
+	$^\dagger$Reserved for future use.
+	}
+
+	\vspace{1em}
+
+	\subsection*{Dest-Only encoding allocation (rs1 field)}
+	We do not currently have any one-register-operand instructions, but any
+	future dest-only instructions will be of the following form:
+
+	\vspace{1em}
+
+	\rvcheriheader
+	\rvcherirawbitbox{dest}{func}{rd}
+
+	\vspace{1em}
+
+	{\rvcherienctablefontsize
+	\rvcherienctabledest
+	}

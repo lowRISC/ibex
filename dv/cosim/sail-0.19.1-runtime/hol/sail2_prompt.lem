@@ -1,0 +1,52 @@
+open import Pervasives
+open import Sail2_values
+open import Sail2_prompt_monad
+open import Sail2_state_monad
+open import Sail2_state
+
+let inline bool_of_bitU_fail = Sail2_state.bool_of_bitU_fail
+let inline of_bits_fail = of_bits_failS
+let inline reg_deref = read_regS
+let inline bool_of_bitU_nondet = bool_of_bitU_nondetS
+let inline bools_of_bits_nondet = bools_of_bits_nondetS
+let inline of_bits_nondet = of_bits_nondetS
+let inline mword_nondet = mword_nondetS
+
+val choose_bools : forall 'rv 'e. string -> nat -> monad 'rv (list bool) 'e
+let choose_bools descr n = genlistS (fun _ -> choose_bool descr) n
+
+val choose_bitvector : forall 'regs 'a 'e. Bitvector 'a => string -> nat -> monad 'regs 'a 'e
+let choose_bitvector descr n = choose_bools descr n >>$= fun v -> returnS (of_bools v)
+
+val choose_from_list : forall 'regs 'a 'e. SetType 'a => string -> list 'a -> monad 'regs 'a 'e
+let inline choose_from_list msg xs = chooseS (Set.fromList xs)
+
+val choose_int_in_range : forall 'regs 'e. string -> integer -> integer -> monad 'regs integer 'e
+let choose_int_in_range descr i j =
+  choose_int descr >>$= fun k ->
+  returnS (max i (min j k))
+
+val choose_nat : forall 'regs 'e. string -> monad 'regs integer 'e
+let choose_nat descr = choose_int descr >>$= fun i -> returnS (max 0 i)
+
+(* It would be nice to implement internal_pick as:
+     let internal_pick xs = choose_from_list "internal_pick" xs
+   but that requires SetType 'a annotations on all functions using
+   internal_pick, which Sail doesn't generate (as it's not needed for the
+   prompt monad). *)
+
+val internal_pick : forall 'regs 'a 'e. list 'a -> monad 'regs 'a 'e
+let rec internal_pick xs = match xs with
+  | x :: xs ->
+     if List.length xs > 0 then
+       choose_bool "internal_pick" >>$= fun b ->
+       if b then returnS x else internal_pick xs
+     else returnS x
+  | [] -> failS "internal_pick"
+end
+
+let inline foreachM = foreachS
+let inline whileM = whileS
+let inline untilM = untilS
+let inline and_boolM = and_boolS
+let inline or_boolM = or_boolS

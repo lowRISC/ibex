@@ -1,0 +1,558 @@
+\errorcontextlines 10000
+\usepackage{xparse}
+\usepackage{xspace}
+\usepackage{environ}
+\usepackage{suffix}
+\usepackage{xpatch}
+
+%\renewcommand{\baselinestretch}{2} % double space for editors
+\usepackage[headings]{fullpage}
+\usepackage{bitset}
+\usepackage{comment}
+\usepackage{graphicx}
+\usepackage{marginnote}
+\usepackage{booktabs}
+\usepackage{ifthen}
+\usepackage{bytefield}
+\usepackage{rotating}
+\usepackage{pdflscape}
+\usepackage{tabularx}
+\usepackage{multirow, bigdelim}
+\usepackage{geometry}
+\input{binhex}
+\makeatletter\@ifclassloaded{standalone}{%
+% The svgnames option conflicts with \documentclass[tikz]{standalone}
+\usepackage{xcolor}
+}{% else
+\usepackage[svgnames]{xcolor}
+}\makeatother % end of \@ifclassloaded{standalone}
+\definecolor{lightgray}{gray}{0.8}
+\usepackage{times}
+\usepackage{algpseudocode}
+\newcommand{\note}[2]{{\color{blue}[ Note: #1 - #2]}}
+%%%%
+%%%% For releases, uncomment to cause notes to disappear:
+%%%%
+\renewcommand{\note}[2]{\relax\ifhmode\unskip\fi}
+\newcommand{\deprecated}[2]{{\color{grey}[ Note: #1 - #2]}}
+\newcommand{\arnote}[1]{\note{#1}{Alex R.}}
+\newcommand{\dcnote}[1]{\note{#1}{David C.}}
+\newcommand{\jrtcnote}[1]{\note{#1}{Jess C.}}
+\newcommand{\jwnote}[1]{\note{#1}{Jon W.}}
+\newcommand{\knnote}[1]{\note{#1}{Kyndylan N.}}
+\newcommand{\nwfnote}[1]{\note{#1}{nwf}}
+\newcommand{\psnote}[1]{\note{#1}{Peter S.}}
+\newcommand{\rmnnote}[1]{\note{#1}{Robert N.}}
+
+% \newcommand{\TODO}[1]{{\color{red}TODO #1}}
+\newcommand{\TODO}[1]{}
+
+\usepackage{listings}
+\usepackage{rotating}
+\usepackage{setspace}
+\usepackage{enumitem}
+\setlist{noitemsep}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{makecell}
+\usepackage{hyphenat}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage{tikz}
+ \usetikzlibrary{calc}
+ \usetikzlibrary{decorations.pathreplacing}
+ \usetikzlibrary{fit}
+ \usetikzlibrary{matrix}
+ \usetikzlibrary{positioning}
+ \usetikzlibrary{shapes}
+ \usetikzlibrary{patterns}
+
+\newcommand*{\circnum}[2][gray!25]{%
+  \protect\tikz[baseline={([yshift=-1.5pt]n.base)}]%
+  \protect\node[fill=#1,shape=circle,inner sep=1pt,draw](n){\tiny #2};}
+\newlist{inenum}{enumerate*}{1}
+\setlist[inenum]{label={\circnum{\arabic*}}}
+
+% Makes complex expansions slightly more readable
+\let\ea\expandafter
+
+\usepackage[scaled=0.82]{beramono}
+
+\input{preamble-saildoc-macros}
+
+\makesailcmds{sailRISCV}{sail_latex_riscv}
+\newcommand{\isail}[1]{\lstinline[language=sail]{#1}}
+\newcommand{\optype}[1]{\subsection{#1 Instructions}}
+
+% Must be included later than setspace, otherwise all footnote hyperlinks
+% point to the title page.
+%   PS HACK
+%\usepackage[hidelinks]{hyperref}
+\usepackage[colorlinks]{hyperref}
+% Glossaries must be included after hyperref.
+\usepackage[toc,nonumberlist]{glossaries}
+\usepackage[nottoc]{tocbibind}
+\usepackage[capitalise]{cleveref}
+  \Crefname{appendix}{Appendix}{Appendices}
+  \Crefname{figure}{Figure}{Figures}
+\usepackage{footnote}
+\usepackage{threeparttable}
+\definecolor{CodeColour}{rgb}{0.9,0.9,0.9} %Light grey
+\lstset{basicstyle=\small\ttfamily,
+        stringstyle=\textit, %italic strings
+        keywordstyle=\textbf, %Bold keywords
+        commentstyle=,
+        breaklines=true, % Wrap long lines
+        numbers=left, % Line numbers on the left
+        frame=l, %Border on the left
+        framerule=0.8pt, % Thick border
+        backgroundcolor=\color{CodeColour}, %Coloured code listings
+        numberstyle={\small \oldstylenums},  %tiny, old style line numbers
+		%stepnumber=5, % Number every fifth line
+        numbersep=5pt, % Five points between the line numbers and the text
+        tabsize=4
+}
+\lstdefinelanguage{llvm}
+{
+	morekeywords={private, constant, i8, i32, define, icmp, label, i64, call, void, ret, getelementptr, br, load, align, nounwind},
+	morekeywords={addrspace, inttoptr, ptrtoint, tail},
+	morecomment=[l];
+}%
+
+\lstdefinelanguage{sail}
+  { morekeywords={val,function,cast,type,forall,foreach,from,to,overload,operator,enum,union,undefined,exit,and,assert,sizeof,
+      scattered,register,inc,dec,if,then,else,effect,let,as,@,in,end,Type,Int,Order,match,clause,struct},
+    morestring=[b]",
+    stringstyle={\ttfamily\color{red}},
+    showstringspaces=false,
+    morecomment=[l][\itshape\color{DarkGreen}]{//},
+    morecomment=[s][\itshape\color{DarkGreen}]{/*}{*/},
+    deletestring=[bd]{'},
+    escapechar=\#,
+    emphstyle={\it},
+    numbers=none,
+    frame=none,
+    backgroundcolor=\color{White},
+    aboveskip=0em,
+    belowskip=0em,
+  }
+
+\lstdefinelanguage{bluespec}
+{ morekeywords={function,endfunction,for,struct,typedef,Integer,Bit,Bool,TSub,TAdd,return,if,method},
+  morestring=[b]"'=’-<>,
+  stringstyle={\ttfamily\color{red}},
+  morecomment=[l][\itshape\color{DarkGreen}]{//},
+  morecomment=[s][\itshape\color{DarkGreen}]{/*}{*/},
+  emphstyle={\it},
+}
+
+\lstnewenvironment{ccodelisting}{\lstset{language=C}}{}
+\lstnewenvironment{llvmlisting}{\lstset{language={llvm}}}{}
+\newcommand{\ccode}[1]{\lstinline[backgroundcolor=\color{white},language=C]|#1|}
+\newcommand{\llvmir}[1]{\lstinline[backgroundcolor=\color{white},language={llvm}]|#1|}
+\newcommand{\asm}[1]{\lstinline[backgroundcolor=\color{white},language={}]|#1|}
+\lstnewenvironment{asmcode}{\lstset{language=}}{}
+\newcommand{\regname}[1]{{\small\ttfamily\$#1}}
+
+\newcommand{\baselineboxformatting}[1]{%
+  % Measure size of contents
+  \sbox0{#1}%
+  % Use the difference between the contents' height and the bitbox's height,
+  % clamped to [-.44\baselineskip, 0], as our minimum depth.
+  \setlength{\skip0}{\ht0 - \height}%
+  \ifdim\skip0>0pt%
+    \setlength{\skip0}{0}%
+  \else%
+    \ifdim\skip0<-.44\baselineskip%
+      \setlength{\skip0}{-.44\baselineskip}%
+    \fi%
+  \fi%
+  \centering\rule[\skip0]{0pt}{\height}#1%
+}
+\bytefieldsetup{boxformatting=\baselineboxformatting}
+
+% Well this is gross, but it lets us align baselines between labels and
+% bytefields in tabular environments... by pretending that the label is
+% a "bytefield" of one bit of the right width, with no bounding lines.
+\newcommand{\raiseforbf}[1]{%
+  {\begin{bytefield}[bitwidth=\widthof{#1}]{1} \bitbox[]{1}{#1} \end{bytefield}}%
+}
+
+\makeatletter
+\newdimen\rotateinbitbox@height
+\newcommand{\rotateinbitbox}[1]{%
+  \rotateinbitbox@height=\height%
+  \rotatebox{90}{\makebox[\rotateinbitbox@height][c]{#1}}%
+}
+\makeatother
+
+\hyphenation{CheriBSD}
+\hyphenation{FreeBSD}
+\hyphenation{CTSRD}
+\hyphenation{CheriRTOS}
+\hyphenation{CompartOS}
+
+\newcommand{\cheriot}{CHERIoT}
+\newcommand{\cherimcu}{\cheriot{}}
+\newcommand{\cherimcuos}{\cheriot{} RTOS}
+\newcommand{\cherimcuisa}{\cheriot{} ISA}
+
+\reversemarginpar
+\setlength{\marginparwidth}{1.2in}
+\let\oldmarginpar\marginpar
+\renewcommand\marginpar[1]{\-\oldmarginpar[\raggedright\footnotesize #1]%
+{\raggedright\footnotesize #1}}
+
+\newcommand{\defn}[1]{\textbf{#1}}
+\newcommand{\flag}[1]{{\tt \small #1}}
+\newcommand{\literal}[1]{{\tt \small #1}}
+\newcommand{\function}[1]{{\tt \small #1}}
+\newcommand{\keyword}[1]{\textit{#1}}
+
+% Register names
+\newcommand{\reg}[1]{{\bf R#1}}		% MIPS register numbers
+\newcommand{\creg}[1]{{\bf C#1}}	% Capability register numbers
+\newcommand{\mreg}[1]{{\bf \$#1}}	% MIPS ABI register names
+\newcommand{\PC}{{\bf PC}}
+\newcommand{\SP}{{\bf SP}}
+\newcommand{\EPC}{{\bf EPC}}
+\newcommand{\PCC}{{\bf PCC}}
+\newcommand{\CGP}{{\bf CGP}}
+\newcommand{\DDC}{{\bf DDC}}
+\newcommand{\CNULL}{{\bf CNULL}}
+\newcommand{\IDC}{{\bf IDC}}
+\newcommand{\TSC}{{\bf TSC}}
+\newcommand{\KRC}{{\bf KR1C}}
+\newcommand{\KQC}{{\bf KR2C}}
+\newcommand{\KCC}{{\bf KCC}}
+\newcommand{\KDC}{{\bf KDC}}
+\newcommand{\ErrorEPCC}{{\bf ErrorEPCC}}
+\newcommand{\EPCC}{{\bf EPCC}}
+\newcommand{\CULR}{{\bf CULR}}
+\newcommand{\CPLR}{{\bf CPLR}}
+\newcommand{\EXL}{{\bf EXL}}
+\newcommand{\KSU}{{\bf KSU}}
+\newcommand{\ErrorEPC}{{\bf ErrorEPC}}
+\newcommand{\causereg}{{\bf cause}}
+\newcommand{\capcausereg}{{\bf capcause}}
+
+% RISC-V new register names
+\newcommand{\UTCC}{{\bf UTCC}}
+\newcommand{\UTDC}{{\bf UTDC}}
+\newcommand{\UScratchC}{{\bf UScratchC}}
+\newcommand{\UEPCC}{{\bf UEPCC}}
+\newcommand{\STCC}{{\bf STCC}}
+\newcommand{\STDC}{{\bf STDC}}
+\newcommand{\SScratchC}{{\bf SScratchC}}
+\newcommand{\SEPCC}{{\bf SEPCC}}
+\newcommand{\MTCC}{{\bf MTCC}}
+\newcommand{\MTDC}{{\bf MTDC}}
+\newcommand{\MScratchC}{{\bf MScratchC}}
+\newcommand{\MEPCC}{{\bf MEPCC}}
+\newcommand{\xTCC}{{\bf {\it x}TCC}}
+\newcommand{\xTDC}{{\bf {\it x}TDC}}
+\newcommand{\xScratchC}{{\bf {\it x}ScratchC}}
+\newcommand{\xEPCC}{{\bf {\it x}EPCC}}
+\newcommand{\xccsr}{\texttt{{\it x}ccsr}}
+\newcommand{\mccsr}{\texttt{mccsr}}
+\newcommand{\sccsr}{\texttt{sccsr}}
+\newcommand{\uccsr}{\texttt{uccsr}}
+\newcommand{\mshwm}{\texttt{mshwm}}
+\newcommand{\mshwmb}{\texttt{mshwmb}}
+% RISC-V existing registers
+\newcommand{\xtval}{\texttt{{\it x}tval}}
+\newcommand{\xtvec}{\texttt{{\it x}tvec}}
+\newcommand{\mtval}{\texttt{mtval}}
+\newcommand{\mtvec}{\texttt{mtvec}}
+\newcommand{\stvec}{\texttt{stvec}}
+\newcommand{\utvec}{\texttt{utvec}}
+\newcommand{\xepc}{\texttt{{\it x}epc}}
+\newcommand{\mepc}{\texttt{mepc}}
+\newcommand{\sepc}{\texttt{sepc}}
+\newcommand{\uepc}{\texttt{uepc}}
+\newcommand{\xcause}{\texttt{{\it x}cause}}
+\newcommand{\mcause}{\texttt{mcause}}
+\newcommand{\scause}{\texttt{scause}}
+\newcommand{\ucause}{\texttt{ucause}}
+\newcommand{\xRET}{\insnnoref{{\it x}RET}}
+
+\newcommand{\AL}{{\bf AL}}
+\newcommand{\AX}{{\bf AX}}
+\newcommand{\FS}{{\bf FS}}
+\newcommand{\GS}{{\bf GS}}
+\newcommand{\EAX}{{\bf EAX}}
+\newcommand{\CAX}{{\bf CAX}}
+\newcommand{\CBP}{{\bf CBP}}
+\newcommand{\CBX}{{\bf CBX}}
+\newcommand{\CFS}{{\bf CFS}}
+\newcommand{\CGS}{{\bf CGS}}
+\newcommand{\CDI}{{\bf CDI}}
+\newcommand{\CIP}{{\bf CIP}}
+\newcommand{\KGS}{{\bf KGS}}
+\newcommand{\CRTWO}{{\bf CR2}}
+\newcommand{\CRFOUR}{{\bf CR4}}
+\newcommand{\CRFIVE}{{\bf CR5}}
+\newcommand{\CRTWELVE}{{\bf CR12}}
+\newcommand{\CS}{{\bf CS}}
+\newcommand{\CSI}{{\bf CSI}}
+\newcommand{\CSP}{{\bf CSP}}
+\newcommand{\IDT}{{\bf IDT}}
+\newcommand{\IST}{{\bf IST}}
+\newcommand{\KSC}{{\bf KSC}}
+\newcommand{\RAX}{{\bf RAX}}
+\newcommand{\RBP}{{\bf RBP}}
+\newcommand{\RBX}{{\bf RBX}}
+\newcommand{\RCX}{{\bf RCX}}
+\newcommand{\RDI}{{\bf RDI}}
+\newcommand{\REX}{{\bf REX}}
+\newcommand{\RIP}{{\bf RIP}}
+\newcommand{\RSI}{{\bf RSI}}
+\newcommand{\RSP}{{\bf RSP}}
+\newcommand{\RFLAGS}{{\bf RFLAGS}}
+\newcommand{\TSS}{{\bf TSS}}
+\newcommand{\CSTAR}{{\bf CSTAR}}
+\newcommand{\STAR}{{\bf IA32\_STAR}}
+\newcommand{\LSTAR}{{\bf IA32\_LSTAR}}
+\newcommand{\KGSBASE}{{\bf IA32\_KERNEL\_GS\_BASE}}
+
+% Capability register fields
+\newcommand{\ctag}{{\bf tag}}
+\newcommand{\csealed}{{\bf s}}
+\newcommand{\cperms}{{\bf perms}}
+\newcommand{\cuperms}{{\bf uperms}}
+\newcommand{\cflags}{{\bf flags}}
+\newcommand{\cotype}{{\bf otype}}
+\newcommand{\ccursor}{{\bf cursor}}
+\newcommand{\caddress}{{\bf address}}
+\newcommand{\cbase}{{\bf base}}
+\newcommand{\clength}{{\bf length}}
+\newcommand{\coffset}{{\bf offset}}
+\newcommand{\cbound}{{\bf top}}
+
+%  CHERI-128 v1 capability fields
+\newcommand{\ctobase}{{\bf toBase}}
+\newcommand{\ctobound}{{\bf toBound}}
+\newcommand{\cformat}{{\bf FT}}
+\newcommand{\cexponent}{{\bf e}}
+\newcommand{\csign}{{\bf SN}}
+
+%  CHERI-128 v1 capability fields
+\newcommand{\cbasebits}{{\bf baseBits}}
+\newcommand{\ctopbits}{{\bf topBits}}
+\newcommand{\ccarries}{{\bf C}}
+
+% CHERI-128 candidate 3 fields
+\newcommand{\ctop}{{\bf top}}
+%\newcommand{\rbase}{\textbf{base\textsubscript{req}}}
+\newcommand{\rbase}{\textbf{base\_req}}
+\newcommand{\cbasecorrection}{\textbf{c\textsubscript{b}}}
+%\newcommand{\cbasecorrection}{\textbf{c\_b}}
+%\newcommand{\rlength}{\textbf{length\textsubscript{req}}}
+\newcommand{\rlength}{\textbf{rlength}}
+\newcommand{\ctopcorrection}{\textbf{c\textsubscript{t}}}
+%\newcommand{\ctopcorrection}{\textbf{ctop}} - SWM: why use this version?
+\newcommand{\cB}{{\bf B}}
+\newcommand{\cT}{{\bf T}}
+\newcommand{\caddr}{{\bf a}}
+
+% Architectural parameters
+\newcommand{\xlen}{{\texttt{XLEN}}}
+\newcommand{\clen}{{\texttt{CLEN}}}
+
+% Field used in several compression formats
+\newcommand{\cmuperms}{$\boldsymbol{\mu}\textbf{perms}$}
+
+% Stylized permission bit.  Starred form omits Permit\_ prefix for informal
+% references.
+\NewDocumentCommand{\capperm}{sm}{\textsc{\small\IfBooleanTF{#1}{}{Permit\_}#2}\xspace}
+% Permission bit convenience macros
+% We define a short form for normal use and a long @-command form for internal
+% use by saildoc.
+\makeatletter
+\NewDocumentCommand{\makecapperm}{smm}{%
+  \def\@make@capperm##1##2{%
+    \ea\NewDocumentCommand\csname @capperm@\detokenize{##2#3}\endcsname{s}{%
+      \IfBooleanTF{####1}{\capperm*}{\capperm##1}{#3}%
+    }%
+    \ea\ea\ea\let\ea\csname capperm#2\ea\endcsname%
+      \csname @capperm@\detokenize{##2#3}\endcsname%
+  }%
+  \IfBooleanTF{#1}{\@make@capperm{*}{}}{\@make@capperm{}{Permit\_}}%
+  \let\@make@capperm\undefined%
+}
+\makeatother
+\makecapperm{ASR}{Access\_System\_Registers}
+\makecapperm*{ID}{Iterrupt\_Disable}
+\makecapperm{Cid}{Set\_CID}
+\makecapperm{CInvoke}{CInvoke}
+\makecapperm{L}{Load}
+\makecapperm{LC}{Load\_Capability}
+\makecapperm{LM}{Load\_Mutable}
+\makecapperm{S}{Store}
+\makecapperm{Seal}{Seal}
+\makecapperm{MC}{Load\_Store\_Capability}
+\makecapperm{SC}{Store\_Capability}
+\makecapperm{SLC}{Store\_Local\_Capability}
+\makecapperm{Unseal}{Unseal}
+\makecapperm{X}{Execute}
+% No Permit_, so always use starred form even if not given
+\makecapperm*{G}{Global}
+\makecapperm{ILG}{Load\_Global}
+\makecapperm*{AL}{Allocator}
+\makecapperm*{UZ}{User\_Perm0}
+
+\makeatletter
+\newcommand{\@insnlabelname}[2]{insn:#1:#2}
+\newcommand{\@insnlabel}[2]{\label{\@insnlabelname{#1}{#2}}}
+
+% If no optional argument is passed (internally, if an empty second argument is
+% passed), the lowercased text is the label reference
+\newcommand{\@insnrefnofont}[3]{{%
+  \if\relax\detokenize{#2}\relax% optional arg not passed
+    % NB: \lowercase is not expandable so is outside the \def.
+    \lowercase{\def\@insnrefnofont@insnname{#3}}%
+  \else% optional arg passed
+    \def\@insnrefnofont@insnname{#2}%
+  \fi%
+  \hyperref[\@insnlabelname{#1}{\@insnrefnofont@insnname}]{#3}%
+}}
+
+\NewDocumentCommand{\@insnfmt}{sm}{%
+  \IfBooleanTF{#1}{#2}{{\tt \small #2}}%
+}
+
+\NewDocumentCommand{\@insnref}{smmm}{%
+  \IfBooleanTF{#1}{\@insnfmt*}{\@insnfmt}{\@insnrefnofont{#2}{#3}{#4}}%
+}
+
+\newcommand{\@makeinsncmds@explicit}[2]{%
+  \ea\newcommand\csname insn#1labelname\endcsname[1]{\@insnlabelname{#2}{##1}}%
+  \ea\newcommand\csname insn#1label\endcsname[1]{\@insnlabel{#2}{##1}}%
+  \ea\NewDocumentCommand\csname insn#1ref\endcsname{sO{}m}{%
+    \IfBooleanTF{##1}{\@insnref*}{\@insnref}{#2}{##2}{##3}%
+  }%
+}
+\newcommand{\@makeinsncmds}[1]{\@makeinsncmds@explicit{#1}{#1}}
+
+\@makeinsncmds{mips}
+\@makeinsncmds{riscv}
+
+\newcommand{\definsnarch}[1]{\def\@definsnarch{#1}}
+\@makeinsncmds@explicit{}{\@definsnarch}
+
+\let\insnnoref\@insnfmt
+\makeatother
+
+% Default is RISC-V
+\definsnarch{riscv}
+
+\newcommand{\cherithreeop}[5][NOHEADER]{
+\begin{bytefield}{32}
+	\ifthenelse{\equal{#1}{NOHEADER}}{}
+	{\bitheader[endianness=big]{0,5,6,10,11,15,16,20,21,25,26,31}}\\
+	\bitbox{6}{{\color{Grey}0x12}}
+	\bitbox{5}{0x0}
+	\bitbox{5}{#3}
+	\bitbox{5}{#4}
+	\bitbox{5}{#5}
+	\bitbox{6}{#2}
+\end{bytefield}%
+}
+\newcommand{\cheritwoop}[4][NOHEADER]{\cherithreeop[#1]{{\color{Grey}0x3f}}{#3}{#4}{#2}}
+\newcommand{\cherioneop}[3][NOHEADER]{\cheritwoop[#1]{{\color{Grey}0x1f}}{#3}{#2}}
+
+
+\newcommand{\usesDDCinsteadofNULL}[1]{%
+\paragraph{Note:}
+If the encoded value of \emph{#1} is zero, this instruction will use
+\DDC{} as the \emph{#1} operand
+}
+
+% When specifying instructions in pseudocode:
+\newcommand{\algorithmicnot}{\textbf{not}}
+\newcommand{\algorithmicand}{\textbf{and}}
+\newcommand{\algorithmicor}{\textbf{or}}
+\newcommand{\algorithmictrue}{\textbf{true}}
+\newcommand{\algorithmicfalse}{\textbf{false}}
+\newcommand{\algorithmicwith}{\textbf{with}}
+
+\DeclareMathOperator{\msb}{msb}
+\DeclareMathOperator{\clz}{clz}
+
+% Markdown and Sail's LaTeX backend don't do well with literal < and >, so add
+% \lt and \gt macros like \le and \ge.
+\let\lt<
+\let\gt>
+
+\makeatletter
+\newcount\@autogrid@col
+\newcount\@autogrid@cols
+\def\@autogrid@cr{%
+  \global\advance\@autogrid@col 1\relax%
+  \ifnum\@autogrid@col=\@autogrid@cols%
+    \def\@autogrid@cr@body{\cr}%
+    \global\@autogrid@col=0\relax%
+  \else%
+    \def\@autogrid@cr@body{&}%
+  \fi%
+  \@autogrid@cr@body%
+  \let\\\@autogrid@cr%
+}
+\newenvironment{autogrid}[1]{%
+  \let\@autogrid@format\@empty%
+  \@autogrid@cols=\numexpr(#1)\relax%
+  \@autogrid@col=0\relax%
+  \loop\ifnum\@autogrid@col<\@autogrid@cols%
+    \ea\def\ea\@autogrid@format\ea{\@autogrid@format l}%
+    \advance\@autogrid@col 1\relax%
+  \repeat%
+  \@autogrid@col=0\relax%
+  \def\@autogrid@begintabular{\begin{tabular}}%
+  \ea\@autogrid@begintabular\ea{\@autogrid@format}%
+  \let\\\@autogrid@cr%
+}{%
+  \end{tabular}%
+}
+\makeatother
+
+
+\makeatletter\@ifclassloaded{standalone}{%
+% No need for glossary or bibliography when building tikz figures
+}{% else
+\renewcommand{\glossarypreamble}{\label{glossary}}
+\makeglossaries
+
+\input{glossary}
+
+
+%% bibliography setup:
+% UK date format in bibliography:
+\usepackage[british]{babel}
+\usepackage{csquotes} % recommended for biblatex
+% list up to 99 names instead of the default 3 and set
+% giveninits=true to match the abbrv bibtex style.
+\usepackage[backend=bibtex,bibencoding=utf8,style=numeric,sortcites,maxnames=99,giveninits=true]{biblatex}
+\addbibresource{cheri.bib}
+% Note: \citetitle formats the title differently depending on the type of entry,
+% whereas this macro always uses \textit{}
+\newcommand*{\citetitleit}[1]{\textit{\citefield{#1}{title}}}
+
+
+% Skip unncessary bibtex fields in the bibliography
+\AtEveryBibitem{%
+\clearfield{issn}%
+\clearfield{urldate}%
+\clearfield{urlyear}%
+\clearfield{review}%
+\clearfield{series}%
+\clearfield{note}%
+\clearfield{address}%
+% avoid printing both isbn and DOI
+\iffieldundef{doi}{}{\clearfield{isbn}}%
+% we don't want 15 JJ Thomson Avenue, Cambridge for every techreport
+% Note: location is a list not a field so we need \clearlist
+\clearlist{location}%
+}
+}\makeatother % end of \@ifclassloaded{standalone}

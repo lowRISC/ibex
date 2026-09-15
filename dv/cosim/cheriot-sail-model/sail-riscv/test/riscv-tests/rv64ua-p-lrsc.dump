@@ -1,0 +1,709 @@
+
+rv64ua-p-lrsc:     file format elf64-littleriscv
+
+
+Disassembly of section .text.init:
+
+0000000080000000 <_start>:
+    80000000:	04c0006f          	j	8000004c <reset_vector>
+
+0000000080000004 <trap_vector>:
+    80000004:	34202f73          	csrr	t5,mcause
+    80000008:	00800f93          	li	t6,8
+    8000000c:	03ff0a63          	beq	t5,t6,80000040 <write_tohost>
+    80000010:	00900f93          	li	t6,9
+    80000014:	03ff0663          	beq	t5,t6,80000040 <write_tohost>
+    80000018:	00b00f93          	li	t6,11
+    8000001c:	03ff0263          	beq	t5,t6,80000040 <write_tohost>
+    80000020:	80000f17          	auipc	t5,0x80000
+    80000024:	fe0f0f13          	addi	t5,t5,-32 # 0 <_start-0x80000000>
+    80000028:	000f0463          	beqz	t5,80000030 <trap_vector+0x2c>
+    8000002c:	000f0067          	jr	t5
+    80000030:	34202f73          	csrr	t5,mcause
+    80000034:	000f5463          	bgez	t5,8000003c <handle_exception>
+    80000038:	0040006f          	j	8000003c <handle_exception>
+
+000000008000003c <handle_exception>:
+    8000003c:	5391e193          	ori	gp,gp,1337
+
+0000000080000040 <write_tohost>:
+    80000040:	00001f17          	auipc	t5,0x1
+    80000044:	fc3f2023          	sw	gp,-64(t5) # 80001000 <tohost>
+    80000048:	ff9ff06f          	j	80000040 <write_tohost>
+
+000000008000004c <reset_vector>:
+    8000004c:	f1402573          	csrr	a0,mhartid
+    80000050:	00051063          	bnez	a0,80000050 <reset_vector+0x4>
+    80000054:	00000297          	auipc	t0,0x0
+    80000058:	01028293          	addi	t0,t0,16 # 80000064 <reset_vector+0x18>
+    8000005c:	30529073          	csrw	mtvec,t0
+    80000060:	18005073          	csrwi	satp,0
+    80000064:	00000297          	auipc	t0,0x0
+    80000068:	01c28293          	addi	t0,t0,28 # 80000080 <reset_vector+0x34>
+    8000006c:	30529073          	csrw	mtvec,t0
+    80000070:	fff00293          	li	t0,-1
+    80000074:	3b029073          	csrw	pmpaddr0,t0
+    80000078:	01f00293          	li	t0,31
+    8000007c:	3a029073          	csrw	pmpcfg0,t0
+    80000080:	00000297          	auipc	t0,0x0
+    80000084:	01828293          	addi	t0,t0,24 # 80000098 <reset_vector+0x4c>
+    80000088:	30529073          	csrw	mtvec,t0
+    8000008c:	30205073          	csrwi	medeleg,0
+    80000090:	30305073          	csrwi	mideleg,0
+    80000094:	30405073          	csrwi	mie,0
+    80000098:	00000193          	li	gp,0
+    8000009c:	00000297          	auipc	t0,0x0
+    800000a0:	f6828293          	addi	t0,t0,-152 # 80000004 <trap_vector>
+    800000a4:	30529073          	csrw	mtvec,t0
+    800000a8:	00100513          	li	a0,1
+    800000ac:	01f51513          	slli	a0,a0,0x1f
+    800000b0:	00055863          	bgez	a0,800000c0 <reset_vector+0x74>
+    800000b4:	0ff0000f          	fence
+    800000b8:	00100193          	li	gp,1
+    800000bc:	00000073          	ecall
+    800000c0:	80000297          	auipc	t0,0x80000
+    800000c4:	f4028293          	addi	t0,t0,-192 # 0 <_start-0x80000000>
+    800000c8:	00028e63          	beqz	t0,800000e4 <reset_vector+0x98>
+    800000cc:	10529073          	csrw	stvec,t0
+    800000d0:	0000b2b7          	lui	t0,0xb
+    800000d4:	1092829b          	addiw	t0,t0,265
+    800000d8:	30229073          	csrw	medeleg,t0
+    800000dc:	30202373          	csrr	t1,medeleg
+    800000e0:	f4629ee3          	bne	t0,t1,8000003c <handle_exception>
+    800000e4:	30005073          	csrwi	mstatus,0
+    800000e8:	00000297          	auipc	t0,0x0
+    800000ec:	01428293          	addi	t0,t0,20 # 800000fc <reset_vector+0xb0>
+    800000f0:	34129073          	csrw	mepc,t0
+    800000f4:	f1402573          	csrr	a0,mhartid
+    800000f8:	30200073          	mret
+    800000fc:	00002517          	auipc	a0,0x2
+    80000100:	f0450513          	addi	a0,a0,-252 # 80002000 <begin_signature>
+    80000104:	00100593          	li	a1,1
+    80000108:	00b5262f          	amoadd.w	a2,a1,(a0)
+    8000010c:	00100693          	li	a3,1
+    80000110:	fed67ee3          	bleu	a3,a2,8000010c <reset_vector+0xc0>
+    80000114:	00052583          	lw	a1,0(a0)
+    80000118:	fed5eee3          	bltu	a1,a3,80000114 <reset_vector+0xc8>
+
+000000008000011c <test_2>:
+    8000011c:	00002517          	auipc	a0,0x2
+    80000120:	eec50513          	addi	a0,a0,-276 # 80002008 <foo>
+    80000124:	000387b7          	lui	a5,0x38
+    80000128:	ab77879b          	addiw	a5,a5,-1353
+    8000012c:	00e79793          	slli	a5,a5,0xe
+    80000130:	eef78793          	addi	a5,a5,-273 # 37eef <_start-0x7ffc8111>
+    80000134:	18f5272f          	sc.w	a4,a5,(a0)
+    80000138:	00100e93          	li	t4,1
+    8000013c:	00200193          	li	gp,2
+    80000140:	0dd71663          	bne	a4,t4,8000020c <fail>
+
+0000000080000144 <test_3>:
+    80000144:	00002717          	auipc	a4,0x2
+    80000148:	ec472703          	lw	a4,-316(a4) # 80002008 <foo>
+    8000014c:	00000e93          	li	t4,0
+    80000150:	00300193          	li	gp,3
+    80000154:	0bd71c63          	bne	a4,t4,8000020c <fail>
+
+0000000080000158 <test_4>:
+    80000158:	00002517          	auipc	a0,0x2
+    8000015c:	eb050513          	addi	a0,a0,-336 # 80002008 <foo>
+    80000160:	00002597          	auipc	a1,0x2
+    80000164:	2ac58593          	addi	a1,a1,684 # 8000240c <fooTest3>
+    80000168:	1005a5af          	lr.w	a1,(a1)
+    8000016c:	18b5272f          	sc.w	a4,a1,(a0)
+    80000170:	00100e93          	li	t4,1
+    80000174:	00400193          	li	gp,4
+    80000178:	09d71a63          	bne	a4,t4,8000020c <fail>
+    8000017c:	00002517          	auipc	a0,0x2
+    80000180:	e8c50513          	addi	a0,a0,-372 # 80002008 <foo>
+    80000184:	40000593          	li	a1,1024
+    80000188:	00160613          	addi	a2,a2,1
+    8000018c:	1005272f          	lr.w	a4,(a0)
+    80000190:	00c70733          	add	a4,a4,a2
+    80000194:	18e5272f          	sc.w	a4,a4,(a0)
+    80000198:	fe071ae3          	bnez	a4,8000018c <test_4+0x34>
+    8000019c:	fff58593          	addi	a1,a1,-1
+    800001a0:	fe0596e3          	bnez	a1,8000018c <test_4+0x34>
+    800001a4:	00002517          	auipc	a0,0x2
+    800001a8:	e6050513          	addi	a0,a0,-416 # 80002004 <barrier>
+    800001ac:	00100593          	li	a1,1
+    800001b0:	00b5202f          	amoadd.w	zero,a1,(a0)
+    800001b4:	00052583          	lw	a1,0(a0)
+    800001b8:	fed5cee3          	blt	a1,a3,800001b4 <test_4+0x5c>
+    800001bc:	0ff0000f          	fence
+
+00000000800001c0 <test_5>:
+    800001c0:	00002517          	auipc	a0,0x2
+    800001c4:	e4852503          	lw	a0,-440(a0) # 80002008 <foo>
+    800001c8:	00969593          	slli	a1,a3,0x9
+    800001cc:	40b50533          	sub	a0,a0,a1
+    800001d0:	fff68693          	addi	a3,a3,-1
+    800001d4:	fe06dce3          	bgez	a3,800001cc <test_5+0xc>
+    800001d8:	00000e93          	li	t4,0
+    800001dc:	00500193          	li	gp,5
+    800001e0:	03d51663          	bne	a0,t4,8000020c <fail>
+
+00000000800001e4 <test_6>:
+    800001e4:	00002517          	auipc	a0,0x2
+    800001e8:	e2450513          	addi	a0,a0,-476 # 80002008 <foo>
+    800001ec:	100525af          	lr.w	a1,(a0)
+    800001f0:	180525af          	sc.w	a1,zero,(a0)
+    800001f4:	fe059ce3          	bnez	a1,800001ec <test_6+0x8>
+    800001f8:	180525af          	sc.w	a1,zero,(a0)
+    800001fc:	00100e93          	li	t4,1
+    80000200:	00600193          	li	gp,6
+    80000204:	01d59463          	bne	a1,t4,8000020c <fail>
+    80000208:	00301c63          	bne	zero,gp,80000220 <pass>
+
+000000008000020c <fail>:
+    8000020c:	0ff0000f          	fence
+    80000210:	00018063          	beqz	gp,80000210 <fail+0x4>
+    80000214:	00119193          	slli	gp,gp,0x1
+    80000218:	0011e193          	ori	gp,gp,1
+    8000021c:	00000073          	ecall
+
+0000000080000220 <pass>:
+    80000220:	0ff0000f          	fence
+    80000224:	00100193          	li	gp,1
+    80000228:	00000073          	ecall
+    8000022c:	c0001073          	unimp
+    80000230:	0000                	unimp
+    80000232:	0000                	unimp
+    80000234:	0000                	unimp
+    80000236:	0000                	unimp
+    80000238:	0000                	unimp
+    8000023a:	0000                	unimp
+    8000023c:	0000                	unimp
+    8000023e:	0000                	unimp
+    80000240:	0000                	unimp
+    80000242:	0000                	unimp
+
+Disassembly of section .data:
+
+0000000080002000 <begin_signature>:
+    80002000:	0000                	unimp
+    80002002:	0000                	unimp
+
+0000000080002004 <barrier>:
+    80002004:	0000                	unimp
+    80002006:	0000                	unimp
+
+0000000080002008 <foo>:
+    80002008:	0000                	unimp
+    8000200a:	0000                	unimp
+    8000200c:	0000                	unimp
+    8000200e:	0000                	unimp
+    80002010:	0000                	unimp
+    80002012:	0000                	unimp
+    80002014:	0000                	unimp
+    80002016:	0000                	unimp
+    80002018:	0000                	unimp
+    8000201a:	0000                	unimp
+    8000201c:	0000                	unimp
+    8000201e:	0000                	unimp
+    80002020:	0000                	unimp
+    80002022:	0000                	unimp
+    80002024:	0000                	unimp
+    80002026:	0000                	unimp
+    80002028:	0000                	unimp
+    8000202a:	0000                	unimp
+    8000202c:	0000                	unimp
+    8000202e:	0000                	unimp
+    80002030:	0000                	unimp
+    80002032:	0000                	unimp
+    80002034:	0000                	unimp
+    80002036:	0000                	unimp
+    80002038:	0000                	unimp
+    8000203a:	0000                	unimp
+    8000203c:	0000                	unimp
+    8000203e:	0000                	unimp
+    80002040:	0000                	unimp
+    80002042:	0000                	unimp
+    80002044:	0000                	unimp
+    80002046:	0000                	unimp
+    80002048:	0000                	unimp
+    8000204a:	0000                	unimp
+    8000204c:	0000                	unimp
+    8000204e:	0000                	unimp
+    80002050:	0000                	unimp
+    80002052:	0000                	unimp
+    80002054:	0000                	unimp
+    80002056:	0000                	unimp
+    80002058:	0000                	unimp
+    8000205a:	0000                	unimp
+    8000205c:	0000                	unimp
+    8000205e:	0000                	unimp
+    80002060:	0000                	unimp
+    80002062:	0000                	unimp
+    80002064:	0000                	unimp
+    80002066:	0000                	unimp
+    80002068:	0000                	unimp
+    8000206a:	0000                	unimp
+    8000206c:	0000                	unimp
+    8000206e:	0000                	unimp
+    80002070:	0000                	unimp
+    80002072:	0000                	unimp
+    80002074:	0000                	unimp
+    80002076:	0000                	unimp
+    80002078:	0000                	unimp
+    8000207a:	0000                	unimp
+    8000207c:	0000                	unimp
+    8000207e:	0000                	unimp
+    80002080:	0000                	unimp
+    80002082:	0000                	unimp
+    80002084:	0000                	unimp
+    80002086:	0000                	unimp
+    80002088:	0000                	unimp
+    8000208a:	0000                	unimp
+    8000208c:	0000                	unimp
+    8000208e:	0000                	unimp
+    80002090:	0000                	unimp
+    80002092:	0000                	unimp
+    80002094:	0000                	unimp
+    80002096:	0000                	unimp
+    80002098:	0000                	unimp
+    8000209a:	0000                	unimp
+    8000209c:	0000                	unimp
+    8000209e:	0000                	unimp
+    800020a0:	0000                	unimp
+    800020a2:	0000                	unimp
+    800020a4:	0000                	unimp
+    800020a6:	0000                	unimp
+    800020a8:	0000                	unimp
+    800020aa:	0000                	unimp
+    800020ac:	0000                	unimp
+    800020ae:	0000                	unimp
+    800020b0:	0000                	unimp
+    800020b2:	0000                	unimp
+    800020b4:	0000                	unimp
+    800020b6:	0000                	unimp
+    800020b8:	0000                	unimp
+    800020ba:	0000                	unimp
+    800020bc:	0000                	unimp
+    800020be:	0000                	unimp
+    800020c0:	0000                	unimp
+    800020c2:	0000                	unimp
+    800020c4:	0000                	unimp
+    800020c6:	0000                	unimp
+    800020c8:	0000                	unimp
+    800020ca:	0000                	unimp
+    800020cc:	0000                	unimp
+    800020ce:	0000                	unimp
+    800020d0:	0000                	unimp
+    800020d2:	0000                	unimp
+    800020d4:	0000                	unimp
+    800020d6:	0000                	unimp
+    800020d8:	0000                	unimp
+    800020da:	0000                	unimp
+    800020dc:	0000                	unimp
+    800020de:	0000                	unimp
+    800020e0:	0000                	unimp
+    800020e2:	0000                	unimp
+    800020e4:	0000                	unimp
+    800020e6:	0000                	unimp
+    800020e8:	0000                	unimp
+    800020ea:	0000                	unimp
+    800020ec:	0000                	unimp
+    800020ee:	0000                	unimp
+    800020f0:	0000                	unimp
+    800020f2:	0000                	unimp
+    800020f4:	0000                	unimp
+    800020f6:	0000                	unimp
+    800020f8:	0000                	unimp
+    800020fa:	0000                	unimp
+    800020fc:	0000                	unimp
+    800020fe:	0000                	unimp
+    80002100:	0000                	unimp
+    80002102:	0000                	unimp
+    80002104:	0000                	unimp
+    80002106:	0000                	unimp
+    80002108:	0000                	unimp
+    8000210a:	0000                	unimp
+    8000210c:	0000                	unimp
+    8000210e:	0000                	unimp
+    80002110:	0000                	unimp
+    80002112:	0000                	unimp
+    80002114:	0000                	unimp
+    80002116:	0000                	unimp
+    80002118:	0000                	unimp
+    8000211a:	0000                	unimp
+    8000211c:	0000                	unimp
+    8000211e:	0000                	unimp
+    80002120:	0000                	unimp
+    80002122:	0000                	unimp
+    80002124:	0000                	unimp
+    80002126:	0000                	unimp
+    80002128:	0000                	unimp
+    8000212a:	0000                	unimp
+    8000212c:	0000                	unimp
+    8000212e:	0000                	unimp
+    80002130:	0000                	unimp
+    80002132:	0000                	unimp
+    80002134:	0000                	unimp
+    80002136:	0000                	unimp
+    80002138:	0000                	unimp
+    8000213a:	0000                	unimp
+    8000213c:	0000                	unimp
+    8000213e:	0000                	unimp
+    80002140:	0000                	unimp
+    80002142:	0000                	unimp
+    80002144:	0000                	unimp
+    80002146:	0000                	unimp
+    80002148:	0000                	unimp
+    8000214a:	0000                	unimp
+    8000214c:	0000                	unimp
+    8000214e:	0000                	unimp
+    80002150:	0000                	unimp
+    80002152:	0000                	unimp
+    80002154:	0000                	unimp
+    80002156:	0000                	unimp
+    80002158:	0000                	unimp
+    8000215a:	0000                	unimp
+    8000215c:	0000                	unimp
+    8000215e:	0000                	unimp
+    80002160:	0000                	unimp
+    80002162:	0000                	unimp
+    80002164:	0000                	unimp
+    80002166:	0000                	unimp
+    80002168:	0000                	unimp
+    8000216a:	0000                	unimp
+    8000216c:	0000                	unimp
+    8000216e:	0000                	unimp
+    80002170:	0000                	unimp
+    80002172:	0000                	unimp
+    80002174:	0000                	unimp
+    80002176:	0000                	unimp
+    80002178:	0000                	unimp
+    8000217a:	0000                	unimp
+    8000217c:	0000                	unimp
+    8000217e:	0000                	unimp
+    80002180:	0000                	unimp
+    80002182:	0000                	unimp
+    80002184:	0000                	unimp
+    80002186:	0000                	unimp
+    80002188:	0000                	unimp
+    8000218a:	0000                	unimp
+    8000218c:	0000                	unimp
+    8000218e:	0000                	unimp
+    80002190:	0000                	unimp
+    80002192:	0000                	unimp
+    80002194:	0000                	unimp
+    80002196:	0000                	unimp
+    80002198:	0000                	unimp
+    8000219a:	0000                	unimp
+    8000219c:	0000                	unimp
+    8000219e:	0000                	unimp
+    800021a0:	0000                	unimp
+    800021a2:	0000                	unimp
+    800021a4:	0000                	unimp
+    800021a6:	0000                	unimp
+    800021a8:	0000                	unimp
+    800021aa:	0000                	unimp
+    800021ac:	0000                	unimp
+    800021ae:	0000                	unimp
+    800021b0:	0000                	unimp
+    800021b2:	0000                	unimp
+    800021b4:	0000                	unimp
+    800021b6:	0000                	unimp
+    800021b8:	0000                	unimp
+    800021ba:	0000                	unimp
+    800021bc:	0000                	unimp
+    800021be:	0000                	unimp
+    800021c0:	0000                	unimp
+    800021c2:	0000                	unimp
+    800021c4:	0000                	unimp
+    800021c6:	0000                	unimp
+    800021c8:	0000                	unimp
+    800021ca:	0000                	unimp
+    800021cc:	0000                	unimp
+    800021ce:	0000                	unimp
+    800021d0:	0000                	unimp
+    800021d2:	0000                	unimp
+    800021d4:	0000                	unimp
+    800021d6:	0000                	unimp
+    800021d8:	0000                	unimp
+    800021da:	0000                	unimp
+    800021dc:	0000                	unimp
+    800021de:	0000                	unimp
+    800021e0:	0000                	unimp
+    800021e2:	0000                	unimp
+    800021e4:	0000                	unimp
+    800021e6:	0000                	unimp
+    800021e8:	0000                	unimp
+    800021ea:	0000                	unimp
+    800021ec:	0000                	unimp
+    800021ee:	0000                	unimp
+    800021f0:	0000                	unimp
+    800021f2:	0000                	unimp
+    800021f4:	0000                	unimp
+    800021f6:	0000                	unimp
+    800021f8:	0000                	unimp
+    800021fa:	0000                	unimp
+    800021fc:	0000                	unimp
+    800021fe:	0000                	unimp
+    80002200:	0000                	unimp
+    80002202:	0000                	unimp
+    80002204:	0000                	unimp
+    80002206:	0000                	unimp
+    80002208:	0000                	unimp
+    8000220a:	0000                	unimp
+    8000220c:	0000                	unimp
+    8000220e:	0000                	unimp
+    80002210:	0000                	unimp
+    80002212:	0000                	unimp
+    80002214:	0000                	unimp
+    80002216:	0000                	unimp
+    80002218:	0000                	unimp
+    8000221a:	0000                	unimp
+    8000221c:	0000                	unimp
+    8000221e:	0000                	unimp
+    80002220:	0000                	unimp
+    80002222:	0000                	unimp
+    80002224:	0000                	unimp
+    80002226:	0000                	unimp
+    80002228:	0000                	unimp
+    8000222a:	0000                	unimp
+    8000222c:	0000                	unimp
+    8000222e:	0000                	unimp
+    80002230:	0000                	unimp
+    80002232:	0000                	unimp
+    80002234:	0000                	unimp
+    80002236:	0000                	unimp
+    80002238:	0000                	unimp
+    8000223a:	0000                	unimp
+    8000223c:	0000                	unimp
+    8000223e:	0000                	unimp
+    80002240:	0000                	unimp
+    80002242:	0000                	unimp
+    80002244:	0000                	unimp
+    80002246:	0000                	unimp
+    80002248:	0000                	unimp
+    8000224a:	0000                	unimp
+    8000224c:	0000                	unimp
+    8000224e:	0000                	unimp
+    80002250:	0000                	unimp
+    80002252:	0000                	unimp
+    80002254:	0000                	unimp
+    80002256:	0000                	unimp
+    80002258:	0000                	unimp
+    8000225a:	0000                	unimp
+    8000225c:	0000                	unimp
+    8000225e:	0000                	unimp
+    80002260:	0000                	unimp
+    80002262:	0000                	unimp
+    80002264:	0000                	unimp
+    80002266:	0000                	unimp
+    80002268:	0000                	unimp
+    8000226a:	0000                	unimp
+    8000226c:	0000                	unimp
+    8000226e:	0000                	unimp
+    80002270:	0000                	unimp
+    80002272:	0000                	unimp
+    80002274:	0000                	unimp
+    80002276:	0000                	unimp
+    80002278:	0000                	unimp
+    8000227a:	0000                	unimp
+    8000227c:	0000                	unimp
+    8000227e:	0000                	unimp
+    80002280:	0000                	unimp
+    80002282:	0000                	unimp
+    80002284:	0000                	unimp
+    80002286:	0000                	unimp
+    80002288:	0000                	unimp
+    8000228a:	0000                	unimp
+    8000228c:	0000                	unimp
+    8000228e:	0000                	unimp
+    80002290:	0000                	unimp
+    80002292:	0000                	unimp
+    80002294:	0000                	unimp
+    80002296:	0000                	unimp
+    80002298:	0000                	unimp
+    8000229a:	0000                	unimp
+    8000229c:	0000                	unimp
+    8000229e:	0000                	unimp
+    800022a0:	0000                	unimp
+    800022a2:	0000                	unimp
+    800022a4:	0000                	unimp
+    800022a6:	0000                	unimp
+    800022a8:	0000                	unimp
+    800022aa:	0000                	unimp
+    800022ac:	0000                	unimp
+    800022ae:	0000                	unimp
+    800022b0:	0000                	unimp
+    800022b2:	0000                	unimp
+    800022b4:	0000                	unimp
+    800022b6:	0000                	unimp
+    800022b8:	0000                	unimp
+    800022ba:	0000                	unimp
+    800022bc:	0000                	unimp
+    800022be:	0000                	unimp
+    800022c0:	0000                	unimp
+    800022c2:	0000                	unimp
+    800022c4:	0000                	unimp
+    800022c6:	0000                	unimp
+    800022c8:	0000                	unimp
+    800022ca:	0000                	unimp
+    800022cc:	0000                	unimp
+    800022ce:	0000                	unimp
+    800022d0:	0000                	unimp
+    800022d2:	0000                	unimp
+    800022d4:	0000                	unimp
+    800022d6:	0000                	unimp
+    800022d8:	0000                	unimp
+    800022da:	0000                	unimp
+    800022dc:	0000                	unimp
+    800022de:	0000                	unimp
+    800022e0:	0000                	unimp
+    800022e2:	0000                	unimp
+    800022e4:	0000                	unimp
+    800022e6:	0000                	unimp
+    800022e8:	0000                	unimp
+    800022ea:	0000                	unimp
+    800022ec:	0000                	unimp
+    800022ee:	0000                	unimp
+    800022f0:	0000                	unimp
+    800022f2:	0000                	unimp
+    800022f4:	0000                	unimp
+    800022f6:	0000                	unimp
+    800022f8:	0000                	unimp
+    800022fa:	0000                	unimp
+    800022fc:	0000                	unimp
+    800022fe:	0000                	unimp
+    80002300:	0000                	unimp
+    80002302:	0000                	unimp
+    80002304:	0000                	unimp
+    80002306:	0000                	unimp
+    80002308:	0000                	unimp
+    8000230a:	0000                	unimp
+    8000230c:	0000                	unimp
+    8000230e:	0000                	unimp
+    80002310:	0000                	unimp
+    80002312:	0000                	unimp
+    80002314:	0000                	unimp
+    80002316:	0000                	unimp
+    80002318:	0000                	unimp
+    8000231a:	0000                	unimp
+    8000231c:	0000                	unimp
+    8000231e:	0000                	unimp
+    80002320:	0000                	unimp
+    80002322:	0000                	unimp
+    80002324:	0000                	unimp
+    80002326:	0000                	unimp
+    80002328:	0000                	unimp
+    8000232a:	0000                	unimp
+    8000232c:	0000                	unimp
+    8000232e:	0000                	unimp
+    80002330:	0000                	unimp
+    80002332:	0000                	unimp
+    80002334:	0000                	unimp
+    80002336:	0000                	unimp
+    80002338:	0000                	unimp
+    8000233a:	0000                	unimp
+    8000233c:	0000                	unimp
+    8000233e:	0000                	unimp
+    80002340:	0000                	unimp
+    80002342:	0000                	unimp
+    80002344:	0000                	unimp
+    80002346:	0000                	unimp
+    80002348:	0000                	unimp
+    8000234a:	0000                	unimp
+    8000234c:	0000                	unimp
+    8000234e:	0000                	unimp
+    80002350:	0000                	unimp
+    80002352:	0000                	unimp
+    80002354:	0000                	unimp
+    80002356:	0000                	unimp
+    80002358:	0000                	unimp
+    8000235a:	0000                	unimp
+    8000235c:	0000                	unimp
+    8000235e:	0000                	unimp
+    80002360:	0000                	unimp
+    80002362:	0000                	unimp
+    80002364:	0000                	unimp
+    80002366:	0000                	unimp
+    80002368:	0000                	unimp
+    8000236a:	0000                	unimp
+    8000236c:	0000                	unimp
+    8000236e:	0000                	unimp
+    80002370:	0000                	unimp
+    80002372:	0000                	unimp
+    80002374:	0000                	unimp
+    80002376:	0000                	unimp
+    80002378:	0000                	unimp
+    8000237a:	0000                	unimp
+    8000237c:	0000                	unimp
+    8000237e:	0000                	unimp
+    80002380:	0000                	unimp
+    80002382:	0000                	unimp
+    80002384:	0000                	unimp
+    80002386:	0000                	unimp
+    80002388:	0000                	unimp
+    8000238a:	0000                	unimp
+    8000238c:	0000                	unimp
+    8000238e:	0000                	unimp
+    80002390:	0000                	unimp
+    80002392:	0000                	unimp
+    80002394:	0000                	unimp
+    80002396:	0000                	unimp
+    80002398:	0000                	unimp
+    8000239a:	0000                	unimp
+    8000239c:	0000                	unimp
+    8000239e:	0000                	unimp
+    800023a0:	0000                	unimp
+    800023a2:	0000                	unimp
+    800023a4:	0000                	unimp
+    800023a6:	0000                	unimp
+    800023a8:	0000                	unimp
+    800023aa:	0000                	unimp
+    800023ac:	0000                	unimp
+    800023ae:	0000                	unimp
+    800023b0:	0000                	unimp
+    800023b2:	0000                	unimp
+    800023b4:	0000                	unimp
+    800023b6:	0000                	unimp
+    800023b8:	0000                	unimp
+    800023ba:	0000                	unimp
+    800023bc:	0000                	unimp
+    800023be:	0000                	unimp
+    800023c0:	0000                	unimp
+    800023c2:	0000                	unimp
+    800023c4:	0000                	unimp
+    800023c6:	0000                	unimp
+    800023c8:	0000                	unimp
+    800023ca:	0000                	unimp
+    800023cc:	0000                	unimp
+    800023ce:	0000                	unimp
+    800023d0:	0000                	unimp
+    800023d2:	0000                	unimp
+    800023d4:	0000                	unimp
+    800023d6:	0000                	unimp
+    800023d8:	0000                	unimp
+    800023da:	0000                	unimp
+    800023dc:	0000                	unimp
+    800023de:	0000                	unimp
+    800023e0:	0000                	unimp
+    800023e2:	0000                	unimp
+    800023e4:	0000                	unimp
+    800023e6:	0000                	unimp
+    800023e8:	0000                	unimp
+    800023ea:	0000                	unimp
+    800023ec:	0000                	unimp
+    800023ee:	0000                	unimp
+    800023f0:	0000                	unimp
+    800023f2:	0000                	unimp
+    800023f4:	0000                	unimp
+    800023f6:	0000                	unimp
+    800023f8:	0000                	unimp
+    800023fa:	0000                	unimp
+    800023fc:	0000                	unimp
+    800023fe:	0000                	unimp
+    80002400:	0000                	unimp
+    80002402:	0000                	unimp
+    80002404:	0000                	unimp
+    80002406:	0000                	unimp
+    80002408:	0000                	unimp
+    8000240a:	0000                	unimp
+
+000000008000240c <fooTest3>:
+    8000240c:	0000                	unimp
+    8000240e:	0000                	unimp

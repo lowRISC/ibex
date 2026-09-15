@@ -1,0 +1,316 @@
+\chapter{Instruction reference}
+\label{chap:isaref-riscv}
+
+\input{def-riscv-insns}
+\def\rvcheriasminsnref#1{#1}
+\def\rvcheriasminsnnoref#1{#1}
+\providecommand{\rvcheriasmfmt}{}
+\renewcommand{\rvcheriasmfmt}[2][]{%
+  #2%
+  \ifthenelse{\equal{#1}{}}{%
+  }{%
+    ~{\textit{\footnotesize{(#1)}}}%
+  }%
+}
+
+In this chapter, we specify each instruction via both informal descriptions
+and code in the Sail language.
+To allow for more succinct code descriptions, we rely on a number of
+common function definitions and constants also described in this chapter.
+
+\section{Sail language used in instruction descriptions}
+\label{sec:sail-language-description}
+The instruction descriptions contained in this chapter are accompanied
+by code in the Sail language~\cite{sail-popl2019,sail-url} taken from the 
+\cherimcu{} Sail implementation~\cite{cheriot-sail}, which is derived from the CHERI-RISC-V Sail
+implementation~\cite{sail-cheri-riscv}.
+Sail is a domain specific imperative language designed for describing
+processor architectures.  It has a compiler that can output executable
+code in OCaml or C for building executable models, and can also
+translate to various theorem prover languages for automated reasoning
+about the ISA.
+The following is a brief description of the Sail language features used in document.
+For a full description see the Sail language documentation~\cite{sail-url}.
+
+Types used in Sail:
+
+\label{sailMIPSzbits}
+\label{sailRISCVzbits}
+\begin{itemize}
+\item \isail{int} Sail integers are of arbitrary precision (therefore there are no overflows) but can be constrained using simple first-order constraints. As a common case integer range types can be defined using \isail{range(a,b)} to indicate an integer in the range $a$ to $b$ inclusive. Operations on integers respect the constraints on their operands so, for example, if \isail{x} and \isail{y} have type \isail{range(a, b)} then \isail{x + y} has type \isail{range(a + a, b + b)}. Integer literals are written in decimal.
+\item \isail{bits(n)} \label{zbits} is a bit vector of length \isail{n}. Vectors are indexed using square bracket notation with index 0 being the least significant bit. Arithmetic and logical operations on vectors are defined on two vectors of equal length producing a result of the same length and truncating on overflow. Where signedness is significant it is indicated in the operator name, for example \isail{<_s} performs signed comparison of bit vectors . Bit vector literals are written in hexadecimal for multiples of four bits or in binary with \isail{0x} or \isail{0b} prefixes, e.g. \isail{0x3} means `0011' and \isail{0b11} means `11'. The at symbol, \isail{@}, indicates concatenation of vectors.
+\item \isail{structs} are similar to C structs with named, typed fields accessed with a dot as in \isail{struct_val.field_name}. Struct copying with field updates is also supported as in \isail{\{struct_val with field_name=new_val\}}.
+\item Registers in Sail contain the architectural state that is modified by instruction execution. By convention register names in the CHERI specification start with a capital letter to distinguish them from local variables. Sail also supports a form of `assignment' to function calls as in \isail{wGPR(rd) = result}. This is just syntactic sugar for an extra argument to the function call. This syntax is used by functions that write registers or memory and have special behavior such as \isail{wGPR}, \isail{writeCapReg} and \isail{MEMw}.
+\end{itemize}
+
+The following operators and expression syntax are used in the Sail code:
+
+\begin{itemize}
+\item \label{sailRISCVznot}\label{sailMIPSznot}Boolean operators:
+\isail{not}, \isail{|} (logical OR), \isail{&} (logical AND), \isail{^} (exclusive OR)
+
+\item Integer operators:
+\isail{+} (addition), \isail{-} (subtraction), \isail{*} (multiplication), \isail{\%} (modulo)
+
+Sail operations on integers are the usual mathematical operators. Note \isail{a \% b} is the modulo operator that, for $b > 0$ returns a value in the range $0$ to $b-1$ regardless of the sign of $a$. Although Sail integers are notionally infinite in range, CHERI instructions can be implemented with finite arithmetic.
+
+\item Bit vector operators:
+\isail{&} (bitwise AND), \isail{<_s} (signed less than), \isail{@} (bit vector concatenation)
+
+\item Equality:
+\isail{==} (equal), \isail{!=} (not equal)
+
+\item Vector slice:
+
+  \isail{v[a..b]}
+
+Creates a sub-range of a vector from index $a$ down to $b$ inclusive.
+
+\item Local variables:
+
+  \isail{mutable_var = exp;} \\
+  \isail{let immutable_var = exp;}
+
+Mutable variables are introduced by simply assigning to them (optionally prefixed with keyword \isail{var}). An explicit type may be given following a colon, but types can usually be inferred. Sail supports mutable or immutable variables where immutable ones are introduced by \isail{let} and assigned only once when created.
+
+\item Functional if:
+
+\isail{if cond then exp1 else exp2}
+
+May return a value, similar to C ternary operator.
+
+
+\item Foreach loop:
+
+% XXX: for som reason sail generates a link to "to" for ccleartags/cloadtags
+\begin{lstlisting}[language=sail,label=sailMIPSzto]
+foreach(i from start_exp to end_exp) {
+  body
+};
+\end{lstlisting}
+
+\item Function invocation:
+
+\isail{func_id (arg1, arg2)}
+
+\item Field selection from struct:
+
+  \isail{struct\_val.field}
+
+Returns the value of the given field from structure.
+
+\item Functional update of structure:
+
+\isail{\{struct\_val with field=exp\}}
+
+A copy of the structure with the named field replaced with another value.
+
+\end{itemize}
+
+\section{Constant Definitions}
+The following constants are used in various type and function definitions throughout the specification.
+
+\medskip
+% Note: we can use \sailRISCVtype{foo\_bar} instead after rems-project/sail#100
+\phantomsection\label{sailRISCVzxlen}
+\sailRISCVtype{xlen}
+\sailRISCVtypecapAddrWidth{}
+\sailRISCVtypecapLenWidth{}
+\sailRISCVtype{cap\_E\_width}
+\sailRISCVtype{cap\_cE\_width}
+\sailRISCVtype{cap\_max\_E}
+\sailRISCVtypecapSizze{}
+\sailRISCVtypecapMantissaWidth{}
+\sailRISCVtype{cap\_perms\_width}
+\sailRISCVtype{cap\_cperms\_width}
+\sailRISCVtype{cap\_otype\_width}
+\sailRISCVtype{cap\_cotype\_width}
+\sailRISCVtype{log2\_revocation\_granule\_size}
+
+% FIXME: These extra labels are required to allow markdown saildoc references such as [cap_uperms_width] to work correctly.
+% \phantomsection\label{sailRISCVzcapzyotypezywidth}
+
+\section{Function Definitions}
+
+This section contains descriptions of convenience functions used by the Sail code featured in this chapter.
+
+\subsection*{Functions for integer and bit vector manipulation}
+
+The following functions convert between bit vectors and integers and manipulate bit vectors:
+
+\medskip
+\sailRISCVval{unsigned}
+\sailRISCVval{signed}
+\sailRISCVval{to\_bits}
+% Technically this is not a vector, but it seems appropriate to put these together
+\sailRISCVval{bool\_to\_bit}
+\sailRISCVval{bool\_to\_bits}
+\sailRISCVval{truncate}
+\sailRISCVval{truncateLSB}
+\sailRISCVval{pow2}
+\sailRISCVval{align\_down}
+
+% The following are overloads so we can't easily use the generated latex
+% Hacky hspace to get rid of unwanted hangindent
+
+\phantomsection
+\label{sailRISCVzEXTZ}
+\saildocval{Adds zeros in most significant bits of vector to obtain a vector of desired length.}{\hspace{-\parindent}\isail{EXTZ}}
+
+\label{sailRISCVzEXTS}
+\saildocval{Extends the most significant bits of vector preserving the sign bit.}{\hspace{-\parindent}\isail{EXTS}}
+
+\label{sailRISCVzzzeros}
+\saildocval{Produces a bit vector of all zeros}{\hspace{-\parindent}\isail{zeros}}
+
+\label{sailRISCVzones}
+\saildocval{Produces a bit vector of all ones}{\hspace{-\parindent}\isail{ones}}
+
+\subsection*{Types used in function definitions}
+
+\sailRISCVtype{CapBits}
+\sailRISCVtype{CapAddrBits}
+\sailRISCVtype{CapLenBits}
+\sailRISCVtype{CapPermsBits}
+% \sailRISCVtype{Capability}
+% \medskip
+% \noindent
+Many functions also use \isail{struct Capability}, a structure holding a
+partially-decompressed representation of CHERI capabilities.
+%
+% The following functions can be used to convert between the structure
+% representation and the raw capability bits:
+
+% \medskip%
+% \sailRISCVval{capBitsToCapability}
+% \sailRISCVval{capToBits}
+
+\subsection*{Functions for reading and writing register and memory}
+
+%\label{sailRISCVzC}
+\begin{lstlisting}[language=sail,label=sailRISCVzC]
+C(n) : regno -> Capability
+C(n) : (regno, Capability) -> unit
+\end{lstlisting}
+The overloaded function \isail{C(n)} is used to read or write capability register \isail{n}.
+
+\begin{lstlisting}[language=sail,label=sailRISCVzX]
+X(n) : regno -> xlenbits
+X(n) : (regno, xlenbits) -> unit
+\end{lstlisting}
+The overloaded function \isail{X(n)} is used to read or write integer register \isail{n}.
+
+\medskip
+% \sailRISCVval{memBitsToCapability}
+% \sailRISCVval{capToMemBits}
+\sailRISCVval{mem\_read\_cap}
+\sailRISCVval{mem\_read\_cap\_revoked}
+\sailRISCVval{mem\_write\_ea\_cap}
+\sailRISCVval{mem\_write\_cap}
+
+\subsection*{Functions for ISA exception behavior}
+\sailRISCVval{handle\_exception}
+\sailRISCVval{handle\_illegal}
+\sailRISCVval{handle\_mem\_exception}
+\sailRISCVval{handle\_cheri\_cap\_exception}
+\sailRISCVval{handle\_cheri\_reg\_exception}
+
+\medskip
+% \sailRISCVval{privLevel\_to\_bits}
+\sailRISCVval{min\_instruction\_bytes}
+
+\medskip
+\sailRISCVval{legalize\_epcc}
+\sailRISCVval{legalize\_tcc}
+
+% TODO: \subsection*{Functions for control flow}
+
+
+\subsection*{Functions for manipulating capabilities}
+
+The Sail code abstracts the capability representation using the following functions for getting and setting fields in the capability.
+The base of the capability is the address of the first byte of memory to which it grants access and the top is one greater than the last byte, so the set of dereferenceable addresses is:
+\[
+\{ a \in \mathbb{N} \mid \mathit{base} \leq a < \mathit{top}\}
+\]
+Note that the capability format can encode $\mathit{top}$ of $2^{32}$, meaning the entire 32-bit address space can be addressed.
+
+\medskip
+\sailRISCVval{getCapBounds}
+\sailRISCVval{getCapBaseBits}
+\sailRISCVval{getCapTop}
+\sailRISCVval{getCapLength}
+\sailRISCVval{inCapBounds}
+
+\noindent The following functions adjust the bounds and address of capabilities.
+Not all combinations of bounds and address are representable, so these functions return a boolean value indicating whether the requested operation was successful.
+Even in the case of failure a capability is still returned, although it may not preserve the bounds of the original capability.
+
+\medskip
+\sailRISCVval{setCapBounds}
+\sailRISCVval{setCapBoundsRoundDown}
+\sailRISCVval{setCapAddr}
+\sailRISCVval{incCapAddr}
+% \sailRISCVval{setCapOffset}
+% \sailRISCVval{incCapOffset}
+
+\medskip
+\sailRISCVval{getRepresentableAlignmentMask}
+\sailRISCVval{getRepresentableLength}
+
+\medskip
+\arnote{TODO: short description of sealing and unsealing}
+\sailRISCVval{sealCap}
+\sailRISCVval{unsealCap}
+\sailRISCVval{isCapSealed}
+% \sailRISCVval{hasReservedOType}
+\sailRISCVval{clearTag}
+\sailRISCVval{clearTagIf}
+\sailRISCVval{clearTagIfSealed}
+
+\noindent
+The architectural permissions as described in \cref{sec:perms} are accessed using the following functions:
+
+\medskip
+\sailRISCVval{getCapPerms}
+\sailRISCVval{setCapPerms}
+
+\subsection*{Checking for availability of ISA features}
+\sailRISCVval{haveRVC}
+\sailRISCVval{haveFExt}
+
+\section{\cherimcu{} Instructions}
+
+\input{insn-riscv/auicgp}
+\input{insn-riscv/auipcc}
+\input{insn-riscv/candperm}
+\input{insn-riscv/ccleartag}
+\input{insn-riscv/cgetaddr}
+\input{insn-riscv/cgetbase}
+\input{insn-riscv/cgethigh}
+\input{insn-riscv/cgetlen}
+\input{insn-riscv/cgetperm}
+\input{insn-riscv/cgettag}
+\input{insn-riscv/cgettop}
+\input{insn-riscv/cgettype}
+\input{insn-riscv/cincoffset}
+\input{insn-riscv/cincoffsetimm}
+\input{insn-riscv/cjal}
+\input{insn-riscv/cjalr}
+\input{insn-riscv/lc} % [c]lc
+\input{insn-riscv/cmove}
+\input{insn-riscv/crepresentablealignmentmask}
+\input{insn-riscv/croundrepresentablelength}
+\input{insn-riscv/sc} % [c]sc
+\input{insn-riscv/cseal}
+\input{insn-riscv/csetaddr}
+\input{insn-riscv/csetbounds}
+\input{insn-riscv/csetboundsexact}
+\input{insn-riscv/csetboundsrounddown}
+\input{insn-riscv/csetboundsimm}
+\input{insn-riscv/csetequalexact}
+\input{insn-riscv/csethigh}
+\input{insn-riscv/cspecialrw}
+\input{insn-riscv/csub}
+\input{insn-riscv/ctestsubset}
+\input{insn-riscv/cunseal}

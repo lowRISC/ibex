@@ -1,0 +1,172 @@
+type bit20 = int
+type bit12 = int
+type bit6  = int
+type bit5  = int
+type bit4  = int
+
+type riscvUop =  (* upper immediate ops *)
+| RISCVLUI
+| RISCVAUIPC
+
+let pp_riscv_uop = function
+| RISCVLUI   -> "lui"
+| RISCVAUIPC -> "auipc"
+
+
+type riscvBop =  (* branch ops *)
+| RISCVBEQ
+| RISCVBNE
+| RISCVBLT
+| RISCVBGE
+| RISCVBLTU
+| RISCVBGEU
+
+let pp_riscv_bop = function
+| RISCVBEQ  -> "beq"
+| RISCVBNE  -> "bne"
+| RISCVBLT  -> "blt"
+| RISCVBGE  -> "bge"
+| RISCVBLTU -> "bltu"
+| RISCVBGEU -> "bgeu"
+
+type riscvIop = (* immediate ops *)
+| RISCVADDI
+| RISCVSLTI
+| RISCVSLTIU
+| RISCVXORI
+| RISCVORI
+| RISCVANDI
+
+let pp_riscv_iop = function
+| RISCVADDI  -> "addi"
+| RISCVSLTI  -> "slti"
+| RISCVSLTIU -> "sltiu"
+| RISCVXORI  -> "xori"
+| RISCVORI   -> "ori"
+| RISCVANDI  -> "andi"
+
+type riscvSop = (* shift ops *)
+| RISCVSLLI
+| RISCVSRLI
+| RISCVSRAI
+
+let pp_riscv_sop = function
+| RISCVSLLI -> "slli"
+| RISCVSRLI -> "srli"
+| RISCVSRAI -> "srai"
+
+type riscvRop = (* reg-reg ops *)
+| RISCVADD
+| RISCVSUB
+| RISCVSLL
+| RISCVSLT
+| RISCVSLTU
+| RISCVXOR
+| RISCVSRL
+| RISCVSRA
+| RISCVOR
+| RISCVAND
+
+let pp_riscv_rop = function
+| RISCVADD  -> "add"
+| RISCVSUB  -> "sub"
+| RISCVSLL  -> "sll"
+| RISCVSLT  -> "slt"
+| RISCVSLTU -> "sltu"
+| RISCVXOR  -> "xor"
+| RISCVSRL  -> "srl"
+| RISCVSRA  -> "sra"
+| RISCVOR   -> "or"
+| RISCVAND  -> "and"
+
+type riscvRopw = (* reg-reg 32-bit ops *)
+| RISCVADDW
+| RISCVSUBW
+| RISCVSLLW
+| RISCVSRLW
+| RISCVSRAW
+
+let pp_riscv_ropw = function
+| RISCVADDW -> "addw"
+| RISCVSUBW -> "subw"
+| RISCVSLLW -> "sllw"
+| RISCVSRLW -> "srlw"
+| RISCVSRAW -> "sraw"
+
+type wordWidth =
+  | RISCVBYTE
+  | RISCVHALF
+  | RISCVWORD
+  | RISCVDOUBLE
+
+let pp_word_width width : string =
+  begin match width with
+  | RISCVBYTE   -> "b"
+  | RISCVHALF   -> "h"
+  | RISCVWORD   -> "w"
+  | RISCVDOUBLE -> "d"
+  end
+
+let pp_riscv_load_op (unsigned, width, aq, rl) =
+  "l" ^
+  (pp_word_width width) ^
+  (if unsigned then "u" else "") ^
+  (if aq then ".aq" else "") ^
+  (if rl then ".rl" else "")
+
+let pp_riscv_store_op (width, aq, rl) =
+  "s" ^
+  (pp_word_width width) ^
+  (if aq then ".aq" else "") ^
+  (if rl then ".rl" else "")
+
+let pp_riscv_load_reserved_op (aq, rl, width) =
+  "lr." ^
+  (pp_word_width width) ^
+  (if aq then ".aq" else "") ^
+  (if rl then ".rl" else "")
+
+let pp_riscv_store_conditional_op (aq, rl, width) =
+  "sc." ^
+  (pp_word_width width) ^
+  (if aq then ".aq" else "") ^
+  (if rl then ".rl" else "")
+
+type riscvAmoop =
+  | RISCVAMOSWAP
+  | RISCVAMOADD
+  | RISCVAMOXOR
+  | RISCVAMOAND
+  | RISCVAMOOR
+  | RISCVAMOMIN
+  | RISCVAMOMAX
+  | RISCVAMOMINU
+  | RISCVAMOMAXU
+
+let pp_riscv_amo_op_part = function
+  | RISCVAMOSWAP -> "swap"
+  | RISCVAMOADD  -> "add"
+  | RISCVAMOXOR  -> "xor"
+  | RISCVAMOAND  -> "and"
+  | RISCVAMOOR   -> "or"
+  | RISCVAMOMIN  -> "min"
+  | RISCVAMOMAX  -> "max"
+  | RISCVAMOMINU -> "minu"
+  | RISCVAMOMAXU -> "maxu"
+
+let pp_riscv_amo_op (op, aq, rl, width) =
+  "amo" ^
+  pp_riscv_amo_op_part op ^
+  begin match width with
+  | RISCVWORD   -> ".w"
+  | RISCVDOUBLE -> ".d"
+  | _ -> assert false
+  end ^
+  (if aq then ".aq" else "") ^
+  (if rl then ".rl" else "")
+
+let pp_riscv_fence_option = function
+  | 0b0011 -> "rw"
+  | 0b0010 -> "r"
+  | 0b0001 -> "w"
+  | _ -> failwith "unexpected fence option"

@@ -8,7 +8,7 @@
 import sys
 import pydantic
 import pathlib3x as pathlib
-from typing import List, Any
+from typing import List, Any, Optional
 
 import scripts_lib
 
@@ -86,6 +86,11 @@ class DTest(DConfig):  # noqa
     desc: str
     test_srcs: pathlib.Path
     iterations: pydantic.conint(gt=0)
+    # Extra plusargs passed straight through to xrun (e.g. "+enable_cheriot_seq=1").
+    # Not part of upstream's schema -- pydantic silently drops unknown YAML keys,
+    # so without this field a directed test's sim_opts is parsed but never
+    # reaches run_rtl.py's testopts.get('sim_opts').
+    sim_opts: Optional[str] = None
 
     ##################################
     # DTest.VALIDATORS

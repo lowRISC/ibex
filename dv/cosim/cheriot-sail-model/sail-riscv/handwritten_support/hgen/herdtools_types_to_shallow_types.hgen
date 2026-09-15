@@ -1,0 +1,90 @@
+let is_inc = false
+
+let translate_reg name value =
+    Lem_machine_word.wordFromInteger Lem_machine_word.instance_Machine_word_Size_Machine_word_ty5_dict (Nat_big_num.of_int (reg_to_int value))
+
+let translate_uop op = match op with
+  | RISCVLUI   -> RISCV_LUI
+  | RISCVAUIPC -> RISCV_AUIPC
+
+let translate_bop op = match op with
+  | RISCVBEQ  -> RISCV_BEQ
+  | RISCVBNE  -> RISCV_BNE
+  | RISCVBLT  -> RISCV_BLT
+  | RISCVBGE  -> RISCV_BGE
+  | RISCVBLTU -> RISCV_BLTU
+  | RISCVBGEU -> RISCV_BGEU
+
+let translate_iop op = match op with
+  | RISCVADDI  -> RISCV_ADDI
+  | RISCVSLTI  -> RISCV_SLTI
+  | RISCVSLTIU -> RISCV_SLTIU
+  | RISCVXORI  -> RISCV_XORI
+  | RISCVORI   -> RISCV_ORI
+  | RISCVANDI  -> RISCV_ANDI
+
+let translate_sop op = match op with
+  | RISCVSLLI -> RISCV_SLLI
+  | RISCVSRLI -> RISCV_SRLI
+  | RISCVSRAI -> RISCV_SRAI
+
+let translate_rop op = match op with
+  | RISCVADD  -> RISCV_ADD
+  | RISCVSUB  -> RISCV_SUB
+  | RISCVSLL  -> RISCV_SLL
+  | RISCVSLT  -> RISCV_SLT
+  | RISCVSLTU -> RISCV_SLTU
+  | RISCVXOR  -> RISCV_XOR
+  | RISCVSRL  -> RISCV_SRL
+  | RISCVSRA  -> RISCV_SRA
+  | RISCVOR   -> RISCV_OR
+  | RISCVAND  -> RISCV_AND
+
+let translate_ropw op = match op with
+  | RISCVADDW -> RISCV_ADDW
+  | RISCVSUBW -> RISCV_SUBW
+  | RISCVSLLW -> RISCV_SLLW
+  | RISCVSRLW -> RISCV_SRLW
+  | RISCVSRAW -> RISCV_SRAW
+
+let translate_amoop op = match op with
+  | RISCVAMOSWAP -> AMOSWAP
+  | RISCVAMOADD  -> AMOADD
+  | RISCVAMOXOR  -> AMOXOR
+  | RISCVAMOAND  -> AMOAND
+  | RISCVAMOOR   -> AMOOR
+  | RISCVAMOMIN  -> AMOMIN
+  | RISCVAMOMAX  -> AMOMAX
+  | RISCVAMOMINU -> AMOMINU
+  | RISCVAMOMAXU -> AMOMAXU
+
+let translate_wordWidth op = match op with
+  | RISCVBYTE   -> BYTE
+  | RISCVHALF   -> HALF
+  | RISCVWORD   -> WORD
+  | RISCVDOUBLE -> DOUBLE
+
+let translate_bool name b = b (* function
+   * | true -> trueSail2_values.B10
+   * | false -> false Sail2_values.B00 *)
+
+let translate_imm21 name value =
+  Lem_machine_word.wordFromInteger Lem_machine_word.instance_Machine_word_Size_Machine_word_ty21_dict (Nat_big_num.of_int value)
+
+let translate_imm20 name value =
+  Lem_machine_word.wordFromInteger Lem_machine_word.instance_Machine_word_Size_Machine_word_ty20_dict (Nat_big_num.of_int value)
+
+let translate_imm13 name value =
+  Lem_machine_word.wordFromInteger Lem_machine_word.instance_Machine_word_Size_Machine_word_ty13_dict (Nat_big_num.of_int value)
+
+let translate_imm12 name value =
+  Lem_machine_word.wordFromInteger Lem_machine_word.instance_Machine_word_Size_Machine_word_ty12_dict (Nat_big_num.of_int value)
+
+let translate_imm6 name value =
+  Lem_machine_word.wordFromInteger Lem_machine_word.instance_Machine_word_Size_Machine_word_ty6_dict (Nat_big_num.of_int value)
+
+let translate_imm5 name value =
+  Lem_machine_word.wordFromInteger Lem_machine_word.instance_Machine_word_Size_Machine_word_ty5_dict (Nat_big_num.of_int value)
+
+let translate_imm4 name value =
+  Lem_machine_word.wordFromInteger Lem_machine_word.instance_Machine_word_Size_Machine_word_ty4_dict (Nat_big_num.of_int value)

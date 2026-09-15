@@ -1,0 +1,115 @@
+\chapter{RTOS implementation}
+\label{chap:rtos}
+
+The \cherimcuos{} is intended to provide a minimal TCB.
+The core of the RTOS comprises:
+
+\begin{description}
+	\item[A loader,] which runs before any untrusted data is encountered and sets up the capabilities for the rest of the system.
+	\item[Switch routines,] which add up to around 300 instructions in hand-written assembly, for switching between thread and compartments.
+	\item[A heap allocator,] which allocates memory from a shared heap for use by compartments.
+	\item[A scheduler,] which selects the next thread to run.
+\end{description}
+
+Of these, only the loader and the switch routines run with access to the trusted stack and register save areas (that is, with the access-system-registers permission on their \PCC).
+This means that these are the only two that can completely compromise all of the security properties on which the rest of the system is built.
+The loader runs once on system start and then erases itself.
+The loader is not needed on systems where the persistent storage (e.g. flash) can store tag bits.
+
+The switch routines (currently) add up to a total of around 300 instructions, with no memory allocation and very little control flow.
+For comparison, the trusted (unverified) part of seL4 is 340 instructions~\cite{sel4-faq}, so \cherimcuos{} contains less code in its TCB than seL4 contains unverified code in its TCB.
+
+The heap allocator holds capabilities to the shared heap and the revocation bitmap for the shared heap and so is able to violate heap memory safety.
+The scheduler is more or less an untrusted compartment, though with a private stack.
+Importantly, the scheduler does not have access to the stacks, trusted stacks, or register-save areas of the threads that it manages.
+It may choose the next thread to run, but it cannot tamper with a thread's state.
+
+\section{Per-thread state}
+
+Each thread has a stack (reachable from \CSP) and a \textit{trusted stack}.
+The trusted stack maintains the state required for cross-domain calls.
+The same data structure also contains the register save area, where the contents of the register file will be saved when an interrupt is delivered.
+
+A capability to the trusted stack and register save area for the running stack is stored in the \MScratchC{} register, which can be accessed only by code whose \PCC{} has the permission to access system registers.
+\nwfnote{MScratchC is pretty badly named now, isn't it?}
+
+\section{The loader}
+
+The loader starts with access to the root capabilities and so has complete access to everything on start.
+The majority of the loader is written in C++ with rich types conveying intentionality, including templates that provide capability permission sets as compile-time constants that can be statically checked
+
+The loader splits the architectural roots into four software-defined roots:
+
+\begin{description}
+	\item[Executable] capabilities are used for deriving capabilities that will end up installed in \PCC{}.
+	\item[Global] capabilities do not have permit-store-local and are used for deriving capabilities for globals, heap memory, and so on.
+	\item[Local] capabilities do not have the global permission and are used only for stacks, trusted stacks, and register save areas.
+	\item[Sealing] capabilities have no memory-related permissions and are used only for sealing and unsealing.
+\end{description}
+
+Each capability that is derived from a root is derived via a mechanism that validates (at compile time) that the requested permissions are less than the permissions of the root.
+
+The C++ portion of the loader is stored in a portion of memory that will eventually become the heap.
+Once it returns to a small assembly stub, this stub zeroes all of the memory used by the loader (stack, code, and globals) and almost all of the register file, ensuring that no capabilities are leaked.
+It then yields to the scheduler (via an \insnnoref{ecall} instruction) and becomes a stackless idle thread.
+
+The loader is responsible for initializing import tables (the capabilities that may point outside of the compartment, see Chapter \ref{chap:abi} for details), preparing each thread's initial state, and applying caprelocs (dynamically initialized capabilities stored in globals).
+For each capreloc, the loader finds the compartment that it refers to and attempts to derive the target from the compartment's \PCC{} and \CGP{}.
+If this fails, then the boot image is corrupted and the loader resets (allowing a first-stage loader to perform A/B installations).
+\nwfnote{A \emph{future} first-stage loader?  I don't think we have one, yet?}
+
+\section{Interrupt handling}
+
+The interrupt handling code is part of the switcher and runs with permission to access \MScratchC{}.
+It first saves the register file in the current thread's register save area and seals the capability to this area.
+Next, it loads the other special-register values that describe the interrupt and prepares a context invoking the scheduler.
+
+The scheduler is always invoked with the same stack, with arguments containing a sealed capability to the register-save area of the interrupted and yielding thread.
+It then returns a sealed capability to a register-save area for a thread to resume.
+The scheduler runs with interrupts disabled and provides a simple static priority scheduler with round-robin scheduling within a priority level.
+Threads are run when no thread with a higher priority is runnable.
+If two threads at the same priority level are runnable, one runs until it either yields or an interrupt is delivered, then the next one runs.
+
+\section{Synchronization and scheduling primitives}
+
+The scheduler is a compartment and so can expose entry points that can be invoked via the switcher.
+These include semaphore and message queue interfaces that will park a thread (mark it as not runnable) until some event happens.
+
+In addition, an \insnnoref{MCall} instruction will deliver an interrupt, causing the running thread to immediately yield.
+This is used for an explicit yield operation that transfers control immediately to the switcher and then to the scheduler.
+This mechanism can be used from inside the scheduler itself to allow a thread to yield after the scheduler has updated some data structures related to it.
+
+In combination, these can be used to build synchronization primitives with timeouts.
+A thread that wishes to block waiting for an event calls the scheduler, which then records the conditions that will wake the thread (including the timeout) and yields via an \insnnoref{MCall}.
+One resume, the scheduler can check how long it slept for and return from the cross-compartment call.
+
+\section{The memory allocator}
+
+The memory allocator currently provides a simple \ccode{malloc}-like API.
+Future versions will add explicit memory pinning (no concurrent deallocation of an object during a compartment invocation) and explicit permission to deallocate objects.
+
+In addition, the allocator provides a mechanism for allocating sealable objects.
+The \cherimcuisa{} has only a handful of sealing types and so it is not feasible for every compartment to be able to seal capabilities using the hardware mechanism.
+Instead, the memory allocator reserves one hardware sealing type for allocating sealable objects.
+A sealable object has a header describing the capability that is used to unseal it.
+The allocator will provide a sealed capability to the whole object (including the header) and, if invoked with the correct unsealing capability) will return an unsealed capability to all of the object \textit{except} for the header.
+
+This mechanism allows compartments to provide opaque data types to software running outside of the compartment.
+
+\section{Error handling}
+\label{sec:errorhandling}
+One effect of the CHERI architecture is to turn errors that could result in memory corruption vulnerabilities into traps.
+To mitigate the availability concerns this could create, the \cherimcuos{} provides a mechanism for recovering from faults in a controlled way.
+Compartments can define an error handler that will be called if a fault occurs during execution of that compartment, or if a fault in a called compartment results an `unwind'.
+The error handler can inspect the saved register context from the time of the fault and can choose either to resume execution with an amended register context or to unwind the trusted stack, returning an error to the calling compartment.
+
+Careful use of this mechanism can allow an application to continue even after it encounters an unexpected fault.
+For example, a compartment error handler might reset the compartment state before returning an error to the calling compartment.
+For more details of this mechanism and special security considerations please refer to the \cherimcuos{} documentation.
+
+\section{Other components}
+
+All other components, such as a network stack (taken from FreeRTOS), a TLS stack (from mBedTLS), and so on are untrusted.
+They are treated no differently from any other user-provided code and are packaged only for convenience.
+The bottom of the network stack talks to a device driver, which is simply another compartment whose import table is used to grant access to the MMIO region containing the network device's control registers.
+

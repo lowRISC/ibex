@@ -1,0 +1,43 @@
+\documentclass[tikz]{standalone}
+\input{preamble} % include all the common macros and font settings
+
+\begin{document}
+\begin{tikzpicture}
+
+        \matrix [row sep=20pt, column sep=10pt] {
+        %
+                \node[draw] (i1w) {instance 1 read-write region} ;
+        %
+        &       \node[draw] (ro) {read-only region} ;
+        %
+        &       \node[draw] (i2w) {instance 2 read-write region} ;
+        %
+        \\
+        %
+                \node[draw] (i1p) {instance 1 PLT} ;
+        %
+        &
+        %
+        &       \node[draw] (i2p) {instance 2 PLT} ; \\
+        %
+        } ;
+
+        \draw [->] (i1p) -| (ro.230) ;
+        \draw [->] (i2p) -| (ro.300) ;
+
+        \draw [dotted,->] ([xshift=-10pt]i1w.south) -- ([xshift=-20pt]i1p.north) ;
+        \draw [->] ([xshift=20pt]i1p.north) -- ([xshift=10pt]i1w.south) ;
+
+        \draw [dotted,->] ([xshift=-10pt]i2w.south) -- ([xshift=-20pt]i2p.north) ;
+        \draw [->] ([xshift=20pt]i2p.north) -- ([xshift=10pt]i2w.south) ;
+
+    \coordinate (i1s) at ([xshift=-05pt,yshift=-10pt]i1p.south) {} ; \draw [->] (i1s) -- ([xshift=-05pt]i1p.south) ;
+    \coordinate (i1s) at ([xshift=-10pt,yshift=-10pt]i1p.south) {} ; \draw [->] (i1s) -- ([xshift=-10pt]i1p.south) ;
+    \coordinate (i1s) at ([xshift=-15pt,yshift=-10pt]i1p.south) {} ; \draw [->] (i1s) -- ([xshift=-15pt]i1p.south) ;
+
+    \coordinate (i2s) at ([xshift=-05pt,yshift=-10pt]i2p.south) {} ; \draw [->] (i2s) -- ([xshift=-05pt]i2p.south) ;
+    \coordinate (i2s) at ([xshift=-10pt,yshift=-10pt]i2p.south) {} ; \draw [->] (i2s) -- ([xshift=-10pt]i2p.south) ;
+    \coordinate (i2s) at ([xshift=-15pt,yshift=-10pt]i2p.south) {} ; \draw [->] (i2s) -- ([xshift=-15pt]i2p.south) ;
+
+\end{tikzpicture}
+\end{document}

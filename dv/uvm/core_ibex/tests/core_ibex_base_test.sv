@@ -50,10 +50,11 @@ class core_ibex_base_test extends uvm_test;
   // NOTE: This logic should match the code in the get_isas_for_config() function in
   //       core_ibex/scripts/scripts_lib.py: keep them in sync!
   function string get_isa_string();
-    bit     RV32E;
-    rv32m_e RV32M;
-    rv32b_e RV32B;
-    string  isa;
+    bit      RV32E;
+    rv32m_e  RV32M;
+    rv32b_e  RV32B;
+    rv32zc_e RV32ZC;
+    string   isa;
 
     if (!uvm_config_db#(bit)::get(null, "", "RV32E", RV32E)) begin
       `uvm_fatal(`gfn, "Cannot get RV32E parameter")
@@ -63,6 +64,9 @@ class core_ibex_base_test extends uvm_test;
     end
     if (!uvm_config_db#(rv32b_e)::get(null, "", "RV32B", RV32B)) begin
       `uvm_fatal(`gfn, "Cannot get RV32B parameter")
+    end
+    if (!uvm_config_db#(rv32zc_e)::get(null, "", "RV32ZC", RV32ZC)) begin
+      `uvm_fatal(`gfn, "Cannot get RV32ZC parameter")
     end
 
     // Construct the right ISA string for the cosimulator by looking at top-level testbench
@@ -79,6 +83,23 @@ class core_ibex_base_test extends uvm_test;
         isa = {isa, "_Zba_Zbb_Zbc_Zbs_XZbf_XZbp_XZbr_XZbt"};
       RV32BFull:
         isa = {isa, "_Zba_Zbb_Zbc_Zbs_XZbe_XZbf_XZbp_XZbr_XZbt"};
+    endcase
+
+    // RV32ZC controls the compressed decoder's Zcb/Zcmp support (see
+    // ibex_compressed_decoder.sv) -- riscv-dv's illegal-instruction generator
+    // can land on a real Zcb encoding (e.g. C.MUL, 0x9dd1) purely by chance,
+    // and without this Spike (unaware of Zcb) treats it as illegal while the
+    // DUT correctly executes it, producing a spurious cosim mismatch. This
+    // was never wired up before RV32ZC was connected to dut/config_db above.
+    case (RV32ZC)
+      RV32Zca:
+        ;
+      RV32ZcaZcb:
+        isa = {isa, "_Zcb"};
+      RV32ZcaZcmp:
+        isa = {isa, "_Zcmp"};
+      RV32ZcaZcbZcmp:
+        isa = {isa, "_Zcb_Zcmp"};
     endcase
 
     return isa;
@@ -169,7 +190,7 @@ class core_ibex_base_test extends uvm_test;
     cosim_cfg.pmp_num_regions = pmp_num_regions;
     cosim_cfg.pmp_granularity = pmp_granularity;
     cosim_cfg.mhpm_counter_num = mhpm_counter_num;
-    cosim_cfg.relax_cosim_check = cfg.disable_cosim;
+    cosim_cfg.relax_cosim_check = cfg.disable_cosim | cfg.enable_cheriot_seq;
     cosim_cfg.secure_ibex = secure_ibex;
     cosim_cfg.icache = icache;
     cosim_cfg.dm_start_addr = 32'h`DM_ADDR;
@@ -226,6 +247,10 @@ class core_ibex_base_test extends uvm_test;
     enable_irq_seq = cfg.enable_irq_single_seq || cfg.enable_irq_multiple_seq;
     phase.raise_objection(this);
     cur_run_phase = phase;
+
+    if (cfg.enable_cheriot_seq) begin
+      dut_vif.dut_cb.cheriot_enable <= ibex_pkg::IbexMuBiOn;
+    end
 
     dut_vif.dut_cb.fetch_enable <= ibex_pkg::IbexMuBiOff;
     clk_vif.wait_clks(100);

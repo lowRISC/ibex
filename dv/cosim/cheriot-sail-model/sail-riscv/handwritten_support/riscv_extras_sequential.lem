@@ -1,0 +1,230 @@
+(*=======================================================================================*)
+(*  RISCV Sail Model                                                                     *)
+(*                                                                                       *)
+(*  This Sail RISC-V architecture model, comprising all files and                        *)
+(*  directories except for the snapshots of the Lem and Sail libraries                   *)
+(*  in the prover_snapshots directory (which include copies of their                     *)
+(*  licences), is subject to the BSD two-clause licence below.                           *)
+(*                                                                                       *)
+(*  Copyright (c) 2017-2023                                                              *)
+(*    Prashanth Mundkur                                                                  *)
+(*    Rishiyur S. Nikhil and Bluespec, Inc.                                              *)
+(*    Jon French                                                                         *)
+(*    Brian Campbell                                                                     *)
+(*    Robert Norton-Wright                                                               *)
+(*    Alasdair Armstrong                                                                 *)
+(*    Thomas Bauereiss                                                                   *)
+(*    Shaked Flur                                                                        *)
+(*    Christopher Pulte                                                                  *)
+(*    Peter Sewell                                                                       *)
+(*    Alexander Richardson                                                               *)
+(*    Hesham Almatary                                                                    *)
+(*    Jessica Clarke                                                                     *)
+(*    Microsoft, for contributions by Robert Norton-Wright and Nathaniel Wesley Filardo  *)
+(*    Peter Rugg                                                                         *)
+(*    Aril Computer Corp., for contributions by Scott Johnson                            *)
+(*    Philipp Tomsich                                                                    *)
+(*    VRULL GmbH, for contributions by its employees                                     *)
+(*                                                                                       *)
+(*  All rights reserved.                                                                 *)
+(*                                                                                       *)
+(*  This software was developed by the above within the Rigorous                         *)
+(*  Engineering of Mainstream Systems (REMS) project, partly funded by                   *)
+(*  EPSRC grant EP/K008528/1, at the Universities of Cambridge and                       *)
+(*  Edinburgh.                                                                           *)
+(*                                                                                       *)
+(*  This software was developed by SRI International and the University of               *)
+(*  Cambridge Computer Laboratory (Department of Computer Science and                    *)
+(*  Technology) under DARPA/AFRL contract FA8650-18-C-7809 ("CIFV"), and                 *)
+(*  under DARPA contract HR0011-18-C-0016 ("ECATS") as part of the DARPA                 *)
+(*  SSITH research programme.                                                            *)
+(*                                                                                       *)
+(*  This project has received funding from the European Research Council                 *)
+(*  (ERC) under the European Union’s Horizon 2020 research and innovation                *)
+(*  programme (grant agreement 789108, ELVER).                                           *)
+(*                                                                                       *)
+(*                                                                                       *)
+(*  Redistribution and use in source and binary forms, with or without                   *)
+(*  modification, are permitted provided that the following conditions                   *)
+(*  are met:                                                                             *)
+(*  1. Redistributions of source code must retain the above copyright                    *)
+(*     notice, this list of conditions and the following disclaimer.                     *)
+(*  2. Redistributions in binary form must reproduce the above copyright                 *)
+(*     notice, this list of conditions and the following disclaimer in                   *)
+(*     the documentation and/or other materials provided with the                        *)
+(*     distribution.                                                                     *)
+(*                                                                                       *)
+(*  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''                   *)
+(*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED                    *)
+(*  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A                      *)
+(*  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR                  *)
+(*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,                         *)
+(*  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT                     *)
+(*  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF                     *)
+(*  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND                  *)
+(*  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,                   *)
+(*  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT                   *)
+(*  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF                   *)
+(*  SUCH DAMAGE.                                                                         *)
+(*=======================================================================================*)
+
+open import Pervasives
+open import Pervasives_extra
+open import Sail2_instr_kinds
+open import Sail2_values
+open import Sail2_operators_mwords
+open import Sail2_prompt_monad
+open import Sail2_prompt
+
+type bitvector 'a = mword 'a
+
+let MEM_fence_rw_rw () = barrier Barrier_RISCV_rw_rw
+let MEM_fence_r_rw  () = barrier Barrier_RISCV_r_rw
+let MEM_fence_r_r   () = barrier Barrier_RISCV_r_r
+let MEM_fence_rw_w  () = barrier Barrier_RISCV_rw_w
+let MEM_fence_w_w   () = barrier Barrier_RISCV_w_w
+let MEM_fence_w_rw  () = barrier Barrier_RISCV_w_rw
+let MEM_fence_rw_r  () = barrier Barrier_RISCV_rw_r
+let MEM_fence_r_w   () = barrier Barrier_RISCV_r_w
+let MEM_fence_w_r   () = barrier Barrier_RISCV_w_r
+let MEM_fence_tso   () = barrier Barrier_RISCV_tso
+let MEM_fence_i     () = barrier Barrier_RISCV_i
+
+val MEMea                            : forall 'rv 'a 'e. Size 'a => bitvector 'a -> integer -> monad 'rv unit 'e
+val MEMea_release                    : forall 'rv 'a 'e. Size 'a => bitvector 'a -> integer -> monad 'rv unit 'e
+val MEMea_strong_release             : forall 'rv 'a 'e. Size 'a => bitvector 'a -> integer -> monad 'rv unit 'e
+val MEMea_conditional                : forall 'rv 'a 'e. Size 'a => bitvector 'a -> integer -> monad 'rv unit 'e
+val MEMea_conditional_release        : forall 'rv 'a 'e. Size 'a => bitvector 'a -> integer -> monad 'rv unit 'e
+val MEMea_conditional_strong_release : forall 'rv 'a 'e. Size 'a => bitvector 'a -> integer -> monad 'rv unit 'e
+
+let MEMea addr size                      = write_mem_ea Write_plain addr size
+let MEMea_release addr size              = write_mem_ea Write_RISCV_release addr size
+let MEMea_strong_release addr size       = write_mem_ea Write_RISCV_strong_release addr size
+let MEMea_conditional addr size          = write_mem_ea Write_RISCV_conditional addr size
+let MEMea_conditional_release addr size  = write_mem_ea Write_RISCV_conditional_release addr size
+let MEMea_conditional_strong_release addr size
+                                          = write_mem_ea Write_RISCV_conditional_strong_release addr size
+
+val MEMr                         : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
+val MEMr_acquire                 : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
+val MEMr_strong_acquire          : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
+val MEMr_reserved                : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
+val MEMr_reserved_acquire        : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
+val MEMr_reserved_strong_acquire : forall 'rv 'a 'b 'e. Size 'a, Size 'b => integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
+
+let MEMr addrsize size hexRAM addr                         = read_mem Read_plain addr size
+let MEMr_acquire addrsize size hexRAM addr                 = read_mem Read_RISCV_acquire addr size
+let MEMr_strong_acquire addrsize size hexRAM addr          = read_mem Read_RISCV_strong_acquire addr size
+let MEMr_reserved addrsize size hexRAM addr                = read_mem Read_RISCV_reserved addr size
+let MEMr_reserved_acquire addrsize size hexRAM addr        = read_mem Read_RISCV_reserved_acquire addr size
+let MEMr_reserved_strong_acquire addrsize size hexRAM addr = read_mem Read_RISCV_reserved_strong_acquire addr size
+
+val write_ram : forall 'rv 'a 'b 'e. Size 'a, Size 'b =>
+  integer -> integer -> bitvector 'a -> bitvector 'a -> bitvector 'b -> monad 'rv bool 'e
+let write_ram addrsize size hexRAM address value =
+  write_mem Write_plain address size value
+
+val read_ram : forall 'rv 'a 'b 'e. Size 'a, Size 'b =>
+  integer -> integer -> bitvector 'a -> bitvector 'a -> monad 'rv (bitvector 'b) 'e
+let read_ram addrsize size hexRAM address =
+  read_mem Read_plain address size
+
+val load_reservation : forall 'a. Size 'a => bitvector 'a -> unit
+let load_reservation addr = ()
+
+let speculate_conditional_success () = excl_result ()
+
+let match_reservation _ = true
+let cancel_reservation () = ()
+
+val sys_enable_writable_misa : unit -> bool
+let sys_enable_writable_misa () = true
+declare ocaml target_rep function sys_enable_writable_misa = `Platform.enable_writable_misa`
+
+val sys_enable_rvc : unit -> bool
+let sys_enable_rvc () = true
+declare ocaml target_rep function sys_enable_rvc = `Platform.enable_rvc`
+
+val sys_enable_zfinx : unit -> bool
+let sys_enable_zfinx () = false
+declare ocaml target_rep function sys_enable_zfinx = `Platform.enable_zfinx`
+
+val sys_enable_next : unit -> bool
+let sys_enable_next () = true
+declare ocaml target_rep function sys_enable_next = `Platform.enable_next`
+
+val sys_enable_writable_fiom : unit -> bool
+let sys_enable_writable_fiom () = true
+declare ocaml target_rep function sys_enable_writable_fiom = `Platform.enable_writable_fiom`
+
+val plat_ram_base : forall 'a. Size 'a => unit -> bitvector 'a
+let plat_ram_base () = wordFromInteger 0
+declare ocaml target_rep function plat_ram_base = `Platform.dram_base`
+
+val plat_ram_size : forall 'a. Size 'a => unit -> bitvector 'a
+let plat_ram_size () = wordFromInteger 0
+declare ocaml target_rep function plat_ram_size = `Platform.dram_size`
+
+val plat_rom_base : forall 'a. Size 'a => unit -> bitvector 'a
+let plat_rom_base () = wordFromInteger 0
+declare ocaml target_rep function plat_rom_base = `Platform.rom_base`
+
+val plat_rom_size : forall 'a. Size 'a => unit -> bitvector 'a
+let plat_rom_size () = wordFromInteger 0
+declare ocaml target_rep function plat_rom_size = `Platform.rom_size`
+
+val plat_clint_base : forall 'a. Size 'a => unit -> bitvector 'a
+let plat_clint_base () = wordFromInteger 0
+declare ocaml target_rep function plat_clint_base = `Platform.clint_base`
+
+val plat_clint_size : forall 'a. Size 'a => unit -> bitvector 'a
+let plat_clint_size () = wordFromInteger 0
+declare ocaml target_rep function plat_clint_size = `Platform.clint_size`
+
+val plat_enable_dirty_update : unit -> bool
+let plat_enable_dirty_update () = false
+declare ocaml target_rep function plat_enable_dirty_update = `Platform.enable_dirty_update`
+
+val plat_enable_misaligned_access : unit -> bool
+let plat_enable_misaligned_access () = false
+declare ocaml target_rep function plat_enable_misaligned_access = `Platform.enable_misaligned_access`
+
+val plat_mtval_has_illegal_inst_bits : unit -> bool
+let plat_mtval_has_illegal_inst_bits () = false
+declare ocaml target_rep function plat_mtval_has_illegal_inst_bits = `Platform.mtval_has_illegal_inst_bits`
+
+val plat_insns_per_tick : unit -> integer
+let plat_insns_per_tick () = 1
+declare ocaml target_rep function plat_insns_per_tick = `Platform.insns_per_tick`
+
+val plat_htif_tohost : forall 'a. Size 'a => unit -> bitvector 'a
+let plat_htif_tohost () = wordFromInteger 0
+declare ocaml target_rep function plat_htif_tohost = `Platform.htif_tohost`
+
+val plat_term_write : forall 'a. Size 'a => bitvector 'a -> unit
+let plat_term_write _ = ()
+declare ocaml target_rep function plat_term_write = `Platform.term_write`
+
+val plat_term_read : forall 'a. Size 'a => unit -> bitvector 'a
+let plat_term_read () = wordFromInteger 0
+declare ocaml target_rep function plat_term_read = `Platform.term_read`
+
+val shift_bits_right : forall 'a 'b. Size 'a, Size 'b => bitvector 'a -> bitvector 'b -> bitvector 'a
+let shift_bits_right v m = shiftr v (uint m)
+val shift_bits_left : forall 'a 'b. Size 'a, Size 'b => bitvector 'a -> bitvector 'b -> bitvector 'a
+let shift_bits_left v m = shiftl v (uint m)
+
+val print_string : string -> string -> unit
+let print_string msg s = () (* print_endline (msg ^ s) *)
+
+val prerr_string : string -> string -> unit
+let prerr_string msg s = prerr_endline (msg ^ s)
+
+val prerr_bits : forall 'a. Size 'a => string -> bitvector 'a -> unit
+let prerr_bits msg bs = prerr_endline (msg ^ (show_bitlist (bits_of bs)))
+
+val print_bits : forall 'a. Size 'a => string -> bitvector 'a -> unit
+let print_bits msg bs = () (* print_endline (msg ^ (show_bitlist (bits_of bs))) *)
+
+val print_dbg : string -> unit
+let print_dbg msg = ()

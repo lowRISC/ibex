@@ -1,0 +1,111 @@
+open import Pervasives_extra
+open import Sail2_instr_kinds
+open import Sail2_values
+import Sail2_state_monad
+
+(* Fake interface of the prompt monad by redirecting to the state monad, since
+   the former is not currently supported by HOL4 *)
+
+type monad 'rv 'a 'e = Sail2_state_monad.monadS 'rv 'a 'e
+type monadR 'rv 'a 'e 'r = Sail2_state_monad.monadRS 'rv 'a 'e 'r
+
+(* We need to use a target_rep for these because HOL doesn't handle unused
+   type parameters well. *)
+
+type base_monad 'regval 'regstate 'a 'e = monad 'regstate 'a 'e
+declare hol target_rep type base_monad 'regval 'regstate 'a 'e = `monad` 'regstate 'a 'e
+type base_monadR 'regval 'regstate 'a 'r 'e = monadR 'regstate 'a 'r 'e
+declare hol target_rep type base_monadR 'regval 'regstate 'a 'r 'e = `monadR` 'regstate 'a 'r 'e
+
+let inline return = Sail2_state_monad.returnS
+let inline bind = Sail2_state_monad.bindS
+let inline (>>=) = Sail2_state_monad.(>>$=)
+let inline (>>) = Sail2_state_monad.(>>$)
+
+val either_bind : forall 'e 'a 'b. either 'e 'a -> ('a -> either 'e 'b) -> either 'e 'b
+let either_bind m f =
+  match m with
+  | Left e -> Left e
+  | Right x -> f x
+  end
+
+val (>>$=) : forall 'e 'a 'b. either 'e 'a -> ('a -> either 'e 'b) -> either 'e 'b
+declare isabelle target_rep function (>>$=) = infix `\<bind>`
+let inline ~{isabelle} (>>$=) = either_bind
+
+val (>>$) : forall 'e 'a. either 'e unit -> either 'e 'a -> either 'e 'a
+declare isabelle target_rep function (>>$) = infix `\<then>`
+let inline ~{isabelle} (>>$) m n = m >>$= fun (_ : unit) -> n
+
+val choose_regval : forall 'regs 'regval 'e. SetType 'regval => string -> monad 'regs 'regval 'e
+let choose_regval _ = Sail2_state_monad.chooseS universal
+
+val choose_convert : forall 'regs 'rv 'a 'e. SetType 'rv => ('rv -> maybe 'a) -> string -> monad 'regs 'a 'e
+let choose_convert of_rv descr = Sail2_state_monad.chooseS universal >>= (fun rv -> Sail2_state_monad.maybe_failS descr (of_rv rv))
+
+val choose_convert_default : forall 'regs 'rv 'e 'a. SetType 'rv => ('rv -> maybe 'a) -> 'a -> string -> monad 'rv 'a 'e
+let choose_convert_default of_rv x descr = Sail2_state_monad.chooseS universal >>= (fun rv -> return (match of_rv rv with
+    | Just a -> a
+    | Nothing -> x
+    end))
+
+val choose_bool : forall 'regs 'e. string -> monad 'regs bool 'e
+let choose_bool _ = Sail2_state_monad.choose_boolS ()
+
+val choose_bit : forall 'regs 'e. string -> monad 'regs bitU 'e
+let choose_bit descr = choose_bool descr >>= (fun b -> return (bitU_of_bool b))
+
+val choose_int : forall 'regs 'e. string -> monad 'regs integer 'e
+let choose_int _ = Sail2_state_monad.chooseS universal
+
+val choose_real : forall 'regs 'e. string -> monad 'regs real 'e
+let choose_real _ = Sail2_state_monad.chooseS universal
+
+val choose_string : forall 'regs 'e. string -> monad 'regs string 'e
+let choose_string _ = Sail2_state_monad.chooseS universal
+
+let inline headM = Sail2_state_monad.headS
+
+let inline exit = Sail2_state_monad.exitS
+
+let inline throw = Sail2_state_monad.throwS
+let inline try_catch = Sail2_state_monad.try_catchS
+
+let inline catch_early_return = Sail2_state_monad.catch_early_returnS
+let inline early_return = Sail2_state_monad.early_returnS
+let inline liftR = Sail2_state_monad.liftRS
+let inline try_catchR = Sail2_state_monad.try_catchRS
+
+let inline maybe_fail = Sail2_state_monad.maybe_failS
+
+let inline read_memt_bytes = Sail2_state_monad.read_memt_bytesS
+let inline read_mem_bytes = Sail2_state_monad.read_mem_bytesS
+let inline read_reg = Sail2_state_monad.read_regS
+let inline reg_deref = Sail2_state_monad.read_regS
+let inline read_memt = Sail2_state_monad.read_memtS
+let inline read_mem = Sail2_state_monad.read_memS
+let inline excl_result = Sail2_state_monad.excl_resultS
+let inline write_reg = Sail2_state_monad.write_regS
+let inline write_mem_ea wk addrsize addr sz = return ()
+let inline write_memt = Sail2_state_monad.write_memtS
+let inline write_mem = Sail2_state_monad.write_memS
+let barrier _ = return ()
+let footprint _ = return ()
+
+let inline assert_exp = Sail2_state_monad.assert_expS
+
+val pure_early_return : forall 'a. either 'a 'a -> 'a
+let pure_early_return = function
+  | Left a -> a
+  | Right a -> a
+end
+
+val foreachE : forall 'a 'vars 'e.
+  list 'a -> 'vars -> ('a -> 'vars -> either 'e 'vars) -> either 'e 'vars
+let rec foreachE l vars body =
+match l with
+| [] -> Right vars
+| (x :: xs) ->
+  body x vars >>$= fun vars ->
+  foreachE xs vars body
+end

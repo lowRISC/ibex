@@ -1,0 +1,82 @@
+\chapter{Known caveats}
+
+There are a small number of known caveats for developers attempting to secure a compartment.
+Future iterations may have compiler mitigations for some of these.
+
+\section{Shared stacks}
+
+Compartments invoked by the same thread all use the same stack.
+This is important for embedded systems.
+Embedded stacks are often on the order of 1 KiB in size and so requiring a separate stack segment for every thread and compartment pair would quickly exhaust memory.
+This sharing provides one useful tool for an attacker: The caller has access to all of the callee's stack prior to a call.
+
+A malicious compartment may construct a capability to a currently-unused part of the stack, which will become the callee's stack.
+It cannot stash these on the heap or in globals but it can then pass these as arguments.
+The compartment switcher will \dcnote{Real Soon Now!} check that these are not passed as direct arguments but a compartment may load a capability and corrupt its own state.
+For example, consider the following interface:
+
+\begin{ccodelisting}
+struct A
+{
+	char *outBuffer;
+	size_t length;
+};
+__attribute__((cheri_compartment("victim")))
+void copyOutSomething(const struct A *out);
+\end{ccodelisting}
+
+This API takes a structure containing a pointer to a buffer and a length and is expected to write something via this pointer.
+If the attacker sets up the \ccode{outBuffer} field to point to something on the victim's stack, then the victim may corrupt its own stack.
+The victim must check this.
+The \ccode{check_pointer} function from \file{cheri.hh} validates that pointers do not do this.
+This function takes a set of permissions that the capability must have and a size (optionally: if unspecified it assumes that the pointer must be big enough for one instance of pointee type) and returns true only if the pointer is not on the current compartment's stack, is tagged, unsealed, and has sufficient permissions.
+
+The following snippet is taken from the implementation of one of the scheduler functions.
+
+\begin{ccodelisting}
+if (!check_pointer<PermissionSet{Permission::Store,
+                                 Permission::LoadStoreCapability}>(ret))
+{
+    return -EINVAL;
+}
+\end{ccodelisting}
+
+This ensures that the \ccode{void **ret} argument can be used to store a capability.
+If this is not the case, the function returns early.
+
+\section{Explicit leakage}
+
+Passing a pointer to a cross-compartment function call at the C level grants the callee access to the pointee data.
+Similarly, returning a pointer from a cross-compartment function call grants the caller access to the pointee.
+The ISA provides several tools for restricting this:
+
+\begin{description}
+	\item[Sealing] allows pointers to be made unusable by anyone who lacks the matching permit-unseal capability and unforgeable by anyone who lacks the matching permit-seal capability.
+	\item[Deep immutability] (the permit-load-mutable permission) provides a mechanism for passing data structures between compartments that prevents the recipient from mutating any objects reached via the initial pointer.
+	\item[Local] capabilities (shallowly local, or deeply local capabilities that lack the permit-load-global permission) provide a mechanism to prevent the callee (including any indirect callee) from capturing a pointer.
+\end{description}
+
+These tools provide a security benefit only if they are used.
+It is good practice for any compartment-owned data that is returned to a caller to be sealed.
+For example, a network stack returning a connection context should return a sealed capability.
+As a rule of thumb, if you are not writing code that is correct in the presence of every possible bit pattern for a data structure then pointers to that data structure that are shared outside of a compartment should be sealed.
+
+Any pointer that is \ccode{const} should be marked as deeply immutable.
+This is not done automatically because C and C++ both allow the \ccode{const} qualifier to be cast away.
+Any pointer-typed function argument pointer that is not expected to be captured by the callee should be marked as local.
+
+Future versions of the compiler will provide declarative annotations that implicitly drop these permissions in the caller.
+
+
+\section{Availability}
+
+In some embedded systems (most control systems), availability is a critical part of the TCB.
+In such systems, an attacker who can prevent the system from responding can do real-world damage.
+For example, preventing the brake-control system from engaging the brakes in response to a signal or preventing an emergency cut-out from being delivered can cause injury or loss of life.
+
+In such systems, the scheduler becomes part of the TCB.
+The scheduler is not trusted for confidentiality or integrity and has a limited interface to the rest of the TCB and so can potentially be replaced by something simpler for these use cases (or something formally verified to ensure that the highest-priority thread will be scheduled in a timely fashion).
+
+Similarly, any lower-priority thread that can reach a compartment that can invoke an interrupts-disabled function is part of the TCB for availability.
+It is important to carefully audit all such paths to ensure that they will not prevent interrupt delivery for long enough to violate hard realtime guarantees.
+

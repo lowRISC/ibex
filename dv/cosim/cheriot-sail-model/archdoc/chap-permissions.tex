@@ -1,0 +1,23 @@
+\chapter{Permission compression rationale}
+\label{chap:permissions}
+
+To devise the permission compression scheme we initially observed a number of constraints on the useful permissions combinations:
+
+\vspace{1em}
+\begin{tabularx}{\textwidth}{rX}
+$MC \rightarrow (LD \lor SD)$   & Capability read / write is not useful without a load or store permission. \\
+$LG \rightarrow (MC \land  LD)$ & Load global requires load capability. \\
+$LM \rightarrow (MC \land  LD)$ & Load mutable requires load capability. \\
+$SL \rightarrow (MC \land  SD)$ & Store local requires store capability. \\
+$SR \rightarrow EX$             & Access system registers only applies to executable capabilities. \\
+$EX \rightarrow (MC \land LD)$  & Executable capabilities require load capability for global access. \\
+$\neg(EX \land SD)$             & Executable capabilities should not be writable, to enhance security. \\
+$\neg((SE \lor US \lor U0) \land (LD \lor SD))$ & Memory permissions should be disjoint from sealing permissions due to separate namespaces. \\
+\end{tabularx}
+\vspace{1em}
+
+If we apply all of these constraints we find there are only 33 useful permission combinations
+(excluding the global bit, which we take to be orthogonal).
+Eliminating just one of these combinations allows us to encode them using a 5-bit encoding.
+We see limited uses for write-only capabilities outside MMIO, so we chose write-only store-local as the least useful combination, leading to the encoding described in \cref{sec:perms}.
+This may be reassessed once we have a clearer picture of use cases for write-only capabilities.

@@ -1,0 +1,87 @@
+(* let translate_out_big_bit = Sail_values.unsigned
+ *
+ * let translate_out_int inst = (Nat_big_num.to_int (translate_out_big_bit inst))
+ * let translate_out_signed_int inst bits =
+ *     let i = (Nat_big_num.to_int (translate_out_big_bit inst)) in
+ *     if (i >= (1 lsl (bits - 1))) then
+ *     (i - (1 lsl bits)) else
+ *       i *)
+
+let translate_out_int i = Nat_big_num.to_int (Lem.naturalFromWord i)
+let translate_out_signed_int i = Nat_big_num.to_int (Lem.signedIntegerFromWord i)
+
+let translate_out_ireg ireg = IReg (int_to_ireg (translate_out_int ireg))
+
+let translate_out_uop op = match op with
+  | RISCV_LUI   -> RISCVLUI
+  | RISCV_AUIPC -> RISCVAUIPC
+
+let translate_out_bop op = match op with
+  | RISCV_BEQ  -> RISCVBEQ
+  | RISCV_BNE  -> RISCVBNE
+  | RISCV_BLT  -> RISCVBLT
+  | RISCV_BGE  -> RISCVBGE
+  | RISCV_BLTU -> RISCVBLTU
+  | RISCV_BGEU -> RISCVBGEU
+
+let translate_out_iop op = match op with
+  | RISCV_ADDI   -> RISCVADDI
+  | RISCV_SLTI   -> RISCVSLTI
+  | RISCV_SLTIU  -> RISCVSLTIU
+  | RISCV_XORI   -> RISCVXORI
+  | RISCV_ORI    -> RISCVORI
+  | RISCV_ANDI   -> RISCVANDI
+
+let translate_out_sop op = match op with
+  | RISCV_SLLI -> RISCVSLLI
+  | RISCV_SRLI -> RISCVSRLI
+  | RISCV_SRAI -> RISCVSRAI
+
+let translate_out_rop op = match op with
+  | RISCV_ADD   -> RISCVADD
+  | RISCV_SUB   -> RISCVSUB
+  | RISCV_SLL   -> RISCVSLL
+  | RISCV_SLT   -> RISCVSLT
+  | RISCV_SLTU  -> RISCVSLTU
+  | RISCV_XOR   -> RISCVXOR
+  | RISCV_SRL   -> RISCVSRL
+  | RISCV_SRA   -> RISCVSRA
+  | RISCV_OR    -> RISCVOR
+  | RISCV_AND   -> RISCVAND
+
+let translate_out_ropw op = match op with
+  | RISCV_ADDW  -> RISCVADDW
+  | RISCV_SUBW  -> RISCVSUBW
+  | RISCV_SLLW  -> RISCVSLLW
+  | RISCV_SRLW  -> RISCVSRLW
+  | RISCV_SRAW  -> RISCVSRAW
+
+let translate_out_amoop op = match op with
+  | AMOSWAP -> RISCVAMOSWAP
+  | AMOADD  -> RISCVAMOADD
+  | AMOXOR  -> RISCVAMOXOR
+  | AMOAND  -> RISCVAMOAND
+  | AMOOR   -> RISCVAMOOR
+  | AMOMIN  -> RISCVAMOMIN
+  | AMOMAX  -> RISCVAMOMAX
+  | AMOMINU -> RISCVAMOMINU
+  | AMOMAXU -> RISCVAMOMAXU
+
+let translate_out_wordWidth op = match op with
+  | BYTE   -> RISCVBYTE
+  | HALF   -> RISCVHALF
+  | WORD   -> RISCVWORD
+  | DOUBLE -> RISCVDOUBLE
+
+let translate_out_bool b = b (* function
+   * | Sail_values.B1  -> true
+   * | Sail_values.B0 -> false
+   * | _ -> failwith "translate_out_bool Undef" *)
+
+let translate_out_simm21 imm = translate_out_signed_int imm (* 21 *)
+let translate_out_simm20 imm = translate_out_signed_int imm (* 20 *)
+let translate_out_simm13 imm = translate_out_signed_int imm (* 13 *)
+let translate_out_simm12 imm = translate_out_signed_int imm (* 12 *)
+let translate_out_imm6 imm = translate_out_int imm
+let translate_out_imm5 imm = translate_out_int imm
+let translate_out_imm4 imm = translate_out_int imm

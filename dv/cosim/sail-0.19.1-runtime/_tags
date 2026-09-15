@@ -1,0 +1,3 @@
+true: debug
+<*.m{l,li}>: package(lem), package(linksem), package(zarith)
+<main.native>: package(lem), package(linksem), package(zarith)

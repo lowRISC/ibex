@@ -1,0 +1,21 @@
+| `RISCVThreadStart                        -> `RISCVThreadStart
+| `RISCVStopFetching                       -> `RISCVStopFetching
+
+| `RISCVUTYPE (x, r0, y)                   -> `RISCVUTYPE (x, map_reg r0, y)
+| `RISCVJAL (x, r0)                        -> `RISCVJAL (x, map_reg r0)
+| `RISCVJALR (x, r0, r1)                   -> `RISCVJALR (x, map_reg r0, map_reg r1)
+| `RISCVBType (x, r0, r1, y)               -> `RISCVBType (x, map_reg r0, map_reg r1, y)
+| `RISCVIType (x, r0, r1, y)               -> `RISCVIType (x, map_reg r0, map_reg r1, y)
+| `RISCVShiftIop (x, r0, r1, y)            -> `RISCVShiftIop (x, map_reg r0, map_reg r1, y)
+| `RISCVRType (r0, r1, r2, y)              -> `RISCVRType (r0, map_reg r1, map_reg r2, y)
+| `RISCVLoad (x, r0, r1, y, z, a, b)       -> `RISCVLoad (x, map_reg r0, map_reg r1, y, z, a, b)
+| `RISCVStore (x, r0, r1, y, z, a)         -> `RISCVStore (x, map_reg r0, map_reg r1, y, z, a)
+| `RISCVADDIW (x, r0, r1)                  -> `RISCVADDIW (x, map_reg r0, map_reg r1)
+| `RISCVSHIFTW (x, r0, r1, y)              -> `RISCVSHIFTW (x, map_reg r0, map_reg r1, y)
+| `RISCVRTYPEW (r0, r1, r2, x)             -> `RISCVRTYPEW (r0, map_reg r1, map_reg r2, x)
+| `RISCVFENCE (p, s)                       -> `RISCVFENCE (p, s)
+| `RISCVFENCE_TSO (p, s)                   -> `RISCVFENCE_TSO (p, s)
+| `RISCVFENCEI                             -> `RISCVFENCEI
+| `RISCVLoadRes (aq, rl, rs1, w, rd)       -> `RISCVLoadRes (aq, rl, map_reg rs1, w, map_reg rd)
+| `RISCVStoreCon (aq, rl, rs2, rs1, w, rd) -> `RISCVStoreCon (aq, rl, map_reg rs2, map_reg rs1, w, map_reg rd)
+| `RISCVAMO (op, aq, rl, rs2, rs1, w, rd)  -> `RISCVAMO (op, aq, rl, map_reg rs2, map_reg rs1, w, map_reg rd)

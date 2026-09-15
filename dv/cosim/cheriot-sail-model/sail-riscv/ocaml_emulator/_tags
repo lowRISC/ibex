@@ -1,0 +1,3 @@
+<**/*.ml>: bin_annot, annot
+<*.m{l,li}>: package(lem), package(linksem), package(zarith)
+<riscv_ocaml_sim.native>: package(lem), package(linksem), package(zarith)

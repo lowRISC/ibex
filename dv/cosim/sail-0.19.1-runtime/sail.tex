@@ -1,0 +1,42 @@
+\documentclass{report}
+
+\usepackage[svgnames]{xcolor}
+\usepackage{fullpage}
+\usepackage{listings}
+\usepackage{hyperref}
+
+\hypersetup{colorlinks=true,linkcolor=DarkRed}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  columns=fullflexible,
+  breaklines=true,
+  postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+}
+
+\lstdefinelanguage{sail}
+  { morekeywords={val,function,cast,type,forall,overload,operator,enum,union,undefined,exit,and,assert,sizeof,
+      scattered,register,inc,dec,if,then,else,effect,let,as,@,in,end,Type,Int,Order,match,clause,struct},
+    keywordstyle={\bf\ttfamily\color{blue}},
+    morestring=[b]",
+    stringstyle={\ttfamily\color{red}},
+    morecomment=[l][\itshape\color{DarkGreen}]{//},
+    morecomment=[s][\itshape\color{DarkGreen}]{/*}{*/},
+    deletestring=[bd]{'},
+    escapechar=\#,
+    emphstyle={\it},
+    literate=
+      {\{|}{{$\{|$}}1
+      {|\}}{{$|\}$}}1
+  }
+
+\lstset{language=sail}
+
+\def\sail{\trivlist \item\relax}
+\def\endsail{\endtrivlist}
+
+\begin{document}
+
+\include{out}
+
+\end{document}

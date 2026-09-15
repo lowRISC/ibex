@@ -1,0 +1,22 @@
+| `RISCVStopFetching (* this is a special instruction used by rmem to
+                        indicate the end of a litmus thread *)
+| `RISCVThreadStart  (* this instruction indicates a thread creation in ELF files *)
+
+| `RISCVUTYPE of bit20 * reg * riscvUop
+| `RISCVJAL   of bit20 * reg
+| `RISCVJALR  of bit12 * reg * reg
+| `RISCVBType of bit12 * reg * reg * riscvBop
+| `RISCVIType of bit12 * reg * reg * riscvIop
+| `RISCVShiftIop of bit6 * reg * reg * riscvSop
+| `RISCVRType of reg * reg * reg * riscvRop
+| `RISCVLoad of bit12 * reg * reg * bool * wordWidth * bool * bool
+| `RISCVStore of bit12 * reg * reg * wordWidth * bool * bool
+| `RISCVADDIW of bit12 * reg * reg
+| `RISCVSHIFTW of bit5 * reg * reg * riscvSop
+| `RISCVRTYPEW of reg * reg * reg * riscvRopw
+| `RISCVFENCE of bit4 * bit4
+| `RISCVFENCE_TSO of bit4 * bit4
+| `RISCVFENCEI
+| `RISCVLoadRes of bool * bool * reg * wordWidth * reg
+| `RISCVStoreCon of bool * bool * reg * reg * wordWidth * reg
+| `RISCVAMO of riscvAmoop * bool * bool * reg * reg * wordWidth * reg

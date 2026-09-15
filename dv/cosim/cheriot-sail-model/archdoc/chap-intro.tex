@@ -1,0 +1,158 @@
+\chapter{Introduction}
+
+The \cherimcu{} (Capability Hardware Extension to RISC-V for Internet of Things, pronounced like 'chariot') design is heavily based on prior work by the CHERI project.
+Our RISC-V extension is based on the CHERI ISAv8\cite{UCAM-CL-TR-951} and would not have been possible without this work.
+
+This document describes the current status of the \cherimcuisa{}.
+This ISA is not intended to be a final CHERI specification for embedded RISC-V devices but is a work-in-progress that is sufficiently close to final that feedback is valuable.
+In particular, the current C extension to RISC-V makes a number of optimization decisions that are not useful in a CHERI context and so we would likely benefit from an alternative (as yet unspecified) 16-bit instruction extension for embedded CHERI targets.
+
+The \cherimcu{} project would not have been possible without the existing ``big CHERI'' research~\cite{UCAM-CL-TR-951,Davis_CheriABIEnforcingValid_2019},
+exploration of green-field CHERI-aware operating systems~\cite{esswood:cherios},
+and work to adapt CHERI software models to embedded systems~\cite{xia:cherirtos,xia:capprotembed,almatary:compartos,almatary:thesis}.
+This ISA attempts to scale CHERI down yet further, into smaller embedded systems than previously considered;
+we have taken the opportunity to simultaneously design our ISA, compartment model, programmer model, compiler, and RTOS~\cite{cheriot-rtos}.
+The capability encoding and instruction set have been tuned to enable this use and validated by running existing embedded software in compartments.
+Curious readers are invited to see our study of related works in \cref{app:related}.
+
+This document describes:
+
+\begin{itemize}
+	\item The RISC-V ISA extension (\cref{part:isa}).
+	\item The compartment model that the ISA is intended to support (\cref{chap:compartmentmodel}).
+	\item The RTOS implementation used to enforce the model (\cref{chap:rtos})
+	\item The language extensions used to expose this model to developers (\cref{chap:language}).
+	\item The ABI used to implement the compartment model (\cref{chap:abi}).
+\end{itemize}
+
+Performance, power, and area costs for the implementation are not part of this and will be presented in a follow-up publication.
+
+\section{The \cherimcuos{} Model}
+
+Because the ISA given here is the result of simultaneous design with software, we will often refer to software concepts for motivation or justification of design choices.
+Particularly central to the discussion are the notions of memory safety, compartments, and threads.
+We provide coarse definitions here and will refine them as we continue.
+
+A \defn{thread} is a schedulable entity associated with a general-purpose register file and a designated region of memory for use as a call stack.
+Threads are either running, in which case their register file is the CPU's, or suspended, in which case the register file is saved to memory for later use.
+
+A system is said to be \defn{memory safe} if its references to memory are:
+%
+\begin{description}
+
+  \item[Unforgeable] A reference to memory (in particular, the authority to access memory) can be constructed only from other references.
+
+  \item[Monotonic] A constructed reference will have no more authority than its progenitor reference(s) (and may have less).
+
+  \item[Spatially Safe] References to memory authorize access to a set of memory locations determined when the reference is constructed.
+
+  \item[Temporally Safe] References to a region of memory will not remain usable across \emph{reuse} of memory for a different allocation.
+
+\end{description}
+%
+\cherimcu{} is based on CHERI and so language-level references are expected to compile down to CHERI capabilities.
+We may gloss over subtle distinctions and conflate the terms ``capability,'' ``pointer,'' and ``reference.''
+
+A \defn{compartment} is a collection of code, data, and capabilities that serves as an invocable security context.
+Compartments statically export \keyword{entry-points}, which may be statically imported by other compartments or passed as opaque \keyword{cross-compartment function pointers}.
+A compartment that (statically or dynamically) imports an entry point may then invoke it to perform a \keyword{cross-compartment call}.
+Such calls are synchronous and transition the calling thread from one compartment to another.
+The thread's stack is used, with appropriate bounds adjustment, in both the caller and callee compartment.
+
+\section{Security goals}
+
+We aim to provide a minimal TCB that can run user software (including third-party code) in compartments.
+These compartments are not part of the TCB and are assumed to have a mutual distrust relationship with each other.
+
+We define a set of security guarantees that apply to all untrusted compartments.
+These guarantees are enforced by three system components, which form the TCB for confidentiality and integrity.
+These components are:
+
+\begin{description}
+	\item[The loader,] which is responsible for setting up all of the initial capabilities for everything in the system.
+		This never accesses any data that was not part of the initial firmware image.
+	\item[The switcher,] which is responsible for transitions between compartments and between threads.
+		This is around 300 instructions in hand-written assembly.
+	\item[The memory allocator,] which is responsible for providing the hardware with the information required to enforce heap memory safety.
+\end{description}
+
+The code in these components must be carefully audited.
+
+An embedded system may have user-provided components that run at the highest priority level, with interrupts disabled.
+Any code that runs with interrupts disabled is part of the TCB for availability.
+
+\TODO{rn: general thought that the following sections read less like goals and more like description of the implementation.}
+
+\subsection{Heap memory safety}
+
+\cherimcuos{} provides a \defn{heap}, a system-provided compartment with dedicated memory to which it grants other compartments dynamic, temporary access.
+
+The allocator ensures that the capabilities it gives out have bounds that do not overlap any other allocation, and so the CHERI bounds checks enforce spatial memory safety.
+Heap memory is also temporally safe: no heap memory will be reused until the system has ensured that all dangling pointers to it are deallocated.
+The hardware provides a guarantee that no capability can be loaded if the memory allocator has marked the memory it points to as deallocated.
+This mechanism is described in detail in Section \ref{sec:temporal}.
+A revocation service (which can be implemented in hardware or software) periodically scans all memory and deletes capabilities that point to revoked memory.
+
+The memory allocator is part of the TCB as it could violate confidentiality and integrity in a number of ways.
+It holds a capability to the entire heap and so, in principle, can violate confidentiality of heap contents either directly or by failing to clear memory before issuing an allocation in reused space.
+Similarly, it can violate integrity by directly using or improperly revealing capabilities held within heap memory.
+It can violate spatial safety by not correctly bounding capabilities it returns.
+Finally, it could violate temporal safety by either not marking freed objects as deallocated or by un-marking the memory and reusing it before revocation.
+
+However, despite all that, the memory allocator does not hold capabilities to normal compartment memory, only to region(s) reserved for the heap it manages.
+As such, even a completely compromised memory allocator can violate safety properties of the heap only; it cannot directly violate memory safety for non-heap memory.
+
+\subsection{Local stack memory safety}
+
+Allocations on a thread's stack are bounded by CHERI capabilities -- the compiler generates instructions to derive these capabilities from the stack capability -- but are not guaranteed to be temporally safe.
+
+However, \cherimcuisa{} and \cherimcuos{} have mechanisms to ensure that capabilities to stack allocations can not be stored anywhere other than on the stack to which they point (which may include address-taken allocations on the caller's portion of the stack).
+In practice, this means that violating stack temporal safety is very difficult: stack-derived capabilities cannot be stored onto the heap or into a global (it will deliver a trap).
+Therefore, the only way of having a stack pointer outlive the allocation is to store it through another stack-derived pointer that points to a higher frame or return it directly in a register.
+
+% First, capabilities contain a bit distinguishing so-called ``global'' capabilities from ``local'' ones.
+% Second, the capability permission to store a capability through another comes in two flavors: all capabilities or just global ones.
+% Stack capabilities are ``local'' in this sense and have permission to store all capabilities, whereas, for example, capabilities to heap allocations or global data are ``global'' in this sense but have permission to store \emph{only} global capabilities.
+
+\subsection{Cross-compartment stack memory safety}
+
+During a cross-compartment call, the thread and its stack transition security contexts.
+The stack bounds are restricted so that the callee has no access to the caller’s stack, except via capabilities that are explicitly passed as arguments.
+This suffix of stack memory accessible to the callee is zeroed both on call and on return, which prevents any information leak from uninitialized memory.
+The implicit stack pointer and stack-derived arguments provided by the caller are the only pointers that are both held by a compartment and capable of storing other stack-derived pointers.
+
+\subsubsection{Lexically-Scoped Delegation}
+
+\cherimcuisa{}'s capability permission scheme allows software to derive variants of capabilities that can be stored only to stack memory.
+Additionally, \cherimcuisa{} can impose this derivation \emph{transitively} per capability: any capability loaded via such a capability becomes another such and, so, will impose the same on those loaded through it, and so on.
+
+These two mechanisms allow for \defn{lexically-scoped delegation}: a calling compartment may, for any capability it holds, construct a variant that can only be stored to the stack and can load only capabilities that can be stored only to the stack.
+Passing this derived capability to the callee ensures that the callee compartment cannot capture either the passed capability or any loaded through it in memory not visible to (and mutable by) the caller after return.
+
+% Removing the global permission prevents the callee from storing the pointer anywhere other than its own stack.
+% Removing the indirect-load-global permission enforces this on any pointers transitively loaded from the original delegated pointer.
+
+\subsection{Global memory safety}
+All objects with static storage duration are compartment-local and are visible to any thread executing within a compartment.
+Memory safety for globals is therefore advisory (untrusted code can simply access the global capability directly).
+The compiler will insert bound for any address-taken global.
+Immutable objects with static storage duration are derived from \PCC{} (with the execute permission removed) and so cannot be written to.
+
+\subsection{Higher-level security properties}
+
+The local security properties outlined above are used to build isolation between threads and compartments.
+This leads to the following high-level security goals:
+
+\begin{itemize}
+	\item No compartment should be able to access another compartment's data, except where explicitly shared.
+	\item No thread should be able to access another thread's data, except where explicitly shared.
+\end{itemize}
+
+Compartments that have not been explicitly granted the rights to run with interrupts disabled should also not be able to impact availability.
+
+\subsection{Threat model}
+
+We assume that code running in a compartment is untrusted.
+As such, an attacker is assumed to have the ability to execute arbitrary code within a compartment.
+It is not possible to prevent programmers from introducing bugs but we aim to provide a set of tools that will make it easy to write code in a compartment that is able to protect itself from another attacker-controlled compartment that can invoke its entry points.
+

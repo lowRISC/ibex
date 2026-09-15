@@ -1,0 +1,36 @@
+| `RISCVThreadStart               -> "start"
+| `RISCVStopFetching              -> "stop"
+
+| `RISCVUTYPE(imm, rd, op)        -> sprintf "%s %s, %d" (pp_riscv_uop op) (pp_reg rd) imm
+| `RISCVJAL(imm, rd)              -> sprintf "jal  %s, %d" (pp_reg rd) imm
+| `RISCVJALR(imm, rs, rd)         -> sprintf "jalr %s, %s, %d" (pp_reg rd) (pp_reg rs) imm
+| `RISCVBType(imm, rs2, rs1, op)  -> sprintf "%s %s, %s, %d" (pp_riscv_bop op) (pp_reg rs1) (pp_reg rs2) imm
+| `RISCVIType(imm, rs2, rs1, op)  -> sprintf "%s %s, %s, %d" (pp_riscv_iop op) (pp_reg rs1) (pp_reg rs2) imm
+| `RISCVShiftIop(imm, rs, rd, op) -> sprintf "%s %s, %s, %d" (pp_riscv_sop op) (pp_reg rd) (pp_reg rs) imm
+| `RISCVRType (rs2, rs1, rd, op)  -> sprintf "%s %s, %s, %s" (pp_riscv_rop op) (pp_reg rd) (pp_reg rs1) (pp_reg rs2)
+
+| `RISCVLoad(imm, rs, rd, unsigned, width, aq, rl) ->
+    sprintf "%s %s, %d(%s)" (pp_riscv_load_op (unsigned, width, aq, rl)) (pp_reg rd) imm (pp_reg rs)
+
+| `RISCVStore(imm, rs2, rs1, width, aq, rl) ->
+    sprintf "%s %s, %d(%s)" (pp_riscv_store_op (width, aq, rl)) (pp_reg rs2) imm (pp_reg rs1)
+
+| `RISCVADDIW(imm, rs, rd)        -> sprintf "addiw %s, %s, %d" (pp_reg rd) (pp_reg rs) imm
+| `RISCVSHIFTW(imm, rs, rd, op)   -> sprintf "%s %s, %s, %d" (pp_riscv_sop op) (pp_reg rd) (pp_reg rs) imm
+| `RISCVRTYPEW(rs2, rs1, rd, op)  -> sprintf "%s %s, %s, %s" (pp_riscv_ropw op) (pp_reg rd) (pp_reg rs1) (pp_reg rs2)
+
+| `RISCVFENCE(pred, succ)         -> sprintf "fence %s,%s" (pp_riscv_fence_option pred) (pp_riscv_fence_option succ)
+
+| `RISCVFENCE_TSO(0b0011, 0b0011) -> sprintf "fence.tso"
+| `RISCVFENCE_TSO(_, _)           -> failwith "bad fence.tso"
+
+| `RISCVFENCEI                    -> sprintf "fence.i"
+
+| `RISCVLoadRes(aq, rl, rs1, width, rd) ->
+    sprintf "%s %s, (%s)" (pp_riscv_load_reserved_op (aq, rl, width)) (pp_reg rd) (pp_reg rs1)
+
+| `RISCVStoreCon(aq, rl, rs2, rs1, width, rd) ->
+    sprintf "%s %s, %s, (%s)" (pp_riscv_store_conditional_op (aq, rl, width)) (pp_reg rd) (pp_reg rs2) (pp_reg rs1)
+
+| `RISCVAMO(op, aq, rl, rs2, rs1, width, rd) ->
+    sprintf "%s %s, %s, (%s)" (pp_riscv_amo_op (op, aq, rl, width)) (pp_reg rd) (pp_reg rs2) (pp_reg rs1)

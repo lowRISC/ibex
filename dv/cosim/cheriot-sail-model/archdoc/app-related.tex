@@ -1,0 +1,116 @@
+\chapter{Standing on the Shoulders of Giants}
+\label{app:related}
+
+The \cherimcu{} design is heavily based on prior work by the CHERI project and its myriad contributors and collaborators.
+Our targeted use case differs from those of earlier projects, so we present a brief tour through the existing landscape.
+
+\section{CTSRD CHERI, CHERI-RISC-V, Morello, and CheriBSD}
+
+The CTSRD project at the Cambridge University Computer Laboratory is the nucleation point for the growing CHERI ecosystem.
+The project's current architecture, as well as detailed rationale and discussion of its historical evolution, can be found in the CHERI ISA document (version 8, as of this writing) \cite{UCAM-CL-TR-951}.
+To summarize, however, its primary (micro)architectural focus has been on desktop- and server-class multi-core machines; these modern computers have 64-bit general data paths, Memory Management Units (MMUs) providing large virtual address spaces, caches, and so on.
+Its CHERI-RISC-V proposal extends RV64 specifically; similarly, Arm's experimental Morello extends 64-bit ARMv8 \cite{arm-morello}.
+Correspondingly, its primary software focus has been on UNIX-like operating systems, centered around its adaptation of FreeBSD, CheriBSD~\cite{Davis_CheriABIEnforcingValid_2019}.
+
+\subsection{Translation vs.\ Protection}
+
+CHERI is, informally, designed to ``compose well'' with modern (micro)architectures.
+By contrast to many prior capability systems, CHERI does not demand additional lookup tables to interpret its capabilities or define its protection policies.
+In the desktop/server space, CHERI sits atop existing MMUs: within a CheriBSD process, CHERI capabilities are interpreted relative to a MMU translation table.
+This interpretation continues to benefit from existing TLB designs.
+
+By contrast, embedded systems have generally not had a notion of virtual addresses, conducting all their business using physical addresses as directly presented on a peripheral bus.
+As such, there has not been a convenient translation layer to press into service as a memory \emph{protection} mechanism.
+Attempts to add lookup-table based ``protection without translation'' to physical memory systems, such as ARM's MPU \cite{arm:mpu} and RISC-V's PMP \cite[\S 3.6]{RISCV:Privileged:1.10}, sit uncomfortably on the critical path for memory.
+The need to adjudicate every operation with a minimum of delay necessitates small tables fit into expensive, fast (T)CAMs.
+CHERI capabilities, by contrast, directly carry their permissions and bounds, obviating the need for tables and CAMs and necessitating only the check that each operation is authorized.
+Removing the need for tabular storage allows for greater system flexibility, as authority is now per reference rather than per address, and also removes risk of a (ephemerally) misconfigured table.
+
+\section{Incorporated CHERI Extensions}
+
+The \cherimcuisa{} enshrines into its architecture several as-yet experimental aspects from the larger CHERI systems.
+
+\subsection{Multi-Root, Compressed Permission Encodings}
+
+The \cherimcuisa{} is the first fully-elaborated example of a ``multi-root,'' compressed permissions encoding scheme as first proposed in \cite[\S D.5]{UCAM-CL-TR-951}.
+Its three roots capture two of the suggested splittings: first, memory addresses from sealing types, and second, write from execute memory access.%
+%
+\footnote{This latter splitting is often called either ``W xor X'' (``W\textasciicircum{}X''), following its introduction in OpenBSD 3.3 \cite{openbsd:3.3}, or ``Data Execution Prevention'' (DEP), after Windows XP \cite{msft:dep}.}
+
+\subsection{Recursive Permissions}
+
+The \cherimcuisa{} has two ``recursive'' permissions (recall \cref{sec:perms}), borrowing an idea from many earlier systems.
+%
+The first such is LM, directly analogous to Morello's recursive-load-mutable permission \cite[\S 2.7.4]{arm-morello} and the ``weak'' capabilities of KeyKOS and Coyotos \cite{hardy:keykos,doerrie2015:confinement,shapiro:coyotosspec}.
+A capability lacking LM and yet authorized to load capabilities, by having both LD (``load'') and MC (``memory capabilities''), will cause both SD and LM to be stripped from capabilities loaded through it.
+That is, the capability in the register file resulting from a load instruction may differ from the capability loaded from memory by having these permission bits cleared.
+%
+The other is LG and interacts with the 1-bit information flow system encoded in the GL (``global'') and SL (``store local'') permissions. 
+Like lacking LM clears SD and LM, lacking LG clears GL and LG: all capabilities viewed transitively through a capability without LG appear to be local.
+
+\subsection{Architectural Seals}
+
+The \cherimcuisa{} has a richer collection of architecturally-understood sealing types than the current larger CHERI-RISC-V baseline (see \cref{sec:sealing}).
+(At the time of writing, Morello has its own set of additional architectural seals beyond those in CHERI-RISC-V.)
+%
+In a future revision of the \cherimcuisa{}, sentries will differentiate between forward and backward arcs, with the former requiring explicit authority to construct (unlike the larger systems, where the \texttt{CSealEnter} instruction has ambient authority) and the latter being constructable only as part of a jump.
+
+\subsection{Capability Load Barrriers and Memory-Capability Versioning}
+
+The \cherimcuisa{} adapts the larger systems' MMU-based \emph{capability load barriers} (CHERI-RISC-V \cite[\S 5.3.10]{UCAM-CL-TR-951} and Morello \cite[$\text{R}_\text{CPRKD}$ in \S 2.14]{arm-morello}) directly into the processor pipeline (recall \cref{sec:temporal}).
+For this, \cherimcu{} adds a second metadata bit, in addition to the CHERI capability tag, to each capability-sized granule.
+Capabilities whose base refers to a granule with this second metadata bit asserted are invalid and will have their tag cleared when loaded into the register file.
+This behavior can be seen as a ``1-color-bit'' scaling-down of the proposed ``Memory-Capability Versioning'' scheme of CTSRD CHERI \cite[\S D.6]{UCAM-CL-TR-951}, which builds on technologies like Arm's Memory Tagging Extension \cite{arm:mte}.
+However, \cherimcu{} has done away with the ``version'' field within the capability format, as we found it straightforward for the heap allocator to always internally use capabilities whose bounds cover the entire heap and, importantly, whose base granule is never made invalid.
+
+\section{Esswood's CheriOS}
+
+While the CTSRD group's focus has been largely on UNIX-like software, there have been deviations over the years.
+Esswood's CheriOS \cite{esswood:cherios} describes a green-field microkernel operating system that presumes a CHERI ISA.
+The entire system, OS and user programs alike, run in the same \emph{single-address-space}; the MMU is used for page mapping tricks, but all software perceives the same address space (albeit through different capabilities).
+Like the \cherimcuos{}, CheriOS is \emph{ringless}; the traditional separation of a more-privileged supervisor operating over a less-privileged userspace is no more.
+The core Trusted Computing Base for CheriOS, analogous to the \cherimcuos{}'s switch routines, consists of fewer than 2700 CHERI-MIPS instructions.
+Both systems move functionality traditionally placed in inner rings out to minimally-privileged compartments.
+
+CheriOS software is generally composed of a number of libraries linked together; linkage policy articulates the trust relationships between callers and callees, offering all of mutually-trusting, sandbox, safebox, and mutually-distrusting call relationships.
+%
+The \cherimcuos{} also relies on linkage to define a capability graph, but it offers fewer flavors of cross-compartment calls (most calls are mutually-distrusting with library calls being a minimal safebox).
+
+CheriOS offers full memory safety for C/C++ programs.
+As expected, CHERI provides integrity and monotonicity, and the memory allocators and compiler-generated code insert bounding instructions where appropriate for spatial safety.
+CheriOS achieves heap and stack temporal safety by exploiting the large address spaces of server-class machines.
+Heap temporal safety is achieved in the TCB by a combination of take-once ``reservations'' of address space and quarantining released virtual address space.
+A hardware barrier added to CHERI-MIPS facilitates revoking capabilities pointing into a large contiguous region of released address space, which the TCB may then recycle for new reservations.
+Stack temporal safety builds atop heap temporal safety, with the compiler arranging to construct ``slinky stacks'' \cite[\S 4.1]{esswood:cherios} that do not reuse possibly-escaped stack allocations' address space.
+When a segment of a slinky stack has too little usable address space, it is recycled as heap memory and another large heap allocation is made to provide a fresh segment.
+The \cherimcuos{}, by contrast, must operate on physical addresses and so builds its heap temporal safety using additional \cherimcuisa{} metadata and its slightly weaker notion of stack temporal safety using the store-local permission.
+
+\section{Xia's CheriRTOS}
+
+Similarly, there have been efforts within the CTSRD group to explore CHERI in smaller hardware.
+Xia (also an author of this report) developed, for his Ph.D. thesis, CheriRTOS \cite{xia:cherirtos,xia:capprotembed}.
+CheriRTOS introduces the first 64-bit CHERI capability encodings (for 32-bit address spaces) and explores its implementation in a derivative of CHERI-MIPS.
+The capability scheme used here was largely a straightforward scaling-down of CTSRD's server-oriented CHERI.
+While it was an important and admirable proof of concept, its deficiencies, especially with bounds precision and the large number of bits still devoted to permissions, significantly motivated the development of the \cherimcuisa{} capability format.
+
+CheriRTOS, like many RTOSes before it, takes a \emph{task-centric} perspective on the world, pairing together threads and their associated data and relying on inter-task communication when work requires access to multiple tasks' state.
+Being the first of its kind, CheriRTOS is focused on aspects of cross-compartment invocation and allocator security; tasks are manually-specified concepts and are compiled with only a limited understanding of CHERI capabilities.%
+%
+\footnote{Specifically, task C/C++ code is compiled in a ``hybrid'' mode, where pointers lower to \emph{integers} unless a capability is explicitly requested.
+These integers are interpreted relative to an architectural \emph{capability} register, either the program counter (for relative control transfers or PC-relative loads) or a ``default data capability'' (``DDC,'' which interposes legacy integer-based load and store instructions) \cite[\S 2.3.12]{UCAM-CL-TR-951}.
+The \cherimcuisa{} does not have these legacy instructions or DDC; all \cherimcuos{} code is expected to be compiled ``purecap,'' with all pointers always lowered to capabilities.}
+%
+It then uses CHERI mechanisms to provide \emph{task isolation}.
+By contrast, the \cherimcuos{} decomposes computations (threads and their runtime stacks) from persistent resources (compartments and their associated globals and import tables), allowing threads to enter and exit different compartments, as needed.
+
+\section{Almatary's CompartOS and CheriFreeRTOS}
+
+Almatary's Ph.D. thesis develops the ``CompartOS'' software model \cite{almatary:compartos} and instantiates it with an adaptation of FreeRTOS, called CheriFreeRTOS \cite{almatary:thesis}.
+The Trusted Computing Base for CompartOS is its secure \emph{dynamic} code loader.
+The unit of compartmentalization is, as in the \cherimcuos{}, a \emph{linkage unit} rather than a task (though the \cherimcuos{} provides only static code loading).
+CompartOS includes compartment \emph{availability} in its design objectives, and so offers a multitude of fault-handling mechanisms, including per-compartment trap handlers and forced stack unwinds as offered in the \cherimcuos{}.
+However, while CompartOS is a flexible model, the concrete CheriFreeRTOS does not consider temporal memory safety to be in scope; it lacks a mechanism for capability revocation and does not scrub stacks on compartment switches.
+
+CheriFreeRTOS was used in an extensive evaluation which explored the relative costs and security of both task- and linkage-based compartmentalization models atop both CHERI- and MPU/PMP-enabled ISAs \cite[\S 5]{almatary:thesis}.
+This evaluation found that, while the microarchitectural area costs of CHERI and PMPs (and MMUs) were similar, the security benefits of CHERI were ``unparalleled'' and came with lower runtime cost than comparably-secure MPU/PMP-based approaches.
+Further, the cost of adapting FreeRTOS to the CompartOS model was found to be minimal, with many applications requiring no source-level changes.

@@ -1,0 +1,212 @@
+\chapter{ABI}
+\label{chap:abi}
+
+\cherimcu{} is a hardware-software co-design project, where the ISA and ABI have been carefully designed together to provide the desired compartment model and security guarantees.
+
+\section{Compartment layout}
+
+Each compartment has two reachable regions, bounded by \PCC{} and \CGP{}.
+The \PCC{} region contains the compartment's code, read-only data, and \textit{import table}.
+Read-only data includes relocation read-only data, which is initialized by the loader at boot time.
+A compartment's import table is a read-only table containing capabilities that are used for cross-compartment and cross-library calls, as well as any imported data.
+
+A compartment also has an export table associated with it.
+The export table defines the set of functions that are exported from the compartment (callable by others).
+This is read by the compartment switcher (see \cref{sec:cross-compart-abi}).
+
+Shared libraries are identical to compartments in structure, except that they lack a \CGP{}.
+
+\section{Access to globals}
+
+Read-only globals are accessed using PCC-relative addressing.
+CHERI RISC-V extends the RISC-V \insnref{auipc} (add upper immediate to program counter) instruction to \insnref{auipcc} (add upper immediate to program counter \textit{capability}).
+This adds a 20-bit immediate, left shifted by 12, to the current \PCC{} value, giving an address that is within the immediate range of a RISC-V load or store instruction of the target.
+
+Unfortunately, the result of the \insnref{auipcc} instruction may be out of the bounds of \PCC{}.
+This does not matter on CHERI systems with 128-bit capabilities because the encoding guarantees that capabilities remain valid 4096 bytes out of bounds.
+However, this is not the case with our 64-bit capability encoding that has much tighter `representable bounds'.
+The tag bit is cleared if the capability is too far out of bounds, we must therefore modify the standard CHERI-RISC-V relocation scheme to avoid taking capabilities out of bounds in the middle of computing an address.
+
+We are able to solve this problem by having at least a 1-bit overlap between the immediate field of the loads and stores (or \insnref{cincoffset} instructions) and the \insnref{aupicc}.
+The \insnref{auipcc} instruction and the second instruction must both displace the \PCC{} in the same direction, keeping the intermediate capability in bounds and hence representable.
+If the target address is after the current instruction then both values must be positive, otherwise both values must be negative, which is a simple property for the linker to ensure when applying the relocations.
+To make this possible we reduce the shift of \insnref{auipcc} by one, meaning \insnref{auipcc} can always produce a value within the $2$ KiB range required.\footnote{An alternative solution would be to increase the size of the immediate on loads and stores.
+On RV32E this could be achieved using the register selection bits that are freed by moving from 32 to 16 registers.
+Our first prototypes did this but we choose to remain compatible with RV32I by modifying \insnnoref{auipcc}.
+}
+This does limit the maximum offset for a relocation to less than $2^{31}$ but this is not a problem in practice due to the limited size of compartments.
+Any system that needs more than 2 GiB compartments would likely benefit from a 64-bit address space.
+
+Accesses to read-write globals is very similar.
+The \CGP{} register is biased by half the size of the combined globals section (\asm{.data}, \asm{.bss}, and so on).
+This means that the full immediate range is accessible for displacements.
+With a 12-bit immediate, a single compartment can access 4 KiB of globals in a single load or store (or take their address with a \insnref{cincoffset} instruction).
+We define a new instruction, \insnref{auicgp}, and a relocation type that uses it to mirror the \PCC-relative addressing mode.
+
+We rely on linker relaxation to optimize both \PCC{} relative and \CGP{} relative relocations.
+This means that relocations within $\pm2$ KiB of \PC{} or \CGP{} require only one instruction.
+Given the security incentive to keep compartments small we expect relaxation to work well in the common case.
+In particular, if a compartment has more than 4 KiB of mutable global state it may be advisable to split it into multiple compartments or use dynamic allocation.
+
+\section{Export table layout}
+
+\begin{figure}
+	\centering
+	\begin{bytefield}[bitwidth=\textwidth/32,boxformatting=\centering]{32}
+		\bitheader{0-31} \\
+		\begin{rightwordgroup}{header}
+		\wordbox{2}{\PCC{}} \\
+		\wordbox{2}{\CGP{}} \\
+		\wordbox{1}{error handler offset}
+		\end{rightwordgroup} \\
+		\begin{rightwordgroup}{entries}%
+		\bitbox{16}{entry point offset} & \bitbox{8}{stack size} & \bitbox{3}{\#args} & \bitbox{1}{ie} & \bitbox{1}{id} & \bitbox{3}{0} \\
+		\wordbox[]{1}{\vdots} \\[1ex]
+		\bitbox{16}{entry point offset} & \bitbox{8}{stack size} & \bitbox{3}{\#args} & \bitbox{1}{ie} & \bitbox{1}{id} & \bitbox{3}{0}
+	\end{rightwordgroup} \\
+\end{bytefield}
+
+	\caption{\label{fig:exporttable} Compartment export table layout}
+\end{figure}
+
+\cref{fig:exporttable} shows the layout of the export table for a compartment.
+Each export table starts with a copy of the \PCC{} and \CGP{} for the target compartment.
+The next 32-bits is the offset of the compartment's error handler relative to \PCC{}.\cbase{}, or $-1$ if the compartment does not have an error handler.
+If an error occurs the switcher may jump to this as described in \cref{sec:errorhandling}.
+After the header, the export table is comprised of one 32-bit entry per exported function.
+The first 16 bits of each entry provide the displacement from the start of the compartment's \PCC{} to the entry point.
+This limits a compartment to exporting functions in the first 64 KiB of its code section.
+Most compartments have significantly under 64 KiB of code, the few that are larger can sort their internal layout to ensure that the exported functions all fit within the start.
+
+The next 8 bits are the minimum amount of stack space that the function requires.
+This allows compartments to be defensive against callers that try to invoke them without enough stack space for their prologues.
+If a function requires more than 256 bytes of stack space then it can add a dynamic check on the size of \CSP{} after the compartment switch.
+
+The final 8 bits are reserved for flags, described in the following table:
+
+\begin{center}
+	\begin{tabular}{r|l}
+		Bits & Meaning \\ \hline
+		0-2 & Number of argument registers used. \\
+		3 & Interrupts enabled \\
+		4 & Interrupts disabled 
+	\end{tabular}
+\end{center}
+
+The compartment switcher is responsible for clearing all registers except for the used argument registers and so must know how many are used.
+The compiler fills in this set.
+This provides a value from 0 (no arguments) to 7 (all six argument registers used, plus \creg{5} carrying stack arguments.
+
+Exports from compartments must set either the interrupts-enabled or interrupts-disabled bit.
+Code running in a different security context always runs with an explicit interrupt status, to make it easier to reason about compartment behavior.
+Functions exposed from shared libraries may set neither, in which case the function will be invoked with the caller's interrupt status.
+
+Each export table entry from a compartment is exposed as a symbol of the form \texttt{\_\_export\_\{compartment name\}\_\{function name\}}.
+Each export table entry from a library is exposed as a symbol of the form \texttt{\_\_library\_export\_\{library name\}\_\{function name\}}.
+Libraries all use the same name in their export symbols because moving a function from one library to another does not involve running the target in a different security context.
+\nwfnote{Eh?  The export name has ``\texttt{library name}'' in it.  What am I missing?}
+The existence of multiple libraries is purely to improve auditing: libraries (their entry points, called functions, and the contents of their code sections) can be individually tracked, allowing code-signing rules to be driven by specific implementations of individual libraries.
+For example, code signing might require a specific FIPS-certified binary of a crypto library, but allow the shared library providing \ccode{memcpy} to be replaced with a more optimised version.
+
+The function name in the export symbol is mangled according to the Itanium C++ ABI rules.
+This provides some defense against accidental (non-malicious) type mismatches in the caller and callee.
+
+\section{Import table layout}
+
+The import table is similar to a captable in structure.
+\nwfnote{``captable'' appears only here in this document.}
+It is the only piece of state reachable from a compartment that is allowed to contain capabilities that point outside of the compartment's \PCC{} and \CGP{} on system start.
+This makes it a single place to audit the compartment graph.
+The import table is mutable only by the loader.
+After the loader finishes it is reachable only by the read-execute \PCC{} for the compartment, not by any capabilities with store permission.
+Import table entries, at run time, are one of three things:
+
+\begin{itemize}
+	\item Sealed capabilities to export table entries, used for cross-compartment calls.
+	\item Sentry capabilities to library functions.
+	\item Capabilities to memory-mapped I/O (MMIO) regions.
+\end{itemize}
+
+The loader is responsible for initializing these, based on information provided by the compiler and linker.
+Prior to the loader running, import table entries for the first two categories contain addresses of the corresponding export table entry.
+Import table entries for MMIO regions contain the start address and the size of the region.
+This allows a compartment to be granted a subset of an MMIO region, down to access to a single byte (for example, allowing a compartment to poll the `ready' status of a UART but requiring that it performs a call to the compartment that owns the UART to read or write data with it).
+A future version will allow read- or write-only access to MMIO regions.
+
+The loader will populate the import table with capabilities.
+Each import table entry that is used for cross-compartment calls will contain a sealed capability that has the bounds of the target compartment's export table and whose address points to the correct entry.
+This allows the switcher to load the \PCC{} and \CGP{} values from the start and to jump to the correct address.
+
+The first entry in the import table has the (local) symbol name \ccode{.compartment_switcher}.
+It is initialized to 0 at static link time and will be initialized by the loader with a sentry capability for jumping to the compartment switcher.
+
+\section{Cross-compartment calls}
+\label{sec:cross-compart-abi}
+
+Cross-compartment calls pass their arguments in the same registers as the RV32E ABI (\creg{10}--\creg{15}).
+In addition, any stack arguments are passed via \creg{5} (\creg{t0}).
+The callee does not have access to the caller's stack other than via these arguments and so cannot use \CSP-relative addressing for on-stack arguments.
+
+The capability loaded from the import table is passed to the switcher in \creg{6} (\creg{t1}).
+The last step on the caller side is to jump to the sentry pointed to by the \ccode{.compartment_switcher} symbol.
+
+If a compartment calls a function that it also exports, and that function has the same interrupt status as the caller, then the compiler may insert a direct call and skip the switcher.
+
+
+\section{Cross-library calls}
+
+Cross-library calls are simple indirect calls via a capability provided in the import table.
+The import table entry contains a sentry capability to the target function.
+The \cherimcuisa{} has sentries that enable, disable, or inherit the current interrupt status and so cross-library calls can toggle or preserve the interrupt state.
+This makes it easy to reason about the current interrupt state using structured programming idioms.
+\nwfnote{Should we more explicitly emphasize that we do not expose any additional mechanism for managing IRQ state?  Specifically we \emph{don't} have \texttt{enable\_interrupts()} and friends.}
+
+If a function explicitly changes interrupt state within a compartment then it will be handled as if it were a library function exported from and consumed by the function.
+In this case, the symbol in the export table will be local.
+
+\section{Callbacks}
+
+In some situations, one compartment wishes to provide a callback that another compartment can invoke.
+In the \cherimcu{} ABI, this callback is represented as the same form of sealed capability that would be loaded from the import table.
+Functions used as cross-compartment callbacks are both exported and imported by the compartment that wishes to take their address.
+Taking the address of such a function is simply a load from the import table.
+
+As with non-exported functions that change the interrupt status, the symbol in the export table will be local if the function is not also exported as a directly callable function.
+
+\section{Scalar Calling Convention}
+
+The \cherimcu{} scalar calling convention matches the standard RISC-V ABI in most respects, but diverges in two important areas.
+First, while RISC-V passes aggregates consisting of up to two \xlen-byte members in registers, \cherimcu{} extends that to two capability members.
+This permits the passing of aggregates containing two capabilities in registers, matching the intent of the RISC-V ABI which allows passing aggregates containing two pointers in registers.
+Second, 64-bit floating values (\texttt{double} in C/C++) are passed and returned in capability registers, rather than on the stack.
+
+\section{Relocations}
+\label{sec:relocs}
+
+The relocations added to RISC-V for \cherimcu{} ABI are listed in \cref{tab:relocs}.
+As with existing RISC-V, some of these are in two forms because RISC-V loads and stores place their immediate operands in different locations.
+The relocation numbers here are in the global namespace, but we plan to move them to the vendor specfic range in future.
+
+\PCC{} or \CGP{} relative relocations consist of a pair of either \insnref{auipcc} or \insnref{auicgp} plus a 12-bit immediate instruction.
+In most cases (when the offset is within $\pm2$ KiB) linker relaxation can reduce this to a single instruction for \CGP-relative accesses.
+The \insnref{AUICGP} instruction uses an entire major opcode and is rarely needed because it is uncommon for a compartment to have more than 4 KiB of read-write global data (arguably a large globals section is an indication that a compartment should be split or refactored).
+Therefore, in future we could consider alternative relocations that don't require \insnref{auicgp}, such as a three instruction sequence consisting of \asm{lui}, \asm{addi} and \insnref{cincaddr}.
+This would require more complex linker relaxations to retain good code size and efficiency and we have not yet attempted it.
+
+\begin{table}
+	\begin{center}
+		\begin{tabular}{l|l|p{7cm}}
+			Relocation & Value & Meaning \\ \hline
+			\asm{CHERIOT_COMPARTMENT_HI}         & 220 & 20-bit, 11-bit shifted \PCC- or \CGP-relative displacement for use in \insnref{auicgp} or \insnref{auipcc}. \\
+			\asm{CHERIOT_COMPARTMENT_LO_I}       & 221 & 12-bit \PCC- or \CGP-relative displacement for use in I-type instructions. \\
+			\asm{CHERIOT_COMPARTMENT_LO_S}       & 222 & 12-bit \PCC- or \CGP-relative displacement for use in S-type instructions. \\
+			\asm{CHERIOT_COMPARTMENT_SIZE}       & 223 & The size of the referenced symbol, applied to a \insnref{CSetBounds} instruction. \\
+			\asm{CHERIOT_CCALL}                  & 224 & Deprecated. An \insnref{auipcc} and \insnref{cjal} pair which was relaxed as per \asm{CHERI_CCALL} in RISC-V CHERI, and if not was relocated as per \asm{CHERIOT_COMPARTMENT_HI} and \asm{CHERIOT_COMPARTMENT_LO_I}. \\
+			\asm{CHERIOT_COMPARTMENT_CGP_HI}      & 225 & 20-bit, 11-bit shifted \PCC- or \CGP-relative displacement for use in \insnref{auicgp} or \insnref{auipcc}. Guaranteed to be followed in the instruction stream by a four-byte \asm{nop}, which provides space for transforming \asm{auicgp}-relative references into GOT loads as a fallback.\\
+		\end{tabular}
+	\caption{\label{tab:relocs}The relocations defined for the \cherimcu{} ABI}
+	\end{center}
+\end{table}
+
+The same relocations are applied for both \PCC{} and \CGP{} relative accesses.
+The linker is responsible for determining the target of the relocation and will rewrite \insnref{auipcc} or \insnref{auicgp} to the correct instruction depending on the target and update the offset depending on the kind of target.

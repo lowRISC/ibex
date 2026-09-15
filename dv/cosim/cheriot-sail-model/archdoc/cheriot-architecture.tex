@@ -1,0 +1,114 @@
+%%%% University of Cambridge tech-report formatting; enable when producing
+%%%% tech-report versions of these documents; otherwise, disable.
+%\documentclass[12pt,twoside,openright,a4paper]{report}
+%\setlength{\oddsidemargin}{-0.4mm} % 25 mm left margin
+%\setlength{\evensidemargin}{\oddsidemargin}
+%\setlength{\textwidth}{160mm}      % 25 mm right margin
+%\setlength{\topmargin}{-5.4mm}     % 20 mm top margin
+%\setlength{\headheight}{5mm}
+%\setlength{\headsep}{5mm}
+%\setlength{\footskip}{10mm}
+%\setlength{\textheight}{237mm}     % 20 mm bottom margin
+%%%% .. or regular document
+\documentclass[12pt,letterpaper,twoside,openright,fleqn]{report}
+\usepackage{etex}
+% \usepackage{lineno}
+% \linenumbers
+%%%% End of tech-report vs. regular
+%%%%
+
+\input{preamble}
+
+\begin{document}
+\title{\cherimcu{} Architecture specification\\
+  Version 1.0}
+\author{
+  \parbox{\linewidth}{\centering%
+    Saar~Amar,
+    Owen~Anderson,
+    Tony~Chen,
+    David~Chisnall,
+    Felix~Domke,
+    Nathaniel~Wesley~Filardo,
+    Kunyan~Liu,
+    Robert~M.~Norton,
+    Yucong~Tao,
+    Murali~Vijayaraghavan,
+    Robert~N.~M.~Watson,
+    Hongyan~Xia
+  }%
+}
+
+\begin{minipage}[h]{\textwidth}
+  \vspace{-.2cm}
+  \maketitle
+\end{minipage}
+
+\normalsize
+
+%% For revisions sent for editing, prefer double spacing.
+%\doublespacing
+%%
+
+\clearpage
+
+\chapter*{Abstract}
+
+Small embedded cores have little area to spare for security features and yet must often run code written in unsafe languages and, increasingly, are exposed to the hostile Internet.
+CHERIoT  (Capability Hardware Extension to RISC-V for Internet of Things) builds on top of CHERI and RISC-V to provide an ISA and software model that lets software depend on object-granularity spatial memory safety, deterministic use-after-free protection, and lightweight compartmentalization exposed directly to the C/C++ language model.
+This can run existing embedded software components on a clean-slate RTOS that scales up to large numbers of isolated (yet securely communicating) compartments, even on systems with under 256 KiB of SRAM.
+
+\clearpage
+
+\input{acknowledgments}
+
+\clearpage
+
+\input{LICENSE-sail-cheri-riscv}
+
+\clearpage
+
+\input{LICENSE-sail-riscv}
+
+\clearpage
+
+\tableofcontents
+
+\part{Software model and toolchain}
+\label{part:sw}
+
+\input{chap-intro}
+\input{chap-compartment-model}
+\input{chap-cheri-rtos}
+\input{chap-language-extensions}
+\input{chap-abi}
+\input{chap-weaknesses}
+
+\part{Architecture specification}
+\label{part:isa}
+
+\input{chap-cheri-riscv}
+\input{app-isaquick-riscv}
+\input{chap-isaref-riscv}
+
+\appendix
+\part{Appendices}
+
+\input{chap-changes}
+\input{chap-encoding-sail}
+\input{chap-permissions}
+\input{chap-altbounds}
+\input{chap-compressed-changes}
+\input{app-related}
+
+% \glsaddall
+% \printglossaries
+
+\cleardoublepage
+\phantomsection
+\addcontentsline{toc}{chapter}{Bibliography}
+\printbibliography
+
+%\chapter*{Index}
+
+\end{document}

@@ -1,0 +1,85 @@
+\ifcsname @app@isaquick@table@macros@tex\endcsname
+  \ea\endinput
+\fi
+\ea\gdef\csname @app@isaquick@table@macros@tex\endcsname{1}
+
+\makeatletter
+\newcount\@cherienctable@col
+\newcount\@cherienctable@cols
+\newcount\@cherienctable@colbits
+\newcount\@cherienctable@row
+\newcount\@cherienctable@rows
+\newcount\@cherienctable@rowbits
+\newcount\@cherienctable@tmp
+\def\@cherienctable@addtoformat#1{\ea\global\ea\def\ea\@cherienctable@format\ea{\@cherienctable@format #1}}
+\def\@cherienctable@addtobody#1{\ea\global\ea\def\ea\@cherienctable@body\ea{\@cherienctable@body #1}}
+% cols func2str count
+\newcommand{\@cherienctable}[3]{%
+  \@cherienctable@cols=\numexpr(#1)\relax%
+  \@cherienctable@rows=\numexpr(#3+\@cherienctable@cols-1)\relax%
+  \divide\@cherienctable@rows\@cherienctable@cols%
+  %
+  \let\@cherienctable@format\@empty%
+  \let\@cherienctable@body\@empty%
+  \ifnum\@cherienctable@rows>1%
+    \@cherienctable@addtoformat{r|}%
+    \@cherienctable@addtobody{ & }%
+  \fi%
+  %
+  \@cherienctable@colbits=1%
+  \@cherienctable@tmp=2%
+  \loop\ifnum\@cherienctable@tmp<\@cherienctable@cols%
+    \advance\@cherienctable@colbits 1%
+    \multiply\@cherienctable@tmp 2%
+  \repeat%
+  %
+  \@cherienctable@rowbits=1%
+  \@cherienctable@tmp=2%
+  \loop\ifnum\@cherienctable@tmp<\@cherienctable@rows%
+    \advance\@cherienctable@rowbits 1%
+    \multiply\@cherienctable@tmp 2%
+  \repeat%
+  %
+  \@cherienctable@col=0%
+  \loop\ifnum\@cherienctable@col<\@cherienctable@cols%
+    \@cherienctable@addtoformat{c}%
+    \ifnum\@cherienctable@col>0%
+      \@cherienctable@addtobody{ & }%
+    \fi%
+    \edef\@cherienctable@cell{\nbinary{\@cherienctable@colbits}{\the\@cherienctable@col}}%
+    \ea\@cherienctable@addtobody\ea{\@cherienctable@cell}%
+    \advance\@cherienctable@col 1%
+  \repeat%
+  \@cherienctable@addtobody{ \\ \hline}%
+  %
+  \@cherienctable@row=0%
+  \loop\ifnum\@cherienctable@row<\@cherienctable@rows%
+    \ifnum\@cherienctable@rows>1%
+      \edef\@cherienctable@cell{\nbinary{\@cherienctable@rowbits}{\the\@cherienctable@row}}%
+      \ea\@cherienctable@addtobody\ea{\@cherienctable@cell & }%
+    \fi%
+    \@cherienctable@col=0%
+    {%
+      \loop\ifnum\@cherienctable@col<\@cherienctable@cols%
+        \ifnum\@cherienctable@col>0%
+          \@cherienctable@addtobody{ & }%
+        \fi%
+        \edef\@cherienctable@cell{\csname #2\endcsname{\@cherienctable@row*\@cherienctable@cols + \@cherienctable@col}}%
+        \ifx\@cherienctable@cell\@empty%
+          \@cherienctable@addtobody{-}%
+        \else%
+          \ea\@cherienctable@addtobody\ea{\@cherienctable@cell}%
+        \fi%
+        \advance\@cherienctable@col 1%
+      \repeat%
+    }%
+    \@cherienctable@addtobody{ \\}%
+    \advance\@cherienctable@row 1%
+  \repeat%
+  %
+  \def\@cherienctable@begintabular{\begin{tabular}}%
+  \ea\@cherienctable@begintabular\ea{\@cherienctable@format}%
+  \@cherienctable@body%
+  \end{tabular}%
+}
+\makeatother

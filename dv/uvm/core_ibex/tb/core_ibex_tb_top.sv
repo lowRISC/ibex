@@ -52,6 +52,13 @@ module core_ibex_tb_top;
     `define IBEX_CFG_RV32B ibex_pkg::RV32BNone
   `endif
 
+  // Matches ibex_top.sv's own default (RV32ZC was never connected to dut
+  // before, so every existing build already ran with Zcb+Zcmp enabled via
+  // that default -- this fallback must match it, not silently disable them).
+  `ifndef IBEX_CFG_RV32ZC
+    `define IBEX_CFG_RV32ZC ibex_pkg::RV32ZcaZcbZcmp
+  `endif
+
   `ifndef IBEX_CFG_REG_FILE
     `define IBEX_CFG_REG_FILE ibex_pkg::RegFileFF
   `endif
@@ -66,6 +73,7 @@ module core_ibex_tb_top;
   parameter bit RV32E                     = 1'b0;
   parameter ibex_pkg::rv32m_e RV32M       = `IBEX_CFG_RV32M;
   parameter ibex_pkg::rv32b_e RV32B       = `IBEX_CFG_RV32B;
+  parameter ibex_pkg::rv32zc_e RV32ZC     = `IBEX_CFG_RV32ZC;
   parameter ibex_pkg::regfile_e RegFile   = `IBEX_CFG_REG_FILE;
   parameter bit BranchTargetALU           = 1'b0;
   parameter bit WritebackStage            = 1'b0;
@@ -109,6 +117,7 @@ module core_ibex_tb_top;
     .RV32E                (RV32E               ),
     .RV32M                (RV32M               ),
     .RV32B                (RV32B               ),
+    .RV32ZC               (RV32ZC              ),
     .RegFile              (RegFile             ),
     .BranchTargetALU      (BranchTargetALU     ),
     .WritebackStage       (WritebackStage      ),
@@ -185,7 +194,7 @@ module core_ibex_tb_top;
     .crash_dump_o              (                           ),
     .double_fault_seen_o       (dut_if.double_fault_seen   ),
 
-    .cheriot_enable_i          (ibex_pkg::IbexMuBiOff      ),
+    .cheriot_enable_i          (dut_if.cheriot_enable      ),
 
     .fetch_enable_i            (dut_if.fetch_enable        ),
     .mcounteren_writable_i     (dut_if.mcounteren_writable ),
@@ -261,6 +270,12 @@ module core_ibex_tb_top;
   assign rvfi_if.rs2_rdata            = dut.rvfi_rs2_rdata;
   assign rvfi_if.rd_addr              = dut.rvfi_rd_addr;
   assign rvfi_if.rd_wdata             = dut.rvfi_rd_wdata;
+  // CHERIoT capability write: {tag, compressed 32-bit memory-format capability}.
+  // ibex_cheriot_pkg::cheriot_cap_to_mem() packs the RTL's expanded register
+  // capability (cap_t) the same way a CSC instruction would compress it to
+  // store into memory -- used by the cheriot-sail cosim step below, which only
+  // needs the tag bit (bit 32) and the compressed value, not the full struct.
+  assign rvfi_if.rd_wcap              = ibex_cheriot_pkg::cheriot_cap_to_mem(dut.rvfi_rd_wcap);
   assign rvfi_if.pc_rdata             = dut.rvfi_pc_rdata;
   assign rvfi_if.pc_wdata             = dut.rvfi_pc_wdata;
   assign rvfi_if.mem_addr             = dut.rvfi_mem_addr;
@@ -397,6 +412,7 @@ module core_ibex_tb_top;
     uvm_config_db#(bit)::set(null, "*", "RV32E", RV32E);
     uvm_config_db#(ibex_pkg::rv32m_e)::set(null, "*", "RV32M", RV32M);
     uvm_config_db#(ibex_pkg::rv32b_e)::set(null, "*", "RV32B", RV32B);
+    uvm_config_db#(ibex_pkg::rv32zc_e)::set(null, "*", "RV32ZC", RV32ZC);
 
     if (PMPEnable) begin
       uvm_config_db#(bit [31:0])::set(null, "*", "PMPNumRegions", PMPNumRegions);

@@ -1,0 +1,76 @@
+| UTYPE reg COMMA NUM
+  { (* it's not clear if NUM here should be before or after filling the
+      lowest 12 bits with zeros, or if it should be signed or unsigned;
+      currently assuming: NUM does not include the 12 zeros, and is unsigned *)
+    if not (iskbituimm 20 $4) then failwith "immediate is not 20bit"
+    else `RISCVUTYPE ($4, $2, $1.op) }
+| JAL reg COMMA NUM
+  { if not ($4 mod 2 = 0) then failwith "odd offset"
+    else if not (iskbitsimm 21 $4) then failwith "offset is not 21bit"
+    else `RISCVJAL ($4, $2) }
+| JALR reg COMMA reg COMMA NUM
+  { if not (iskbitsimm 12 $6) then failwith "offset is not 12bit"
+    else `RISCVJALR ($6, $4, $2) }
+| BTYPE reg COMMA reg COMMA NUM
+  { if not ($6 mod 2 = 0) then failwith "odd offset"
+    else if not (iskbitsimm 13 $6) then failwith "offset is not 13bit"
+    else `RISCVBType ($6, $4, $2, $1.op) }
+| ITYPE reg COMMA reg COMMA NUM
+  { if $1.op <> RISCVSLTIU && not (iskbitsimm 12 $6) then failwith "immediate is not 12bit"
+    else if $1.op = RISCVSLTIU && not (iskbituimm 12 $6) then failwith "unsigned immediate is not 12bit"
+    else `RISCVIType ($6, $4, $2, $1.op) }
+| ADDIW reg COMMA reg COMMA NUM
+  { if not (iskbitsimm 12 $6) then failwith "immediate is not 12bit"
+    else `RISCVADDIW ($6, $4, $2) }
+| SHIFTIOP reg COMMA reg COMMA NUM
+  { if not (iskbituimm 6 $6) then failwith "unsigned immediate is not 6bit"
+    else `RISCVShiftIop ($6, $4, $2, $1.op) }
+| SHIFTW reg COMMA reg COMMA NUM
+  { if not (iskbituimm 5 $6) then failwith "unsigned immediate is not 5bit"
+    else `RISCVSHIFTW ($6, $4, $2, $1.op) }
+| RTYPE reg COMMA reg COMMA reg
+  { `RISCVRType ($6, $4, $2, $1.op) }
+| LOAD reg COMMA NUM LPAR reg RPAR
+  { if not (iskbitsimm 12 $4) then failwith "offset is not 12bit"
+    else `RISCVLoad ($4, $6, $2, $1.unsigned, $1.width, $1.aq, $1.rl) }
+| STORE reg COMMA NUM LPAR reg RPAR
+  { if not (iskbitsimm 12 $4) then failwith "offset is not 12bit"
+    else `RISCVStore ($4, $2, $6, $1.width, $1.aq, $1.rl) }
+| RTYPEW reg COMMA reg COMMA reg
+  { `RISCVRTYPEW ($6, $4, $2, $1.op) }
+| FENCE FENCEOPTION COMMA FENCEOPTION
+  { match ($2, $4) with
+    | (Fence_RW, Fence_RW) -> `RISCVFENCE (0b0011, 0b0011)
+    | (Fence_R,  Fence_RW) -> `RISCVFENCE (0b0010, 0b0011)
+    | (Fence_W,  Fence_RW) -> `RISCVFENCE (0b0001, 0b0011)
+    | (Fence_RW, Fence_R)  -> `RISCVFENCE (0b0011, 0b0010)
+    | (Fence_R,  Fence_R)  -> `RISCVFENCE (0b0010, 0b0010)
+    | (Fence_W,  Fence_R)  -> `RISCVFENCE (0b0001, 0b0010)
+    | (Fence_RW, Fence_W)  -> `RISCVFENCE (0b0011, 0b0001)
+    | (Fence_R,  Fence_W)  -> `RISCVFENCE (0b0010, 0b0001)
+    | (Fence_W,  Fence_W)  -> `RISCVFENCE (0b0001, 0b0001)
+  }
+| FENCETSO
+  { `RISCVFENCE_TSO (0b0011, 0b0011) }
+| FENCEI
+  { `RISCVFENCEI }
+| LOADRES reg COMMA LPAR reg RPAR
+  { `RISCVLoadRes ($1.aq, $1.rl, $5, $1.width, $2) }
+| LOADRES reg COMMA NUM LPAR reg RPAR
+  { if $4 <> 0 then failwith "'lr' offset must be 0" else
+    `RISCVLoadRes ($1.aq, $1.rl, $6, $1.width, $2) }
+| STORECON reg COMMA reg COMMA LPAR reg RPAR
+  { `RISCVStoreCon ($1.aq, $1.rl, $4, $7, $1.width, $2) }
+| STORECON reg COMMA reg COMMA NUM LPAR reg RPAR
+  { if $6 <> 0 then failwith "'sc' offset must be 0" else
+    `RISCVStoreCon ($1.aq, $1.rl, $4, $8, $1.width, $2) }
+| AMO reg COMMA reg COMMA LPAR reg RPAR
+  { `RISCVAMO ($1.op, $1.aq, $1.rl, $4, $7, $1.width, $2) }
+| AMO reg COMMA reg COMMA NUM LPAR reg RPAR
+  { if $6 <> 0 then failwith "'amo<op>' offset must be 0" else
+    `RISCVAMO ($1.op, $1.aq, $1.rl, $4, $8, $1.width, $2) }
+
+/* pseudo-ops */
+| LI reg COMMA NUM
+  { if not (iskbitsimm 12 $4) then failwith "immediate is not 12bit (li is currently implemented only with small immediate)"
+    else `RISCVIType ($4, IReg R0, $2, RISCVORI) }

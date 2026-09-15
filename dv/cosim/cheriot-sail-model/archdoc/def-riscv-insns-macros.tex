@@ -1,0 +1,319 @@
+\ifcsname @def@riscv@insns@macros@tex\endcsname
+  \ea\endinput
+\fi
+\ea\gdef\csname @def@riscv@insns@macros@tex\endcsname{1}
+
+\makeatletter
+% class func name tablestr
+\newcommand{\@rvcheriencdef}[4]{%
+  \ea\ifx\csname @rvcheri@enc@func2name@#1@\the\numexpr(#2)\endcsname\relax%
+    \csgdef{@rvcheri@enc@func2name@#1@\the\numexpr(#2)}{#3}%
+    \csgdef{@rvcheri@enc@func2tablestr@#1@\the\numexpr(#2)}{#4}%
+  \else%
+    \def\@rvcheriencdef@duperror##1{%
+      \GenericError{[RISC-V (#1)] }{Duplicate encoding}{%
+        [RISC-V (#1)] Function code 0x##1 for #3\MessageBreak%
+        is already assigned to \csname @rvcheri@enc@func2name@#1@\the\numexpr(#2)\endcsname%
+      }{}%
+    }%
+    \ea\@rvcheriencdef@duperror\ea{\hex{\the\numexpr(#2)}}%
+  \fi%
+}
+\newcommand{\@rvcheriencusetablestr}[2]{\csuse{@rvcheri@enc@func2tablestr@#1@\the\numexpr(#2)}}
+\newcommand{\@rvcherimakeencusetablestrcmd}[1]{%
+  \ea\newcommand\csname @rvcheriencusetablestr@#1\endcsname[1]{%
+    \@rvcheriencusetablestr{#1}{##1}%
+  }%
+}
+\@rvcherimakeencusetablestrcmd{top}
+\@rvcherimakeencusetablestrcmd{srcsrcdest}
+\@rvcherimakeencusetablestrcmd{srcsrc}
+\@rvcherimakeencusetablestrcmd{src}
+\@rvcherimakeencusetablestrcmd{srcdest}
+\@rvcherimakeencusetablestrcmd{dest}
+\@rvcherimakeencusetablestrcmd{expload}
+\@rvcherimakeencusetablestrcmd{expstore}
+
+\let\@rvcherisubclass@tablesuffix\@empty
+\define@key{@rvcherisubclass}{tablesuffix}{\def\@rvcherisubclass@tablesuffix{#1}}
+\newcommand{\rvcherisubclass}[4][]{{%
+  \setkeys{@rvcherisubclass}{#1}%
+  \def\@rvcheriencdef@partial##1{\@rvcheriencdef{#2}{"#3}{#4}{#4##1}}%
+  \ea\@rvcheriencdef@partial\ea{\@rvcherisubclass@tablesuffix}%
+}}
+
+\newbool{@rvcheri@header}
+\newcommand{\rvcheriheader}{\booltrue{@rvcheri@header}}
+\newcommand{\@rvcheri@ifheader}[1]{%
+  \ifbool{@rvcheri@header}{%
+    \global\boolfalse{@rvcheri@header}%
+    #1%
+  }{}%
+}
+\newcommand{\@rvcherisrcsrcdest}[4]{
+  \begin{bytefield}{32}
+    \@rvcheri@ifheader{%
+      \bitheader[endianness=big]{0,6,7,11,12,14,15,19,20,24,25,31}\\
+    }%
+    \bitbox{7}{#1}
+    \bitbox{5}{#4}
+    \bitbox{5}{#3}
+    \bitbox{3}{0x0}
+    \bitbox{5}{#2}
+    \bitbox{7}{0x5b}
+  \end{bytefield}%
+}
+\newcommand{\@rvcherisrcsrcdestimm}[4]{
+  \begin{bytefield}{32}
+    \@rvcheri@ifheader{%
+      \bitheader[endianness=big]{0,6,7,11,12,14,15,19,20,31}\\
+    }%
+    \bitbox{12}{#4[11:0]}
+    \bitbox{5}{#3}
+    \bitbox{3}{#1}
+    \bitbox{5}{#2}
+    \bitbox{7}{0x5b}
+  \end{bytefield}%
+}
+\newcommand{\@rvcherisrcsrcdestclear}[4]{
+  \begin{bytefield}{32}
+    \@rvcheri@ifheader{%
+      \bitheader[endianness=big]{0,6,7,11,12,14,15,17,18,19,20,24,25,31}\\
+    }%
+    \bitbox{7}{#1}
+    \bitbox{5}{#4}
+    \bitbox{2}{#3}
+    \bitbox{3}{#2$_{[7:5]}$}
+    \bitbox{3}{0x0}
+    \bitbox{5}{#2$_{[4:0]}$}
+    \bitbox{7}{0x5b}
+  \end{bytefield}%
+}
+
+\newcommand{\@rvcherisrcsrc}[3]{\@rvcherisrcsrcdest{0x7e}{#1}{#2}{#3}}
+\newcommand{\@rvcherisrc}[2]{\@rvcherisrcsrc{0x1f}{#2}{#1}}
+\newcommand{\@rvcherisrcdest}[3]{\@rvcherisrcsrcdest{0x7f}{#2}{#3}{#1}}
+\newcommand{\@rvcheridest}[2]{\@rvcherisrcdest{0x1f}{#2}{#1}}
+\newcommand{\@rvcheriscr}[4]{\@rvcherisrcsrcdest{#1}{#2}{#4}{#3}}
+\newcommand{\@rvchericlear}[1]{\@rvcherisrcsrcdestclear{0x7f}{m}{q}{#1}}
+\newcommand{\@rvcheristorever}[3]{\@rvcherisrcsrcdest{0x7e}{#1}{#3}{#2}}
+\newcommand{\@rvcheriexpload}[3]{\@rvcherisrcsrcdest{0x7d}{#2}{#3}{#1}}
+\newcommand{\@rvcheriexpstore}[3]{\@rvcherisrcsrcdest{0x7c}{#1}{#3}{#2}}
+\newcommand{\@rvcheriexpstorecond}[4]{\@rvcherisrcsrcdest{0x7c}{#1}{#4}{#2/#3}}
+
+\newcommand{\@rvcheriasmdef}[2]{%
+  \ea\ifx\csname @rvcheri@asm@#1\endcsname\relax%
+    \csgdef{@rvcheri@asm@#1}{#2}%
+  \else%
+    \def\@rvcheriasmdef@duperror##1{%
+      \GenericError{[RISC-V] }{Duplicate assembly ID}{%
+        [RISC-V] Instruction ID ##1 already has an assembly definition%
+      }%
+    }%
+    \@rvcheriasmdef@duperror{#1}%
+  \fi%
+}
+
+\newcommand{\@rvcheriasmencdef}[3]{%
+  \ifthenelse{\equal{\@rvcheriinsn@noref}{true}}{%
+    \def\@rvcheriasmencdef@insnref{rvcheriasminsnnoref}%
+  }{%
+    \def\@rvcheriasmencdef@insnref{rvcheriasminsnref}%
+  }%
+  \ifthenelse{\equal{\@rvcheriinsn@name}{}}{%
+  }{%
+    \ea\def%
+      \ea\@rvcheriasmencdef@asm@partial%
+      \ea##\ea1%
+      \ea{%
+        \csname rvcheriasmfmt\ea\ea\ea\endcsname%
+          \ea\ea\ea[\ea\@rvcheriinsn@restriction\ea]\ea{%
+            \csname\@rvcheriasmencdef@insnref\endcsname{##1} #3}}%
+    \ea\ea\ea\def%
+      \ea\ea\ea\@rvcheriasmencdef@asm%
+      \ea\ea\ea{%
+        \ea\@rvcheriasmencdef@asm@partial%
+        \ea{\@rvcheriinsn@name}}%
+    \ea\ea\ea\@rvcheriasmdef\ea\ea\ea{\ea\@rvcheriinsn@id\ea}\ea{\@rvcheriasmencdef@asm}%
+    \ifthenelse{\equal{\@rvcheriinsn@id}{\@rvcheriinsn@shortid}}{%
+    }{%
+      \ea\ea\ea\@rvcheriasmdef\ea\ea\ea{\ea\@rvcheriinsn@shortid\ea}\ea{\@rvcheriasmencdef@asm}%
+    }%
+    \ifthenelse{\equal{\@rvcheriinsn@notable}{true}}{%
+    }{%
+      \def\@rvcheriasmencdef@rvcheriencdef@partial{\@rvcheriencdef{#1}{#2}}%
+      \ea\def\ea\@rvcheriasmencdef@hypershortname\ea{%
+        \csname\@rvcheriasmencdef@insnref\ea\endcsname\ea*\ea{\@rvcheriinsn@shortname}%
+      }%
+      \ea\ea\ea\def\ea\ea\ea\@rvcheriasmencdef@tablestr\ea\ea\ea{%
+        \ea\@rvcheriasmencdef@hypershortname\@rvcheriinsn@tablesuffix%
+      }%
+      \ea\ea\ea\@rvcheriasmencdef@rvcheriencdef@partial%
+        \ea\ea\ea{%
+          \ea\@rvcheriinsn@name%
+        \ea}%
+        \ea{%
+          \ea\unexpanded\ea{\@rvcheriasmencdef@tablestr}%
+        }%
+    }%
+  }%
+}
+
+\let\@rvcheriinsn@name\@empty
+\def\@rvcheriinsn@noref{false}
+\def\@rvcheriinsn@notable{false}
+\def\@rvcheriinsn@rawfunc{false}
+\let\@rvcheriinsn@tablesuffix\@empty
+\define@key{@rvcheriinsn}{name}{\def\@rvcheriinsn@name{#1}}
+\define@key{@rvcheriinsn}{noref}[true]{\def\@rvcheriinsn@noref{#1}}
+\define@key{@rvcheriinsn}{notable}[true]{\def\@rvcheriinsn@notable{#1}}
+\define@key{@rvcheriinsn}{rawfunc}[true]{\def\@rvcheriinsn@rawfunc{#1}}
+\define@key{@rvcheriinsn}{restriction}{\def\@rvcheriinsn@restriction{#1}}
+\define@key{@rvcheriinsn}{shortname}{\def\@rvcheriinsn@shortname{#1}}
+\define@key{@rvcheriinsn}{tablesuffix}{\def\@rvcheriinsn@tablesuffix{#1}}
+\def\@rvcheriinsnsetkeys#1{%
+  \setkeys{@rvcheriinsn}{#1}%
+  \ea\ifx\csname @rvcheriinsn@shortname\endcsname\relax%
+    \let\@rvcheriinsn@shortname\@rvcheriinsn@name%
+  \fi%
+  \ea\ifx\csname @rvcheriinsn@name\endcsname\relax%
+  \else%
+    \ea\def\ea\@rvcheriinsn@id\ea{\@rvcheriinsn@name}%
+    \ea\def\ea\@rvcheriinsn@shortid\ea{\@rvcheriinsn@shortname}%
+    \ea\ifx\csname @rvcheriinsn@restriction\endcsname\relax%
+      \let\@rvcheriinsn@restriction\@empty%
+    \else%
+      \ea\ea\ea\def\ea\ea\ea\@rvcheriinsn@id\ea\ea\ea{\ea\@rvcheriinsn@id\ea:\@rvcheriinsn@restriction}%
+      \ea\ea\ea\def\ea\ea\ea\@rvcheriinsn@shortid\ea\ea\ea{\ea\@rvcheriinsn@shortid\ea:\@rvcheriinsn@restriction}%
+    \fi%
+  \fi%
+}
+\def\@rvcheriinsnfmtfunc#1{%
+  \ifthenelse{\equal{\@rvcheriinsn@rawfunc}{true}}{%
+    #1%
+  }{%
+    0x\lowercase{#1}%
+  }%
+}
+
+\newcommand{\@rvcheribitboxdef@single}[2]{%
+  \ea\ifx\csname @rvcheri@bitbox@#1\endcsname\relax%
+    \csgdef{@rvcheri@bitbox@#1}{#2}%
+  \else%
+    \def\@rvcheribitboxdef@duperror##1{%
+      \GenericError{[RISC-V] }{Duplicate bitbox ID}{%
+        [RISC-V] Instruction ID ##1 already has a bitbox definition%
+      }%
+    }%
+    \@rvcheribitboxdef@duperror{#1}%
+  \fi%
+}
+
+\newcommand{\@rvcheribitboxdef}[1]{%
+  \ea\@rvcheribitboxdef@single\ea{\@rvcheriinsn@id}{#1}%
+  \ifthenelse{\equal{\@rvcheriinsn@id}{\@rvcheriinsn@shortid}}{%
+  }{%
+    \ea\@rvcheribitboxdef@single\ea{\@rvcheriinsn@shortid}{#1}%
+  }%
+}
+
+\def\@rvcherirawbitbox#1{%
+  \csname @rvcheri#1\endcsname%
+}
+\let\rvcherirawbitbox\@rvcherirawbitbox
+
+\newcommand{\rvcherisrcsrcdest}[5][]{{%
+  \@rvcheriinsnsetkeys{#1}%
+  \@rvcheribitboxdef{\@rvcherirawbitbox{srcsrcdest}{\@rvcheriinsnfmtfunc{#2}}{#3}{#4}{#5}}%
+  \@rvcheriasmencdef{srcsrcdest}{"#2}{#3, #4, #5}%
+}}
+\newcommand{\rvcherisrcsrcdestimm}[5][]{{%
+  \@rvcheriinsnsetkeys{#1}%
+  \@rvcheribitboxdef{\@rvcherirawbitbox{srcsrcdestimm}{\@rvcheriinsnfmtfunc{#2}}{#3}{#4}{#5}}%
+  \@rvcheriasmencdef{top}{"#2}{#3, #4, #5}%
+}}
+\newcommand{\rvcherisrcsrc}[4][]{{%
+  \@rvcheriinsnsetkeys{#1}%
+  \@rvcheribitboxdef{\@rvcherirawbitbox{srcsrc}{\@rvcheriinsnfmtfunc{#2}}{#3}{#4}}%
+  \@rvcheriasmencdef{srcsrc}{"#2}{#3, #4}%
+}}
+\newcommand{\rvcherisrc}[3][]{{%
+  \@rvcheriinsnsetkeys{#1}%
+  \@rvcheribitboxdef{\@rvcherirawbitbox{src}{\@rvcheriinsnfmtfunc{#2}}{#3}}%
+  \@rvcheriasmencdef{src}{"#2}{#3}%
+}}
+\newcommand{\rvcherisrcdest}[4][]{{%
+  \@rvcheriinsnsetkeys{#1}%
+  \@rvcheribitboxdef{\@rvcherirawbitbox{srcdest}{\@rvcheriinsnfmtfunc{#2}}{#3}{#4}}%
+  \@rvcheriasmencdef{srcdest}{"#2}{#3, #4}%
+}}
+\newcommand{\rvcheridest}[3][]{{%
+  \@rvcheriinsnsetkeys{#1}%
+  \@rvcheribitboxdef{\@rvcherirawbitbox{dest}{\@rvcheriinsnfmtfunc{#2}}{#3}}%
+  \@rvcheriasmencdef{dest}{"#2}{#3}%
+}}
+
+\newcommand{\rvcheriscr}[5][]{{%
+  \@rvcheriinsnsetkeys{#1}%
+  \@rvcheribitboxdef{\@rvcherirawbitbox{scr}{\@rvcheriinsnfmtfunc{#2}}{#3}{#4}{#5}}%
+  \@rvcheriasmencdef{srcsrcdest}{"#2}{#3, #4, #5}%
+}}
+\newcommand{\rvchericlear}[2][]{{%
+  \@rvcheriinsnsetkeys{#1}%
+  \@rvcheribitboxdef{\@rvcherirawbitbox{clear}{\@rvcheriinsnfmtfunc{#2}}}%
+  \@rvcheriasmencdef{srcdest}{"#2}{q(uarter), m(ask)}%
+}}
+
+\newcommand{\rvcheristorever}[4][]{{%
+  \@rvcheriinsnsetkeys{#1}%
+  \@rvcheribitboxdef{\@rvcherirawbitbox{storever}{\@rvcheriinsnfmtfunc{#2}}{#3}{#4}}%
+  \@rvcheriasmencdef{srcsrc}{"#2}{#3, #4}%
+}}
+
+\newcommand{\rvcheriexpload}[4][]{{%
+  \@rvcheriinsnsetkeys{#1}%
+  \@rvcheribitboxdef{\@rvcherirawbitbox{expload}{\@rvcheriinsnfmtfunc{#2}}{#3}{#4}}%
+  \@rvcheriasmencdef{expload}{"#2}{#3, #4}%
+}}
+\newcommand{\rvcheriexploadres}[4][]{{%
+  \@rvcheriinsnsetkeys{#1}%
+  \@rvcheribitboxdef{\@rvcherirawbitbox{expload}{\@rvcheriinsnfmtfunc{#2}}{#3}{#4}}%
+  \@rvcheriasmencdef{expload}{"#2}{#3, #4}%
+}}
+\newcommand{\rvcheriexpstore}[4][]{{%
+  \@rvcheriinsnsetkeys{#1}%
+  \@rvcheribitboxdef{\@rvcherirawbitbox{expstore}{\@rvcheriinsnfmtfunc{#2}}{#3}{#4}}%
+  \@rvcheriasmencdef{expstore}{"#2}{#3, #4}%
+}}
+\newcommand{\rvcheriexpstorecond}[5][]{{%
+  \@rvcheriinsnsetkeys{#1}%
+  \@rvcheribitboxdef{\@rvcherirawbitbox{expstorecond}{\@rvcheriinsnfmtfunc{#2}}{#3}{#4}{#5}}%
+  \@rvcheriasmencdef{expstore}{"#2}{#4, #5}%
+}}
+
+\newcommand{\rvcheribitbox}[1]{%
+  \ea\ifx\csname @rvcheri@bitbox@#1\endcsname\relax%
+    \def\rvcheribitbox@unknownerr##1{%
+      \GenericError{[RISC-V] }{Unknown bitbox ID}{%
+        [RISC-V] Instruction ID ##1 has no known bitbox definition%
+      }{}%
+    }%
+    \rvcheribitbox@unknownerr{#1}%
+  \else%
+    \csname @rvcheri@bitbox@#1\endcsname%
+  \fi%
+}
+
+\newcommand{\rvcheriasm}[1]{%
+  \ea\ifx\csname @rvcheri@asm@#1\endcsname\relax%
+    \def\rvcheriasm@unknownerr##1{%
+      \GenericError{[RISC-V] }{Unknown assembly ID}{%
+        [RISC-V] Instruction ID ##1 has no known assembly definition%
+      }{}%
+    }%
+    \rvcheriasm@unknownerr{#1}%
+  \else%
+    \csname @rvcheri@asm@#1\endcsname%
+  \fi%
+}
+\makeatother

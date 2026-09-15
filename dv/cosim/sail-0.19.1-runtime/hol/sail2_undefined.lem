@@ -1,0 +1,28 @@
+open import Pervasives_extra
+open import Sail2_values
+open import Sail2_prompt_monad
+open import Sail2_prompt
+
+(* Default implementations of "undefined" functions for builtin types via
+   nondeterministic choice, for use with the -undefined_gen option of Sail.
+   
+   Identical to ../../src/gen_lib/sail2_undefined.lem except for type class
+   constraints. *)
+
+val undefined_bitvector : forall 'rv 'a 'e. Bitvector 'a => integer -> monad 'rv 'a 'e
+let undefined_bitvector n = choose_bitvector "undefined_bitvector" (natFromInteger n)
+
+let undefined_unit () = return ()
+let undefined_bits = undefined_bitvector
+let undefined_bit () = choose_bit "undefined_bit"
+let undefined_bool () = choose_bool "undefined_bool"
+let undefined_string () = choose_string "undefined_string"
+let undefined_int () = choose_int "undefined_int"
+let undefined_nat () = choose_nat "undefined_nat"
+let undefined_real () = choose_real "undefined_real"
+let undefined_range i j = choose_int_in_range "undefined_range" i j
+let undefined_atom i = return i
+
+(* TODO: Choose each vector element individually *)
+val undefined_vector : forall 'rv 'a 'e. integer -> 'a -> monad 'rv (list 'a) 'e
+let undefined_vector len u = return (repeat [u] len)

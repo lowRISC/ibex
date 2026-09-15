@@ -16,7 +16,9 @@ CSS_RG_GRADIENT_YELLOW_POINT = 0.7
 
 def css_red_green_gradient(value: float) -> str:
     '''Outputs a CSS compatible colour value from a point on a red-yellow-green
-       gradient'''
+       gradient. value may be None (metric unavailable) -- rendered as neutral grey.'''
+    if value is None:
+        return 'rgb(200,200,200)'
     if value < CSS_RG_GRADIENT_YELLOW_POINT:
         red = 1.0
         green = value / CSS_RG_GRADIENT_YELLOW_POINT
@@ -163,8 +165,13 @@ def add_cov_to_summary(metric_name: str, metric_data: Dict[str, Dict[str, int]],
     '''Calculates coverage percentage for particular coverage metric and add it
        coverage summary dictionary.
 
-       This is a helper function used by create_cov_summary_dict
+       This is a helper function used by create_cov_summary_dict. Always sets
+       cov_summary_dict[metric_name] -- to None when the xcelium report has no
+       data for this metric (e.g. a short single-test run) -- so the HTML
+       template's cov_summary[metric_name] lookup can't KeyError; pct_str/
+       pct_style render None as 'n/a'.
     '''
+    cov_summary_dict[metric_name] = None
     if (f'{metric_name}-covered' in metric_data):
         cov_pct = (metric_data[f'{metric_name}-covered']['covered'] /
             metric_data[f'{metric_name}-covered']['total'])
@@ -219,7 +226,7 @@ def create_cov_summary_dict(metadata: RegressionMetadata) -> Dict[str, int]:
     with open(cg_report_filename, 'r') as cg_report_file:
         cg_report_dict = parse_xcelium_cov_report(cg_report_file.read())
 
-    cov_summary_dict = {}
+    cov_summary_dict = {metric_name: None for metric_name in IBEX_COVERAGE_METRICS}
 
     if 'ibex_top' in cov_report_dict:
         for metric_name in IBEX_COVERAGE_METRICS:

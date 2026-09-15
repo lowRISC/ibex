@@ -1,0 +1,1 @@
+This package installs a CHERI-RISC-V emulator (64-bit only) built form the Sail model at https://github.com/rems-project/sail-cheri-riscv

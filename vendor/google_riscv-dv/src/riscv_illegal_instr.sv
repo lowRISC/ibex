@@ -248,7 +248,20 @@ class riscv_illegal_instr extends uvm_object;
                                              (instr_bin[6:5] == 2'b10) && (c_op == 2'b01));
       (reserved_c == kReservedC1)        -> ((instr_bin[15:10] == 6'b100111) &&
                                              (instr_bin[6:5] == 2'b11) && (c_op == 2'b01));
-      (reserved_c == kReservedC2)        -> ((c_msb == 3'b100) && (c_op == 2'b00));
+      // LOCAL PATCH (not upstream google/riscv-dv -- reapply after any vendor resync):
+      // kReservedC2 assumed the whole {c_msb=100, c_op=00} space (C0 quadrant,
+      // funct3=100) was reserved/safely-illegal. The Zcb extension (enabled by
+      // default on this core's ibex_pkg::RV32ZcaZcbZcmp config) repurposes
+      // instr_bin[12:10] == 000/001/010/011 within that space for real
+      // instructions (c.lbu/c.lhu+c.lh/c.sb/c.sh -- see
+      // ibex_compressed_decoder.sv's funct3=100 case). Without this exclusion,
+      // "kReservedC2" sometimes generates one of those live encodings by
+      // chance; the DUT correctly executes it as a real load/store through a
+      // register never set up for one, tripping the bus/RF alert checked by
+      // core_ibex_tb_top.sv's NoAlertsTriggered assertion.
+      (reserved_c == kReservedC2)        -> ((c_msb == 3'b100) && (c_op == 2'b00) &&
+                                             !(instr_bin[12:10] inside {3'b000, 3'b001,
+                                                                        3'b010, 3'b011}));
       (reserved_c == kReservedAddi16sp)  -> ((c_msb == 3'b011) && (c_op == 2'b01) &&
                                              (instr_bin[11:7] == 2) &&
                                              !instr_bin[12] && (instr_bin[6:2] == 0));

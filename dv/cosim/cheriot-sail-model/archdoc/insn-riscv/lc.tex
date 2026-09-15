@@ -1,0 +1,26 @@
+\clearpage
+\phantomsection
+\addcontentsline{toc}{subsection}{CLC}
+\insnriscvlabel{lc}
+\insnriscvlabel{clc}
+\subsection*{CLC}
+
+\subsubsection*{Format}
+
+\noindent\rvcheriasmfmt{\rvcheriasminsnref{CLC} cd, imm(cs1)}
+
+\begin{center}
+\begin{bytefield}{32}
+	\bitheader[endianness=big]{0,6,7,11,12,14,15,19,20,31}\\
+	\bitbox{12}{imm}
+	\bitbox{5}{cs1}
+	\bitbox{3}{0x3}
+	\bitbox{5}{cd}
+	\bitbox{7}{0x3}
+\end{bytefield}
+\end{center}
+
+% XXX: Ideally we would be able to use [LC](LoadCapImm) in the saildoc but that
+% generates a link to the literal LoadCapImm.
+\label{sailRISCVzLC}
+\sailRISCVisarefbody{LoadCapImm}

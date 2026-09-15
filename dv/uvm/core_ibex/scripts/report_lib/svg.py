@@ -126,18 +126,24 @@ def output_results_svg(test_summary_dict: Dict[str, Dict[str, int]],
 
 
     if cov_summary_dict:
-        code_coverage = sum([cov_summary_dict['block'],
+        # A metric can be legitimately unavailable (e.g. a single-test run
+        # with no covergroup data, or a coverage type xcelium's report didn't
+        # produce) -- create_cov_summary_dict represents that as None rather
+        # than omitting the key. Treat missing metrics as 0 for the code
+        # coverage average rather than crashing.
+        code_coverage_metrics = [cov_summary_dict['block'],
                 cov_summary_dict['branch'],
                 cov_summary_dict['statement'],
                 cov_summary_dict['expression'],
-                cov_summary_dict['fsm']]) / 5
+                cov_summary_dict['fsm']]
+        code_coverage = sum(m or 0 for m in code_coverage_metrics) / 5
 
-
+        covergroup_cov = cov_summary_dict['covergroup']
+        covergroup_str = 'n/a' if covergroup_cov is None else f"{covergroup_cov * 100:.1f}%"
         dashboard_elements.append(
                 DashboardElement("Functional Coverage",
-                    f"{cov_summary_dict['covergroup'] * 100:.1f}%", 150,
-                    value_colour = css_red_green_gradient(
-                        cov_summary_dict['covergroup'])))
+                    covergroup_str, 150,
+                    value_colour = css_red_green_gradient(covergroup_cov)))
 
         dashboard_elements.append(
                 DashboardElement("Code Coverage", f"{code_coverage * 100:.1f}%",

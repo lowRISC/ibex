@@ -1,0 +1,33 @@
+# Ensure LEM_DIR is set before running Holmake, e.g., by using the accompanying Makefile
+
+LEM_SCRIPTS = sail2_instr_kindsScript.sml sail2_valuesScript.sml sail2_operatorsScript.sml \
+  sail2_operators_mwordsScript.sml sail2_operators_bitlistsScript.sml \
+  sail2_state_monadScript.sml sail2_stateScript.sml sail2_promptScript.sml sail2_prompt_monadScript.sml \
+  sail2_undefinedScript.sml sail2_stringScript.sml
+
+LEM_CLEANS = $(LEM_SCRIPTS)
+
+SCRIPTS = $(LEM_SCRIPTS) \
+  sail2_valuesAuxiliaryScript.sml sail2_stateAuxiliaryScript.sml
+
+THYS = $(patsubst %Script.sml,%Theory.uo,$(SCRIPTS))
+
+INCLUDES = $(LEM_DIR)/hol-lib
+
+all: $(THYS)
+.PHONY: all
+
+EXTRA_CLEANS = $(LEM_CLEANS)
+
+ifdef POLY
+HOLHEAP = sail-heap
+EXTRA_CLEANS = $(LEM_CLEANS) $(HOLHEAP) $(HOLHEAP).o
+
+BASE_HEAP = $(LEM_DIR)/hol-lib/lemheap
+
+$(HOLHEAP): $(BASE_HEAP)
+	$(protect $(HOLDIR)/bin/buildheap) -o $(HOLHEAP) -b $(BASE_HEAP)
+
+all: $(HOLHEAP)
+
+endif

@@ -1,0 +1,91 @@
+| `RISCVThreadStart  -> THREAD_START()
+| `RISCVStopFetching -> STOP_FETCHING()
+
+| `RISCVUTYPE(imm, rd, op) -> UTYPE(
+      translate_imm20 "imm" imm,
+      translate_reg "rd" rd,
+      translate_uop op)
+| `RISCVJAL(imm, rd) -> RISCV_JAL(
+      translate_imm21 "imm" imm,
+      translate_reg "rd" rd)
+| `RISCVJALR(imm, rs, rd) -> RISCV_JALR(
+      translate_imm12 "imm" imm,
+      translate_reg "rs" rd,
+      translate_reg "rd" rd)
+| `RISCVBType(imm, rs2, rs1, op) -> BTYPE(
+      translate_imm13 "imm" imm,
+      translate_reg "rs2" rs2,
+      translate_reg "rs1" rs1,
+      translate_bop op)
+| `RISCVIType(imm, rs1, rd, op) -> ITYPE(
+      translate_imm12 "imm" imm,
+      translate_reg "rs1" rs1,
+      translate_reg "rd" rd,
+      translate_iop op)
+| `RISCVShiftIop(imm, rs, rd, op) -> SHIFTIOP(
+      translate_imm6 "imm" imm,
+      translate_reg "rs" rs,
+      translate_reg "rd" rd,
+      translate_sop op)
+| `RISCVRType (rs2, rs1, rd, op) -> RTYPE (
+      translate_reg "rs2" rs2,
+      translate_reg "rs1" rs1,
+      translate_reg "rd" rd,
+      translate_rop op)
+| `RISCVLoad(imm, rs, rd, unsigned, width, aq, rl) -> LOAD(
+      translate_imm12 "imm" imm,
+      translate_reg "rs" rs,
+      translate_reg "rd" rd,
+      translate_bool "unsigned" unsigned,
+      translate_wordWidth width,
+      translate_bool "aq" aq,
+      translate_bool "rl" rl)
+| `RISCVStore(imm, rs, rd, width, aq, rl) -> STORE (
+      translate_imm12 "imm" imm,
+      translate_reg "rs" rs,
+      translate_reg "rd" rd,
+      translate_wordWidth width,
+      translate_bool "aq" aq,
+      translate_bool "rl" rl)
+| `RISCVADDIW(imm, rs, rd) -> ADDIW(
+      translate_imm12 "imm" imm,
+      translate_reg "rs" rs,
+      translate_reg "rd" rd)
+| `RISCVSHIFTW(imm, rs, rd, op) -> SHIFTW(
+      translate_imm5 "imm" imm,
+      translate_reg "rs" rs,
+      translate_reg "rd" rd,
+      translate_sop op)
+| `RISCVRTYPEW(rs2, rs1, rd, op) -> RTYPEW(
+      translate_reg "rs2" rs2,
+      translate_reg "rs1" rs1,
+      translate_reg "rd" rd,
+      translate_ropw op)
+| `RISCVFENCE(pred, succ) -> FENCE(
+      translate_imm4 "pred" pred,
+      translate_imm4 "succ" succ)
+| `RISCVFENCE_TSO(pred, succ) -> FENCE_TSO(
+      translate_imm4 "pred" pred,
+      translate_imm4 "succ" succ)
+| `RISCVFENCEI -> FENCEI ()
+| `RISCVLoadRes(aq, rl, rs1, width, rd) -> LOADRES(
+      translate_bool "aq" aq,
+      translate_bool "rl" rl,
+      translate_reg "rs1" rs1,
+      translate_wordWidth width,
+      translate_reg "rd" rd)
+| `RISCVStoreCon(aq, rl, rs2, rs1, width, rd) -> STORECON(
+      translate_bool "aq" aq,
+      translate_bool "rl" rl,
+      translate_reg "rs2" rs2,
+      translate_reg "rs1" rs1,
+      translate_wordWidth width,
+      translate_reg "rd" rd)
+| `RISCVAMO (op, aq, rl, rs2, rs1, width, rd) -> AMO(
+      translate_amoop op,
+      translate_bool "aq" aq,
+      translate_bool "rl" rl,
+      translate_reg "rs2" rs2,
+      translate_reg "rs1" rs1,
+      translate_wordWidth width,
+      translate_reg "rd" rd)

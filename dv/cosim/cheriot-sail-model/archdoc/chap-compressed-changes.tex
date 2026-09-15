@@ -1,0 +1,26 @@
+\chapter{Proposed compressed instruction encoding changes}
+\label{chap:c-changes}
+
+\cref{sec:c-extension} introduces changes to map certain compressed instructions to their CHERI counterparts, without changing the encoding of compressed instructions themselves.
+This brings minimum changes to the instruction decoder of an existing RISC-V CPU.
+However, further code size reduction can be achieved if we take advantage of the extra register index bits freed up by RV32E, or if we drastically redesign certain encodings in C extension entirely.
+
+\section{Compressed \asm{CMove} and \asm{CIncAddr}}
+The compiler generates \asm{CMove} and \asm{mv} to copy registers for capabilities and integers respectively.
+While \asm{mv} has a compressed \asm{c.mv} counterpart, \asm{CMove} does not.
+Move instructions are often used to shuffle registers among argument, temporary and callee-saved registers for function calls, taking a significant proportion of the code size.
+
+We take advantage of the freed bits from RV32E and use one bit to differentiate between \asm{c.CMove} and \asm{c.mv}.
+Initial code size investigations show a reduction of 5\%, which is significant.
+An alternative for \asm{c.CMove} is to conflate \asm{c.CMove} with \asm{c.mv}, which requires no extra bits from RV32E.
+However, implications of this conflation on ABI, architectural state and compiler have not been investigated.
+
+Similarly, the extra bit in \asm{c.addi} can encode \asm{c.CIncAddr}.
+The benefit of a \asm{c.CIncAddr} is less significant, at around 1-2\%.
+
+\section{Three-operand compressed instructions}
+Currently, RISC-V compressed instructions take at most two operands, with certain instructions having full 5-bit register indices to address all 32 registers.
+Initial prototyping suggests that sacrificing the ability to address all registers and reducing immediate ranges to increase the number of operands gives further code size reduction.
+Increasing the number of operands increases the chance of pattern-matching uncompressed instructions with compressed ones, and the code size reduction outweighs the number of instructions that can no longer be compressed with a smaller immediate or register index.
+We currently see another 1-2\% reduction on top of compressed \asm{c.CMove} and \asm{c.CIncAddr}.
+However, this is a drastic ISA change and needs further investigation for justification.

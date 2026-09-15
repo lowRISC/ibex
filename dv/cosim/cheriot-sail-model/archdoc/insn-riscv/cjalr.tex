@@ -1,0 +1,22 @@
+\clearpage
+\phantomsection
+\addcontentsline{toc}{subsection}{CJALR}
+\insnriscvlabel{cjalr}
+\subsection*{CJALR}
+
+\subsubsection*{Format}
+
+\rvcheriasmfmt{\rvcheriasminsnnoref{CJALR} cd, imm(cs1)}
+
+\begin{center}
+\begin{bytefield}{32}
+	\bitheader[endianness=big]{0,6,7,11,12,14,15,19,20,31}\\
+	\bitbox{12}{imm[11:0]}
+	\bitbox{5}{cs1}
+	\bitbox{3}{0}
+	\bitbox{5}{cd}
+	\bitbox{7}{0x67}
+\end{bytefield}
+\end{center}
+
+\sailRISCVisarefbody{CJALR}

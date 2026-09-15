@@ -1,0 +1,49 @@
+diff --git a/model/riscv_mem.sail b/model/riscv_mem.sail
+index 256d6de4..45640229 100644
+--- a/model/riscv_mem.sail
++++ b/model/riscv_mem.sail
+@@ -28,8 +28,8 @@ function phys_mem_read forall 'n, 'n > 0. (t : AccessType, addr : xlenbits, widt
+     (false, false, true)  => Some(read_ram(Read_RISCV_reserved, addr, width)),
+     (true, false, true)   => Some(read_ram(Read_RISCV_reserved_acquire, addr, width)),
+     (true, true, true)    => Some(read_ram(Read_RISCV_reserved_strong_acquire, addr, width)),
+-    (false, true, false)  => None(), /* should these be instead throwing error_not_implemented as below? */
+-    (false, true, true)   => None()
++    (false, true, false)  => Some(read_ram(Read_plain, addr, width)),
++    (false, true, true)   => Some(read_ram(Read_plain, addr, width))
+   }) : option(bits(8 * 'n));
+   match (t, result) {
+     (Execute, None()) => MemException(E_Fetch_Access_Fault),
+@@ -91,8 +91,8 @@ function mem_read (typ, addr, width, aq, rl, res) = {
+   if (aq | res) & (~ (is_aligned_addr(addr, width)))
+   then MemException(E_Load_Addr_Align)
+   else match (aq, rl, res) {
+-    (false, true,  false) => throw(Error_not_implemented("load.rl")),
+-    (false, true,  true)  => throw(Error_not_implemented("lr.rl")),
++    (false, true,  false) => pmp_mem_read(typ, addr, width, aq, rl, res),
++    (false, true,  true)  => pmp_mem_read(typ, addr, width, aq, rl, res),
+     (_, _, _)             => pmp_mem_read(typ, addr, width, aq, rl, res)
+   };
+  rvfi_read(addr, width, result);
+@@ -109,9 +109,9 @@ function mem_write_ea (addr, width, aq, rl, con) = {
+     (false, true,  false) => MemValue(write_ram_ea(Write_RISCV_release, addr, width)),
+     (false, false, true)  => MemValue(write_ram_ea(Write_RISCV_conditional, addr, width)),
+     (false, true , true)  => MemValue(write_ram_ea(Write_RISCV_conditional_release, addr, width)),
+-    (true,  false, false) => throw(Error_not_implemented("store.aq")),
++    (true,  false, false) => MemValue(write_ram_ea(Write_plain, addr, width)),
+     (true,  true,  false) => MemValue(write_ram_ea(Write_RISCV_strong_release, addr, width)),
+-    (true,  false, true)  => throw(Error_not_implemented("sc.aq")),
++    (true,  false, true)  => MemValue(write_ram_ea(Write_plain, addr, width)),
+     (true,  true , true)  => MemValue(write_ram_ea(Write_RISCV_conditional_strong_release, addr, width))
+   }
+ }
+@@ -176,8 +176,8 @@ function mem_write_value_meta (addr, width, value, meta, aq, rl, con) = {
+     (true,  true,  false) => pmp_mem_write(Write_RISCV_strong_release, addr, width, value, meta),
+     (true,  true , true)  => pmp_mem_write(Write_RISCV_conditional_strong_release, addr, width, value, meta),
+     // throw an illegal instruction here?
+-    (true,  false, false) => throw(Error_not_implemented("store.aq")),
+-    (true,  false, true)  => throw(Error_not_implemented("sc.aq"))
++    (true,  false, false) => pmp_mem_write(Write_plain, addr, width, value, meta),
++    (true,  false, true)  => pmp_mem_write(Write_plain, addr, width, value, meta)
+   }
+ }
+ 

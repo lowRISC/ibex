@@ -1,0 +1,31 @@
+opam-version: "1.2"
+name: "sail-cheri-riscv"
+version: "0.2"
+maintainer: "Sail Devs <cl-sail-dev@lists.cam.ac.uk>"
+authors: [
+  "Alasdair Armstrong"
+  "Thomas Bauereiss"
+  "Brian Campbell"
+  "Shaked Flur"
+  "Jonathan French"
+  "Prashanth Mundkur"
+  "Robert Norton"
+  "Christopher Pulte"
+  "Peter Sewell"
+]
+homepage: "https://github.com/rems-project/sail-cheri-riscv/"
+bug-reports: "https://github.com/rems-project/sail-cheri-riscv/issues"
+license: "BSD3"
+dev-repo: "https://github.com/rems-project/sail-cheri-riscv.git"
+build: [make "LEM_DIR=%{lem:share}%" "SAIL_DIR=%{sail:share}%" "SAIL=sail" "SAIL_RISCV_DIR=%{sail-riscv:share}%" "opam-build"]
+depends: [
+  "ocamlfind"
+  "ocamlbuild"
+  "lem"
+  "sail" {>= "0.10"}
+  "sail-riscv" {>= "0.3"}
+  "linksem" {>= "0.3"}
+  "conf-gmp"
+  "conf-zlib"
+]
+available: [ocaml-version >= "4.06.1"]
