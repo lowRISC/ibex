@@ -36,6 +36,7 @@ module ibex_controller import ibex_pkg::*; #(
 
   // instr from IF-ID pipeline stage
   input  logic                  instr_valid_i,           // instr is valid
+  input  logic                  dummy_instr_id_i,        // instr in ID is a dummy
   input  logic [31:0]           instr_i,                 // uncompressed instr data for mtval
   input  logic [15:0]           instr_compressed_i,      // instr compressed data for mtval
   input  logic                  instr_is_compressed_i,   // instr is compressed
@@ -459,7 +460,12 @@ module ibex_controller import ibex_pkg::*; #(
   // single step mode. The first valid instruction on debug mode entry will clear it. Hold its value
   // when there is no valid instruction so `do_single_step_d` remains asserted until debug mode is
   // entered.
-  assign do_single_step_d = instr_valid_i ? ~debug_mode_q & debug_single_step_i : do_single_step_q;
+  // Dummy instructions are architecturally invisible but assert `instr_valid_i` like any other
+  // instruction. Without excluding them, a dummy landing in the window after DRET satisfies the
+  // step: debug mode is re-entered with nothing retired, dpc unchanged and the instruction at dpc
+  // never executed. A dummy must neither arm nor clear the request, so it takes the hold arm.
+  assign do_single_step_d = (instr_valid_i & ~dummy_instr_id_i) ?
+                                ~debug_mode_q & debug_single_step_i : do_single_step_q;
   // Enter debug mode due to:
   // * external `debug_req_i`
   // * core in single step mode (dcsr.step == 1).

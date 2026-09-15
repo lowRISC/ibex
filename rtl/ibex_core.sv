@@ -682,6 +682,7 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
 
     // from/to IF-ID pipeline register
     .instr_valid_i        (instr_valid_id),
+    .dummy_instr_id_i     (dummy_instr_id),
     .instr_rdata_i        (instr_rdata_id),
     .instr_rdata_alu_i    (instr_rdata_alu_id),
     .instr_rdata_c_i      (instr_rdata_c_id),
@@ -2442,6 +2443,54 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
 
   // If the ID stage signals its ready the mult/div FSMs must be idle in the following cycle
   // `ASSERT(MultDivFSMIdleOnIdReady, id_in_ready |=> ex_block_i.sva_multdiv_fsm_idle)
+
+  // A dummy instruction must not be what satisfies a single step (Debug v0.13.2 4.8.1: halt after
+  // a single instruction). `do_single_step_d` takes the hold arm for a valid dummy, so the request
+  // is stable across one whether or not it was already armed.
+  `ASSERT(SingleStepStableAcrossDummy,
+          instr_valid_id & dummy_instr_id |=> $stable(id_stage_i.controller_i.do_single_step_q))
+  `COVER(SingleStepDummyWhileDisarmed,
+         instr_valid_id & dummy_instr_id & ~id_stage_i.controller_i.do_single_step_q)
+  `COVER(SingleStepDummyWhileArmed,
+         instr_valid_id & dummy_instr_id & id_stage_i.controller_i.do_single_step_q)
+
+`ifdef RVFI
+  // The architectural half of the same property: a step-caused debug entry is preceded by exactly
+  // one architectural retirement. Retirements are counted on RVFI, which excludes dummies by
+  // construction and, unlike perf_instr_ret_wb, reports ebreak, ecall, illegal and fetch-error
+  // instructions, all of which are legitimate things to step over. A Zcmp sequence presents one
+  // RVFI item per micro-op, so only its last micro-op (or a trapping one, which ends the sequence
+  // without a last item) closes an architectural instruction. DRET does not count as the step's
+  // own progress; its item can be presented after debug_mode falls, so the debug-mode indication
+  // captured with the item is used. The counter saturates so an overrunning step cannot wrap back
+  // to a pass.
+  logic [1:0] step_rvfi_cnt_q;
+  logic       step_arch_retire;
+
+  assign step_arch_retire = rvfi_valid && !rvfi_ext_debug_mode &&
+                            (rvfi_trap || !rvfi_ext_expanded_insn_valid ||
+                             rvfi_ext_expanded_insn_last);
+
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      step_rvfi_cnt_q <= '0;
+    end else if (debug_mode) begin
+      step_rvfi_cnt_q <= '0;
+    end else if (step_arch_retire && !(&step_rvfi_cnt_q)) begin
+      step_rvfi_cnt_q <= step_rvfi_cnt_q + 2'd1;
+    end
+  end
+
+  `COVER(StepCountedTrappedNonFinalUop,
+         rvfi_valid && rvfi_trap && rvfi_ext_expanded_insn_valid &&
+         !rvfi_ext_expanded_insn_last && debug_single_step)
+
+  // Checked on the edge that commits the debug entry and saves dcsr.cause: the earlier
+  // enter_debug_mode request precedes the stepped instruction's rvfi_valid by several cycles.
+  `ASSERT(StepDebugEntryHasArchitecturalProgress,
+          debug_mode_entering && debug_csr_save && (debug_cause == DBG_CAUSE_STEP)
+          |=> (step_rvfi_cnt_q == 2'd1))
+`endif
 
   //////////
   // FCOV //
