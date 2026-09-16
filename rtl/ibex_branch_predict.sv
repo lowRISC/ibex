@@ -97,4 +97,13 @@ module ibex_branch_predict (
   assign predict_branch_taken_o = fetch_valid_i & (instr_j | instr_cj | instr_b_taken);
   // Calculate target
   assign predict_branch_pc_o    = fetch_pc_i + branch_imm;
+
+  // This is only used for the Yosys-based formal flow. Once we have working bind support, we can
+  // get rid of it.
+`ifdef FORMAL
+ `ifdef YOSYS
+  `include "formal_tb_frag.svh"
+ `endif
+`endif
+
 endmodule
