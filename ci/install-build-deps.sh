@@ -110,13 +110,16 @@ $SUDO_CMD tar -C /tools/riscv -xf build/toolchain/rv32-toolchain.tar.xz --strip-
 echo "/tools/riscv/bin" >> $GITHUB_PATH
 
 # The LLVM toolchain above ships only Clang and binutils, with no bundled C
-# library or compiler runtime (no libgcc/compiler-rt equivalent). CoreMark
-# is the only target in this repo that isn't fully freestanding (it needs
-# soft-float division routines for its final MHz report), so pull in just
-# the old GCC toolchain's libgcc.a to satisfy that at link time.
+# library or compiler runtime (no newlib/libgcc/compiler-rt equivalent).
+# CoreMark is the only target in this repo that isn't fully freestanding
+# (it calls libm's modf() and needs soft-float division routines for its
+# final MHz report), so pull in the old GCC toolchain (headers, newlib and
+# libgcc) to satisfy that at compile/link time. It's never invoked as a
+# compiler.
 LIBGCC_TOOLCHAIN_URL="https://github.com/lowRISC/lowrisc-toolchains/releases/download/$RISCV_GCC_LIBGCC_TAR_VERSION/$RISCV_GCC_LIBGCC_TAR_VARIANT-$RISCV_GCC_LIBGCC_TAR_VERSION.tar.xz"
 curl -Ls -o build/toolchain/rv32-gcc-libgcc.tar.xz "$LIBGCC_TOOLCHAIN_URL"
 $SUDO_CMD mkdir -p /tools/riscv-gcc-libgcc && $SUDO_CMD chmod 777 /tools/riscv-gcc-libgcc
 $SUDO_CMD tar -C /tools/riscv-gcc-libgcc -xf build/toolchain/rv32-gcc-libgcc.tar.xz --strip-components=1
+echo "RISCV_OLD_TOOLCHAIN_DIR=/tools/riscv-gcc-libgcc" >> $GITHUB_ENV
 RISCV_LIBGCC_DIR="$(dirname "$(find /tools/riscv-gcc-libgcc/lib/gcc/riscv32-unknown-elf -name libgcc.a)")"
 echo "RISCV_LIBGCC_DIR=$RISCV_LIBGCC_DIR" >> $GITHUB_ENV
