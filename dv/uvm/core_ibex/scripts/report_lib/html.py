@@ -13,9 +13,13 @@ from functools import reduce
 from .util import gen_test_run_result_text, css_red_green_gradient
 
 def pct_str(pct_val: float) -> str:
+    if pct_val is None:
+        return 'N/A'
     return f'{pct_val * 100:.1f}%'
 
 def pct_style(pct_val: float) -> str:
+    if pct_val is None:
+        return ''
     return f'background-color: {css_red_green_gradient(pct_val)};'
 
 def output_results_html(md: RegressionMetadata,
