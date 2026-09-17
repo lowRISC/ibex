@@ -166,8 +166,8 @@ def add_cov_to_summary(metric_name: str, metric_data: Dict[str, Dict[str, int]],
        This is a helper function used by create_cov_summary_dict
     '''
     if (f'{metric_name}-covered' in metric_data):
-        cov_pct = (metric_data[f'{metric_name}-covered']['covered'] /
-            metric_data[f'{metric_name}-covered']['total'])
+        counts = metric_data[f'{metric_name}-covered']
+        cov_pct = counts['covered'] / counts['total'] if counts['total'] else None
 
         cov_summary_dict[metric_name] = cov_pct
 
@@ -219,7 +219,7 @@ def create_cov_summary_dict(metadata: RegressionMetadata) -> Dict[str, int]:
     with open(cg_report_filename, 'r') as cg_report_file:
         cg_report_dict = parse_xcelium_cov_report(cg_report_file.read())
 
-    cov_summary_dict = {}
+    cov_summary_dict = dict.fromkeys(IBEX_COVERAGE_METRICS)
 
     if 'ibex_top' in cov_report_dict:
         for metric_name in IBEX_COVERAGE_METRICS:
