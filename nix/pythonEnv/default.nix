@@ -17,18 +17,22 @@
     sourcePreference = "wheel"; # "sdist";
   };
 
-  # Construct package set from uv.lock
-  pythonSet' =
-    # Use base package set from pyproject.nix builders
-    (pkgs.callPackage inputs.pyproject-nix.build.packages { inherit python; }).overrideScope uvLockedOverlay;
-
-  # Apply overlay(s) to fix any build issues
+  # Construct a package set from uv.lock. The workspace overlay must be last so
+  # its locked versions take precedence over the generic build-system overlays.
   pythonSet =
-    pythonSet'.pythonPkgsHostHost.overrideScope
+    (pkgs.callPackage inputs.pyproject-nix.build.packages { inherit python; }).overrideScope
       (
         pkgs.lib.composeManyExtensions [
           inputs.pyproject-build-systems.overlays.default
           (inputs.uv2nix_hammer_overrides.overrides pkgs)
+          uvLockedOverlay
+          (final: prev: {
+            # PyYAML 6.0 uses setuptools as its build backend without declaring
+            # it in its package metadata.
+            pyyaml = prev.pyyaml.overrideAttrs (old: {
+              nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.setuptools ];
+            });
+          })
         ]
       );
 
