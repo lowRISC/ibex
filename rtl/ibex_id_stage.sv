@@ -482,10 +482,8 @@ module ibex_id_stage import ibex_cheriot_pkg::*; #(
     .BranchTargetALU(BranchTargetALU),
     .BaseIsa        (BaseIsa)
   ) decoder_i (
-    .clk_i (clk_i),
-    .rst_ni(rst_ni),
+    .cheriot_enable_i(cheriot_enable_i),
 
-    .cheriot_enable_i (cheriot_enable_i),
     // controller
     .illegal_insn_o(illegal_insn_dec),
     .ebrk_insn_o   (ebrk_insn),
@@ -1242,6 +1240,8 @@ module ibex_id_stage import ibex_cheriot_pkg::*; #(
   ////////////////
 
   // Selectors must be known/valid.
+  `ASSERT(IbexRegImmAluOpKnown, (opcode_e'(instr_rdata_i[6:0]) == OPCODE_OP_IMM) |->
+      !$isunknown(instr_rdata_i[14:12]))
   `ASSERT_KNOWN_IF(IbexAluOpMuxSelKnown, alu_op_a_mux_sel, instr_valid_i)
   `ASSERT(IbexAluAOpMuxSelValid, instr_valid_i |-> alu_op_a_mux_sel inside {
       OP_A_REG_A,
