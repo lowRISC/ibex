@@ -75,6 +75,9 @@ class ibex_asm_program_gen extends riscv_asm_program_gen;
              $sformatf("addi  x%0d, x%0d, 4", cfg.gpr[0], cfg.gpr[0]),
              $sformatf("csrw  0x%0x, x%0d", MEPC, cfg.gpr[0])
              };
+    // The trap dispatcher pushed a kernel-stack frame on entry; a returning
+    // handler must pop it, or every ECALL leaks one frame.
+    pop_gpr_from_kernel_stack(MSTATUS, MSCRATCH, cfg.mstatus_mprv, cfg.sp, cfg.tp, instr);
     instr.push_back("mret");
     gen_section(get_label("ecall_handler", hart), instr);
   endfunction

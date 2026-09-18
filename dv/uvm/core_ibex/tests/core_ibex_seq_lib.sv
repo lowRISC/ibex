@@ -175,10 +175,16 @@ class debug_seq extends core_base_seq#(irq_seq_item);
   `uvm_object_new
 
   int unsigned drop_delay = 75;
+  // Longest time the request is held waiting for the core to enter debug mode.
+  int unsigned hold_timeout_cycles = 5000;
+  virtual core_ibex_rvfi_if rvfi_vif;
 
   virtual task body();
     if (!uvm_config_db#(virtual core_ibex_dut_probe_if)::get(null, "", "dut_if", dut_vif)) begin
       `uvm_fatal(get_full_name(), "Cannot get dut_if")
+    end
+    if (!uvm_config_db#(virtual core_ibex_rvfi_if)::get(null, "", "rvfi_if", rvfi_vif)) begin
+      `uvm_fatal(get_full_name(), "Cannot get rvfi_if")
     end
     dut_vif.dut_cb.debug_req <= 1'b0;
     super.body();
@@ -188,6 +194,22 @@ class debug_seq extends core_base_seq#(irq_seq_item);
     `uvm_info(get_full_name(), "Sending debug request", UVM_HIGH)
     dut_vif.dut_cb.debug_req <= 1'b1;
     clk_vif.wait_clks(drop_delay);
+    // A debug module keeps haltreq asserted until the hart reports halted, which the debug ROM does
+    // with its first instructions. Keep the request up until the core has retired an instruction
+    // that reports the request on RVFI (the first debug ROM instruction, or the next retirement if
+    // the core was already in debug mode), so a request that wakes the core from WFI is still
+    // asserted when that instruction enters ID, where RVFI samples it for the cosim.
+    `DV_SPINWAIT_EXIT(begin
+                        wait (dut_vif.dut_cb.debug_mode == 1'b1);
+                        do @(rvfi_vif.monitor_cb);
+                        while (!(rvfi_vif.monitor_cb.valid && rvfi_vif.monitor_cb.ext_debug_req));
+                      end,
+                      begin
+                        clk_vif.wait_clks(hold_timeout_cycles);
+                        `uvm_error(get_full_name(),
+                                   "No retirement reported the debug request before the hold timeout")
+                      end,
+                      "")
     dut_vif.dut_cb.debug_req <= 1'b0;
   endtask
 

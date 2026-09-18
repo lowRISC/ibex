@@ -8,7 +8,7 @@
 import sys
 import pydantic
 import pathlib3x as pathlib
-from typing import List, Any
+from typing import List, Any, Optional
 
 import scripts_lib
 
@@ -52,6 +52,11 @@ class DConfig(pydantic.BaseModel):  # noqa
     rtl_test: str
     rtl_params: dict
     timeout_s: pydantic.conint(gt=0)
+    # Optional plusargs appended to the simulator command line. run_rtl.py
+    # already reads 'sim_opts' from the test options for both test types, but
+    # for a directed test the options come from this schema, so without this
+    # field pydantic silently dropped it.
+    sim_opts: Optional[str] = None
 
     # Directed Test Build Options
     gcc_opts: str  # any options that don't specify a path eg. "-O3 -g -static"
