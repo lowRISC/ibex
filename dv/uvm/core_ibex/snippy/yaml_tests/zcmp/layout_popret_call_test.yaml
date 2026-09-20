@@ -1,0 +1,22 @@
+include:
+  - ../sections.yaml
+
+options:
+    mtriple: "riscv32"
+    mcpu: generic-rv32
+    march: "rv32imc_zba_zbb_zbc_zbs_zicsr_zcmp"
+    honor-target-abi: on
+    num-instrs: 10000
+    init-regs-in-elf: on
+    init-memory: full
+    redefine-sp: SP
+    redefine-ra: RA
+    function-number: 40
+    function-layers: 5
+
+
+histogram:
+    - [CM_POPRET, 1.0]
+    - [CM_POPRETZ, 1.0]
+    - [JAL, 1.0]
+    - [ADD, 1.0]

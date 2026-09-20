@@ -1,0 +1,49 @@
+include:
+  - sections.yaml
+
+options:
+    mtriple: "riscv32"
+    mcpu: generic-rv32
+    march: "rv32imc_zba_zbb_zbc_zbs_zicsr"
+    preserve-ra: true
+    num-instrs: 10000
+
+operands-reinitialization:
+    - type: valuegram
+      weight: 1.0
+      opcodes:
+        - "ORI":
+            - type: operands
+              values:
+                - - [1, 1.0]
+                  - [-1, 1.0]
+                  - [uniform, 1.0]
+        - "ANDI":
+            - type: operands
+              values:
+                - - [1, 1.0]
+                  - [-1, 1.0]
+                  - [uniform, 1.0]
+        - "XORI":
+            - type: operands
+              values:
+                - - [1, 1.0]
+                  - [-1, 1.0]
+                  - [uniform, 1.0]
+
+imm-hist:
+  opcodes:
+    - "ORI":
+      - [1, 1.0]
+      - [-1, 1.0]
+    - "ANDI":
+      - [1, 1.0]
+      - [-1, 1.0]
+    - "XORI":
+      - [1, 1.0]
+      - [-1, 1.0]
+
+histogram:
+    - [ORI, 1.0]
+    - [ANDI, 1.0]
+    - [XORI, 1.0]

@@ -1,0 +1,26 @@
+include:
+  - ../sections.yaml
+
+options:
+    mtriple: "riscv32"
+    mcpu: generic-rv32
+    march: "rv32imc_zba_zbb_zbc_zbs_zicsr_zcmp"
+    honor-target-abi: on
+    num-instrs: 10000
+    redefine-sp: reg::X3
+    function-number: 2
+    init-regs-in-elf: on
+
+call-graph:
+  entry-point: SnippyFunction
+  function-list:
+    - name: SnippyFunction
+      callees:
+        - fun1
+    - name: fun1
+
+histogram:
+    - [CM_PUSH, 1.0]
+    - [CM_MVA01S, 1.0]
+    - [CM_MVSA01, 1.0]
+    - [JAL, 1.0]

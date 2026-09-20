@@ -1,0 +1,24 @@
+include:
+  - sections.yaml
+
+randomize-ra: on
+function-number: 200
+function-layers: 1
+
+options:
+    mtriple: "riscv32"
+    mcpu: generic-rv32
+    march: "rv32imc_zba_zbb_zbc_zbs_zicsr"
+    preserve-ra: true
+    num-instrs: 10000
+    init-memory: full
+    init-regs-in-elf: on
+    call-graph-density: 1000
+
+branches:
+    loop-ratio: 0
+
+histogram:
+  - [JALR, 1.0]
+  - [JAL, 1.0]
+  - [C_JR, 1.0]

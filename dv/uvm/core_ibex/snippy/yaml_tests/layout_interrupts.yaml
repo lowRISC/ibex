@@ -1,0 +1,16 @@
+include:
+  - sections.yaml
+
+options:
+    mtriple: "riscv32"
+    mcpu: generic-rv32
+    march: "rv32imc_zba_zbb_zbc_zbs_zicsr_zifencei"
+    preserve-ra: true
+    num-instrs: 10
+    reserved-regs-list: [X4]
+
+histogram:
+    - [C_EBREAK, 1.0]
+    - [EBREAK, 1.0]
+    - [FENCE_I, 1.0]
+    - [FENCE, 1.0]

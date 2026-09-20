@@ -115,7 +115,7 @@ def _main() -> int:
             'tb_dir': md.dir_tb,
             'tb_build_log': md.tb_build_log,
             'cmp_opts':
-                get_compile_opts(md.ibex_config, md.simulator) + \
+                get_compile_opts(md.ibex_config, md.simulator, md.rv32zc) + \
                 # Base address of the debug module. This is passed as a parameter
                 # at compile time as the PMP module must always allow debug mode
                 # accesses to it.

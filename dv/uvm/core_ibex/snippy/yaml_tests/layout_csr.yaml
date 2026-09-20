@@ -1,0 +1,28 @@
+include:
+  - sections.yaml
+
+options:
+    mtriple: "riscv32"
+    mcpu: generic-rv32
+    march: "rv32imc_zba_zbb_zbc_zbs_zicsr"
+    preserve-ra: true
+    num-instrs: 1000
+    redefine-sp: any-not-SP
+
+imm-hist:
+  opcodes:
+    - "CSRR[CSW]":
+        operands:
+          - - [0x300, 1.0]  #mstatus
+    - "CSRR[CSW]I":
+        operands:
+          - - [0x300, 1.0]  #mstatus
+          - - [1, 1.0]
+
+histogram:
+    - [CSRRW, 1.0]
+    - [CSRRS, 1.0]
+    - [CSRRC, 1.0]
+    - [CSRRSI, 1.0]
+    - [CSRRWI, 1.0]
+    - [CSRRCI, 1.0]

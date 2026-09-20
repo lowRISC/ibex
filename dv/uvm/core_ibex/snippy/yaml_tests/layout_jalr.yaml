@@ -1,0 +1,26 @@
+include:
+  - sections.yaml
+
+
+options:
+    mtriple: "riscv32"
+    mcpu: generic-rv32
+    march: "rv32imc_zba_zbb_zbc_zbs_zicsr"
+    preserve-ra: true
+    num-instrs: 100
+    init-memory: full
+    redefine-ra: any-not-RA
+    init-regs-in-elf: on
+    reserved-regs-list: [X0,X3,X4,X5,X8,X9,X10,X11,X12,X13,X14,X15,X16,X17,X18,X19,X20,X21,X22,X23,X24,X25,X26,X27,X28,X29,X30,X31]
+
+call-graph:
+  entry-point: SnippyFunction
+  function-list:
+    - name: SnippyFunction
+      callees:
+        - fun1
+    - name: fun1
+
+histogram:
+  - [JALR, 5.0]
+  - [ADDI, 5.0]

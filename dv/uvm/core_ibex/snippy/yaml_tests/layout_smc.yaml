@@ -1,0 +1,128 @@
+include:
+  - sections.yaml
+
+options:
+    mtriple: "riscv32"
+    mcpu: generic-rv32
+    march: "rv32imc_zba_zbb_zbc_zbs_zicsr_zifencei"
+    preserve-ra: true
+    init-regs-in-elf: true
+    num-instrs: 80
+    function-number: 2
+    function-layers: 2
+    num-instr-ancil: 15
+    random-scheduling: true
+    enable-static-stack: false
+    mattr: "-exact-asm"
+
+branches:
+  permutation: off
+  alignment: 1
+  loop-ratio: 0.0
+
+code-layout:
+  ranges:
+    - start: 0x80040000
+      size: 0x40000
+      stride: 0x1
+      first-offset: 0
+      last-offset: 0x0
+
+smcgram:
+   smc-tgt-blocks: 1
+   smc-overwriters:
+     min: 2
+     max: 2
+   smc-mode: immediate
+
+histogram:
+    - [ADD, 1.0]
+    - [ADDI, 1.0]
+    - [AND, 1.0]
+    - [ANDI, 1.0]
+    - [ANDN, 1.0]
+    - [AUIPC, 1.0]
+    - [BCLR, 1.0]
+    - [BCLRI, 1.0]
+    - [BEXT, 1.0]
+    - [BEXTI, 1.0]
+    - [BINV, 1.0]
+    - [BINVI, 1.0]
+    - [BSET, 1.0]
+    - [BSETI, 1.0]
+    - [CLZ, 1.0]
+    - [CPOP, 1.0]
+    - [CTZ, 1.0]
+    - [C_ADD, 1.0]
+    - [C_ADDI, 1.0]
+    - [C_AND, 1.0]
+    - [C_ANDI, 1.0]
+    - [C_LI, 1.0]
+    - [C_LUI, 1.0]
+    - [C_MV, 1.0]
+    - [C_OR, 1.0]
+    - [C_SLLI, 1.0]
+    - [C_SRAI, 1.0]
+    - [C_SRLI, 1.0]
+    - [C_SUB, 1.0]
+    - [C_XOR, 1.0]
+    - [DIV, 1.0]
+    - [DIVU, 1.0]
+    - [MAX, 1.0]
+    - [MAXU, 1.0]
+    - [MIN, 1.0]
+    - [MINU, 1.0]
+    - [MUL, 1.0]
+    - [MULH, 1.0]
+    - [MULHSU, 1.0]
+    - [MULHU, 1.0]
+    - [OR, 1.0]
+    - [ORC_B, 1.0]
+    - [ORI, 1.0]
+    - [ORN, 1.0]
+    - [REM, 1.0]
+    - [REMU, 1.0]
+    - [REV8_RV32, 1.0]
+    - [ROL, 1.0]
+    - [ROR, 1.0]
+    - [RORI, 1.0]
+    - [SEXT_B, 1.0]
+    - [SEXT_H, 1.0]
+    - [SH1ADD, 1.0]
+    - [SH2ADD, 1.0]
+    - [SH3ADD, 1.0]
+    - [SLL, 1.0]
+    - [SLLI, 1.0]
+    - [SLT, 1.0]
+    - [SLTI, 1.0]
+    - [SLTIU, 1.0]
+    - [SLTU, 1.0]
+    - [SRA, 1.0]
+    - [SRAI, 1.0]
+    - [SRL, 1.0]
+    - [SRLI, 1.0]
+    - [SUB, 1.0]
+    - [XNOR, 1.0]
+    - [XOR, 1.0]
+    - [XORI, 1.0]
+    - [CLMULH, 1.0]
+    - [CLMUL, 1.0]
+    - [ZEXT_H_RV32, 1.0]
+    - [CLMULR, 1.0]
+    - [SB, 1]
+    - [SH, 1]
+    - [SW, 1]
+    - [C_LW, 14.5]
+    - [C_SW, 14.5]
+    - [LB, 14.5]
+    - [LBU, 14.5]
+    - [LH, 14.5]
+    - [LHU, 14.5]
+    - [LW, 14.5]
+    - [BEQ, 5.0]
+    - [BNE, 5.0]
+    - [BGE, 5.0]
+    - [BGEU, 5.0]
+    - [BLT, 5.0]
+    - [BLTU, 5.0]
+    - [JAL, 50.0]

@@ -1,0 +1,101 @@
+include:
+  - sections.yaml
+
+options:
+  mtriple: "riscv32"
+  mcpu: generic-rv32
+  march: "rv32imc_zba_zbb_zbc_zbs_zicsr"
+  preserve-ra: true
+  redefine-sp: any-not-SP
+  random-scheduling: true
+  init-memory: full
+  init-regs-in-elf: on
+  num-instrs: 6000
+
+operands-reinitialization:
+  - type: valuegram
+    weight: 8.0
+    opcodes:
+      - "DIV":
+          - type: operands
+            values: [0x00000000, 0x00000000]
+          - [uniform, 1.0]
+      - "DIVU":
+          - type: operands
+            values: [0xffffffff, 0x00000000]
+          - [uniform, 1.0]
+      - "REM":
+          - type: operands
+            values: [0x80000000, 0xffffffff]
+          - [uniform, 1.0]
+      - "REMU":
+          - type: operands
+            values: [0xffffffff, 0x00000000]
+          - [uniform, 1.0]
+      - "SLL":
+          - type: operands
+            values: [0x00000001, 0x0000001f]
+          - [uniform, 1.0]
+      - "SRL":
+          - type: operands
+            values: [0x80000000, 0x0000001f]
+          - [uniform, 1.0]
+      - "SRA":
+          - type: operands
+            values: [0x80000000, 0x0000001f]
+          - [uniform, 1.0]
+      - "SLT":
+          - type: operands
+            values: [0x80000000, 0x7fffffff]
+          - [uniform, 1.0]
+      - "SLTU":
+          - type: operands
+            values: [0xffffffff, 0x00000001]
+          - [uniform, 1.0]
+      - "CLZ":
+          - type: operands
+            values: [0x00000000]
+          - [uniform, 1.0]
+      - "CTZ":
+          - type: operands
+            values: [0x00000000]
+          - [uniform, 1.0]
+      - "CPOP":
+          - type: operands
+            values: [0xffffffff]
+          - [uniform, 1.0]
+
+histogram:
+  - [LUI, 20.0]
+  - [ADDI, 20.0]
+  - [XORI, 20.0]
+  - [ORI, 20.0]
+  - [ANDI, 20.0]
+  - [SLL, 30.0]
+  - [SRL, 30.0]
+  - [SRA, 30.0]
+  - [SLLI, 30.0]
+  - [SRLI, 30.0]
+  - [SRAI, 30.0]
+  - [SLT, 30.0]
+  - [SLTU, 30.0]
+  - [SLTI, 30.0]
+  - [SLTIU, 30.0]
+  - [DIV, 30.0]
+  - [DIVU, 30.0]
+  - [REM, 30.0]
+  - [REMU, 30.0]
+  - [MUL, 20.0]
+  - [MULH, 20.0]
+  - [MULHSU, 20.0]
+  - [MULHU, 20.0]
+  - [CLZ, 30.0]
+  - [CTZ, 30.0]
+  - [CPOP, 30.0]
+  - [ROL, 20.0]
+  - [ROR, 20.0]
+  - [RORI, 20.0]
+  - [MIN, 20.0]
+  - [MINU, 20.0]
+  - [MAX, 20.0]
+  - [MAXU, 20.0]
