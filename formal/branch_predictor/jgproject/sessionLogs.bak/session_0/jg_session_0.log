@@ -1,0 +1,343 @@
+# ----------------------------------------
+# Jasper Version Info
+# tool      : Jasper 2025.09
+# platform  : Linux 6.18.33
+# version   : 2025.09p002 64 bits
+# build date: 2025.11.19 14:35:23 UTC
+# ----------------------------------------
+# started   : 2026-09-21 10:07:03 BST
+# hostname  : nyx.(none)
+# pid       : 4136455
+# arguments : '-style' 'windows' '-label' 'session_0' '-console' '//127.0.0.1:41277' '-nowindow' '-data' 'AAABFnicVY7dCcJAEIS/EwTxQcRHSxC0gvQgYgEhJIcaYy7RE33TUu3knJxgyC77N7M7rAGSVwiBaObzqySGoXXzaIjs3oMK456cKBbkHLHKZzZ41UroijWZugrHg5Q7NTflRu64as9SCN+y1/ZU241QRxkVSw7/uVP2QpdRMaeVykmc1XV/MxNbq0912fEwF5ILucgzcUX81/IU6+P3XzTKJV0=' '-bridge_url' ':-1' '-proj' '/home/evmorfiaa/ibex/formal/tmp_04/jgproject/sessionLogs/session_0' '-init' '-hidden' '/home/evmorfiaa/ibex/formal/tmp_04/jgproject/.tmp/.initCmds.tcl' 'check.tcl' '-hidden' '/home/evmorfiaa/ibex/formal/tmp_04/jgproject/.tmp/.postCmds.tcl'
+
+Any disclosure about the Cadence Design Systems software or its use
+model to any third party violates the written Non-Disclosure Agreement
+between Cadence Design Systems, Inc. and the customer.
+
+THIS SOFTWARE CONTAINS CONFIDENTIAL INFORMATION AND TRADE SECRETS OF
+CADENCE DESIGN SYSTEMS, INC. USE, DISCLOSURE, OR REPRODUCTION IS
+PROHIBITED WITHOUT THE PRIOR EXPRESS WRITTEN PERMISSION OF CADENCE
+DESIGN SYSTEMS, INC.
+
+Copyright (C) 2000-2025 Cadence Design Systems, Inc. All Rights
+Reserved.  Unpublished -- rights reserved under the copyright laws of
+the United States.
+
+This product includes software developed by others and redistributed
+according to license agreement. See doc/third_party_readme.txt for
+further details.
+
+RESTRICTED RIGHTS LEGEND
+
+Use, duplication, or disclosure by the Government is subject to
+restrictions as set forth in subparagraph (c) (1) (ii) of the Rights in
+Technical Data and Computer Software clause at DFARS 252.227-7013 or
+subparagraphs (c) (1) and (2) of Commercial Computer Software -- Restricted
+Rights at 48 CFR 52.227-19, as applicable.
+
+
+                          Cadence Design Systems, Inc.
+                          2655 Seely Avenue
+                          San Jose, CA 95134
+                          Phone: 408.943.1234
+
+For technical assistance visit http://support.cadence.com.
+
+Jasper Apps Analysis Session - /home/evmorfiaa/ibex/formal/tmp_04/jgproject/sessionLogs/session_0
+
+INFO: successfully checked out licenses "jasper_pint" and "jasper_papp".
+INFO: reading configuration file "/home/evmorfiaa/.config/cadence/jasper.conf".
+% # Copyright lowRISC contributors.
+% # Licensed under the Apache License, Version 2.0, see LICENSE for details.
+% # SPDX-License-Identifier: Apache-2.0
+% #
+% # JasperGold formal check for ibex_branch_predict.
+% #
+% # Run via the local Makefile (from this directory):
+% #   make batch   -- headless run, exits with pass/fail status
+% #   make gui     -- open JasperGold GUI
+% 
+% clear -all
+INFO (IPF121): Cleared environment completely for new design analysis.
+% 
+% # RTL: package + module.  prim_assert.sv is pulled in via `include, so we
+% # only need its directory on the include search path.
+% analyze -sv12 \
+    +incdir+. \
+    +incdir+../../vendor/lowrisc_ip/ip/prim/rtl \
+    ../../rtl/ibex_pkg.sv \
+    ../../rtl/ibex_branch_predict.sv \
+    formal_tb.sv \
+    branch_predict_bind.sv
+[-- (VERI-1482)] Analyzing Verilog file '/nas/lowrisc/tools/cadence/jasper/2025.09/lib/verilog/packages/std/std.sv' into library 'std'
+[-- (VERI-1482)] Analyzing Verilog file '../../rtl/ibex_pkg.sv'
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(396): parameter 'ADDR_W' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(397): parameter 'BUS_SIZE' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(398): parameter 'BUS_BYTES' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(399): parameter 'BUS_W' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(400): parameter 'IC_SIZE_BYTES' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(401): parameter 'IC_NUM_WAYS' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(402): parameter 'IC_LINE_SIZE' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(403): parameter 'IC_LINE_BYTES' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(404): parameter 'IC_LINE_W' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(405): parameter 'IC_NUM_LINES' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(406): parameter 'IC_LINE_BEATS' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(407): parameter 'IC_LINE_BEATS_W' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(408): parameter 'IC_INDEX_W' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(409): parameter 'IC_INDEX_HI' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(410): parameter 'IC_TAG_SIZE' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(411): parameter 'IC_OUTPUT_BEATS' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(412): parameter 'IC_DATA_ECC_SIZE' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(413): parameter 'IC_TAG_ECC_SIZE' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(415): parameter 'SCRAMBLE_KEY_W' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(416): parameter 'SCRAMBLE_NONCE_W' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(419): parameter 'PMP_MAX_REGIONS' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(420): parameter 'PMP_CFG_W' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(423): parameter 'PMP_ADDR_MSB' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(426): parameter 'PMP_ADDR_LSB' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(429): parameter 'PMP_I' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(430): parameter 'PMP_I2' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(431): parameter 'PMP_D' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(697): parameter 'CSR_OFF_PMP_CFG' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(698): parameter 'CSR_OFF_PMP_ADDR' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(701): parameter 'CSR_MSTATUS_MIE_BIT' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(702): parameter 'CSR_MSTATUS_MPIE_BIT' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(703): parameter 'CSR_MSTATUS_MPP_BIT_LOW' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(704): parameter 'CSR_MSTATUS_MPP_BIT_HIGH' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(705): parameter 'CSR_MSTATUS_MPRV_BIT' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(706): parameter 'CSR_MSTATUS_TW_BIT' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(709): parameter 'CSR_MISA_MXL' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(712): parameter 'CSR_MSIX_BIT' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(713): parameter 'CSR_MTIX_BIT' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(714): parameter 'CSR_MEIX_BIT' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(715): parameter 'CSR_MFIX_BIT_LOW' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(716): parameter 'CSR_MFIX_BIT_HIGH' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(719): parameter 'CSR_MSECCFG_MML_BIT' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(720): parameter 'CSR_MSECCFG_MMWP_BIT' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(721): parameter 'CSR_MSECCFG_RLB_BIT' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(738): parameter 'LfsrWidth' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(741): parameter 'RndCnstLfsrSeedDefault' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(742): parameter 'RndCnstLfsrPermDefault' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(745): parameter 'RndCnstIbexKeyDefault' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(747): parameter 'RndCnstIbexNonceDefault' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(752): parameter 'IbexMuBiWidth' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(759): parameter 'IbexMuBiOn' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(760): parameter 'IbexMuBiOff' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(769): parameter 'PmpCfgRst' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(791): parameter 'PmpAddrRst' declared inside package 'ibex_pkg' shall be treated as localparam
+[WARN (VERI-2418)] ../../rtl/ibex_pkg.sv(810): parameter 'PmpMseccfgRst' declared inside package 'ibex_pkg' shall be treated as localparam
+[-- (VERI-1482)] Analyzing Verilog file '../../rtl/ibex_branch_predict.sv'
+[INFO (VERI-1328)] ../../rtl/ibex_branch_predict.sv(18): analyzing included file '../../vendor/lowrisc_ip/ip/prim/rtl/prim_assert.sv'
+[INFO (VERI-1328)] ../../vendor/lowrisc_ip/ip/prim/rtl/prim_assert.sv(110): analyzing included file '../../vendor/lowrisc_ip/ip/prim/rtl/prim_assert_standard_macros.svh'
+[INFO (VERI-1328)] ../../vendor/lowrisc_ip/ip/prim/rtl/prim_assert.sv(187): analyzing included file '../../vendor/lowrisc_ip/ip/prim/rtl/prim_assert_sec_cm.svh'
+[INFO (VERI-1328)] ../../vendor/lowrisc_ip/ip/prim/rtl/prim_assert.sv(188): analyzing included file '../../vendor/lowrisc_ip/ip/prim/rtl/prim_flop_macros.sv'
+[-- (VERI-1482)] Analyzing Verilog file 'formal_tb.sv'
+[INFO (VERI-1328)] formal_tb.sv(8): analyzing included file '../../vendor/lowrisc_ip/ip/prim/rtl/prim_assert.sv'
+[-- (VERI-1482)] Analyzing Verilog file 'branch_predict_bind.sv'
+% 
+% elaborate -top ibex_branch_predict -disable_auto_bbox
+INFO (ISW003): Top module name is "ibex_branch_predict".
+[INFO (HIER-8002)] ../../rtl/ibex_branch_predict.sv(109): Disabling old hierarchical reference handler
+[INFO (VERI-1018)] formal_tb.sv(12): compiling module 'formal_tb'
+[INFO (VERI-1018)] ../../rtl/ibex_branch_predict.sv(20): compiling module 'ibex_branch_predict'
+INFO (INL208): Elaboration synthesis summary:
+  Single run mode                         On
+  Advanced Incremental run mode           Off
+  Late hierarchical reference connection  On
+  Number of analyzed Verilog modules      4 (4 synthesized)
+  Number of analyzed VHDL entities        0 (0 synthesized)
+  Number of synthesized netlists          4 (2 packages)
+  Pipeline                                On (2 pipelined netlists)
+INFO (INL003): Clearing all state information (assumes, stopats, and so forth).
+ibex_branch_predict
+[<embedded>] % 
+[<embedded>] % clock clk_i
+[<embedded>] % reset -expression {!rst_ni}
+INFO (IPM031): Clearing proof results of all properties.
+INFO (IRS006): Current reset condition is "rst_ni".
+[<embedded>] % 
+[<embedded>] % # Disable the ProofGrid bridge (Advanced Job Dispatch daemon).
+[<embedded>] % # The bridge fails to start on this machine (EPF117/EPF044); disabling it
+[<embedded>] % # lets the Hp engine run proofs locally in-process.
+[<embedded>] % set_proofgrid_bridge off
+WARNING (WBR001): Jasper advanced job dispatch and management feature is disabled. All related settings will be ignored.
+[<embedded>] % 
+[<embedded>] % prove -all -engine_mode Hp
+INFO (IPF036): Starting proof on task: "<embedded>", 10 properties to prove with 0 already proven/unreachable
+INFO (IRS029): Starting reset analysis: phase 1 of 4.
+INFO (IRS030): Running reset analysis: phase 2 of 4.
+INFO (IRS031): Running reset analysis: phase 3 of 4.
+INFO (IRS020): Starting the reset analysis simulation with a limit of 100 iterations (phase 4 of 4).
+INFO (ISIM006): Running simulation: {mode = single, probe = all}.
+INFO (IRS024): Reset iterations 0 to 3 analyzed.
+INFO (ISIM008): Simulation is processing trace data. Total number of nets in analysis 275.
+INFO (IRS018): Reset analysis simulation executed for 2 iterations. Assigned values for 0 of 0 design flops, 0 of 0 design latches, 10 of 10 internal elements.
+INFO (IRS039): Reset analysis complete.
+INFO (IPF031): Settings used for proof thread 0:
+    orchestration                      = on
+    time_limit                         = 86400s
+    per_property_time_limit            = 1s * 10 ^ scan
+    engine_mode                        = Hp 
+    proofgrid_per_engine_max_jobs      = 1
+    max engine jobs                    = auto
+    proofgrid_mode                     = local
+    proofgrid_restarts                 = 10
+AMcustom1: Custom engine code is hT3N1rhP11/52HrFRS21ROp2LOjVTgPvT8L8BGXHgLhaIuqtT4nARFjUqrBL+7pLmaTOzBepZW/Jm8SSrHDybSQtoNiO3y43wk+dEoWlsZizu97Fih6O6lPVG/LpWP5SsUPwlGagLNa1FKEFvwVXyX7//8prySbvSxIHXr5er+z4RAEA
+Ncustom2: Custom engine code is hT3OXrhPByJp3TrFSTLhUmMH4KVtJgmTCnNDF46yMXOKY48m4LS5nE7yBzFjA7kDuwO/GhGUpEPiky3p3wmPn3dJZHxFMsafSoObRzSC+tn7sEY0WbTdZ/FV4hL3MYH/b1CIUvXSWR4wqEoVLsmMOD4xIPT4lI1LO6ZCO7PnnWQuLwetnvKlrXx6wCW/A+x+enqslg1YPobi4wEF/EvbzOvcTYdJvl2s4H2yZg2b2ofAVN5WvhWk1HoBAA
+ADcustom3: Custom engine code is hT3Nv7hPv1752HrFRa2kROx2f/ECJeZB2AZsLdlO8VwmIuqtT4nIDFXclhg+O+o+DMmQCekbheGk0kK28laA9gaOFDXsQp29J3X615HY1IPHJWd6FUFvCHjO+p1k652b5JJvZlShNpGlGSXAiQe/mEAj6tEBAA
+Tricustom4: Custom engine code is hT3Nu7hPt1752DvFRa0kNDiyIV97VyejwM9C/jCLJjdPvusZONHY42VYUy0Q1ZotnhcVtNc56tJ5wbxv6V2+XpdsaSlHck5vfnbYjdwj1OECy9U+7oSQ0SZE3g5ayD+Phuh4odCJTjeKa2k4elM9ldQfkAEA
+Gcustom5: Custom engine code is hT3NibhPDfeYQADBZnYcglOvK9Pfd7EOeniIqP8jNsyIqInncipMGcUXqAadachREE9F2PwhBUZUNw5kHnd4JdXkamORRgEA
+C2custom6: Custom engine code is hT3NirhPjfWYQADBZnYcglOvK9Pfd7EOeniIqP8jNsyIqInncgkrYMMXCYbdK0dUjZIF9d4cJ0rHoBDjwVLBKuG86XYVV00BAA
+0.0.PRE: A proof was found: No trace exists. [0.00 s]
+AGcustom7: Custom engine code is hT3NirhP/fmYQADBZnYcglOvK9Pfd7EOeniIqP8jNsyIqInnckcwYMMXCYbdK0dUjZIF9d4cJ0rHoBDjwVLBKuHEZnZByh0BAA
+Bcustom8: Custom engine code is hT3NjrhPDfiYQADBZnYcglOvK9PfWxFtenjIyBqfrgr7if/jL/yPOuK1BAflEcW0DxNH2eDIoezN2gxlQFg81RZtiWXh7aiTAidvAQA
+INFO (IPF057): 0.0.PRE: The property "ibex_branch_predict.bp_tb_i.predict_target_matches_ref" was proven in 0.00 s.
+Ncustom9: Custom engine code is hT3NR7hPByFp3TrFSTLhUmMH4KWtJglTyV/c51BHEeZWamnJv767nE6PCak26bd3gf3XGN3rIRheufhDieCJQVISo+gNYUKhiUedBKGtsP/a18svAnlMJZudHxDFwK5ufsyoxsIyiAeSY2oi3tEuoDHr5gw42DFKAG3PqO3CEsl8Azzdt3pl5nGA1Ifv2H02eYsFzWb/nfp8PMb3F0krE/EgBcm8TD9Div8BAA
+Tricustom10: Custom engine code is hT3Nu7hP3fiYQADBZnYcglNHp9bfd7EOeniIqP/ji8sGLQu8yhsFO+wxJ+O+R0bU8g/IewXFomyos+viQnWc2xYNYmMqpo3i40O7DaZR7qfp4YqNx26KRvQ/qx0BAA
+0: Found proofs for 1 properties in preprocessing
+0: Using multistage preprocessing
+0: Starting reduce
+0: Finished reduce in 0s
+0.0.PRE: Performing Proof Simplification...
+0.0.Hp: clocks: 1, declared: 1, looping: 0, posedge: 1, negedge: 0, noedge: 0, bothedge: 0
+0.0.Hp: Proof Simplification Iteration 1	[0.00 s]
+0.0.PRE: A trace with 1 cycles was found. [0.00 s]
+INFO (IPF047): 0.0.PRE: The cover property "ibex_branch_predict.BranchInsTypeOneHot:precondition1" was covered in 1 cycles in 0.00 s.
+0.0.Hp: Proof Simplification Iteration 2	[0.26 s]
+0.0.PRE: A proof was found: No trace exists. [0.00 s]
+INFO (IPF057): 0.0.PRE: The property "ibex_branch_predict.bp_tb_i.predict_taken_matches_ref" was proven in 0.00 s.
+0.0.Hp: Proof Simplification Iteration 3	[0.26 s]
+0.0.PRE: A proof was found: No trace exists. [0.00 s]
+INFO (IPF057): 0.0.PRE: The property ":noDeadEnd" was proven in 0.00 s.
+    Use check_assumptions -show -dead_end to show this property in the property table.
+0.0.PRE: A proof was found: No trace exists. [0.00 s]
+INFO (IPF057): 0.0.PRE: The property ":noConflict" was proven in 0.00 s.
+    Use check_assumptions -show to show this property in the property table.
+INFO (IPF047): 0.0.PRE: The cover property ":live" was covered in 1 cycles in 0.00 s.
+    Use check_assumptions -show -live to show this property in the property table.
+0.0.PRE: Proof Simplification completed in 0.26 s
+0: About to start ProofGrid in its own thread with a limit of 10000 pending notifications and a limit of 10 traces.
+0: ============================= ProofGrid (v3) start =============================
+0: ProofGrid usable level: 1
+0: Initial ProofGrid level: 1
+0: ProofGrid is starting event handling
+0: Computed task hash in 0.00s
+0.0.Hp: nyx: "NixOS 26.05 (Yarara)" is an unsupported operating system.
+0.0.Hp: Proofgrid shell started at 4137047@nyx(local) jg_4136455_nyx_1
+0.0.Hp: clocks: 1, declared: 1, looping: 0, posedge: 1, negedge: 0, noedge: 0, bothedge: 0
+0.0.Hp: A proof was found: No trace exists. [0.00 s]
+INFO (IPF057): 0.0.Hp: The property "ibex_branch_predict.BranchInsTypeOneHot" was proven in 0.00 s.
+0.0.Hp: Trace Attempt  1	[0.00 s]
+0.0.Hp: A trace with 1 cycles was found. [0.00 s]
+INFO (IPF047): 0.0.Hp: The cover property "ibex_branch_predict.bp_tb_i.jal_reachable" was covered in 1 cycles in 0.00 s.
+0.0.Hp: A trace with 1 cycles was found. [0.00 s]
+INFO (IPF047): 0.0.Hp: The cover property "ibex_branch_predict.bp_tb_i.cj_reachable" was covered in 1 cycles in 0.00 s.
+0.0.Hp: A trace with 1 cycles was found. [0.00 s]
+INFO (IPF047): 0.0.Hp: The cover property "ibex_branch_predict.bp_tb_i.neg_branch_reachable" was covered in 1 cycles in 0.00 s.
+0.0.Hp: A trace with 1 cycles was found. [0.00 s]
+INFO (IPF047): 0.0.Hp: The cover property "ibex_branch_predict.bp_tb_i.pos_branch_reachable" was covered in 1 cycles in 0.00 s.
+0.0.Hp: A trace with 1 cycles was found. [0.00 s]
+INFO (IPF047): 0.0.Hp: The cover property "ibex_branch_predict.bp_tb_i.neg_cb_reachable" was covered in 1 cycles in 0.00 s.
+0: ProofGrid is temporarily paused because there are too many pending traces.
+0: ProofGrid is resuming to work after pausing for 0.01s. The amount of pending traces decreased.
+0.0.Hp: A trace with 1 cycles was found. [0.00 s]
+INFO (IPF047): 0.0.Hp: The cover property "ibex_branch_predict.bp_tb_i.pos_cb_reachable" was covered in 1 cycles in 0.01 s.
+0.0.Hp: Outbound connection closed
+INFO (IPF144): 0: Initiating shutdown of proof [0.01 s]
+0.0.Hp: Requesting engine job to terminate
+0.0.Hp: All properties determined. [0.00 s]
+0.0.Hp: Outbound connection closed
+0.0.Hp: Exited with Success (@ 0.01 s)
+0: ProofGrid usable level: 0
+0: --------------------------------------------------------------
+ProofGrid Summary (utilization 1.86 %)
+--------------------------------------------------------------
+     engines started                               :     1
+     engine jobs started                           :     1
+
+    Time in state (seconds)
+    --------------------------------------------
+               Pending     Running        Dead
+    --------------------------------------------
+    min           0.00        0.00        0.00
+    mean          0.66        0.01        0.00
+    median        0.66        0.01        0.00
+    max           0.66        0.01        0.00
+    sum           0.66        0.01        0.00
+
+    Data read    : 1.38 kiB
+    Data written : 258.00 B
+
+INFO (IPF180): 0: ProofGrid utilization: 1.86% slot-seconds: 0.01
+0: ProofGrid usable level: 0
+0: All pending notifications were processed.
+INFO (IPF059): 0: Completed proof on task: "<embedded>"
+
+==============================================================
+SUMMARY
+==============================================================
+           Properties Considered              : 10
+                 assertions                   : 3
+                  - proven                    : 3 (100%)
+                  - bounded_proven (user)     : 0 (0%)
+                  - bounded_proven (auto)     : 0 (0%)
+                  - marked_proven             : 0 (0%)
+                  - cex                       : 0 (0%)
+                  - ar_cex                    : 0 (0%)
+                  - undetermined              : 0 (0%)
+                  - unknown                   : 0 (0%)
+                  - error                     : 0 (0%)
+                 covers                       : 7
+                  - unreachable               : 0 (0%)
+                  - bounded_unreachable (user): 0 (0%)
+                  - covered                   : 7 (100%)
+                  - ar_covered                : 0 (0%)
+                  - undetermined              : 0 (0%)
+                  - unknown                   : 0 (0%)
+                  - error                     : 0 (0%)
+determined
+[<embedded>] % 
+[<embedded>] % report -summary
+
+==============================================================
+    Jasper Verification Results
+==============================================================
+    2025.09p002 64 bits for Linux64 4.18.0-372.26.1.el8_6.x86_64
+    Host Name: nyx.servers.lowrisc.org
+    User Name: evmorfiaa
+    Printed on: Monday, Sep21, 2026 10:07:30 am BST
+    Working Directory: /home/evmorfiaa/ibex/formal/tmp_04
+
+
+==============================================================
+SUMMARY
+==============================================================
+    Total Tasks           : 1
+    Total Properties      : 10
+          assumptions     : 0                   
+           - approved     : 0                   
+           - temporary    : 0                   
+          assertions      : 3                   
+           - proven       : 3                   ( 100.0% )
+           - marked_proven: 0                   ( 0.0% )
+           - cex          : 0                   ( 0.0% )
+           - ar_cex       : 0                   ( 0.0% )
+           - undetermined : 0                   ( 0.0% )
+           - unprocessed  : 0                   ( 0.0% )
+           - error        : 0                   ( 0.0% )
+          covers          : 7                   
+           - unreachable  : 0                   ( 0.0% )
+           - covered      : 7                   ( 100.0% )
+           - ar_covered   : 0                   ( 0.0% )
+           - undetermined : 0                   ( 0.0% )
+           - unprocessed  : 0                   ( 0.0% )
+           - error        : 0                   ( 0.0% )
+[<embedded>] % report -file results.txt -force
+[<embedded>] % exit
+INFO (IPL005): Received request to exit from the console.
+INFO: Waiting for proof threads to stop...
+INFO: Proof threads stopped.
+INFO (IPL018): The peak resident set memory use for this session was 0.429 GB.
+INFO (IPL014): Waiting for the Tcl-thread to exit.
+INFO (IPL015): The Tcl-thread exited with status 0.
+INFO (IPL016): Exiting the analysis session with status 0.

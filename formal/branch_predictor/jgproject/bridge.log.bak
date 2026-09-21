@@ -1,0 +1,28 @@
+2026-09-21 10:06:53: INFO (IBR0079): ===========System Information==========
+2026-09-21 10:06:53: INFO (IBR0080): Start date: 2026-09-21 09:06:53 UTC
+2026-09-21 10:06:53: INFO (IBR0081): Hostname: nyx
+2026-09-21 10:06:53: INFO (IBR0082): Host IP address(es): eno1(65.109.32.167), tun.lowrisc(10.110.64.2)
+2026-09-21 10:06:53: WARNING (WBR0024): Multiple IP addresses were found
+2026-09-21 10:06:53: WARNING (WBR0025): Make sure listen address (ws://:0) is reachable from your network
+2026-09-21 10:06:53: INFO (IBR0083): Username: evmorfiaa
+2026-09-21 10:06:53: INFO (IBR0086): Limit of open files: 524288
+2026-09-21 10:06:53: INFO (IBR0102): System Info:
+2026-09-21 10:06:53: INFO (IBR0103): 	Product Type : NixOS 26.05 (Yarara)
+2026-09-21 10:06:53: INFO (IBR0104): 	Kernel Type : linux
+2026-09-21 10:06:53: INFO (IBR0105): 	Kernel Version : 6.18.33
+2026-09-21 10:06:53: INFO (IBR0106): 	Machine ID : nyx
+2026-09-21 10:06:53: INFO (IBR0111): Memory Info:
+2026-09-21 10:06:53: INFO (IBR0112): 	Total memory: 131090 MB
+2026-09-21 10:06:53: INFO (IBR0113): 	Available memory: 90690 MB
+2026-09-21 10:06:53: INFO (IBR0107): CPU information:
+2026-09-21 10:06:53: INFO (IBR0108): 	Architecture : x86_64
+2026-09-21 10:06:53: INFO (IBR0110): 	 Model name: AMD Ryzen 9 7950X3D 16-Core Processor
+2026-09-21 10:06:53: INFO (IBR0109): 	Core count: 32
+2026-09-21 10:06:53: INFO (IBR0087): PID: 4136442
+2026-09-21 10:06:53: INFO (IBR0088): =======================================
+2026-09-21 10:06:53: INFO (IBR0059): Bridge endpoint: ws://0.0.0.0:39775
+2026-09-21 10:06:53: INFO (IBR0053): Jasper endpoint: ':45895'
+2026-09-21 10:07:30: INFO (IBR0128): Termination signal received (#2). Trying to exit.
+2026-09-21 10:07:31: INFO (IBR0124): Shutting down...
+2026-09-21 10:07:31: INFO (IBR0131): Jobs are finished and clients are disconnected.
+2026-09-21 10:07:31: INFO (IBR0132): Exiting with exit status 0.

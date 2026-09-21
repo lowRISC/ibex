@@ -1,0 +1,90 @@
+2026-09-21 10:08:42.532481 (4137661) main____ INFO    ----------------------------------------
+2026-09-21 10:08:42.532526 (4137661) main____ INFO    Jasper version info
+2026-09-21 10:08:42.532535 (4137661) main____ INFO      tool      : Jasper 2025.09
+2026-09-21 10:08:42.532543 (4137661) main____ INFO      version   : 2025.09p002 64 bits
+2026-09-21 10:08:42.532549 (4137661) main____ INFO      build date: 2025.11.19 14:35:23 UTC
+2026-09-21 10:08:42.532555 (4137661) main____ INFO    ----------------------------------------
+2026-09-21 10:08:42.532566 (4137661) main____ INFO    Runtime info:
+2026-09-21 10:08:42.532572 (4137661) main____ INFO      platform  : Linux 6.18.33 x86_64
+2026-09-21 10:08:42.532586 (4137661) main____ INFO      hostname  : nyx
+2026-09-21 10:08:42.532596 (4137661) main____ INFO      pid       : 4137661
+2026-09-21 10:08:42.532602 (4137661) main____ INFO      arguments : '-style' 'windows' 'check.tcl' '-allow_unsupported_OS' '-proj' 'jgproject' '-acquire_proj'
+2026-09-21 10:08:42.532610 (4137661) main____ INFO      locale    : UTF-8
+2026-09-21 10:08:42.532619 (4137661) main____ INFO    ----------------------------------------
+2026-09-21 10:08:42.532625 (4137661) main____ INFO    System resource limits info:
+2026-09-21 10:08:42.532631 (4137661) main____ INFO      virtual memory: unlimited
+2026-09-21 10:08:42.532637 (4137661) main____ INFO      cpu time      : unlimited
+2026-09-21 10:08:42.532646 (4137661) main____ INFO      processes     : 511937
+2026-09-21 10:08:42.532656 (4137661) main____ INFO      stack size    : 8388608 B
+2026-09-21 10:08:42.532665 (4137661) main____ INFO      core file size: unlimited
+2026-09-21 10:08:42.532671 (4137661) main____ INFO      open files    : 524288
+2026-09-21 10:08:42.532677 (4137661) main____ INFO      file size     : unlimited
+2026-09-21 10:08:42.532683 (4137661) main____ INFO    ----------------------------------------
+2026-09-21 10:08:42.532688 (4137661) main____ INFO    Memory statistics:
+2026-09-21 10:08:42.532694 (4137661) main____ INFO      total physical memory  : 131090964 kB
+2026-09-21 10:08:42.532704 (4137661) main____ INFO      free physical memory   : 85329136 kB
+2026-09-21 10:08:42.532710 (4137661) main____ INFO      committed address space: 22077968 kB
+2026-09-21 10:08:42.532715 (4137661) main____ INFO    ----------------------------------------
+2026-09-21 10:08:42.533126 (4137661) main____ INFO    Important environment variables:
+2026-09-21 10:08:42.533138 (4137661) main____ INFO      CDS_LIC_FILE       : '5280@cadence-license.services.lowrisc.dev'
+2026-09-21 10:08:42.533148 (4137661) main____ INFO      DISPLAY            : 'localhost:11.0'
+2026-09-21 10:08:42.533154 (4137661) main____ INFO      EDITOR             : 'nvim'
+2026-09-21 10:08:42.533160 (4137661) main____ INFO      JASPER_CPU_CHECK   : '1'
+2026-09-21 10:08:42.533166 (4137661) main____ INFO      JASPER_HOME        : '/nas/lowrisc/tools/cadence/jasper/2025.09'
+2026-09-21 10:08:42.533172 (4137661) main____ INFO      JASPER_INSTALL_DIR : '/nas/lowrisc/tools/cadence/jasper/2025.09'
+2026-09-21 10:08:42.533179 (4137661) main____ INFO      JASPER_KERNEL_CHECK: '1'
+2026-09-21 10:08:42.533188 (4137661) main____ INFO      JASPER_OS_CHECK    : '0'
+2026-09-21 10:08:42.533193 (4137661) main____ INFO      JASPER_PLATFORM    : 'Linux64'
+2026-09-21 10:08:42.533199 (4137661) main____ INFO      LANG               : 'en_GB.UTF-8'
+2026-09-21 10:08:42.533205 (4137661) main____ INFO      LC_ADDRESS         : 'en_GB.UTF-8'
+2026-09-21 10:08:42.533211 (4137661) main____ INFO      LC_IDENTIFICATION  : 'en_GB.UTF-8'
+2026-09-21 10:08:42.533222 (4137661) main____ INFO      LC_MEASUREMENT     : 'en_GB.UTF-8'
+2026-09-21 10:08:42.533227 (4137661) main____ INFO      LC_MONETARY        : 'en_GB.UTF-8'
+2026-09-21 10:08:42.533233 (4137661) main____ INFO      LC_NAME            : 'en_GB.UTF-8'
+2026-09-21 10:08:42.533239 (4137661) main____ INFO      LC_NUMERIC         : 'en_GB.UTF-8'
+2026-09-21 10:08:42.533245 (4137661) main____ INFO      LC_PAPER           : 'en_GB.UTF-8'
+2026-09-21 10:08:42.533251 (4137661) main____ INFO      LC_TELEPHONE       : 'en_GB.UTF-8'
+2026-09-21 10:08:42.533260 (4137661) main____ INFO      LC_TIME            : 'en_GB.UTF-8'
+2026-09-21 10:08:42.533266 (4137661) main____ INFO      TMPDIR             : '/tmp/nix-shell.O8VUzP'
+2026-09-21 10:08:42.533271 (4137661) main____ INFO    ----------------------------------------
+2026-09-21 10:08:42.533332 (4137661) lic_core INFO    Initializing license system ...
+2026-09-21 10:08:42.534582 (4137913) lic_core INFO    [10:08:42.208761] Configured Lic search path (24.01-s003): 5280@cadence-license.services.lowrisc.dev
+2026-09-21 10:08:42.536669 (4137661) lic_core INFO    ... license system initialized.
+2026-09-21 10:08:42.536789 (4137661) lic__man INFO    Claim 'main' for <ui>.
+2026-09-21 10:08:42.536805 (4137661) lic_core INFO    (1) checking out 'jasper_interactive' ...
+2026-09-21 10:08:42.896608 (4137661) lic_core INFO    ... (1) checkout failed (error: -5) ("FLEXnet ERROR(-5, 0, 0): No such feature exists.")
+2026-09-21 10:08:42.896685 (4137661) lic_core INFO    (2) checking out 'jasper_pint' ...
+2026-09-21 10:08:43.449997 (4137661) lic_core INFO    ... (2) checkout succeeded
+2026-09-21 10:08:43.450098 (4137661) lic__man INFO    Claim 'fpv' for <ui>.
+2026-09-21 10:08:43.450134 (4137661) lic_core INFO    (3) checking out 'jasper_fpv' ...
+2026-09-21 10:08:43.771464 (4137661) lic_core INFO    ... (3) checkout failed (error: -5) ("FLEXnet ERROR(-5, 0, 0): No such feature exists.")
+2026-09-21 10:08:43.771534 (4137661) lic_core INFO    (4) checking out 'jasper_fao' ...
+2026-09-21 10:08:44.082897 (4137661) lic_core INFO    ... (4) checkout failed (error: -5) ("FLEXnet ERROR(-5, 0, 0): No such feature exists.")
+2026-09-21 10:08:44.082962 (4137661) lic_core INFO    (5) checking out 'jasper_papp' ...
+2026-09-21 10:08:44.517867 (4137661) lic_core INFO    ... (5) checkout succeeded
+2026-09-21 10:08:44.518506 (4137661) main____ INFO    Tool inactivity delay is 480000 ms.
+2026-09-21 10:08:44.518913 (4137661) bridge__ INFO    Starting Jasper advanced job dispatch and management feature with id 'bridge_0' ...
+2026-09-21 10:08:44.525657 (4137661) bridge__ INFO    Jasper advanced job dispatch and management feature started with id 'bridge_0'(pid: 4137918)
+2026-09-21 10:08:44.545734 (4137661) bridge__ ERROR   Unable to initialize Jasper advanced job dispatch and management feature, jg_bridge protocol failed.
+2026-09-21 10:08:45.164351 (4137661) lic__man INFO    Claim 'fpv' for <ui>.
+2026-09-21 10:08:45.464876 (4137661) lic__man INFO    Unclaim 'fpv' for <ui>.
+2026-09-21 10:08:45.464937 (4137661) lic__man INFO    Claim 'fpv' for <ui>.
+2026-09-21 10:08:45.468885 (4137661) session_ INFO    Starting analysis session with session id 'session_0' (launcher: <local>) ...
+2026-09-21 10:08:45.473453 (4137661) session_ INFO    Analysis session with session id 'session_0' started (pid: 4137926)
+2026-09-21 10:08:49.486356 (4137661) session_ INFO    Analysis session 'session_0' connected to the console (host: 127.0.0.1:42128)
+2026-09-21 10:08:49.750456 (4137661) main____ INFO    Releasing console memory by request of analysis session 'session_0'.
+2026-09-21 10:08:49.854915 (4137661) lic__man INFO    Unclaim everything for 'session_0'.
+2026-09-21 10:08:50.108416 (4137661) lic__man INFO    Unclaim everything for 'session_0'.
+2026-09-21 10:08:50.237008 (4137661) lic__man INFO    Claim 'fpv' for 'session_0'.
+2026-09-21 10:08:50.237066 (4137661) lic__man INFO    Claim 'fpv' for 'session_0/prove-0'.
+2026-09-21 10:08:50.744950 (4137661) lic__man INFO    Unclaim everything for 'session_0/prove-0'.
+2026-09-21 10:09:10.760786 (4137661) main____ INFO    About to exit: requested from GUI
+2026-09-21 10:09:11.106666 (4137661) session_ INFO    Analysis session 'session_0' disconnected.
+2026-09-21 10:09:11.110235 (4137661) lic_core INFO    (2) checkin jasper_pint
+2026-09-21 10:09:11.160396 (4137661) lic_core INFO    (5) checkin jasper_papp
+2026-09-21 10:09:11.197355 (4137661) lic_core INFO    Lic Summary:
+2026-09-21 10:09:11.197376 (4137661) lic_core INFO      [10:09:11.197280] Cdslmd servers:5280@cadence-license.services.lowrisc.dev
+2026-09-21 10:09:11.197390 (4137661) lic_core INFO      [10:09:11.197290] Feature usage summary:
+2026-09-21 10:09:11.197396 (4137661) lic_core INFO      [10:09:11.197290] jasper_pint
+2026-09-21 10:09:11.197402 (4137661) lic_core INFO      [10:09:11.197290] jasper_papp
+2026-09-21 10:09:11.197496 (4137661) main____ INFO    Exiting with status 0.

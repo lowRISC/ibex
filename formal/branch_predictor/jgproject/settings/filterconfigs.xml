@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Jasper FilterConfiguration File. Editing the file is not recommended.-->
+<jasperfilterconfig version="1.0">
+    <filterconfigs count="0"/>
+    <widgetconfigrelations>
+        <widget name="FPV-PropertyTable" type="PropertyTable"/>
+        <widget name="XPROP-PropertyTable" type="PropertyTable"/>
+        <widget name="AFV-PropertyTable" type="PropertyTable"/>
+        <widget name="CONN-PropertyTable" type="PropertyTable"/>
+        <widget name="CSR-PropertyTable" type="PropertyTable"/>
+        <widget name="SUPERLINT-PropertyTable" type="PropertyTable"/>
+        <widget name="SPV-PropertyTable" type="PropertyTable"/>
+        <widget name="COV-PropertyTable" type="PropertyTable"/>
+        <widget name="SEC-PropertyTable" type="PropertyTable"/>
+        <widget name="LPV-PropertyTable" type="PropertyTable"/>
+        <widget name="UNR-PropertyTable" type="PropertyTable"/>
+        <widget name="FSV-PropertyTable" type="PropertyTable"/>
+        <widget name="C2RTL-PropertyTable" type="PropertyTable"/>
+        <widget name="HLS-PropertyTable" type="PropertyTable"/>
+        <widget name="CAF-PropertyTable" type="PropertyTable"/>
+        <widget name="RVV-PropertyTable" type="PropertyTable"/>
+        <widget name="CFPV-PropertyTable" type="PropertyTable"/>
+    </widgetconfigrelations>
+</jasperfilterconfig>

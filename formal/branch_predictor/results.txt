@@ -1,0 +1,38 @@
+
+==============================================================
+    Jasper Verification Results
+==============================================================
+    2025.09p002 64 bits for Linux64 4.18.0-372.26.1.el8_6.x86_64
+    Host Name: nyx.servers.lowrisc.org
+    User Name: evmorfiaa
+    Printed on: Monday, Sep21, 2026 10:08:50 am BST
+    Working Directory: /home/evmorfiaa/ibex/formal/tmp_04
+
+
+==============================================================
+RESULTS
+==============================================================
+
+-------------------------------------------------------------------------------------------------------------------
+       Name                                                       |    Result    |  Engine  |  Bound  |  Time    
+-------------------------------------------------------------------------------------------------------------------
+
+---[ <embedded> ]--------------------------------------------------------------------------------------------------
+[1]   ibex_branch_predict.BranchInsTypeOneHot                          proven          Hp     Infinite    0.000 s      
+[2]   ibex_branch_predict.BranchInsTypeOneHot:precondition1            covered         PRE           1    0.000 s      
+[3]   ibex_branch_predict.bp_tb_i.predict_taken_matches_ref            proven          PRE    Infinite    0.000 s      
+[4]   ibex_branch_predict.bp_tb_i.predict_target_matches_ref           proven          PRE    Infinite    0.000 s      
+[5]   ibex_branch_predict.bp_tb_i.jal_reachable                        covered         Hp            1    0.001 s      
+[6]   ibex_branch_predict.bp_tb_i.cj_reachable                         covered         Hp            1    0.001 s      
+[7]   ibex_branch_predict.bp_tb_i.neg_branch_reachable                 covered         Hp            1    0.001 s      
+[8]   ibex_branch_predict.bp_tb_i.pos_branch_reachable                 covered         Hp            1    0.001 s      
+[9]   ibex_branch_predict.bp_tb_i.neg_cb_reachable                     covered         Hp            1    0.001 s      
+[10]  ibex_branch_predict.bp_tb_i.pos_cb_reachable                     covered         Hp            1    0.001 s      
+
+==============================================================
+ASSUMPTIONS
+==============================================================
+
+-------------------------------------------------------------------------------
+       Name    |  Expression  |  Location     |  Status      |  Dependencies                  
+-------------------------------------------------------------------------------

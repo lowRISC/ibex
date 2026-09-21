@@ -1,0 +1,36 @@
+CAPI=2:
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+name: "lowrisc:fpv:ibex_bp_fpv:0.1"
+description: "Formal properties for Ibex Branch Predictor"
+
+filesets:
+  all:
+    depend:
+      - lowrisc:ibex:ibex_branch_predict
+      - lowrisc:prim:assert
+      - lowrisc:util:sv2v
+    files:
+      - run.sby.j2 : {file_type: sbyConfigTemplate}
+      - formal_tb_frag.svh : {file_type: systemVerilogSource, is_include_file: true}
+      - formal_tb.sv : {file_type: systemVerilogSource}
+
+targets:
+  prove: &prove
+    filesets:
+      - all
+    toplevel: ibex_branch_predict
+    default_tool: symbiyosys
+    tools:
+      symbiyosys:
+        tasknames:
+        - prove
+
+  cover:
+    <<: *prove
+    tools:
+      symbiyosys:
+        tasknames:
+        - cover
