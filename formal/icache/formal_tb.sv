@@ -184,16 +184,18 @@ module formal_tb
   //
   //  Read this as "a negedge of instr_req_o implies that the transaction was granted or squashed on
   //  the previous cycle".
+  //  wait one cycle to allow for precious cycle history
   `ASSERT(req_to_gnt,
-          `IMPLIES($fell(instr_req_o), $past(instr_gnt_i | instr_pmp_err_i)))
+         ##1 `IMPLIES($fell(instr_req_o), $past(instr_gnt_i | instr_pmp_err_i)))
 
   //  ADDR stability
   //
   //  If instr_req_o goes high, the address at instr_addr_o will stay constant until the request is
   //  squashed or granted. The encoding below says "either the address is stable, the request has
   //  been squashed, we've had a grant or this is a new request".
+  //  wait one cycle to allow for precious cycle history
   `ASSERT(req_addr_stable,
-          $stable(instr_addr_o) | $past(instr_gnt_i | instr_pmp_err_i | ~instr_req_o))
+          ##1 ($stable(instr_addr_o) | $past(instr_gnt_i | instr_pmp_err_i | ~instr_req_o)))
 
   //  VALID until READY
   //
