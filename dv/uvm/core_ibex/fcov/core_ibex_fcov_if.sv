@@ -603,15 +603,13 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
       bins out_of_flush3 = (FLUSH => DBG_TAKEN_IF);
       bins out_of_wait_sleep = (WAIT_SLEEP => SLEEP);
       bins out_of_sleep = (SLEEP => FIRST_FETCH);
-      // TODO: VCS does not implement default sequence so illegal_bins will be empty
-      illegal_bins illegal_transitions = default sequence;
+      // No "default sequence" illegal_bins: the bins above list the arcs of interest, not every
+      // legal arc (e.g. RESET => RESET, DECODE => DECODE), so a catch-all would flag legal arcs.
     }
 
     cp_controller_fsm_sleep: coverpoint id_stage_i.controller_i.ctrl_fsm_cs {
       bins out_of_sleep = (SLEEP => FIRST_FETCH);
       bins enter_sleep = (WAIT_SLEEP => SLEEP);
-      // TODO: VCS does not implement default sequence so illegal_bins will be empty
-      illegal_bins illegal_transitions = default sequence;
     }
 
     // This will only be seen when specific interrupt is disabled by MIE CSR
