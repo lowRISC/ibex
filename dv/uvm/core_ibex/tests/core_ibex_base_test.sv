@@ -47,12 +47,26 @@ class core_ibex_base_test extends uvm_test;
     irq_collected_port  = new("irq_collected_port_test", this);
   endfunction
 
+  function automatic string rv32zc_isa_suffix(rv32zc_e rv32zc);
+    case (rv32zc)
+      RV32Zca:        return "_zicsr_zifencei_zca";
+      RV32ZcaZcb:     return "_zicsr_zifencei_zca_zcb";
+      RV32ZcaZcmp:    return "_zicsr_zifencei_zca_zcmp";
+      RV32ZcaZcbZcmp: return "_zicsr_zifencei_zca_zcb_zcmp";
+      default: begin
+        `uvm_fatal(`gfn, $sformatf("Unknown RV32ZC value: %0d", rv32zc))
+        return "";
+      end
+    endcase
+  endfunction
+
   // NOTE: This logic should match the code in the get_isas_for_config() function in
-  //       core_ibex/scripts/scripts_lib.py: keep them in sync!
+  //       core_ibex/scripts/ibex_cmd.py: keep them in sync!
   function string get_isa_string();
     bit     RV32E;
     rv32m_e RV32M;
     rv32b_e RV32B;
+    rv32zc_e RV32ZC;
     string  isa;
 
     if (!uvm_config_db#(bit)::get(null, "", "RV32E", RV32E)) begin
@@ -64,12 +78,16 @@ class core_ibex_base_test extends uvm_test;
     if (!uvm_config_db#(rv32b_e)::get(null, "", "RV32B", RV32B)) begin
       `uvm_fatal(`gfn, "Cannot get RV32B parameter")
     end
+    if (!uvm_config_db#(rv32zc_e)::get(null, "", "RV32ZC", RV32ZC)) begin
+      `uvm_fatal(`gfn, "Cannot get RV32ZC parameter")
+    end
 
     // Construct the right ISA string for the cosimulator by looking at top-level testbench
     // parameters.
     isa = {"rv32", RV32E ? "e" : "i"};
     if (RV32M != RV32MNone) isa = {isa, "m"};
-    isa = {isa, "c"};
+    isa = {isa, rv32zc_isa_suffix(RV32ZC)};
+
     case (RV32B)
       RV32BNone:
         ;
