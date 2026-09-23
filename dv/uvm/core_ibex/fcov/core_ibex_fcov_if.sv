@@ -682,13 +682,10 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
 
     `DV_FCOV_EXPR_SEEN(dmem_req_gnt_rvalid, data_rvalid_i & data_req_o & data_gnt_i)
 
+    // Both beats can see a bus error: the second beat may be granted before the first response
+    // arrives, and fcov_mis_bus_err_1_q holds the first error until the second response.
     misaligned_data_bus_err_cross: cross cp_misaligned_first_data_bus_err,
-                                         cp_misaligned_second_data_bus_err {
-      // Cannot see both bus errors together as they're signalled at different states of the load
-      // store unit FSM
-      illegal_bins illegal = binsof(cp_misaligned_first_data_bus_err) intersect {1'b1} &&
-        binsof(cp_misaligned_second_data_bus_err) intersect {1'b1};
-    }
+                                         cp_misaligned_second_data_bus_err;
 
     misaligned_insn_bus_err_cross: cross id_stage_i.instr_fetch_err_i,
                                          id_stage_i.instr_fetch_err_plus2_i;
