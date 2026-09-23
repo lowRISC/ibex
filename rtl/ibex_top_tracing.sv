@@ -175,6 +175,7 @@ module ibex_top_tracing import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   logic [31:0] rvfi_ext_post_mip;
   logic        rvfi_ext_nmi;
   logic        rvfi_ext_nmi_int;
+  logic [31:0] rvfi_ext_nmi_int_mtval;
   logic        rvfi_ext_debug_req;
   logic        rvfi_ext_debug_mode;
   logic        rvfi_ext_rf_wr_suppress;
@@ -196,6 +197,7 @@ module ibex_top_tracing import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   logic [31:0] unused_rvfi_ext_post_mip;
   logic        unused_rvfi_ext_nmi;
   logic        unused_rvfi_ext_nmi_int;
+  logic [31:0] unused_rvfi_ext_nmi_int_mtval;
   logic        unused_rvfi_ext_debug_req;
   logic        unused_rvfi_ext_debug_mode;
   logic        unused_rvfi_ext_rf_wr_suppress;
@@ -210,6 +212,7 @@ module ibex_top_tracing import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   assign unused_rvfi_ext_post_mip = rvfi_ext_post_mip;
   assign unused_rvfi_ext_nmi = rvfi_ext_nmi;
   assign unused_rvfi_ext_nmi_int = rvfi_ext_nmi_int;
+  assign unused_rvfi_ext_nmi_int_mtval = rvfi_ext_nmi_int_mtval;
   assign unused_rvfi_ext_debug_req = rvfi_ext_debug_req;
   assign unused_rvfi_ext_debug_mode = rvfi_ext_debug_mode;
   assign unused_rvfi_ext_rf_wr_suppress = rvfi_ext_rf_wr_suppress;
@@ -348,6 +351,7 @@ module ibex_top_tracing import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     .rvfi_ext_post_mip,
     .rvfi_ext_nmi,
     .rvfi_ext_nmi_int,
+    .rvfi_ext_nmi_int_mtval,
     .rvfi_ext_debug_req,
     .rvfi_ext_debug_mode,
     .rvfi_ext_rf_wr_suppress,
