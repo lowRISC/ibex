@@ -208,6 +208,13 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
       id_instr_category == InstrCategoryFenceI && id_stage_i.instr_first_cycle |->
       id_stage_i.icache_inval_o)
 
+  // A fetch error on a compressed instruction never comes from its second half (mtval = pc + 2).
+  // CHERIoT fetch violations take priority and do not use err_plus2.
+  `ASSERT(NoFetchErrPlus2OnCompressed,
+      id_stage_i.instr_valid_i && id_stage_i.instr_is_compressed_i &&
+      id_stage_i.instr_fetch_err_i && !id_stage_i.instr_fetch_cheriot_acc_vio_i &&
+      !id_stage_i.instr_fetch_cheriot_bound_vio_i |-> !id_stage_i.instr_fetch_err_plus2_i)
+
 
 
   id_stall_type_e id_stall_type;
