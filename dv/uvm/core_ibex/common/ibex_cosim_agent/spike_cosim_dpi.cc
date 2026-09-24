@@ -29,9 +29,9 @@ void *spike_cosim_init(const char *isa_string, svBitVecVal *start_pc,
       isa_string, start_pc[0], start_mtvec[0], log_file_path, secure_ibex,
       icache, pmp_num_regions[0], pmp_granularity[0], mhpm_counter_num[0],
       dm_start_addr[0], dm_end_addr[0]);
-  // Add a memory device that covers the entire address space.
-  // This will only be sparsely populated.
-  cosim->add_memory(0x00000000, 0xFFFF0000);
+  // Add a memory device that covers the entire 32-bit address space, as the
+  // testbench memory model does. This will only be sparsely populated.
+  cosim->add_memory(0x00000000, 0x100000000ULL);
   return static_cast<Cosim *>(cosim);
 }
 
