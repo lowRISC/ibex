@@ -427,6 +427,26 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     .single_cycle_response_o(dmem_single_cycle_response)
   );
 
+`ifndef DV_FCOV_DISABLE
+  // Track a granted second half until its response.
+  // Preserve it across the first response while addr_incr_req_o is asserted.
+  logic mis_2_granted_q;
+
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      mis_2_granted_q <= 1'b0;
+    end else if (data_req_o && data_gnt_i && load_store_unit_i.handle_misaligned_q) begin
+      mis_2_granted_q <= 1'b1;
+    end else if (data_rvalid_i && !load_store_unit_i.addr_incr_req_o) begin
+      mis_2_granted_q <= 1'b0;
+    end
+  end
+
+  `ASSERT(MisalignedTrackerSecondHalfGranted,
+      load_store_unit_i.fcov_mis_2_en_q && !load_store_unit_i.handle_misaligned_q |->
+      mis_2_granted_q)
+`endif
+
   covergroup uarch_cg @(posedge clk_i);
     option.per_instance = 1;
     option.name = "uarch_cg";
