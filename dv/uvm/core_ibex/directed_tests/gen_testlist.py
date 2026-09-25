@@ -422,6 +422,20 @@ def add_configs_and_handwritten_directed_tests():
   iterations: 1
   test_srcs: u_mode_exec_test/u_mode_exec_test.S
   config: riscv-tests
+
+- test: top_of_memory_test
+  desc: >
+    Store and load at the last word of the address space
+  iterations: 1
+  test_srcs: top_of_memory_test/top_of_memory_test.S
+  config: riscv-tests
+
+- test: pmp_misaligned_store_test
+  desc: >
+    Misaligned store whose first half fails PMP
+  iterations: 1
+  test_srcs: pmp_misaligned_store_test/pmp_misaligned_store_test.S
+  config: riscv-tests
 '''
     testlist_string += available_directed_tests
     with open('directed_testlist.yaml', "a") as f:
