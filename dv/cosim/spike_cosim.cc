@@ -688,6 +688,22 @@ void SpikeCosim::misaligned_pmp_fixup() {
                   << top_pending_access_info.addr << std::endl;
         std::cout << std::dec;
 
+        // Ibex has done this store but Spike has not, so write the bytes the
+        // testbench memory accepted (it ignores stores with an error response).
+        if (top_pending_access_info.store && !top_pending_access_info.error) {
+          for (unsigned i = 0; i < 4; ++i) {
+            if (top_pending_access_info.be & (1u << i)) {
+              uint8_t mirror_byte = top_pending_access_info.data >> (8 * i);
+              if (!backdoor_write_mem(top_pending_access_info.addr + i, 1,
+                                      &mirror_byte)) {
+                errors.emplace_back(
+                    "Failed to mirror dropped misaligned store beat");
+                return;
+              }
+            }
+          }
+        }
+
         pending_dside_accesses.erase(pending_dside_accesses.begin());
       }
     }
