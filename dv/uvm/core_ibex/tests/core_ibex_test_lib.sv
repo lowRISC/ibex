@@ -2115,6 +2115,22 @@ class core_ibex_directed_reset_test extends core_ibex_base_test;
 
 endclass
 
+// Used by reset_stale_mem_test: the program checks that it does not see memory contents from
+// before the reset.
+class core_ibex_reset_stale_mem_test extends core_ibex_directed_reset_test;
+
+  `uvm_component_utils(core_ibex_reset_stale_mem_test)
+  `uvm_component_new
+
+  // Disable bad integrity on uninitialized reads so this test checks the data without triggering
+  // a SecureIbex bus alert.
+  virtual function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    dmem_cfg.enable_bad_intg_on_uninit_access = 0;
+  endfunction
+
+endclass
+
 // Used by reset_irq_test: after the reset, raise one interrupt and check the rebooted program takes
 // it.
 class core_ibex_reset_irq_test extends core_ibex_directed_reset_test;

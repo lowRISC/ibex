@@ -423,6 +423,14 @@ def add_configs_and_handwritten_directed_tests():
   test_srcs: u_mode_exec_test/u_mode_exec_test.S
   config: riscv-tests
 
+- test: reset_stale_mem_test
+  desc: >
+    Mid-test reset must not leave the pre-reset memory contents behind
+  iterations: 1
+  rtl_test: core_ibex_reset_stale_mem_test
+  test_srcs: reset_stale_mem_test/reset_stale_mem_test.S
+  config: riscv-tests
+
 - test: reset_irq_test
   desc: >
     Interrupts must still reach the core after a mid-test reset
