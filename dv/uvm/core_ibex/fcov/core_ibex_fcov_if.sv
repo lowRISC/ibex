@@ -208,6 +208,13 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
       id_instr_category == InstrCategoryFenceI && id_stage_i.instr_first_cycle |->
       id_stage_i.icache_inval_o)
 
+  // A fetch error on a compressed instruction never comes from its second half (mtval = pc + 2).
+  // CHERIoT fetch violations take priority and do not use err_plus2.
+  `ASSERT(NoFetchErrPlus2OnCompressed,
+      id_stage_i.instr_valid_i && id_stage_i.instr_is_compressed_i &&
+      id_stage_i.instr_fetch_err_i && !id_stage_i.instr_fetch_cheriot_acc_vio_i &&
+      !id_stage_i.instr_fetch_cheriot_bound_vio_i |-> !id_stage_i.instr_fetch_err_plus2_i)
+
 
 
   id_stall_type_e id_stall_type;
@@ -420,6 +427,26 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     .single_cycle_response_o(dmem_single_cycle_response)
   );
 
+`ifndef DV_FCOV_DISABLE
+  // Track a granted second half until its response.
+  // Preserve it across the first response while addr_incr_req_o is asserted.
+  logic mis_2_granted_q;
+
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      mis_2_granted_q <= 1'b0;
+    end else if (data_req_o && data_gnt_i && load_store_unit_i.handle_misaligned_q) begin
+      mis_2_granted_q <= 1'b1;
+    end else if (data_rvalid_i && !load_store_unit_i.addr_incr_req_o) begin
+      mis_2_granted_q <= 1'b0;
+    end
+  end
+
+  `ASSERT(MisalignedTrackerSecondHalfGranted,
+      load_store_unit_i.fcov_mis_2_en_q && !load_store_unit_i.handle_misaligned_q |->
+      mis_2_granted_q)
+`endif
+
   covergroup uarch_cg @(posedge clk_i);
     option.per_instance = 1;
     option.name = "uarch_cg";
@@ -603,15 +630,13 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
       bins out_of_flush3 = (FLUSH => DBG_TAKEN_IF);
       bins out_of_wait_sleep = (WAIT_SLEEP => SLEEP);
       bins out_of_sleep = (SLEEP => FIRST_FETCH);
-      // TODO: VCS does not implement default sequence so illegal_bins will be empty
-      illegal_bins illegal_transitions = default sequence;
+      // No "default sequence" illegal_bins: the bins above list the arcs of interest, not every
+      // legal arc (e.g. RESET => RESET, DECODE => DECODE), so a catch-all would flag legal arcs.
     }
 
     cp_controller_fsm_sleep: coverpoint id_stage_i.controller_i.ctrl_fsm_cs {
       bins out_of_sleep = (SLEEP => FIRST_FETCH);
       bins enter_sleep = (WAIT_SLEEP => SLEEP);
-      // TODO: VCS does not implement default sequence so illegal_bins will be empty
-      illegal_bins illegal_transitions = default sequence;
     }
 
     // This will only be seen when specific interrupt is disabled by MIE CSR
@@ -657,13 +682,10 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
 
     `DV_FCOV_EXPR_SEEN(dmem_req_gnt_rvalid, data_rvalid_i & data_req_o & data_gnt_i)
 
+    // Both beats can see a bus error: the second beat may be granted before the first response
+    // arrives, and fcov_mis_bus_err_1_q holds the first error until the second response.
     misaligned_data_bus_err_cross: cross cp_misaligned_first_data_bus_err,
-                                         cp_misaligned_second_data_bus_err {
-      // Cannot see both bus errors together as they're signalled at different states of the load
-      // store unit FSM
-      illegal_bins illegal = binsof(cp_misaligned_first_data_bus_err) intersect {1'b1} &&
-        binsof(cp_misaligned_second_data_bus_err) intersect {1'b1};
-    }
+                                         cp_misaligned_second_data_bus_err;
 
     misaligned_insn_bus_err_cross: cross id_stage_i.instr_fetch_err_i,
                                          id_stage_i.instr_fetch_err_plus2_i;
