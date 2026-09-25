@@ -313,8 +313,22 @@ class core_ibex_base_test extends uvm_test;
       `uvm_info(`gfn, "Reset now inactive", UVM_LOW)
       // Build-up testbench components
 
-      // Cosim must be re-initialized before loading the memory
-      env.reset();
+      // Cosim must be re-initialized before loading the memory. The scoreboard re-creates it in
+      // its own process, so wait until a new cosim generation exists.
+      begin
+        int unsigned cosim_gen = env.cosim_agent.scoreboard.cosim_generation;
+        env.reset();
+        fork begin
+          fork
+            wait (env.cosim_agent.scoreboard.cosim_generation != cosim_gen);
+            begin
+              clk_vif.wait_clks(1000);
+              `uvm_fatal(`gfn, "Cosim was not re-created after mid-test reset")
+            end
+          join_any
+          disable fork;
+        end join
+      end
       load_binary_to_mems(); // Backdoor-load, 0-time
     end
   endtask : handle_reset

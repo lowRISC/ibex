@@ -32,6 +32,9 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
 
   iside_err_t iside_error_queue [$];
 
+  // Incremented by every init_cosim(), so a caller can tell a re-created cosim from the old one.
+  int unsigned cosim_generation;
+
   `uvm_component_utils(ibex_cosim_scoreboard)
 
   function new(string name="", uvm_component parent=null);
@@ -81,6 +84,7 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
     if (cosim_handle == null) begin
       `uvm_fatal(`gfn, "Could not initialise cosim")
     end
+    cosim_generation++;
   endfunction
 
   protected function void cleanup_cosim();
@@ -91,8 +95,10 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
   endfunction
 
   virtual task run_phase(uvm_phase phase);
+    // Wait for the power-on reset only. After a mid-test reset, handle_reset() runs once reset is
+    // already released, so the checkers must restart straight away.
+    @(negedge instr_vif.reset);
     forever begin
-      @(negedge instr_vif.reset)
       fork : isolation_fork
         run_cosim_rvfi();
         run_cosim_dmem();
@@ -356,6 +362,13 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
   endfunction
 
   task handle_reset();
+    // RVFI order restarts after reset, so no instruction-side error state may carry over.
+    failed_iside_accesses.delete();
+    iside_pmp_failure.delete();
+    iside_error_queue.delete();
+    check_inserted_iside_error_e.reset();
+    `uvm_info(`gfn, $sformatf("Co-simulation matched %0d instructions before reset",
+                              riscv_cosim_get_insn_cnt(cosim_handle)), UVM_LOW)
     init_cosim();
   endtask
 endclass : ibex_cosim_scoreboard
