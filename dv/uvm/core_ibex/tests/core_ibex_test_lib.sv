@@ -2066,3 +2066,98 @@ class core_ibex_mcounteren_lock_test extends core_ibex_base_test;
   endtask
 
 endclass
+
+// Base class for directed tests that reset the core once. The program writes mscratch at each
+// checkpoint, and the testbench resets the core at the first one.
+class core_ibex_directed_reset_test extends core_ibex_base_test;
+
+  `uvm_component_utils(core_ibex_directed_reset_test)
+  `uvm_component_new
+
+  int unsigned num_checkpoints;
+  int unsigned exp_checkpoints = 2;
+
+  virtual task send_stimulus();
+    fork
+      vseq.start(env.vseqr);
+      forever begin
+        wait_for_mscratch_write();
+        num_checkpoints++;
+      end
+    join_none
+    wait (num_checkpoints == 1);
+    dut_vif.dut_cb.fetch_enable <= ibex_pkg::IbexMuBiOff;
+    clk_vif.apply_reset(.reset_width_clks (100));
+    dut_vif.dut_cb.fetch_enable <= ibex_pkg::IbexMuBiOn;
+    after_reset();
+  endtask
+
+  // Stimulus for the rebooted program.
+  virtual task after_reset();
+  endtask
+
+  // Wait for a write to mscratch to start and end, so a stalled write counts once.
+  task wait_for_mscratch_write();
+    do @(csr_vif.csr_cb); while (!mscratch_write());
+    do @(csr_vif.csr_cb); while (mscratch_write());
+  endtask
+
+  function bit mscratch_write();
+    return csr_vif.csr_cb.csr_access === 1'b1 && csr_vif.csr_cb.csr_addr === CSR_MSCRATCH &&
+           csr_vif.csr_cb.csr_op != CSR_OP_READ;
+  endfunction
+
+  // Check that both boots and any post-reset stimulus reached their checkpoints.
+  virtual function void check_phase(uvm_phase phase);
+    super.check_phase(phase);
+    `DV_CHECK_EQ(num_checkpoints, exp_checkpoints, "Program did not reach all its checkpoints")
+  endfunction
+
+endclass
+
+// Used by reset_irq_test: after the reset, raise one interrupt and check the rebooted program takes
+// it.
+class core_ibex_reset_irq_test extends core_ibex_directed_reset_test;
+
+  `uvm_component_utils(core_ibex_reset_irq_test)
+  `uvm_component_new
+
+  virtual function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    exp_checkpoints = 3;
+  endfunction
+
+  virtual task after_reset();
+    irq_raise_single_seq raise_seq = irq_raise_single_seq::type_id::create("raise_seq");
+    irq_drop_seq         drop_seq  = irq_drop_seq::type_id::create("drop_seq");
+    bit                  irq_delivered;
+
+    raise_seq.num_of_iterations = 1;
+    raise_seq.max_interval      = 1;
+    raise_seq.max_delay         = 10;
+    raise_seq.no_nmi            = 1'b1;
+    drop_seq.num_of_iterations  = 1;
+    drop_seq.max_interval       = 1;
+    drop_seq.max_delay          = 0;
+
+    fork begin
+      fork
+        begin
+          wait (num_checkpoints == 2);
+          raise_seq.start(env.vseqr.irq_seqr);
+          irq_delivered = 1'b1;
+          wait (num_checkpoints == 3);
+        end
+        begin
+          clk_vif.wait_clks(10000);
+          if (num_checkpoints < 2) `uvm_fatal(`gfn, "Program did not restart after the reset")
+          if (!irq_delivered) `uvm_fatal(`gfn, "No interrupt reached the core after the reset")
+          `uvm_fatal(`gfn, "Program did not take the interrupt")
+        end
+      join_any
+      disable fork;
+    end join
+    drop_seq.start(env.vseqr.irq_seqr);
+  endtask
+
+endclass

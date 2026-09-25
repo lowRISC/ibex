@@ -422,6 +422,14 @@ def add_configs_and_handwritten_directed_tests():
   iterations: 1
   test_srcs: u_mode_exec_test/u_mode_exec_test.S
   config: riscv-tests
+
+- test: reset_irq_test
+  desc: >
+    Interrupts must still reach the core after a mid-test reset
+  iterations: 1
+  rtl_test: core_ibex_reset_irq_test
+  test_srcs: reset_irq_test/reset_irq_test.S
+  config: riscv-tests
 '''
     testlist_string += available_directed_tests
     with open('directed_testlist.yaml', "a") as f:
