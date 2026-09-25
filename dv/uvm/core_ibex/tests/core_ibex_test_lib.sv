@@ -798,6 +798,8 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
   bit [ibex_mem_intf_pkg::DATA_WIDTH-1:0] mip;
   bit [ibex_mem_intf_pkg::DATA_WIDTH-1:0] mie;
   bit                                           in_nested_trap;
+  // Set while wait_for_core_setup() runs; the test must not end with it set.
+  bit                                           core_setup_pending;
 
   virtual task send_stimulus();
     fork
@@ -836,6 +838,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
   endfunction
 
   virtual task wait_for_core_setup();
+    core_setup_pending = 1'b1;
     wait_for_csr_write(CSR_MSTATUS, 10000);
     core_init_mstatus = signature_data;
     // capture the initial privilege mode ibex will boot into
@@ -843,7 +846,13 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
     wait_for_csr_write(CSR_MIE, 5000);
     core_init_mie = signature_data;
     check_next_core_status(INITIALIZED, "Core initialization handshake failure", 5000);
+    core_setup_pending = 1'b0;
   endtask
+
+  virtual function void check_phase(uvm_phase phase);
+    super.check_phase(phase);
+    `DV_CHECK(!core_setup_pending, "Test ended before the core setup handshake completed")
+  endfunction
 
   function bit determine_irq_from_txn();
     bit irq_valid;
@@ -1046,7 +1055,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
 
   // Task that waits for xRET to be asserted within a certain number of cycles
   virtual task wait_ret(string ret, int timeout);
-    cur_run_phase.raise_objection(this);
+    raise_run_objection();
     fork begin : isolation_fork
       fork
         begin
@@ -1061,7 +1070,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
       // Will only get here if dret successfully detected within timeout period
       disable fork;
     end join
-    cur_run_phase.drop_objection(this);
+    drop_run_objection();
   endtask
 
   virtual function void check_priv_mode(priv_lvl_e mode);
@@ -1120,7 +1129,7 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
           // disable.
           vseq.wait_for_stop();
           disable fork;
-          if (cur_run_phase.get_objection_count(this) > 1) begin
+          if (!run_phase_closing && cur_run_phase.get_objection_count(this) > 1) begin
             cur_run_phase.drop_objection(this);
           end
         end
