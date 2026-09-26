@@ -100,23 +100,21 @@ always @(negedge clk) begin
 end
 
 // The DUT flags an ECC error on a valid lookup that reads a corrupted tag in any way, or corrupted
-// data in the way that hit.
-logic [IC_NUM_WAYS-1:0] tag_err_inj, data_err_inj;
+// data in the way it reads from: the lowest way that hit. An error for a corrupted copy in another
+// matching way is allowed but not required.
+logic [IC_NUM_WAYS-1:0] tag_err_inj, data_err_inj, read_way;
 logic                   ecc_err_allowed;
 assign tag_err_inj     = (enable_ecc_errors && (& ic_tag_rvalid)) ? tag_sel_line : '0;
 assign data_err_inj    = (enable_ecc_errors && (& ic_data_rvalid)) ? data_sel_line : '0;
+assign read_way        = tag_match & (~tag_match + 1'b1);
 assign ecc_err_allowed = lookup_valid && ((|tag_err_inj) || (|(data_err_inj & tag_match)));
 
 `ASSERT(TagErrChk_A, lookup_valid && (|tag_err_inj) |-> ecc_err, clk, !rst_n)
-
-// Require the error only when the corrupted way is the only hit. A line held in two ways is
-// merged before the data ECC check, so that case is not checked here.
-for (genvar i = 0; i < IC_NUM_WAYS; i++) begin : g_data_assertion
-  `ASSERT(DataErrChk_A,
-          lookup_valid && data_err_inj[i] && (tag_match == IC_NUM_WAYS'(1) << i) |-> ecc_err,
-          clk, !rst_n)
-end
-
+`ASSERT(DataErrChk_A, lookup_valid && (|(data_err_inj & read_way)) |-> ecc_err, clk, !rst_n)
+// A line held in two ways, with a data error in the way the DUT reads from
+`COVER(DupWayDataErr_C,
+       lookup_valid && !(|tag_err_inj) && ($countones(tag_match) > 1) &&
+       (|(data_err_inj & read_way)), clk, !rst_n)
 `ASSERT(NoUnexpectedErrChk_A, ecc_err |-> ecc_err_allowed, clk, !rst_n)
 
 `ASSERT(TagValidChk_A, always (& ic_tag_rvalid == (| ic_tag_rvalid)), clk, !rst_n)
