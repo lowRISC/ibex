@@ -188,7 +188,7 @@ A double fault is defined as a synchronous exception occurring whilst handling a
 The ``cpuctrl`` custom CSR has fields to provide software visibility and access to this mechanism.
 
 When a synchronous exception occurs, Ibex sets ``cpuctrl``.sync_exception_seen.
-Ibex clears ``cpuctrl``.sync_exception_seen when ``mret`` is executed.
+Ibex clears ``cpuctrl``.sync_exception_seen when ``mret`` or ``dret`` is executed.
 If a synchronous exception occurs whilst ``cpuctrl``.sync_exception_seen is set, a double fault has been detected.
 
 When a double fault is detected, the ``double_fault_seen_o`` output is asserted for one cycle and ``cpuctrl``.double_fault_seen is set.
