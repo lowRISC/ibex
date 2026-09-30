@@ -729,6 +729,7 @@ module ibex_if_stage import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     assign instr_skid_en = predict_branch_taken & ~pc_set_i & ~id_in_ready_i & ~instr_skid_valid_q;
 
     assign instr_skid_valid_d = (instr_skid_valid_q & ~id_in_ready_i & ~stall_dummy_instr &
+                                 ~pc_set_i &
                                  !(instr_gets_expanded inside
                                  {INSTR_EXPANDED, INSTR_EXPANDED_COMMIT})) | instr_skid_en;
 
