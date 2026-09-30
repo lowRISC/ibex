@@ -768,7 +768,8 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   // Set when awaiting the response for the second half of a misaligned access
   logic fcov_mis_2_en_d, fcov_mis_2_en_q;
 
-  // fcov_mis_rvalid_1: Set when the response is received to the first half of a misaligned access,
+  // fcov_mis_rvalid_1: Set when the response is received to the first half of a misaligned access
+  //                    whose second half passes the PMP check (a blocked half gets no response),
   // fcov_mis_rvalid_2: Set when response is received for the second half
   logic fcov_mis_rvalid_1, fcov_mis_rvalid_2;
 
@@ -776,7 +777,7 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   logic fcov_mis_bus_err_1_d, fcov_mis_bus_err_1_q;
 
   assign fcov_mis_rvalid_1 = ls_fsm_cs inside {WAIT_RVALID_MIS, WAIT_RVALID_MIS_GNTS_DONE} &&
-                                data_rvalid_i;
+                                data_rvalid_i && !data_pmp_err_i;
 
   assign fcov_mis_rvalid_2 = ls_fsm_cs inside {IDLE} && fcov_mis_2_en_q && data_rvalid_i;
 
