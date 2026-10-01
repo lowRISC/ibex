@@ -13,6 +13,12 @@ filesets:
     file_type: cppSource
 
 parameters:
+  BaseIsa:
+    datatype: str
+    default: ibex_pkg::BaseIsaRV32I
+    paramtype: vlogdefine
+    description: "Base ISA parameter enum. See the ibex_pkg::base_isa_e enum in ibex_pkg.sv for permitted values."
+
   RV32E:
     datatype: int
     paramtype: vlogparam
@@ -138,6 +144,7 @@ targets:
       - files_simple_system
     toplevel: ibex_simple_system
     parameters:
+      - BaseIsa
       - RV32E
       - RV32M
       - RV32B
