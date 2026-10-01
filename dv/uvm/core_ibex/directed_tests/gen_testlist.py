@@ -97,6 +97,30 @@ def add_configs_and_handwritten_directed_tests():
   test_srcs: mcounteren_test/mcounteren_lock_test.S
   config: riscv-tests
 
+- test: dummy_instr_minstret_test
+  desc: >
+    Dummy instructions must not be counted in minstret: the minstret delta
+    over a fixed block is the same with dummies off, on and off again.
+  iterations: 1
+  test_srcs: dummy_instr_test/dummy_instr_minstret_test.S
+  config: riscv-tests
+  rtl_params:
+    PMPEnable: 1
+    SecureIbex: 1
+
+- test: dummy_instr_zcmp_test
+  desc: >
+    Dummy instructions must not disturb an expanded Zcmp sequence. Cosim
+    mismatches are not fatal because the cosim does not enable Zcmp.
+  iterations: 1
+  test_srcs: dummy_instr_test/dummy_instr_zcmp_test.S
+  config: riscv-tests
+  rtl_params:
+    PMPEnable: 1
+    SecureIbex: 1
+    RV32ZC: ["ibex_pkg::RV32ZcaZcmp", "ibex_pkg::RV32ZcaZcbZcmp"]
+  sim_opts: +disable_cosim=1
+
 - test: pmp_mseccfg_test_rlb1_l0_0_u0
   desc: >
     mseccfg test
@@ -432,13 +456,11 @@ def append_directed_testlist(tests, test_suite, test_suite_name, is_assembly):
 # Test-suite: {test_suite_name}
 '''.format(test_suite_name = test_suite_name)
     extension = '.S' if is_assembly else '.c'
-    extension_grep = ' | egrep .S' if is_assembly else ' | egrep .c'
 
     for test_group_name in tests:
-        available_tests = os.popen('ls '+test_suite+test_group_name+extension_grep).read()
-        available_testlist = []
-        for test in available_tests.split('\n')[:-1]:
-            available_testlist.append(test)
+        # Sorted, so the output does not depend on the locale.
+        available_testlist = sorted(f for f in os.listdir(test_suite + test_group_name)
+                                    if f.endswith(extension))
         for test_name_str in available_testlist:
             test_name = test_name_str.split(extension)[0]
             testlist_string = testlist_string + '''
@@ -455,11 +477,8 @@ def append_directed_testlist(tests, test_suite, test_suite_name, is_assembly):
         f.write(testlist_string)
 
 def list_tests(dir):
-    testlist_str = os.popen('ls '+dir).read()
-    testlist = []
-    for test in testlist_str.split('\n')[:-1]:
-        testlist.append(test)
-        print(testlist)
+    testlist = sorted(os.listdir(dir))
+    print(testlist)
     return testlist
 
 def _main() -> int:
