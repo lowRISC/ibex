@@ -110,8 +110,9 @@ class Cosim {
   // Set the state of the internal NMI (non-maskable interrupt) line.
   // Behaviour wise this is almost as same as external NMI case explained at
   // set_nmi method. Difference is that this one is a response from Ibex rather
-  // than an input.
-  virtual void set_nmi_int(bool nmi_int) = 0;
+  // than an input. `mtval` is what Ibex writes to mtval when it takes this NMI:
+  // the address of the access that failed its integrity check.
+  virtual void set_nmi_int(bool nmi_int, uint32_t mtval) = 0;
 
   // Set the debug request.
   //

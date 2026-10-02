@@ -711,7 +711,7 @@ void SpikeCosim::set_nmi(bool nmi) {
   }
 }
 
-void SpikeCosim::set_nmi_int(bool nmi_int) {
+void SpikeCosim::set_nmi_int(bool nmi_int, uint32_t mtval) {
   if (nmi_int && !nmi_mode && !processor->get_state()->debug_mode &&
       processor->halt_request != processor_t::HR_REGULAR) {
     processor->get_state()->nmi_int = true;
@@ -725,6 +725,9 @@ void SpikeCosim::set_nmi_int(bool nmi_int) {
     mstack.cause = processor->get_csr(CSR_MCAUSE);
 
     early_interrupt_handle();
+
+    // Spike's trap sets mtval to zero. Replace it with the address Ibex wrote.
+    set_csr(CSR_MTVAL, mtval);
   }
 }
 
