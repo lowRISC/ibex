@@ -34,6 +34,9 @@ bit                        enable_ecc_errors;
 bit   [IC_NUM_WAYS-1 : 0]  data_sel_line;
 bit   [IC_NUM_WAYS-1 : 0]  tag_sel_line;
 int   unsigned             dis_err_pct = 99;
+// The DUT's lookup state, connected in tb.sv
+logic                      lookup_valid;
+logic [IC_NUM_WAYS-1:0]    tag_match;
 
 clocking monitor_cb @(posedge clk);
   input  ic_tag_addr;
@@ -42,7 +45,7 @@ clocking monitor_cb @(posedge clk);
   input  ic_tag_wdata;
   input  ic_tag_rvalid;
   input  ic_tag_rdata_in;
-  output ic_tag_rdata_o;
+  input  ic_tag_rdata_o;
   input  ic_data_req;
   input  ic_data_gnt;
   input  ic_data_rvalid;
@@ -50,7 +53,7 @@ clocking monitor_cb @(posedge clk);
   input  ic_data_addr;
   input  ic_data_wdata;
   input  ic_data_rdata_in;
-  output ic_data_rdata_o;
+  input  ic_data_rdata_o;
   input  ecc_err;
   input  enable_ecc_errors;
 endclocking
@@ -96,17 +99,26 @@ always @(negedge clk) begin
   end
 end
 
-`ASSERT(TagErrChk_A, (& ic_tag_rvalid) && enable_ecc_errors && (tag_sel_line != 0) |-> ecc_err,
-        clk, rst_n)
+// The DUT flags an ECC error on a valid lookup that reads a corrupted tag in any way, or corrupted
+// data in the way that hit.
+logic [IC_NUM_WAYS-1:0] tag_err_inj, data_err_inj;
+logic                   ecc_err_allowed;
+assign tag_err_inj     = (enable_ecc_errors && (& ic_tag_rvalid)) ? tag_sel_line : '0;
+assign data_err_inj    = (enable_ecc_errors && (& ic_data_rvalid)) ? data_sel_line : '0;
+assign ecc_err_allowed = lookup_valid && ((|tag_err_inj) || (|(data_err_inj & tag_match)));
 
+`ASSERT(TagErrChk_A, lookup_valid && (|tag_err_inj) |-> ecc_err, clk, !rst_n)
+
+// Require the error only when the corrupted way is the only hit. A line held in two ways is
+// merged before the data ECC check, so that case is not checked here.
 for (genvar i = 0; i < IC_NUM_WAYS; i++) begin : g_data_assertion
   `ASSERT(DataErrChk_A,
-          (& ic_data_rvalid) && !$isunknown(ic_data_rdata_in[i]) && (data_sel_line[i]) &&
-          enable_ecc_errors |-> ecc_err,
-          clk,
-          rst_n)
+          lookup_valid && data_err_inj[i] && (tag_match == IC_NUM_WAYS'(1) << i) |-> ecc_err,
+          clk, !rst_n)
 end
 
-`ASSERT(TagValidChk_A, always (& ic_tag_rvalid == (| ic_tag_rvalid)), clk, rst_n)
-`ASSERT(DataValidChk_A, always (| ic_data_rvalid) == (& ic_data_rvalid), clk, rst_n)
+`ASSERT(NoUnexpectedErrChk_A, ecc_err |-> ecc_err_allowed, clk, !rst_n)
+
+`ASSERT(TagValidChk_A, always (& ic_tag_rvalid == (| ic_tag_rvalid)), clk, !rst_n)
+`ASSERT(DataValidChk_A, always (| ic_data_rvalid) == (& ic_data_rvalid), clk, !rst_n)
 endinterface
