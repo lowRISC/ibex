@@ -20,11 +20,20 @@ export SPIKE_PATH=$SPIKE_INSTALL_DIR/bin
 export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$SPIKE_INSTALL_DIR/lib/pkgconfig
 ```
 
-You will need the [RISC-V toolchain](https://github.com/riscv-collab/riscv-gnu-toolchain).
+You will need the [lowRISC RISC-V toolchain](https://github.com/lowRISC/lowrisc-toolchains/releases).
 You'll need to add this to your path and then also set the following environment variables:
 ```bash
-export RISCV_GCC=riscv32-unknown-elf-gcc
+export RISCV_TOOLCHAIN=/path/to/lowrisc-toolchain-rv32imcb
+export RISCV_GCC=riscv32-unknown-elf-clang
 export RISCV_OBJCOPY=riscv32-unknown-elf-objcopy
+```
+
+Some directed tests (e.g. the PMP/mseccfg tests) need headers and libraries
+that the above toolchain doesn't ship (it's Clang and binutils only, with no
+bundled C library or compiler runtime). For those, also set:
+```bash
+export RISCV_OLD_TOOLCHAIN_DIR=/path/to/lowrisc-toolchain-gcc-rv32imcb
+export RISCV_LIBGCC_DIR=$RISCV_OLD_TOOLCHAIN_DIR/lib/gcc/riscv32-unknown-elf/<gcc-version>
 ```
 
 ## Running tests
