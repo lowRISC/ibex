@@ -688,6 +688,22 @@ void SpikeCosim::misaligned_pmp_fixup() {
                   << top_pending_access_info.addr << std::endl;
         std::cout << std::dec;
 
+        // Ibex has done this store but Spike has not, so write the bytes the
+        // testbench memory accepted (it ignores stores with an error response).
+        if (top_pending_access_info.store && !top_pending_access_info.error) {
+          for (unsigned i = 0; i < 4; ++i) {
+            if (top_pending_access_info.be & (1u << i)) {
+              uint8_t mirror_byte = top_pending_access_info.data >> (8 * i);
+              if (!backdoor_write_mem(top_pending_access_info.addr + i, 1,
+                                      &mirror_byte)) {
+                errors.emplace_back(
+                    "Failed to mirror dropped misaligned store beat");
+                return;
+              }
+            }
+          }
+        }
+
         pending_dside_accesses.erase(pending_dside_accesses.begin());
       }
     }
@@ -1067,8 +1083,10 @@ bool SpikeCosim::pc_is_debug_ebreak(uint32_t pc) {
   // ebreak debug entry is controlled by the ebreakm (bit 15) and ebreaku (bit
   // 12) fields of DCSR. If the appropriate bit of the current privilege level
   // isn't set ebreak won't enter debug so return false.
-  if (((processor->get_state()->prv == PRV_M) && ((dcsr & 0x1000) == 0)) ||
-      ((processor->get_state()->prv == PRV_U) && ((dcsr & 0x8000) == 0))) {
+  if (((processor->get_state()->prv == PRV_M) &&
+       ((dcsr & DCSR_EBREAKM) == 0)) ||
+      ((processor->get_state()->prv == PRV_U) &&
+       ((dcsr & DCSR_EBREAKU) == 0))) {
     return false;
   }
 
