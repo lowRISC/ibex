@@ -122,6 +122,19 @@
     }
 
     {
+      name: ecc_back_line
+      desc: '''Insert ECC errors into lines held in two ways
+
+            Run the back_line test with ECC errors enabled. Branching back
+            into a line that is still being fetched can allocate it in a
+            second way. Check that an error in the way the cache reads from
+            is reported. An error for a corrupted copy in another matching
+            way is allowed but not required.'''
+      stage: V2
+      tests: ["ibex_icache_ecc_back_line"]
+    }
+
+    {
       name: stress_all
       desc: '''Run sequences back-to-back
 
