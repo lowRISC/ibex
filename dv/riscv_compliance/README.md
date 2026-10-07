@@ -18,7 +18,7 @@ How to run RISC-V Compliance on Ibex
    have the following tools installed:
    - Verilator
    - fusesoc
-   - srecord (for `srec_cat`)
+   - srecord (for `srec_cat`) - won't be needed once moved to a newer version.
    - A RV32 compiler
 
    On Ubuntu/Debian, install the required tools like this:
