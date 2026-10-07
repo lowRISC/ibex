@@ -271,6 +271,7 @@ module core_ibex_tb_top;
   assign rvfi_if.ext_post_mip         = dut.rvfi_ext_post_mip;
   assign rvfi_if.ext_nmi              = dut.rvfi_ext_nmi;
   assign rvfi_if.ext_nmi_int          = dut.rvfi_ext_nmi_int;
+  assign rvfi_if.ext_nmi_int_mtval    = dut.rvfi_ext_nmi_int_mtval;
   assign rvfi_if.ext_debug_req        = dut.rvfi_ext_debug_req;
   assign rvfi_if.ext_rf_wr_suppress   = dut.rvfi_ext_rf_wr_suppress;
   assign rvfi_if.ext_mcycle           = dut.rvfi_ext_mcycle;

@@ -167,6 +167,7 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   output logic [31:0]                  rvfi_ext_post_mip,
   output logic                         rvfi_ext_nmi,
   output logic                         rvfi_ext_nmi_int,
+  output logic [31:0]                  rvfi_ext_nmi_int_mtval,
   output logic                         rvfi_ext_debug_req,
   output logic                         rvfi_ext_debug_mode,
   output logic                         rvfi_ext_rf_wr_suppress,
@@ -1752,6 +1753,7 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   ibex_pkg::irqs_t captured_mip;
   logic            captured_nmi;
   logic            captured_nmi_int;
+  logic [31:0]     captured_nmi_int_mtval;
   logic            captured_debug_req;
   logic            captured_valid;
 
@@ -1761,6 +1763,7 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   ibex_pkg::irqs_t rvfi_ext_stage_post_mip            [RVFI_STAGES];
   logic            rvfi_ext_stage_nmi                 [RVFI_STAGES+1];
   logic            rvfi_ext_stage_nmi_int             [RVFI_STAGES+1];
+  logic [31:0]     rvfi_ext_stage_nmi_int_mtval       [RVFI_STAGES+1];
   logic            rvfi_ext_stage_debug_req           [RVFI_STAGES+1];
   logic            rvfi_ext_stage_debug_mode          [RVFI_STAGES];
   logic [63:0]     rvfi_ext_stage_mcycle              [RVFI_STAGES];
@@ -1835,6 +1838,7 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
 
   assign rvfi_ext_nmi                 = rvfi_ext_stage_nmi                 [RVFI_STAGES];
   assign rvfi_ext_nmi_int             = rvfi_ext_stage_nmi_int             [RVFI_STAGES];
+  assign rvfi_ext_nmi_int_mtval       = rvfi_ext_stage_nmi_int_mtval       [RVFI_STAGES];
   assign rvfi_ext_debug_req           = rvfi_ext_stage_debug_req           [RVFI_STAGES];
   assign rvfi_ext_debug_mode          = rvfi_ext_stage_debug_mode          [RVFI_STAGES-1];
   assign rvfi_ext_mcycle              = rvfi_ext_stage_mcycle              [RVFI_STAGES-1];
@@ -1940,12 +1944,13 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      captured_valid     <= 1'b0;
-      captured_mip       <= '0;
-      captured_nmi       <= 1'b0;
-      captured_nmi_int   <= 1'b0;
-      captured_debug_req <= 1'b0;
-      rvfi_irq_valid     <= 1'b0;
+      captured_valid         <= 1'b0;
+      captured_mip           <= '0;
+      captured_nmi           <= 1'b0;
+      captured_nmi_int       <= 1'b0;
+      captured_nmi_int_mtval <= '0;
+      captured_debug_req     <= 1'b0;
+      rvfi_irq_valid         <= 1'b0;
     end else  begin
       // Capture when ID stage has emptied out and something occurs that will cause a trap and we
       // haven't yet captured
@@ -1957,11 +1962,12 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
           ((~captured_valid) |
            (new_debug_req & ~captured_debug_req) |
            (new_nmi & ~captured_nmi & ~captured_debug_req))) begin
-        captured_valid     <= 1'b1;
-        captured_nmi       <= irq_nm_i;
-        captured_nmi_int   <= id_stage_i.controller_i.irq_nm_int;
-        captured_mip       <= cs_registers_i.mip;
-        captured_debug_req <= debug_req_i;
+        captured_valid         <= 1'b1;
+        captured_nmi           <= irq_nm_i;
+        captured_nmi_int       <= id_stage_i.controller_i.irq_nm_int;
+        captured_nmi_int_mtval <= id_stage_i.controller_i.irq_nm_int_mtval;
+        captured_mip           <= cs_registers_i.mip;
+        captured_debug_req     <= debug_req_i;
       end
 
       // When the pipeline has emptied in preparation for handling a new interrupt send
@@ -1994,6 +2000,7 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       rvfi_ext_stage_pre_mip[0]       <= '0;
       rvfi_ext_stage_nmi[0]       <= '0;
       rvfi_ext_stage_nmi_int[0]   <= '0;
+      rvfi_ext_stage_nmi_int_mtval[0] <= '0;
       rvfi_ext_stage_debug_req[0] <= '0;
       rvfi_ext_stage_irq_valid[0] <= '0;
     end else if ((if_stage_i.instr_valid_id_d & if_stage_i.instr_new_id_d) | rvfi_irq_valid) begin
@@ -2004,6 +2011,9 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       rvfi_ext_stage_nmi_int[0]   <=
         instr_valid_id | ~captured_valid ? id_stage_i.controller_i.irq_nm_int :
                                            captured_nmi_int;
+      rvfi_ext_stage_nmi_int_mtval[0] <=
+        instr_valid_id | ~captured_valid ? id_stage_i.controller_i.irq_nm_int_mtval :
+                                           captured_nmi_int_mtval;
       rvfi_ext_stage_debug_req[0] <= instr_valid_id | ~captured_valid ? debug_req_i        :
                                                                         captured_debug_req;
       rvfi_ext_stage_irq_valid[0] <= rvfi_irq_valid;
@@ -2043,6 +2053,7 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
         rvfi_ext_stage_post_mip[i]            <= '0;
         rvfi_ext_stage_nmi[i+1]               <= '0;
         rvfi_ext_stage_nmi_int[i+1]           <= '0;
+        rvfi_ext_stage_nmi_int_mtval[i+1]     <= '0;
         rvfi_ext_stage_debug_req[i+1]         <= '0;
         rvfi_ext_stage_irq_valid[i+1]         <= '0;
         rvfi_ext_stage_debug_mode[i]          <= '0;
@@ -2139,12 +2150,13 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
           // providing information along with a retired instruction. Move these up the rvfi pipeline
           // for both cases.
           if (rvfi_id_done | rvfi_ext_stage_irq_valid[i]) begin
-            rvfi_ext_stage_pre_mip[i+1]   <= rvfi_ext_stage_pre_mip[i];
-            rvfi_ext_stage_post_mip[i]    <= cs_registers_i.mip;
-            rvfi_ext_stage_nmi[i+1]       <= rvfi_ext_stage_nmi[i];
-            rvfi_ext_stage_nmi_int[i+1]   <= rvfi_ext_stage_nmi_int[i];
-            rvfi_ext_stage_debug_req[i+1] <= rvfi_ext_stage_debug_req[i];
-            rvfi_ext_stage_irq_valid[i+1] <= rvfi_ext_stage_irq_valid[i];
+            rvfi_ext_stage_pre_mip[i+1]       <= rvfi_ext_stage_pre_mip[i];
+            rvfi_ext_stage_post_mip[i]        <= cs_registers_i.mip;
+            rvfi_ext_stage_nmi[i+1]           <= rvfi_ext_stage_nmi[i];
+            rvfi_ext_stage_nmi_int[i+1]       <= rvfi_ext_stage_nmi_int[i];
+            rvfi_ext_stage_nmi_int_mtval[i+1] <= rvfi_ext_stage_nmi_int_mtval[i];
+            rvfi_ext_stage_debug_req[i+1]     <= rvfi_ext_stage_debug_req[i];
+            rvfi_ext_stage_irq_valid[i+1]     <= rvfi_ext_stage_irq_valid[i];
           end
         end else begin
           if (rvfi_wb_done) begin
@@ -2197,12 +2209,13 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
           // providing information along with a retired instruction. Move these up the rvfi pipeline
           // for both cases.
           if (rvfi_wb_done | rvfi_ext_stage_irq_valid[i]) begin
-            rvfi_ext_stage_pre_mip[i+1]   <= rvfi_ext_stage_pre_mip[i];
-            rvfi_ext_stage_post_mip[i]    <= rvfi_ext_stage_post_mip[i-1];
-            rvfi_ext_stage_nmi[i+1]       <= rvfi_ext_stage_nmi[i];
-            rvfi_ext_stage_nmi_int[i+1]   <= rvfi_ext_stage_nmi_int[i];
-            rvfi_ext_stage_debug_req[i+1] <= rvfi_ext_stage_debug_req[i];
-            rvfi_ext_stage_irq_valid[i+1] <= rvfi_ext_stage_irq_valid[i];
+            rvfi_ext_stage_pre_mip[i+1]       <= rvfi_ext_stage_pre_mip[i];
+            rvfi_ext_stage_post_mip[i]        <= rvfi_ext_stage_post_mip[i-1];
+            rvfi_ext_stage_nmi[i+1]           <= rvfi_ext_stage_nmi[i];
+            rvfi_ext_stage_nmi_int[i+1]       <= rvfi_ext_stage_nmi_int[i];
+            rvfi_ext_stage_nmi_int_mtval[i+1] <= rvfi_ext_stage_nmi_int_mtval[i];
+            rvfi_ext_stage_debug_req[i+1]     <= rvfi_ext_stage_debug_req[i];
+            rvfi_ext_stage_irq_valid[i+1]     <= rvfi_ext_stage_irq_valid[i];
           end
         end
       end
