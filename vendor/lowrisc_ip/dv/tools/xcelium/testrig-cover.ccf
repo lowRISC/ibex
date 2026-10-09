@@ -1,0 +1,11 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+
+// Include our normal coverage CCF.
+include_ccf ${dv_root}/tools/xcelium/cover.ccf
+
+// Disable coverage on the instruction fetch module as TestRIG uses
+// Direct Instruction Injection (DII) to bypass part of it,
+// contaminating the coverage.
+deselect_coverage -betfs -module ibex_if_stage...
