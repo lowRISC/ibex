@@ -64,6 +64,60 @@ module ibex_fetch_fifo #(
   logic                     instr_addr_en;
   logic                     unused_addr_in;
 
+`ifdef DII_SIM
+  // Direct Instruction Injection (DII) - used for TestRIG verification.
+  //
+  // In DII mode the testbench provides the full 32-bit instruction word
+  // regardless of address alignment, so bypass the two-word reconstruction
+  // and use the instruction directly from the first FIFO entry.
+  //   32-bit instruction: dii_insn[31:0] = instr
+  //   16-bit instruction: dii_insn[15:0] = compressed instruction
+
+  // External signals - assigned/read by hierarchical from in testbench.
+  logic [31:0] dii_insn;
+  logic [31:0] dii_pc;
+  logic        dii_ack;
+  // Internal signals
+  logic        dii_ack_int;
+  logic [31:0] dii_insn_prev;
+  logic        dii_have_prev;
+  logic        dii_seen_id_trap;
+  logic        dii_seen_wb_trap;
+  logic        dii_can_rewind;
+  logic        dii_rewind;
+  logic [31:0] dii_insn_muxed;
+
+  assign dii_pc      = out_addr_o;
+  assign dii_ack_int = out_ready_i && out_valid_o;
+  assign dii_ack     = dii_ack_int && !dii_rewind;
+
+  // Re-inject the previous instruction if it gets dropped from the
+  // IF-ID pipeline registers, as usually indicated by 'clear_i'.
+  // Do not rewind if we have no previous instruction, such as after reset.
+  // Do not rewind if the previous instruction was actually used,
+  // such as upon an exception in the ID stage or mret
+  // when not negated by an exception in the WB stage.
+  // Account for the possibility of two or more rewinds in a row.
+  always_ff @(posedge clk_i or negedge rst_ni) begin : dii_ff
+    if (!rst_ni) begin
+      dii_insn_prev    <= '0;
+      dii_have_prev    <= '0;
+      dii_seen_id_trap <= '0;
+      dii_seen_wb_trap <= '0;
+      dii_rewind       <= '0;
+    end else begin
+      dii_insn_prev    <= dii_ack ? dii_insn : dii_insn_prev;
+      dii_have_prev    <= dii_ack || dii_have_prev;
+      dii_seen_id_trap <= dii_ack_int ? '0 : (ibex_core.rvfi_trap_id || dii_seen_id_trap);
+      dii_seen_wb_trap <= dii_ack_int ? '0 : (ibex_core.rvfi_trap_wb || dii_seen_wb_trap);
+      dii_rewind       <= dii_can_rewind && (clear_i || (dii_rewind && !dii_ack_int));
+    end
+  end
+  assign dii_can_rewind = dii_have_prev &&
+                          (dii_seen_wb_trap || !(dii_seen_id_trap || id_stage_i.decoder_i.mret_insn_o));
+  assign dii_insn_muxed = dii_rewind ? dii_insn_prev : dii_insn;
+`endif
+
   /////////////////
   // Output port //
   /////////////////
@@ -107,22 +161,9 @@ module ibex_fetch_fifo #(
 
   // If there is an error, rdata is unknown
 `ifdef DII_SIM
-  logic [31:0] instr_rdata_dii;
-  logic [31:0] instr_pc;
-  logic        instr_ack;
-
-  // for DII we directly force out_rdata_o (re-aligned instruction)
-  // to keep the unaligned/aligned_is_compressed signals in sync
-  //   32-bit instruction; instr_rdata_dii[31:0] = instr
-  //   16-bit instruction: instr_rdata_dii[15:0] = compressed instruction
-  //                       instr_rdata_dii[31:0] = don't care
-
   assign unaligned_is_compressed = out_addr_o[1] & cheriot_force_uc_i
-                                 | ((instr_rdata_dii[1:0] != 2'b11) & ~err);
-  assign aligned_is_compressed   = ~out_addr_o[1] & (instr_rdata_dii[1:0] != 2'b11) & ~err;
-
-  assign instr_ack = out_ready_i & out_valid_o;
-  assign instr_pc  = out_addr_o;
+                                 | ((dii_insn_muxed[1:0] != 2'b11) & ~err);
+  assign aligned_is_compressed   = ~out_addr_o[1] & (dii_insn_muxed[1:0] != 2'b11) & ~err;
 `else
   assign unaligned_is_compressed = cheriot_force_uc_i | ((rdata[17:16] != 2'b11) & ~err);
   assign aligned_is_compressed   = (rdata[ 1: 0] != 2'b11) & ~err;
@@ -137,7 +178,7 @@ module ibex_fetch_fifo #(
       // unaligned case
 
 `ifdef DII_SIM
-     out_rdata_o      = instr_rdata_dii;
+      out_rdata_o     = dii_insn_muxed;
 `else
       out_rdata_o     = rdata_unaligned;
 `endif
@@ -152,7 +193,7 @@ module ibex_fetch_fifo #(
     end else begin
       // aligned case
 `ifdef DII_SIM
-     out_rdata_o      = instr_rdata_dii;
+      out_rdata_o     = dii_insn_muxed;
 `else
       out_rdata_o     = rdata;
 `endif
