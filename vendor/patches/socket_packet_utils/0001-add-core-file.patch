@@ -1,0 +1,23 @@
+diff --git a/socket_packet_utils.core b/socket_packet_utils.core
+new file mode 100644
+index 0000000..de7591f
+--- /dev/null
++++ b/socket_packet_utils.core
+@@ -0,0 +1,16 @@
++CAPI=2:
++name: "ucam:utils:socketpacketutils"
++description: "A collection of utilities for sending packets over sockets."
++
++filesets:
++  files_c:
++    files:
++      # There is no header file provided so this file will be '#include'd
++      - socket_packet_utils.c: {is_include_file: true}
++    file_type: cSource
++
++targets:
++  default:
++    description: "Default target; contains socket_packet_utils.c"
++    filesets:
++      - files_c
++

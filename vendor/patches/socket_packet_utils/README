@@ -1,0 +1,8 @@
+The patch here does not seem to be correctly applied by the vendor script, but
+can still be applied by running
+
+patch -p1 < ../patches/SocketPacketUtils/0001-add-core-file.patch
+
+inside the SocketPacketUtils directory within the vendor directory
+(ie inside ibex/vendor/SocketPacketUtils).
+

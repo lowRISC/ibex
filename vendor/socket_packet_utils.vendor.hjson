@@ -1,0 +1,11 @@
+{
+  name: "socket_packet_utils",
+  target_dir: "socket_packet_utils",
+
+  upstream: {
+    url: "https://github.com/CTSRD-CHERI/SocketPacketUtils",
+    rev: "41a3deefabb7a7bc66c0d7363a0e03a74b741d0c",
+  },
+
+  patch_dir: "patches/socket_packet_utils"
+}
