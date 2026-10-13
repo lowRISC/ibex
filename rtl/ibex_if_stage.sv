@@ -32,7 +32,8 @@ module ibex_if_stage import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   parameter lfsr_perm_t  RndCnstLfsrPerm      = RndCnstLfsrPermDefault,
   parameter bit          BranchPredictor      = 1'b0,
   parameter bit          MemECC               = 1'b0,
-  parameter int unsigned MemDataWidth         = MemECC ? 32 + 7 : 32
+  parameter int unsigned MemDataWidth         = MemECC ? 32 + 7 : 32,
+  parameter bit          RV32E                = 1'b0
 ) (
   input  logic                         clk_i,
   input  logic                         rst_ni,
@@ -532,6 +533,8 @@ module ibex_if_stage import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       .dummy_instr_mask_i   (dummy_instr_mask_i),
       .dummy_instr_seed_en_i(dummy_instr_seed_en_i),
       .dummy_instr_seed_i   (dummy_instr_seed_i),
+      .dummy_instr_16regs_i (RV32E || ((BaseIsa == BaseIsaRV32IorCHERIoT) &&
+                                       (cheriot_enable_i == IbexMuBiOn))),
       .fetch_valid_i        (fetch_valid),
       .id_in_ready_i        (id_in_ready_i),
       .insert_hold_i        (dummy_instr_hold),
