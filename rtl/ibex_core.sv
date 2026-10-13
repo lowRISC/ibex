@@ -543,7 +543,8 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     .BranchPredictor      (BranchPredictor),
     .MemECC               (MemECC),
     .MemDataWidth         (MemDataWidth),
-    .BaseIsa              (BaseIsa)
+    .BaseIsa              (BaseIsa),
+    .RV32E                (RV32E)
   ) if_stage_i (
     .clk_i (clk_i),
     .rst_ni(rst_ni),
