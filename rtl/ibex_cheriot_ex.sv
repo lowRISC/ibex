@@ -170,9 +170,7 @@ module ibex_cheriot_ex import ibex_cheriot_pkg::*; import ibex_pkg::*; #(
   logic               cpu_lsu_cheriot_err, cpu_lsu_is_cap;
 
   logic               illegal_scr_addr;
-  // verilator lint_off UNOPTFLAT
   logic               scr_legalization;
-  // verilator lint_on UNOPTFLAT
 
   decoded_cap_t       tfcap;
   perms_t             pmask;
