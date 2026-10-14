@@ -119,6 +119,6 @@ end
 
 `ASSERT(NoUnexpectedErrChk_A, ecc_err |-> ecc_err_allowed, clk, !rst_n)
 
-`ASSERT(TagValidChk_A, always (& ic_tag_rvalid == (| ic_tag_rvalid)), clk, !rst_n)
-`ASSERT(DataValidChk_A, always (| ic_data_rvalid) == (& ic_data_rvalid), clk, !rst_n)
+`ASSERT(TagValidChk_A, (& ic_tag_rvalid) == (| ic_tag_rvalid), clk, !rst_n)
+`ASSERT(DataValidChk_A, (| ic_data_rvalid) == (& ic_data_rvalid), clk, !rst_n)
 endinterface
