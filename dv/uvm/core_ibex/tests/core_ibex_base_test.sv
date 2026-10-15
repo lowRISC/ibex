@@ -305,16 +305,34 @@ class core_ibex_base_test extends uvm_test;
       @(posedge dut_vif.reset);
       `uvm_info(`gfn, "Reset now active", UVM_LOW)
       // Tear-down testbench components
-      // Flush FIFOs
+      // Flush FIFOs and the signature queue: their contents belong to the pre-reset run.
       item_collected_port.flush();
       irq_collected_port.flush();
+      test_done_port.flush();
+      signature_data_q.delete();
 
       @(negedge dut_vif.reset);
       `uvm_info(`gfn, "Reset now inactive", UVM_LOW)
       // Build-up testbench components
 
-      // Cosim must be re-initialized before loading the memory
-      env.reset();
+      // Cosim must be re-initialized before loading the memory. The scoreboard re-creates it in
+      // its own process, so wait until a new cosim generation exists.
+      begin
+        int unsigned cosim_gen = env.cosim_agent.scoreboard.cosim_generation;
+        env.reset();
+        fork begin
+          fork
+            wait (env.cosim_agent.scoreboard.cosim_generation != cosim_gen);
+            begin
+              clk_vif.wait_clks(1000);
+              `uvm_fatal(`gfn, "Cosim was not re-created after mid-test reset")
+            end
+          join_any
+          disable fork;
+        end join
+      end
+      // The new cosim starts with empty memory, so clear the DUT memory model to match.
+      mem.init();
       load_binary_to_mems(); // Backdoor-load, 0-time
     end
   endtask : handle_reset
