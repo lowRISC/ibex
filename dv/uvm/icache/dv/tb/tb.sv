@@ -96,9 +96,13 @@ module tb #(
       .ic_scr_key_valid_i  ( scramble_key_valid_q       ),
       .ic_scr_key_req_o    ( ic_scr_key_req             ),
 
-      // TODO: Probe this and verify functionality
       .ecc_error_o         ( ram_if.ecc_err             )
   );
+
+  // Lookup state used by the ECC checks in ram_if
+  assign ram_if.lookup_valid = dut.lookup_valid_ic1;
+  assign ram_if.lookup_addr  = dut.lookup_addr_ic1;
+  assign ram_if.tag_tweak    = dut.tag_tweak_lw_ic1;
 
   // Scramble key valid starts with OTP returning new valid key and stays high
   // until we request a new valid key.
