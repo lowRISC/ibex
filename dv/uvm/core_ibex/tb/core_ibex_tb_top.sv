@@ -227,9 +227,11 @@ module core_ibex_tb_top;
   end
 
   if (BaseIsa == ibex_pkg::BaseIsaRV32IorCHERIoT) begin : g_trvk_assert_ctrl
-    // Disable TRVK's alignment FIFO assertion alongside the other spurious response checks.
+    // Disable TRVK's FIFO assertions alongside the other spurious response checks.
     `DV_ASSERT_CTRL("tb_no_spurious_response",
       core_ibex_tb_top.dut.u_ibex_top.gen_cheriot_trvk.i_ibex_trvk.AlignValidOnRsp_A)
+    `DV_ASSERT_CTRL("tb_no_spurious_response",
+      core_ibex_tb_top.dut.u_ibex_top.gen_cheriot_trvk.i_ibex_trvk.DsRspFifoNoOverflow_A)
   end
 
 `ifndef DV_FCOV_DISABLE
