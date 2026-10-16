@@ -88,11 +88,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786372443,
-        "narHash": "sha256-remtZOOf+RtqgWFDYDvLd01KyzDexeWhBBdeDlbFDgw=",
+        "lastModified": 1790947286,
+        "narHash": "sha256-ebAZY4IfMhYHLi+hoVgT1TMbBD4p5k21R1nyXHHo0Q0=",
         "owner": "lowrisc",
         "repo": "lowrisc-nix",
-        "rev": "8479a3130685816b8c3cdd484a0f583fa2d8e4d1",
+        "rev": "f351b9070f324c5b84bf3c0f531bedef510d950b",
         "type": "github"
       },
       "original": {
