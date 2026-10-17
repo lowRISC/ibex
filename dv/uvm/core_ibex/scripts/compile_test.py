@@ -153,7 +153,8 @@ def get_directed_compile_cmds(md: RegressionMetadata, trr: TestRunResult) -> Lis
     """Construct the build/compilation commands from the directed_testlist data."""
 
     env = os.environ.copy()
-    for e in ['RISCV_TOOLCHAIN', 'RISCV_GCC', 'RISCV_OBJCOPY']:
+    for e in ['RISCV_TOOLCHAIN', 'RISCV_GCC', 'RISCV_OBJCOPY',
+              'RISCV_OLD_TOOLCHAIN_DIR', 'RISCV_LIBGCC_DIR']:
         if e not in env:
             raise RuntimeError("Missing required environment variables for the RISCV TOOLCHAIN")
 
@@ -161,13 +162,25 @@ def get_directed_compile_cmds(md: RegressionMetadata, trr: TestRunResult) -> Lis
     trr.objectfile = trr.dir_test/'test.o'
     trr.binary = trr.dir_test/'test.bin'
 
+    # The LLVM toolchain ships no C library or compiler runtime. Some
+    # directed tests (e.g. the epmp-tests, via their vendored syscalls.c or
+    # 64-bit division helpers) need headers and archives that used to come
+    # bundled with GCC's newlib/libgcc, so pull those in from the old GCC
+    # toolchain instead. Harmless to add for tests that don't need them:
+    # unreferenced archive members are never pulled into the link.
+    old_toolchain_extra_flags = [
+        f"-isystem{env.get('RISCV_OLD_TOOLCHAIN_DIR')}/riscv32-unknown-elf/include",
+        f"-L{env.get('RISCV_OLD_TOOLCHAIN_DIR')}/riscv32-unknown-elf/lib", "-lm",
+        f"-L{env.get('RISCV_LIBGCC_DIR')}", "-lgcc",
+    ]
+
     # Compose the compilation commands
     riscv_gcc_cmd = " ".join([env.get('RISCV_GCC'),
                               trr.directed_data.get('gcc_opts'),
                               f"-I{trr.directed_data.get('includes')}",
                               f"-T{trr.directed_data.get('ld_script')}",
                               f"-o {trr.objectfile}",
-                              f"{trr.assembly}"])
+                              f"{trr.assembly}"] + old_toolchain_extra_flags)
     riscv_gcc_bin_cmd = " ".join([env.get('RISCV_OBJCOPY'),
                                   f"-O binary {trr.objectfile}",
                                   f"{trr.binary}"])
