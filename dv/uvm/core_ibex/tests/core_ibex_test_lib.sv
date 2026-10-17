@@ -214,9 +214,26 @@ class core_ibex_rf_addr_intg_test extends core_ibex_base_test;
 
   uvm_report_server rs;
 
+  // Read the data stored in the RF flops for register `addr`.
+  protected function logic [31:0] read_rf_data(string rf_path, logic [4:0] addr);
+    logic [31:0] val = '0;
+    if (uvm_hdl_check_path({rf_path, ".g_cheriot_rf.rf_data[0]"})) begin
+      if (!addr[4]) begin
+        void'(uvm_hdl_read($sformatf("%s.g_cheriot_rf.rf_data[%0d]", rf_path, addr[3:0]), val));
+      end else begin
+        void'(uvm_hdl_read($sformatf("%s.g_cheriot_rf.rf_shared[%0d]", rf_path, addr[3:0]), val));
+      end
+    end else begin
+      void'(uvm_hdl_read($sformatf("%s.g_plain_rf.rf_reg[%0d]", rf_path, addr), val));
+    end
+    return val;
+  endfunction
+
   virtual task send_stimulus();
     int          rnd_delay;
     int unsigned bit_idx;
+    int unsigned num_tries;
+    int unsigned max_tries = 20;
     logic [31:0] orig_val, glitch_val;
     logic [1:0]  ecc_err;
     string       glitch_path, ecc_alert_path, lockstep_delay_path;
@@ -263,14 +280,23 @@ class core_ibex_rf_addr_intg_test extends core_ibex_base_test;
     vseq.start(env.vseqr);
     clk_vif.wait_n_clks(rnd_delay);
 
-    `uvm_info(`gfn, $sformatf("Reading value of %s", glitch_path), UVM_LOW)
-    `DV_CHECK_FATAL(uvm_hdl_read(glitch_path, orig_val));
-    `uvm_info(`gfn, $sformatf("Read %x", orig_val), UVM_LOW)
+    // The ECC check only fails if the original and glitched registers hold different data. Retry
+    // until we find such a pair, the CPU keeps executing in the meantime.
+    for (num_tries = 0; num_tries < max_tries; num_tries++) begin
+      `uvm_info(`gfn, $sformatf("Reading value of %s", glitch_path), UVM_LOW)
+      `DV_CHECK_FATAL(uvm_hdl_read(glitch_path, orig_val));
+      `uvm_info(`gfn, $sformatf("Read %x", orig_val), UVM_LOW)
 
-    `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(bit_idx, bit_idx < 5;)
+      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(bit_idx, bit_idx < 5;)
 
-    glitch_val = orig_val;
-    glitch_val[bit_idx] = ~glitch_val[bit_idx];
+      glitch_val = orig_val;
+      glitch_val[bit_idx] = ~glitch_val[bit_idx];
+
+      if (read_rf_data(ibex_rf_path, orig_val[4:0]) !=
+          read_rf_data(ibex_rf_path, glitch_val[4:0])) break;
+      clk_vif.wait_n_clks(100);
+    end
+    `DV_CHECK_FATAL(num_tries < max_tries, "Could not find a register pair holding different data")
 
     // Disable TB assertion for alerts.
     `DV_ASSERT_CTRL_REQ("tb_no_alerts_triggered", 1'b0)
