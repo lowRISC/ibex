@@ -80,8 +80,7 @@ $(Vtb_cs_registers):
 
 .PHONY: run-csr-test
 run-csr-test: | $(Vtb_cs_registers)
-	fusesoc --cores-root=. run --target=sim --run \
-	      --tool=verilator lowrisc:ibex:tb_cs_registers
+	cd $(dir $(Vtb_cs_registers)) && ./$(notdir $(Vtb_cs_registers))
 
 # Echo the parameters passed to fusesoc for the chosen IBEX_CONFIG
 .PHONY: test-cfg
