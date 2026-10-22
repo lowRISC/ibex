@@ -603,11 +603,15 @@ Other bit fields read as zero.
 | Bit#  | R/W  | Description                                                      |
 +=======+======+==================================================================+
 | 8     | R    | **ic_scr_key_valid:** The icache scrambling key is valid. A      |
-|       |      | ``fence.i`` instruction is guaranteed to fetch a new key. If     |
-|       |      | the instruction cache has not been configured or the core has    |
-|       |      | not been configured with security features  (ICache parameter    |
-|       |      | == 0 or SecureIbex parameter == 0), this field will always read  |
-|       |      | as zero. (see :ref:`icache-scramble-key`)                        |
+|       |      | ``fence.i`` instruction is guaranteed to fetch a new key. This   |
+|       |      | field reads as one out of reset, while the key is still          |
+|       |      | ``RndCnstIbexKey``. It only reports that the most recent key     |
+|       |      | request handshake has completed, not where the key came from.    |
+|       |      | If the instruction cache has not been configured (ICache         |
+|       |      | parameter == 0), this field will always read as zero. If the     |
+|       |      | instruction cache has been configured without scrambling         |
+|       |      | (ICacheScramble parameter == 0), this field will always read as  |
+|       |      | one. (see :ref:`icache-scramble-key`)                            |
 +-------+------+------------------------------------------------------------------+
 | 7     | RW   | **double_fault_seen:** A synchronous exception was observed when |
 |       |      | the ``sync_exc_seen`` field was set. This field must be manually |
