@@ -623,8 +623,8 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   if (ICacheScramble) begin : gen_scramble
 
     // SEC_CM: ICACHE.MEM.SCRAMBLE
-    // Scramble key valid starts with OTP returning new valid key and stays high
-    // until we request a new valid key.
+    // Scramble key valid resets high with the RndCnstIbexKey default key. It goes low when a new
+    // key is requested and high again when the key provider acknowledges the request.
     assign scramble_key_valid_d = scramble_req_q ? scramble_key_valid_i :
                                   ic_scr_key_req ? 1'b0                 :
                                                    scramble_key_valid_q;

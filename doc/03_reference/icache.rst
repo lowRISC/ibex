@@ -99,8 +99,14 @@ ICache Scrambling
 If ICacheScramble parameter is enabled, all RAM primitives are replaced with scrambling RAM primitive.
 For more information about how scrambling works internally (see :file:`vendor/lowrisc_ip/ip/prim/doc/prim_ram_1p_scr.md`).
 Interface for receiving scrambling key follows req / ack protocol.
-Ibex first requests a new ephemeral key by asserting the request (``scramble_req_o``) and when a fresh valid key is indicated by ``scramble_key_valid_i``, it deasserts the request.
+To request a new ephemeral key Ibex asserts the request (``scramble_req_o``) and when a fresh valid key is indicated by ``scramble_key_valid_i``, it deasserts the request.
 Note that in current implementation, it is assumed req/ack protocol is synchronized before arriving to Ibex top level.
+
+Out of reset the key holds ``RndCnstIbexKey`` (and the nonce ``RndCnstIbexNonce``) and ``ic_scr_key_valid`` reads 1.
+No key is requested until the first FENCE.I, so software that needs a key from the key provider executes FENCE.I first (see :ref:`icache-scramble-key`).
+
+``scramble_key_valid_i`` acts as the acknowledge of the req / ack handshake, and the ``ic_scr_key_valid`` bit only reports that the handshake has completed.
+It does not indicate where the key came from, for example whether the key provider derived it from a provisioned seed.
 
 .. _icache-scramble-key:
 
@@ -119,6 +125,7 @@ Should a second FENCE.I be executed before the first invalidation completes ther
    The invalidation stops and a new scramble key requested and the process starts over.
 
 To guarantee a new scramble key ensure the ``ic_scr_key_valid`` bit in the ``cpuctrlsts`` CSR is set before executing the FENCE.I instruction.
+The new key is in use once ``ic_scr_key_valid`` reads 1 again after the FENCE.I.
 
 Sub Unit Description
 --------------------
