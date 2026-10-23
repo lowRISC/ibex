@@ -27,7 +27,7 @@ def create_dvsim_report_dict(tool: str, block_name: str, block_variant: str,
 
     if cov_summary_dict:
         dvsim_cov_summary_dict = {cov_name: cov_value * 100 for cov_name, cov_value
-                in cov_summary_dict.items()}
+                in cov_summary_dict.items() if cov_value is not None}
     else:
         dvsim_cov_summary_dict = {}
 
