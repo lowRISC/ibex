@@ -111,6 +111,8 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
                                                           // part of a misaligned access
   logic         pmp_err_q, pmp_err_d;
   logic         lsu_err_q, lsu_err_d;
+  logic         lsu_intg_err_q, lsu_intg_err_d; // integrity error on the first response of a split
+                                                // access
   logic         data_intg_err, data_or_pmp_err;
 
   logic         resp_is_cap_q;
@@ -416,6 +418,7 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     handle_misaligned_d = handle_misaligned_q;
     pmp_err_d           = pmp_err_q;
     lsu_err_d           = lsu_err_q;
+    lsu_intg_err_d      = lsu_intg_err_q;
     cheriot_err_d       = cheriot_err_q & (cheriot_enable_i == IbexMuBiOn);
 
     addr_update         = 1'b0;
@@ -437,15 +440,16 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
         if ((BaseIsa == BaseIsaRV32IorCHERIoT) & (cheriot_enable_i == IbexMuBiOn) &
             cpu_req_erred) begin
           // cheriot access error: don't issue data_req; send error response back to WB stage
-          data_req_o    = 1'b0;
-          cheriot_err_d = 1'b1;
-          ctrl_update   = 1'b1;         // update ctrl/address so we can report error correctly
-          addr_update   = 1'b1;
-          pmp_err_d     = 1'b0;
-          lsu_err_d     = 1'b0;
-          perf_load_o   = 1'b0;
-          lsu_go        = 1'b1;         // decision to move forward with a request
-          ls_fsm_ns     = IDLE;
+          data_req_o     = 1'b0;
+          cheriot_err_d  = 1'b1;
+          ctrl_update    = 1'b1;         // update ctrl/address so we can report error correctly
+          addr_update    = 1'b1;
+          pmp_err_d      = 1'b0;
+          lsu_err_d      = 1'b0;
+          lsu_intg_err_d = 1'b0;
+          perf_load_o    = 1'b0;
+          lsu_go         = 1'b1;         // decision to move forward with a request
+          ls_fsm_ns      = IDLE;
         end else if ((BaseIsa == BaseIsaRV32IorCHERIoT) & (cheriot_enable_i == IbexMuBiOn) &
             cpu_req_valid & lsu_is_cap_i) begin
           // normal cap access case
@@ -453,6 +457,7 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
           cheriot_err_d  = 1'b0;
           pmp_err_d      = data_pmp_err_i;
           lsu_err_d      = 1'b0;
+          lsu_intg_err_d = 1'b0;
           perf_load_o    = ~lsu_we_i;
           perf_store_o   = lsu_we_i;
           lsu_go         = 1'b1;         // decision to move forward with a request
@@ -467,13 +472,14 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
           end
         end else if (cpu_req_valid) begin
           // normal data access case
-          data_req_o    = 1'b1;
-          cheriot_err_d = 1'b0;
-          pmp_err_d     = data_pmp_err_i;
-          lsu_err_d     = 1'b0;
-          perf_load_o   = ~lsu_we_i;
-          perf_store_o  = lsu_we_i;
-          lsu_go        = 1'b1;         // decision to move forward with a request
+          data_req_o     = 1'b1;
+          cheriot_err_d  = 1'b0;
+          pmp_err_d      = data_pmp_err_i;
+          lsu_err_d      = 1'b0;
+          lsu_intg_err_d = 1'b0;
+          perf_load_o    = ~lsu_we_i;
+          perf_store_o   = lsu_we_i;
+          lsu_go         = 1'b1;         // decision to move forward with a request
 
           if (data_gnt_i) begin
             ctrl_update         = 1'b1;
@@ -512,6 +518,7 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
           pmp_err_d = data_pmp_err_i;
           // Record the error status of the first part
           lsu_err_d = data_bus_err_i | pmp_err_q;
+          lsu_intg_err_d = data_intg_err & data_rvalid_i;
           // Capture the first rdata for loads
           rdata_update = ~data_we_q;
           // If already granted, wait for second rvalid
@@ -553,6 +560,7 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
           pmp_err_d = data_pmp_err_i;
           // The first part cannot see a PMP error in this state
           lsu_err_d = data_bus_err_i;
+          lsu_intg_err_d = data_intg_err;
           // Now we can update the address for the second part if no error
           addr_update = ~data_bus_err_i;
           // Capture the first rdata for loads
@@ -639,6 +647,7 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       handle_misaligned_q <= '0;
       pmp_err_q           <= '0;
       lsu_err_q           <= '0;
+      lsu_intg_err_q      <= 1'b0;
       resp_is_cap_q       <= 1'b0;
       resp_lc_clrperm_q   <= '0;
       cheriot_err_q       <= 1'b0;
@@ -651,6 +660,7 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       handle_misaligned_q <= handle_misaligned_d;
       pmp_err_q           <= pmp_err_d;
       lsu_err_q           <= lsu_err_d;
+      lsu_intg_err_q      <= lsu_intg_err_d;
       cheriot_err_q       <= cheriot_err_d;
 
       cap_rx_fsm_q        <= cap_rx_fsm_d;
@@ -694,8 +704,9 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   assign lsu_resp_valid_o   = all_resp & (ls_fsm_cs == IDLE);
 
   // this goes to wb as rf_we_lsu, so needs to be gated when data needs to go back to EX
+  // An integrity error on the first response of a split access also suppresses the write.
   assign lsu_rdata_valid_o  = (ls_fsm_cs == IDLE) & data_rvalid_i & ~data_or_pmp_err & ~data_we_q &
-                              ~data_intg_err;
+                              ~data_intg_err & ~lsu_intg_err_q;
 
   // output to register file
   if (BaseIsa == BaseIsaRV32IorCHERIoT) begin : gen_memcap_rd
@@ -753,7 +764,9 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   // The data_intg_err signal is generated combinatorially from the incoming data_rdata_i. Were it
   // to be factored into load_err_o there would be a feedthrough path from data_rdata_i to
   // data_req_o which is undesirable.
-  assign load_resp_intg_err_o  = data_intg_err & data_rvalid_i & ~data_we_q;
+  // A first-response integrity error of a split access is reported again with the last response,
+  // where the register write is suppressed. The controller ignores it while the NMI is pending.
+  assign load_resp_intg_err_o  = (data_intg_err | lsu_intg_err_q) & data_rvalid_i & ~data_we_q;
   assign store_resp_intg_err_o = data_intg_err & data_rvalid_i & data_we_q;
 
   // Send to controller for mcause encoding.
