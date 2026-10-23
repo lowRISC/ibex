@@ -174,6 +174,7 @@ module ibex_controller import ibex_pkg::*; #(
   logic enter_debug_mode_prio_d;
   logic enter_debug_mode_prio_q;
   logic enter_debug_mode;
+  logic trigger_cause;
   logic ebreak_into_debug;
   logic irq_enabled;
   logic handle_irq;
@@ -519,7 +520,11 @@ module ibex_controller import ibex_pkg::*; #(
   // The decision to enter debug_mode and the write of the cause to DCSR happen
   // in separate steps within the FSM. Hence, there are a small number of cycles
   // where a change in external stimulus can cause the cause to be recorded incorrectly.
-  assign debug_cause_d = trigger_match_i                    ? DBG_CAUSE_TRIGGER :
+  // Trigger matches do not cause debug entry from FLUSH. A completed single step enters debug
+  // mode before the next instruction's trigger can fire.
+  assign trigger_cause = trigger_match_i & (ctrl_fsm_cs != FLUSH) & ~do_single_step_d;
+
+  assign debug_cause_d = trigger_cause                      ? DBG_CAUSE_TRIGGER :
                          ebrk_insn_prio & ebreak_into_debug ? DBG_CAUSE_EBREAK  :
                          debug_req_i                        ? DBG_CAUSE_HALTREQ :
                          do_single_step_d                   ? DBG_CAUSE_STEP    :
