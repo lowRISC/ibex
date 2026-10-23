@@ -29,7 +29,7 @@ void riscv_cosim_set_ic_scr_key_valid(Cosim *cosim, svBit valid);
 void riscv_cosim_notify_dside_access(Cosim *cosim, svBit store,
                                      svBitVecVal *addr, svBitVecVal *data,
                                      svBitVecVal *be, svBit error,
-                                     svBit misaligned_first,
+                                     svBit intg_error, svBit misaligned_first,
                                      svBit misaligned_second,
                                      svBit misaligned_first_saw_error,
                                      svBit m_mode_access);
