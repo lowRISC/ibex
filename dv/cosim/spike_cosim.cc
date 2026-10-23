@@ -41,6 +41,9 @@ SpikeCosim::SpikeCosim(const std::string &isa_string, uint32_t start_pc,
                        uint32_t dm_end_addr)
     : nmi_mode(false),
       pending_iside_error(false),
+      intg_err_pending(false),
+      intg_err_addr(0),
+      load_intg_err_seen(false),
       insn_cnt(0),
       mhpm_counter_num(mhpm_counter_num) {
   FILE *log_file = nullptr;
@@ -221,6 +224,7 @@ bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
   // A trap on a stepped instruction enters debug mode within this step, but
   // the cpuctrlsts update depends on the mode the trap was taken in.
   bool initial_spike_debug_mode = processor->get_state()->debug_mode;
+  load_intg_err_seen = false;
   processor->step(1);
 
   // ISS
@@ -309,6 +313,22 @@ bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
     return false;
   }
   pending_iside_error = false;
+
+  // Loads suppress their register write if and only if they saw an integrity
+  // error
+  if (suppress_reg_write != load_intg_err_seen) {
+    std::stringstream err_str;
+    if (suppress_reg_write) {
+      err_str << "DUT suppressed the register write of the load at PC: "
+              << std::hex << pc << " but it saw no integrity error";
+    } else {
+      err_str << "Load at PC: " << std::hex << pc
+              << " saw an integrity error but the DUT didn't suppress its "
+                 "register write";
+    }
+    errors.emplace_back(err_str.str());
+    return false;
+  }
 
   if (suppress_reg_write) {
     // If we suppressed a register write restore the old register state now
@@ -691,9 +711,27 @@ void SpikeCosim::misaligned_pmp_fixup() {
                   << top_pending_access_info.addr << std::endl;
         std::cout << std::dec;
 
+        // Ibex reports the first half's address (the access fault address)
+        if (top_pending_access_info.intg_error) {
+          record_intg_error(top_pending_access_info.store,
+                            processor->get_csr(CSR_MTVAL));
+        }
+
         pending_dside_accesses.erase(pending_dside_accesses.begin());
       }
     }
+  }
+}
+
+void SpikeCosim::record_intg_error(bool store, uint32_t mtval_addr) {
+  if (!store) {
+    load_intg_err_seen = true;
+  }
+
+  // Further errors are ignored while one is pending
+  if (!intg_err_pending) {
+    intg_err_pending = true;
+    intg_err_addr = mtval_addr;
   }
 }
 
@@ -728,6 +766,15 @@ void SpikeCosim::set_nmi_int(bool nmi_int) {
     mstack.cause = processor->get_csr(CSR_MCAUSE);
 
     early_interrupt_handle();
+
+    // Spike's trap sets mtval to zero, Ibex sets it to the error address
+    if (intg_err_pending) {
+      intg_err_pending = false;
+      set_csr(CSR_MTVAL, intg_err_addr);
+    } else {
+      errors.emplace_back(
+          "DUT took an internal NMI but no dside integrity error was seen");
+    }
   }
 }
 
@@ -908,6 +955,8 @@ SpikeCosim::check_mem_result_e SpikeCosim::check_mem_access(
   bool pending_access_done = false;
   bool misaligned = top_pending_access_info.misaligned_first ||
                     top_pending_access_info.misaligned_second;
+  // Spike accesses misaligned data byte by byte in ascending order
+  bool first_spike_access = !misaligned || (top_pending_access.be_spike == 0);
 
   if (misaligned) {
     // For misaligned accesses spike will generated multiple single byte
@@ -963,6 +1012,13 @@ SpikeCosim::check_mem_result_e SpikeCosim::check_mem_access(
     }
 
     pending_access_done = true;
+  }
+
+  // For an integrity error Ibex reports the address of the first byte spike
+  // touches (the word aligned address for the second half of a misaligned
+  // access)
+  if (first_spike_access && top_pending_access_info.intg_error) {
+    record_intg_error(store, addr);
   }
 
   // Check data from expected access matches pending DUT access.
@@ -1035,6 +1091,12 @@ SpikeCosim::check_mem_result_e SpikeCosim::check_mem_access(
       }
 
       // TODO: How to check BE? May need length of transaction?
+
+      // Spike never touches the second half, Ibex reports the first half's
+      // address for an integrity error on it
+      if (pending_dside_accesses[1].dut_access_info.intg_error) {
+        record_intg_error(store, addr);
+      }
 
       // Remove the top pending access now so both the first and second DUT
       // accesses for this misaligned access are removed.
