@@ -581,6 +581,7 @@ module ibex_lockstep import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     .rvfi_ext_post_mip            (),
     .rvfi_ext_nmi                 (),
     .rvfi_ext_nmi_int             (),
+    .rvfi_ext_nmi_int_mtval       (),
     .rvfi_ext_debug_req           (),
     .rvfi_ext_debug_mode          (),
     .rvfi_ext_rf_wr_suppress      (),
