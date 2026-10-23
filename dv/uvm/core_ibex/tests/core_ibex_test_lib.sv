@@ -432,6 +432,9 @@ class core_ibex_icache_intg_test extends core_ibex_base_test;
   `uvm_component_new
 
   string ibex_top_path = "core_ibex_tb_top.dut.u_ibex_top";
+  string main_icache_path = "u_ibex_core.if_stage_i.gen_icache.icache_i";
+  string shadow_icache_path =
+      "gen_lockstep.u_ibex_lockstep.u_shadow_core.if_stage_i.gen_icache.icache_i";
 
   int unsigned num_ways, num_entries, tag_size, line_size;
 
@@ -460,6 +463,26 @@ class core_ibex_icache_intg_test extends core_ibex_base_test;
   function automatic void release_force(string subpath);
     string path = $sformatf("%s.%s", ibex_top_path, subpath);
     `DV_CHECK_FATAL(uvm_hdl_release(path))
+  endfunction
+
+  // Read a core's IC1 lookup state. The tag match only has to be known for a valid lookup.
+  function automatic void read_lookup(string icache_path, output logic valid,
+                                      output logic [ibex_pkg::IC_NUM_WAYS-1:0] match);
+    uvm_hdl_data_t lookup_valid = read_data({icache_path, ".lookup_valid_ic1"});
+    uvm_hdl_data_t tag_match = read_data({icache_path, ".tag_match_ic1"});
+    valid = lookup_valid[0];
+    match = tag_match[ibex_pkg::IC_NUM_WAYS-1:0];
+    `DV_CHECK_FATAL(!$isunknown(valid))
+    if (valid) begin
+      `DV_CHECK_FATAL(!$isunknown(match))
+    end
+  endfunction
+
+  // ECC is only checked on a lookup. The cache also reads its RAMs while it is disabled.
+  function automatic bit read_is_lookup();
+    uvm_hdl_data_t lookup = read_data($sformatf("%s.lookup_actual_ic0", main_icache_path));
+    `DV_CHECK_FATAL(!$isunknown(lookup[0]))
+    return lookup[0];
   endfunction
 
   virtual function void build_phase(uvm_phase phase);
@@ -528,8 +551,8 @@ class core_ibex_icache_intg_test extends core_ibex_base_test;
       data_req = dut_vif.signal_probe_ic_data_req(dv_utils_pkg::SignalProbeSample);
       data_write = dut_vif.signal_probe_ic_data_write(dv_utils_pkg::SignalProbeSample);
 
-      // Check if at least one data way is being read.
-      if (data_req != '0 && data_write == 1'b0) begin
+      // Check if at least one data way is being read for a lookup.
+      if (data_req != '0 && data_write == 1'b0 && read_is_lookup()) begin
         int unsigned valid_and_used_ways[$];
 
         // Probe the data address.
@@ -546,15 +569,26 @@ class core_ibex_icache_intg_test extends core_ibex_base_test;
         // Check if at least one data way is valid and used.
         if (valid_and_used_ways.size() > 0) begin
           int unsigned way_idx, bit_idx;
-          uvm_hdl_data_t data_rdata, mask, lookup_valid, tag_hit, alert_minor;
+          uvm_hdl_data_t data_rdata, mask, alert_minor;
+          logic main_valid, shadow_valid;
+          logic [ibex_pkg::IC_NUM_WAYS-1:0] main_match, shadow_match;
           logic exp_alert_minor;
+
+          // If several ways hit, the cache merges their data before the ECC check, which can
+          // hide the flipped bit. The shadow core repeats this lookup, so skip it for both.
+          read_lookup(main_icache_path, main_valid, main_match);
+          `DV_CHECK_FATAL(main_valid, "The corrupted read is not a main core lookup")
+          if (main_valid && $countones(main_match) > 1) begin
+            `uvm_info(`gfn, "Several I$ ways hit, waiting for another read", UVM_LOW)
+            continue;
+          end
 
           `uvm_info(`gfn,
               $sformatf("The following I$ data ways are valid and used in this clock cycle: %p",
                         valid_and_used_ways), UVM_LOW)
 
           // Pick a way to corrupt.
-          way_idx = $urandom_range(valid_and_used_ways.size() - 1);
+          way_idx = valid_and_used_ways[$urandom_range(valid_and_used_ways.size() - 1)];
           `uvm_info(`gfn, $sformatf("Corrupting data way %0d", way_idx), UVM_LOW)
 
           // Probe response data.
@@ -574,23 +608,24 @@ class core_ibex_icache_intg_test extends core_ibex_base_test;
           // Force the corrupt value.
           force_data($sformatf("ic_data_rdata[%0d]", way_idx), data_rdata);
 
-          // Give the DUT one clock cycle to react.
+          // The main core handles the read in this cycle: check its alert at the next rising edge.
+          exp_alert_minor = main_valid & main_match[way_idx];
+          @(dut_vif.dut_cb);
+          `DV_CHECK_EQ_FATAL(dut_vif.dut_cb.alert_minor, exp_alert_minor)
+
+          // The shadow core captured the forced rdata at that edge and handles it in this cycle.
+          // Release the force, so that only the shadow sees it.
+          release_force($sformatf("ic_data_rdata[%0d]", way_idx));
           clk_vif.wait_n_clks(1);
 
-          // Decide if an error is expected: if the lookup is valid and the tag hit.
-          lookup_valid = read_data($sformatf(
-              "u_ibex_core.if_stage_i.gen_icache.icache_i.lookup_valid_ic1"));
-          tag_hit = read_data($sformatf(
-              "u_ibex_core.if_stage_i.gen_icache.icache_i.tag_hit_ic1"));
-          exp_alert_minor = lookup_valid & tag_hit;
-          `DV_CHECK_FATAL(!$isunknown(exp_alert_minor))
+          // Data ECC is only checked for the way that hits.
+          read_lookup(shadow_icache_path, shadow_valid, shadow_match);
+          `DV_CHECK_FATAL(shadow_valid, "The corrupted read is not a shadow core lookup")
+          exp_alert_minor = shadow_valid & shadow_match[way_idx];
 
           // Check that the minor alert matches the expectation.
           alert_minor = dut_vif.signal_probe_alert_minor(dv_utils_pkg::SignalProbeSample);
           `DV_CHECK_EQ_FATAL(alert_minor, exp_alert_minor)
-
-          // Release force and complete task.
-          release_force($sformatf("ic_data_rdata[%0d]", way_idx));
           return;
         end
       end else begin
@@ -606,8 +641,8 @@ class core_ibex_icache_intg_test extends core_ibex_base_test;
       tag_req = dut_vif.signal_probe_ic_tag_req(dv_utils_pkg::SignalProbeSample);
       tag_write = dut_vif.signal_probe_ic_tag_write(dv_utils_pkg::SignalProbeSample);
 
-      // Check if at least one tag way is being read.
-      if (tag_req != '0 && tag_write == 1'b0) begin
+      // Check if at least one tag way is being read for a lookup.
+      if (tag_req != '0 && tag_write == 1'b0 && read_is_lookup()) begin
         int unsigned valid_and_used_ways[$];
 
         // Probe the tag address.
@@ -625,14 +660,19 @@ class core_ibex_icache_intg_test extends core_ibex_base_test;
         if (valid_and_used_ways.size() > 0) begin
           int unsigned way_idx, bit_idx;
           uvm_hdl_data_t tag_rdata, mask, alert_minor;
-          logic lookup_valid;
+          logic main_valid, shadow_valid;
+          logic [ibex_pkg::IC_NUM_WAYS-1:0] main_match, shadow_match;
+          logic exp_alert_minor;
+
+          read_lookup(main_icache_path, main_valid, main_match);
+          `DV_CHECK_FATAL(main_valid, "The corrupted read is not a main core lookup")
 
           `uvm_info(`gfn,
               $sformatf("The following I$ tag ways are valid and used in this clock cycle: %p",
                         valid_and_used_ways), UVM_LOW)
 
           // Pick a way to corrupt.
-          way_idx = $urandom_range(valid_and_used_ways.size() - 1);
+          way_idx = valid_and_used_ways[$urandom_range(valid_and_used_ways.size() - 1)];
           `uvm_info(`gfn, $sformatf("Corrupting tag way %0d", way_idx), UVM_LOW)
 
           // Probe response data.
@@ -652,20 +692,21 @@ class core_ibex_icache_intg_test extends core_ibex_base_test;
           // Force the corrupt value.
           force_data($sformatf("ic_tag_rdata[%0d]", way_idx), tag_rdata);
 
-          // Give the DUT one clock cycle to react.
+          // As for data, check the main core's alert at the next rising edge, then release the
+          // force once the shadow core has captured it.
+          @(dut_vif.dut_cb);
+          `DV_CHECK_EQ_FATAL(dut_vif.dut_cb.alert_minor, main_valid)
+          release_force($sformatf("ic_tag_rdata[%0d]", way_idx));
           clk_vif.wait_n_clks(1);
 
-          // Decide if an error is expected: if the lookup is valid.
-          lookup_valid = read_data($sformatf(
-              "u_ibex_core.if_stage_i.gen_icache.icache_i.lookup_valid_ic1"));
-          `DV_CHECK_FATAL(!$isunknown(lookup_valid))
+          // Tag ECC is checked on all ways for any valid lookup.
+          read_lookup(shadow_icache_path, shadow_valid, shadow_match);
+          `DV_CHECK_FATAL(shadow_valid, "The corrupted read is not a shadow core lookup")
+          exp_alert_minor = shadow_valid;
 
           // Check that the minor alert matches the expectation.
           alert_minor = dut_vif.signal_probe_alert_minor(dv_utils_pkg::SignalProbeSample);
-          `DV_CHECK_EQ_FATAL(alert_minor, lookup_valid)
-
-          // Release force and complete task.
-          release_force($sformatf("ic_tag_rdata[%0d]", way_idx));
+          `DV_CHECK_EQ_FATAL(alert_minor, exp_alert_minor)
           return;
         end
       end else begin
@@ -675,21 +716,40 @@ class core_ibex_icache_intg_test extends core_ibex_base_test;
   endtask
 
   task automatic corrupt_used_icache_entries();
-    fork
-      corrupt_used_icache_data();
-      corrupt_used_icache_tag();
-    join_any
+    // Run one corruptor only: a thread left over from a fork could corrupt again after the
+    // alert assertion is re-armed.
+    if ($urandom_range(1)) corrupt_used_icache_data();
+    else                   corrupt_used_icache_tag();
+
+    // The shadow core holds the corrupt rdata until the next rising edge.
+    clk_vif.wait_n_clks(1);
 
     // Re-enable TB assertion for alerts.
     `DV_ASSERT_CTRL_REQ("tb_no_alerts_triggered", 1'b1)
   endtask
 
   virtual task send_stimulus();
+    string shadow_valid_path =
+        $sformatf("%s.%s.lookup_valid_ic1", ibex_top_path, shadow_icache_path);
+    int unsigned lockstep_offset;
+    // The checks above need the lockstep shadow core, one cycle behind the main core.
+    `DV_CHECK_FATAL(uvm_hdl_check_path(shadow_valid_path))
+    lockstep_offset = read_uint("gen_lockstep.u_ibex_lockstep.LockstepOffset");
+    `DV_CHECK_EQ_FATAL(lockstep_offset, 1)
     vseq.start(env.vseqr);
-    fork
-      track_icache_status();
-      corrupt_used_icache_entries();
-    join_any
+    // Outer fork limits "disable fork" to these threads, sparing the vseq's responders.
+    fork begin
+      fork
+        track_icache_status();
+        corrupt_used_icache_entries();
+        begin
+          // Fail if the test ends before the corruption check has completed.
+          wait (test_done == 1'b1);
+          `uvm_fatal(`gfn, "Test ended before the I$ corruption check completed")
+        end
+      join_any
+      disable fork;
+    end join
   endtask
 
 endclass
