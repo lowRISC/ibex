@@ -142,6 +142,48 @@
     RV32ZC: ["ibex_pkg::RV32ZcaZcmp", "ibex_pkg::RV32ZcaZcbZcmp"]
   sim_opts: +disable_cosim=1 +enable_irq_single_seq=1
 
+- test: debug_trigger_ebreak_test
+  desc: >
+    An ebreak enters debug mode while an execute trigger is set on the
+    instruction after it. The trigger does not fire, so dcsr.cause must
+    be EBREAK.
+  iterations: 1
+  test_srcs: debug_trigger_ebreak_test/debug_trigger_ebreak_test.S
+  config: riscv-tests
+  rtl_test: core_ibex_debug_halt_once_test
+  rtl_params:
+    PMPEnable: 1
+    DbgTriggerEn: 1
+  sim_opts: +enable_debug_seq=1
+
+- test: debug_trigger_step_test
+  desc: >
+    A single step ends while an execute trigger is set on the next
+    instruction. The trigger does not fire, so dcsr.cause must be STEP.
+    A trigger on the first instruction of a step still fires.
+  iterations: 1
+  test_srcs: debug_trigger_step_test/debug_trigger_step_test.S
+  config: riscv-tests
+  rtl_test: core_ibex_debug_halt_once_test
+  rtl_params:
+    PMPEnable: 1
+    DbgTriggerEn: 1
+  sim_opts: +enable_debug_seq=1
+
+- test: debug_trigger_trap_test
+  desc: >
+    A single step over an illegal instruction ends at the trap handler
+    while an execute trigger is set on the address after the instruction.
+    The trigger does not fire, so dcsr.cause must be STEP.
+  iterations: 1
+  test_srcs: debug_trigger_trap_test/debug_trigger_trap_test.S
+  config: riscv-tests
+  rtl_test: core_ibex_debug_halt_once_test
+  rtl_params:
+    PMPEnable: 1
+    DbgTriggerEn: 1
+  sim_opts: +enable_debug_seq=1
+
 - test: pmp_mseccfg_test_rlb1_l0_0_u0
   desc: >
     mseccfg test
