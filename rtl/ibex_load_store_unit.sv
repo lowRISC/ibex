@@ -112,7 +112,7 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   logic         pmp_err_q, pmp_err_d;
   logic         lsu_err_q, lsu_err_d;
   logic         lsu_intg_err_q, lsu_intg_err_d; // integrity error on the first response of a split
-                                                // access
+                                                // access (misaligned load or CLC)
   logic         data_intg_err, data_or_pmp_err;
 
   logic         resp_is_cap_q;
@@ -588,6 +588,10 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
         if (cheriot_enable_i == IbexMuBiOn) begin
           addr_incr_req_o = 1'b1;
           data_req_o      = 1'b1;
+          // The first word may arrive before the second grant
+          if (data_rvalid_i) begin
+            lsu_intg_err_d = data_intg_err;
+          end
           if (data_gnt_i && (data_rvalid_i || (cap_rx_fsm_q == CRX_WAIT_RESP2))) begin
             ls_fsm_ns = IDLE;
           end else if (data_gnt_i) begin
@@ -603,6 +607,7 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
           addr_incr_req_o = 1'b1;
           data_req_o      = 1'b0;
           if (data_rvalid_i) begin
+            lsu_intg_err_d = data_intg_err;
             ls_fsm_ns = IDLE;
           end
         end else begin
@@ -714,7 +719,7 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
                          cap_lsw_data_q : data_rdata_ext;
     assign lsu_rcap_o  = ((cheriot_enable_i == IbexMuBiOn) && resp_is_cap_q &&
                           data_rvalid_i && (cap_rx_fsm_q == CRX_WAIT_RESP2) &&
-                          (~data_or_pmp_err)) ?
+                          (!data_or_pmp_err) && !(data_intg_err || lsu_intg_err_q)) ?
                          cheriot_mem_to_cap({data_tag_i, data_rdata_i[31:0]},
                              {cap_lsw_tag_q, cap_lsw_data_q}, resp_lc_clrperm_q) :
                          NULL_CAP;
@@ -835,6 +840,11 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       IDLE, WAIT_GNT_MIS, WAIT_RVALID_MIS, WAIT_GNT,
       WAIT_RVALID_MIS_GNTS_DONE,
       CTX_WAIT_GNT1, CTX_WAIT_GNT2, CTX_WAIT_RESP})
+
+  // The first word of a capability access arrives exactly in the states that record its integrity
+  // error
+  `ASSERT(IbexCapFirstRespState, data_rvalid_i && (cheriot_enable_i == IbexMuBiOn) |->
+      (cap_rx_fsm_q == CRX_WAIT_RESP1) == (ls_fsm_cs inside {CTX_WAIT_GNT2, CTX_WAIT_RESP}))
 
   // Address must not contain X when request is sent.
   `ASSERT(IbexDataAddrUnknown, data_req_o |-> !$isunknown(data_addr_o))
