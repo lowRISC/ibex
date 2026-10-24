@@ -2094,3 +2094,24 @@ class core_ibex_directed_stress_test extends core_ibex_base_test;
   endtask
 
 endclass
+
+// Sends one halt request once the program reports INITIALIZED.
+class core_ibex_debug_halt_once_test extends core_ibex_base_test;
+
+  `uvm_component_utils(core_ibex_debug_halt_once_test)
+  `uvm_component_new
+
+  virtual task send_stimulus();
+    `DV_CHECK_FATAL(cfg.enable_debug_seq, "Needs +enable_debug_seq=1")
+    fork
+      super.send_stimulus();
+      begin
+        check_next_core_status(INITIALIZED, "Program did not report INITIALIZED", 10000);
+        // No extra hold: the request still waits for debug mode and RVFI, then drops before DRET
+        vseq.debug_seq_single_h.drop_delay = 0;
+        vseq.start_debug_single_seq();
+      end
+    join_none
+  endtask
+
+endclass
