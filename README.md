@@ -19,6 +19,11 @@ under the name ["Zero-riscy"](https://doi.org/10.1109/PATMOS.2017.8106976), and 
 contributed to [lowRISC](https://www.lowrisc.org) who maintains it and develops it further. It is
 under active development.
 
+Ibex supports [RV32I](https://docs.riscv.org/reference/isa/v20260120/unpriv/rv32.html) and
+[CHERIoT 1.0](https://github.com/CHERIoT-Platform/cheriot-sail/releases/download/v1.0/cheriot-architecture-v1.0.pdf)
+as base ISAs. The CHERIoT implementation was originally developed by Microsoft in the
+[cheriot-ibex](https://github.com/microsoft/cheriot-ibex) repository.
+
 ## Configuration
 
 Ibex offers several configuration parameters to meet the needs of various application scenarios.
