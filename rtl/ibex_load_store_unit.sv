@@ -700,10 +700,6 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   /////////////
 
   logic all_resp;
-  assign data_or_pmp_err    = lsu_err_q | data_bus_err_i | pmp_err_q |
-                              ((cheriot_enable_i == IbexMuBiOn) &
-                               (cheriot_err_q | (resp_is_cap_q & cap_lsw_err_q)));
-
   assign all_resp           = data_rvalid_i | pmp_err_q |
                               ((cheriot_enable_i == IbexMuBiOn) & cheriot_err_q);
   assign lsu_resp_valid_o   = all_resp & (ls_fsm_cs == IDLE);
@@ -715,6 +711,9 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
 
   // output to register file
   if (BaseIsa == BaseIsaRV32IorCHERIoT) begin : gen_memcap_rd
+    assign data_or_pmp_err = lsu_err_q | data_bus_err_i | pmp_err_q |
+                             ((cheriot_enable_i == IbexMuBiOn) &
+                              (cheriot_err_q | (resp_is_cap_q & cap_lsw_err_q)));
     assign lsu_rdata_o = ((cheriot_enable_i == IbexMuBiOn) & resp_is_cap_q) ?
                          cap_lsw_data_q : data_rdata_ext;
     assign lsu_rcap_o  = ((cheriot_enable_i == IbexMuBiOn) && resp_is_cap_q &&
@@ -724,10 +723,12 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
                              {cap_lsw_tag_q, cap_lsw_data_q}, resp_lc_clrperm_q) :
                          NULL_CAP;
   end else begin : gen_no_cap_rd
+    assign data_or_pmp_err = lsu_err_q | data_bus_err_i | pmp_err_q;
     assign lsu_rdata_o = data_rdata_ext;
     assign lsu_rcap_o  = NULL_CAP;
     logic unused_cap_rd_sigs;
-    assign unused_cap_rd_sigs = ^{resp_lc_clrperm_q, cap_lsw_data_q, cap_lsw_tag_q, data_tag_i};
+    assign unused_cap_rd_sigs = ^{resp_lc_clrperm_q, cap_lsw_err_q, cap_lsw_data_q, cap_lsw_tag_q,
+                                  data_tag_i};
   end
 
 
