@@ -61,6 +61,14 @@ class SpikeCosim : public simif_t, public Cosim {
   bool pending_iside_error;
   uint32_t pending_iside_err_addr;
 
+  // mtval for the internal NMI of the first pending dside integrity error
+  bool intg_err_pending;
+  uint32_t intg_err_addr;
+  // load in the current step saw an integrity error
+  bool load_intg_err_seen;
+
+  void record_intg_error(bool store, uint32_t mtval_addr);
+
   typedef enum {
     kCheckMemOk,           // Checks passed and access succeeded in RTL
     kCheckMemCheckFailed,  // Checks failed
