@@ -262,3 +262,9 @@ They are accessible only in CHERIoT mode.
   Stores to addresses below ``mshwmb`` do not update ``mshwm``.
 
 The CHERIoT SCRs (Special Capability Registers) are described in :ref:`cheriot-scrs`.
+
+Debug Mode
+----------
+
+Ibex does not enforce the CHERIoT protections in Debug Mode, so code running in Debug Mode can access all memory.
+See :ref:`debug-cheriot` for details.

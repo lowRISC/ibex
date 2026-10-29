@@ -771,7 +771,8 @@ In CHERIoT mode, the standard ``mtvec`` (0x305) and ``mepc`` (0x341) CSR address
 | 31 | ``mepcc``             | RW    | Machine Exception Program Counter Capability (holds mepc as cap)   |
 +----+-----------------------+-------+--------------------------------------------------------------------+
 
-The following debug-mode SCRs are accessible only in Debug Mode:
+The following debug-mode SCRs are accessible only in Debug Mode.
+They are specific to Ibex and not part of the CHERIoT specification, which does not define Debug Mode (see :ref:`debug-cheriot`):
 
 +----+-----------------------+-------+------------------------------------------------------------------+
 | ID |   Name                | Mode  | Description                                                      |
