@@ -1173,6 +1173,7 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
 
     .lsu_resp_valid_i(lsu_resp_valid),
     .lsu_resp_err_i  (lsu_resp_err),
+    .cheriot_wb_err_i(cheriot_wb_err),
 
     .instr_done_wb_o(instr_done_wb)
   );
@@ -2488,6 +2489,16 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
          instr_valid_id & dummy_instr_id & ~id_stage_i.controller_i.do_single_step_q)
   `COVER(SingleStepDummyWhileArmed,
          instr_valid_id & dummy_instr_id & id_stage_i.controller_i.do_single_step_q)
+
+  // An instruction that takes an exception in WB does not retire.
+  `ASSERT_KNOWN(IbexWbExceptionKnown, id_stage_i.controller_i.wb_exception_o)
+  `ASSERT_KNOWN(IbexInstrRetWbKnown, perf_instr_ret_wb)
+  `ASSERT(NoInstrRetOnWbException,
+          id_stage_i.controller_i.wb_exception_o |-> ~perf_instr_ret_wb)
+  `COVER(WbExceptionOnCountedInstr,
+         id_stage_i.controller_i.wb_exception_o & perf_instr_ret_wb_spec)
+  `COVER(WbExceptionOnCountedCompressedInstr,
+         id_stage_i.controller_i.wb_exception_o & perf_instr_ret_compressed_wb_spec)
 
   //////////
   // FCOV //
