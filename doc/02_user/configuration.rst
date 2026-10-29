@@ -41,3 +41,10 @@ The current set of supported configurations are:
  * ``opentitan`` - The configuration used by the `OpenTitan <www.opentitan.org>`_ project
  * ``maxperf`` - RV32IMC with three stage pipeline and single cycle multiplier, maximum performance (using stable features) configuration.
  * ``maxperf-pmp-bmbalanced`` - ``maxperf`` configuration with PMP and the 'balanced' bit-manipulation configuration (:ref:`core-integration` for details).
+
+.. _supported-parameter-sets:
+
+Supported Parameter Sets
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``opentitan`` configuration is the parameter set used and signed off in the Earl Grey top of `OpenTitan <https://opentitan.org>`__ (``rv_core_ibex``).
