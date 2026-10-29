@@ -75,6 +75,11 @@ for file in ../rtl/*.sv; do
       continue
   fi
 
+  # Skip tracer (not needed for synthesis)
+  if [ "$module" = "ibex_tracer" ]; then
+      continue
+  fi
+
   sv2v \
     --define=SYNTHESIS --define=YOSYS \
     ../rtl/*_pkg.sv \
@@ -93,9 +98,6 @@ for file in ../rtl/*.sv; do
   sed -i 's/prim_clock_mux2/prim_generic_clock_mux2/g'  "$LR_SYNTH_OUT_DIR"/generated/"${module}".v
   sed -i 's/prim_flop/prim_generic_flop/g' "$LR_SYNTH_OUT_DIR"/generated/"${module}".v
 done
-
-# remove tracer (not needed for synthesis)
-rm -f "$LR_SYNTH_OUT_DIR"/generated/ibex_tracer.v
 
 # remove the FPGA & register-based register file (because we will use the
 # latch-based one instead)
