@@ -453,9 +453,7 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   logic [11:0]            cheriot_ex_err_info;
   logic                   cheriot_wb_err;
   logic [15:0]            cheriot_wb_err_info;
-  // verilator lint_off UNOPTFLAT
   cheriot_op_t            cheriot_operator;
-  // verilator lint_on UNOPTFLAT
 
   logic          rv32_lsu_req;
   logic          rv32_lsu_we;
@@ -466,10 +464,8 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   logic [31:0]   rv32_lsu_addr_last;
 
   logic          cheriot_csr_access;
-  // verilator lint_off UNOPTFLAT
   logic [4:0]    cheriot_csr_addr;
   logic [31:0]   cheriot_csr_wdata;
-  // verilator lint_on UNOPTFLAT
   cap_t          cheriot_csr_wcap;
   cheriot_csr_op_e cheriot_csr_op;
   logic          cheriot_csr_op_en;
