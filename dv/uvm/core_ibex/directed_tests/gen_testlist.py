@@ -162,6 +162,50 @@ def add_configs_and_handwritten_directed_tests():
     RV32ZC: ["ibex_pkg::RV32ZcaZcmp", "ibex_pkg::RV32ZcaZcbZcmp"]
   sim_opts: +disable_cosim=1 +enable_irq_single_seq=1
 
+- test: debug_step_zcmp_store_fault_test
+  desc: >
+    A single step over a cm.push whose first store faults must enter debug
+    mode at the trap vector, before the first instruction of the handler.
+  iterations: 1
+  test_srcs: debug_step_zcmp_store_fault_test/debug_step_zcmp_store_fault_test.S
+  config: riscv-tests
+  rtl_test: core_ibex_debug_halt_once_test
+  rtl_params:
+    PMPEnable: 1
+    RV32E: 0
+    RV32ZC: ["ibex_pkg::RV32ZcaZcmp", "ibex_pkg::RV32ZcaZcbZcmp"]
+  sim_opts: +disable_cosim=1 +enable_debug_seq=1
+
+- test: debug_step_zcmp_fetch_fault_test
+  desc: >
+    A single step over a cm.mva01s in U mode without execute permission
+    must enter debug mode at the trap vector, before the first instruction
+    of the handler.
+  iterations: 1
+  test_srcs: debug_step_zcmp_fetch_fault_test/debug_step_zcmp_fetch_fault_test.S
+  config: riscv-tests
+  rtl_test: core_ibex_debug_halt_once_test
+  rtl_params:
+    PMPEnable: 1
+    RV32E: 0
+    RV32ZC: ["ibex_pkg::RV32ZcaZcmp", "ibex_pkg::RV32ZcaZcbZcmp"]
+  sim_opts: +enable_debug_seq=1
+
+- test: debug_trigger_zcmp_trap_test
+  desc: >
+    An execute trigger on the trap vector must fire when a cm.push faults
+    on its first store, before the first instruction of the handler.
+  iterations: 1
+  test_srcs: debug_trigger_zcmp_trap_test/debug_trigger_zcmp_trap_test.S
+  config: riscv-tests
+  rtl_test: core_ibex_debug_halt_once_test
+  rtl_params:
+    PMPEnable: 1
+    RV32E: 0
+    DbgTriggerEn: 1
+    RV32ZC: ["ibex_pkg::RV32ZcaZcmp", "ibex_pkg::RV32ZcaZcbZcmp"]
+  sim_opts: +disable_cosim=1 +enable_debug_seq=1
+
 - test: pmp_mseccfg_test_rlb1_l0_0_u0
   desc: >
     mseccfg test
