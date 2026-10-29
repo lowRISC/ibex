@@ -77,6 +77,7 @@ module core_ibex_tb_top;
   parameter int unsigned LockstepOffset   = 1;
   parameter bit ICacheScramble            = 1'b0;
   parameter bit DbgTriggerEn              = 1'b0;
+  parameter int unsigned DbgHwBreakNum    = 1;
   parameter int unsigned DmBaseAddr       = 32'h`DM_ADDR;
   parameter int unsigned DmAddrMask       = 32'h`DM_ADDR_MASK;
   parameter int unsigned DmHaltAddr       = 32'h`DEBUG_MODE_HALT_ADDR;
@@ -120,6 +121,7 @@ module core_ibex_tb_top;
     .ICacheScramble       (ICacheScramble      ),
     .BranchPredictor      (BranchPredictor     ),
     .DbgTriggerEn         (DbgTriggerEn        ),
+    .DbgHwBreakNum        (DbgHwBreakNum       ),
     .DmBaseAddr           (DmBaseAddr          ),
     .DmAddrMask           (DmAddrMask          ),
     .DmHaltAddr           (DmHaltAddr          ),
