@@ -56,7 +56,7 @@ opentitan:
   PMPEnable                : 1
   PMPGranularity           : 0
   PMPNumRegions            : 16
-  MHPMCounterNum           : 10
+  MHPMCounterNum           : 2
   MHPMCounterWidth         : 32
 
 # Three-stage pipeline with additional branch traget ALU and 1 cycle multiplier
