@@ -5,7 +5,7 @@ Ibex Configurations
 
 The ``ibex_top`` module has a large number of top-level parameters which configure the core (see :ref:`core-integration`).
 This gives rise to a huge number of possible Ibex core configurations.
-To manage this complexity a number of named configurations is provided in the :file:`ibex_configs.yml` file.
+To manage this complexity a number of named configurations is provided in the :file:`ibex_configs.yaml` file.
 A subset of these are 'supported configurations' which are the focus of verification and development activities.
 
 Configuration Tool
