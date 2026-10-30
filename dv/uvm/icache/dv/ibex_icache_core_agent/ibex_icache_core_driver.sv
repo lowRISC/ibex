@@ -21,6 +21,12 @@ class ibex_icache_core_driver
 
   virtual task automatic reset_signals();
     cfg.vif.reset();
+
+    // Clear the signals on every stop, including one between items
+    forever begin
+      @(cfg.stop_driving);
+      cfg.vif.reset();
+    end
   endtask
 
   // drive trans received from sequencer
@@ -36,11 +42,21 @@ class ibex_icache_core_driver
 
       rsp.saw_error = 1'b0;
 
-      case (req.trans_type)
-        ICacheCoreTransTypeBranch: drive_branch_trans(rsp, req);
-        ICacheCoreTransTypeReq:    drive_req_trans(rsp, req);
-        default:                   `uvm_fatal(`gfn, "Unknown transaction type")
-      endcase
+      // Killing a sequence does not stop the item being driven, which could then raise req just
+      // before reset. Run the item until it ends or a stop arrives.
+      fork begin : isolation_fork
+        fork
+          case (req.trans_type)
+            ICacheCoreTransTypeBranch: drive_branch_trans(rsp, req);
+            ICacheCoreTransTypeReq:    drive_req_trans(rsp, req);
+            default:                   `uvm_fatal(`gfn, "Unknown transaction type")
+          endcase
+          @(cfg.stop_driving);
+        join_any
+        disable fork;
+      end join
+      // The item may have driven the signals after a stop in this time step, so clear them again
+      if (cfg.stop_driving.triggered) cfg.vif.reset();
 
       `uvm_info(`gfn, "item sent", UVM_HIGH)
       seq_item_port.item_done(rsp);
