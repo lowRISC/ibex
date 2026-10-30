@@ -77,6 +77,21 @@
   test_srcs: mcounteren_test/mcounteren_lock_test.S
   config: riscv-tests
 
+- test: debug_trigger_cause_test
+  desc: >
+    An ebreak, a single step or a halt request from WFI enters debug mode
+    while an execute trigger is set on the next instruction. The trigger
+    does not fire, so dcsr.cause must name the entry. Triggers on reached
+    instructions still fire.
+  iterations: 1
+  test_srcs: debug_trigger_cause_test/debug_trigger_cause_test.S
+  config: riscv-tests
+  rtl_test: core_ibex_debug_halt_wfi_test
+  rtl_params:
+    PMPEnable: 1
+    DbgTriggerEn: 1
+  sim_opts: +enable_debug_seq=1
+
 - test: zcmp_reserved_test
   desc: >
     Reserved Zcmp encodings trap as illegal instructions and are not

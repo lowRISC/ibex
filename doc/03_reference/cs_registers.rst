@@ -553,6 +553,10 @@ Details of these configuration bits can be found in the RISC-V Debug Specificati
 Note that **ebreaku** and **prv** are accidentally specified as RW in version 0.13.2 of the RISC-V Debug Specification.
 More recent versions of the specification define these fields correctly as WARL.
 
+When Ibex selects **cause**, a halt request takes priority over an execute trigger match.
+Version 0.13.2 of the specification ranks the trigger first.
+More recent versions rank the halt request above the trigger and allow an implementation to rank it lower.
+
 .. _csr-dpc:
 
 Debug PC Register (dpc)
