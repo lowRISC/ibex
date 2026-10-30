@@ -67,6 +67,7 @@ In CHERIoT mode (see :ref:`cheriot`), Ibex does not enforce the CHERIoT protecti
 * Loads and stores, including ``CLC`` and ``CSC``, are not checked against the bounds, tag, seal and permissions of the authorizing capability.
 * ``CLC`` does not clear the tag or reduce the permissions of the loaded capability based on the permissions of the authorizing capability.
 * Capability instructions do not raise CHERIoT exceptions.
+  ``CSpecialRW`` with an unimplemented SCR index still raises an illegal instruction exception.
 
 Code executed in Debug Mode, such as the debug ROM, the program buffer and the abstract commands of the Debug Module, can therefore read and write all memory and read every capability stored in it.
 
