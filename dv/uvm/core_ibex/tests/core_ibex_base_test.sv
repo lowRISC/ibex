@@ -34,6 +34,8 @@ class core_ibex_base_test extends uvm_test;
   uvm_tlm_analysis_fifo #(irq_seq_item)           irq_collected_port;
   uvm_phase                                       cur_run_phase;
   bit                                             test_done = 1'b0;
+  // Set once all helper objections are dropped at test end.
+  bit                                             run_phase_closing = 1'b0;
 
   `uvm_component_utils(core_ibex_base_test)
 
@@ -235,9 +237,21 @@ class core_ibex_base_test extends uvm_test;
       handle_reset();
     join_none
     wait_for_test_done();
+    // Let helpers still waiting see their event or hit their own timeout.
+    while (phase.get_objection_count(this) > 1) clk_vif.wait_clks(1);
+    run_phase_closing = 1'b1;
     cur_run_phase = null;
     phase.drop_objection(this);
   endtask
+
+  // Helpers raise and drop through these; after run_phase_closing both are no-ops.
+  virtual function void raise_run_objection();
+    if (!run_phase_closing) cur_run_phase.raise_objection(this);
+  endfunction
+
+  virtual function void drop_run_objection();
+    if (!run_phase_closing) cur_run_phase.drop_objection(this);
+  endfunction
 
   virtual function void end_of_elaboration_phase(uvm_phase phase);
     super.end_of_elaboration_phase(phase);
@@ -462,7 +476,7 @@ class core_ibex_base_test extends uvm_test;
   // type, throws uvm_error on mismatch
   virtual task check_next_core_status(core_status_t core_status, string error_msg = "",
                                       int timeout = 9999999);
-    cur_run_phase.raise_objection(this);
+    raise_run_objection();
     fork begin : isolation_fork
       fork
         begin
@@ -480,13 +494,13 @@ class core_ibex_base_test extends uvm_test;
       // Will only get here if we successfully beat the timeout period
       disable fork;
     end join
-    cur_run_phase.drop_objection(this);
+    drop_run_objection();
   endtask
 
   // Waits for a write to the address of the specified CSR and retrieves the csr data
   virtual task wait_for_csr_write(csr_num_e csr, int timeout = 9999999);
     bit [11:0] csr_addr;
-    cur_run_phase.raise_objection(this);
+    raise_run_objection();
     fork begin : isolation_fork
       fork
         begin
@@ -506,7 +520,7 @@ class core_ibex_base_test extends uvm_test;
       // Will only get here if we successfully beat the timeout period
       disable fork;
     end join
-    cur_run_phase.drop_objection(this);
+    drop_run_objection();
   endtask
 
   // Waits until the next time the given core_status is written to the signature address
