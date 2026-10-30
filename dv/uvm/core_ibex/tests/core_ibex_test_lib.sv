@@ -1713,6 +1713,28 @@ class core_ibex_debug_wfi_test extends core_ibex_directed_test;
 
 endclass
 
+// Sends a halt request each time the core sleeps in WFI.
+class core_ibex_debug_halt_wfi_test extends core_ibex_base_test;
+
+  `uvm_component_utils(core_ibex_debug_halt_wfi_test)
+  `uvm_component_new
+
+  virtual task send_stimulus();
+    `DV_CHECK_FATAL(cfg.enable_debug_seq, "Needs +enable_debug_seq=1")
+    fork
+      super.send_stimulus();
+      forever begin
+        wait (dut_vif.dut_cb.wfi === 1'b1);
+        wait (dut_vif.dut_cb.core_sleep === 1'b1);
+        // No extra hold: the request still waits for debug mode and RVFI, then drops before DRET
+        vseq.debug_seq_single_h.drop_delay = 0;
+        vseq.start_debug_single_seq();
+      end
+    join_none
+  endtask
+
+endclass
+
 // Debug CSR entry test
 class core_ibex_debug_csr_test extends core_ibex_directed_test;
 
