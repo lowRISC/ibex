@@ -52,15 +52,11 @@ endif
 %.dis: %.elf
 	$(OBJDUMP) -fhSD $^ > $@
 
-# Note: this target requires the srecord package to be installed.
-# XXX: This could be replaced by objcopy once
-# https://sourceware.org/bugzilla/show_bug.cgi?id=19921
-# is widely available.
-%.vmem: %.bin
-	srec_cat $^ -binary -offset 0x0000 -byte-swap 4 -o $@ -vmem
+%.vmem: %.elf
+	$(OBJCOPY) -O verilog --reverse-bytes=4 --verilog-data-width=4 $< $@
 
 %.bin: %.elf
-	$(OBJCOPY) -O binary $^ $@
+	$(OBJCOPY) -O binary $< $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) -MMD -c $(INCS) -o $@ $<
