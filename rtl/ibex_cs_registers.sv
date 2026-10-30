@@ -1871,6 +1871,21 @@ module ibex_cs_registers import ibex_pkg::*, ibex_cheriot_pkg::*; #(
     end
     assign trigger_match_o = |trigger_match;
 
+`ifdef INC_ASSERT
+    // A debug entry may report a trigger only if dpc gets an enabled trigger's address. During a
+    // step, only the stepped instruction can fire one, so dpc is still the resume address.
+    logic [DbgHwBreakNum-1:0] trigger_at_exception_pc;
+    for (genvar i = 0; i < DbgHwBreakNum; i++) begin : g_dbg_trigger_at_exception_pc
+      assign trigger_at_exception_pc[i] = tmatch_control_q[i] &
+                                          (exception_pc == tmatch_value_q[i]);
+    end
+
+    `ASSERT(IbexTriggerCauseOnlyWhenFired,
+            csr_save_cause_i & debug_csr_save_i |->
+            (debug_cause_i != DBG_CAUSE_TRIGGER) |
+            (|trigger_at_exception_pc & (~dcsr_q.step | (exception_pc == {depc_q[31:1], 1'b0}))))
+`endif
+
   end else begin : gen_no_trigger_regs
     assign tselect_rdata        = 'b0;
     assign tmatch_control_rdata = 'b0;
@@ -1989,6 +2004,8 @@ module ibex_cs_registers import ibex_pkg::*, ibex_cheriot_pkg::*; #(
   ////////////////
 
   `ASSERT(IbexCsrOpEnRequiresAccess, csr_op_en_i |-> csr_access_i)
+  `ASSERT_KNOWN_IF(IbexDebugEntryKnown, {debug_cause_i, exception_pc},
+                   csr_save_cause_i & debug_csr_save_i)
 
   // CHERIoT isolation: MIE control signals must be 0 when CHERIoT is disabled.
   `ASSERT_IF(IbexCheriotClrMieDisabled, !cheriot_csr_clr_mie_i, cheriot_enable_i != IbexMuBiOn)
