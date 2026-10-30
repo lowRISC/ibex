@@ -406,8 +406,15 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       ((lsu_type_i == 2'b00) && (data_offset != 2'b00)) || // misaligned word access
       ((lsu_type_i == 2'b01) && (data_offset == 2'b11));   // misaligned half-word access
 
-  assign cpu_req_valid = lsu_req_i & ~((cheriot_enable_i == IbexMuBiOn) & lsu_cheriot_err_i);
-  assign cpu_req_erred = lsu_req_i &  (cheriot_enable_i == IbexMuBiOn) & lsu_cheriot_err_i;
+  if (BaseIsa == BaseIsaRV32IorCHERIoT) begin : gen_cheriot_req
+    assign cpu_req_valid = lsu_req_i & ~((cheriot_enable_i == IbexMuBiOn) & lsu_cheriot_err_i);
+    assign cpu_req_erred = lsu_req_i &  (cheriot_enable_i == IbexMuBiOn) & lsu_cheriot_err_i;
+  end else begin : gen_no_cheriot_req
+    assign cpu_req_valid = lsu_req_i;
+    assign cpu_req_erred = 1'b0;
+    logic unused_lsu_cheriot_err;
+    assign unused_lsu_cheriot_err = lsu_cheriot_err_i;
+  end
 
   // FSM
   always_comb begin
@@ -419,7 +426,8 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     pmp_err_d           = pmp_err_q;
     lsu_err_d           = lsu_err_q;
     lsu_intg_err_d      = lsu_intg_err_q;
-    cheriot_err_d       = cheriot_err_q & (cheriot_enable_i == IbexMuBiOn);
+    cheriot_err_d       = cheriot_err_q & ((BaseIsa == BaseIsaRV32IorCHERIoT) &
+                                           (cheriot_enable_i == IbexMuBiOn));
 
     addr_update         = 1'b0;
     ctrl_update         = 1'b0;
@@ -700,12 +708,6 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   /////////////
 
   logic all_resp;
-  assign data_or_pmp_err    = lsu_err_q | data_bus_err_i | pmp_err_q |
-                              ((cheriot_enable_i == IbexMuBiOn) &
-                               (cheriot_err_q | (resp_is_cap_q & cap_lsw_err_q)));
-
-  assign all_resp           = data_rvalid_i | pmp_err_q |
-                              ((cheriot_enable_i == IbexMuBiOn) & cheriot_err_q);
   assign lsu_resp_valid_o   = all_resp & (ls_fsm_cs == IDLE);
 
   // this goes to wb as rf_we_lsu, so needs to be gated when data needs to go back to EX
@@ -715,6 +717,11 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
 
   // output to register file
   if (BaseIsa == BaseIsaRV32IorCHERIoT) begin : gen_memcap_rd
+    assign data_or_pmp_err = lsu_err_q | data_bus_err_i | pmp_err_q |
+                             ((cheriot_enable_i == IbexMuBiOn) &
+                              (cheriot_err_q | (resp_is_cap_q & cap_lsw_err_q)));
+    assign all_resp        = data_rvalid_i | pmp_err_q |
+                             ((cheriot_enable_i == IbexMuBiOn) & cheriot_err_q);
     assign lsu_rdata_o = ((cheriot_enable_i == IbexMuBiOn) & resp_is_cap_q) ?
                          cap_lsw_data_q : data_rdata_ext;
     assign lsu_rcap_o  = ((cheriot_enable_i == IbexMuBiOn) && resp_is_cap_q &&
@@ -724,10 +731,13 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
                              {cap_lsw_tag_q, cap_lsw_data_q}, resp_lc_clrperm_q) :
                          NULL_CAP;
   end else begin : gen_no_cap_rd
+    assign data_or_pmp_err = lsu_err_q | data_bus_err_i | pmp_err_q;
+    assign all_resp        = data_rvalid_i | pmp_err_q;
     assign lsu_rdata_o = data_rdata_ext;
     assign lsu_rcap_o  = NULL_CAP;
     logic unused_cap_rd_sigs;
-    assign unused_cap_rd_sigs = ^{resp_lc_clrperm_q, cap_lsw_data_q, cap_lsw_tag_q, data_tag_i};
+    assign unused_cap_rd_sigs = ^{resp_lc_clrperm_q, cheriot_err_q, cap_lsw_err_q, cap_lsw_data_q,
+                                  cap_lsw_tag_q, data_tag_i};
   end
 
 
@@ -775,7 +785,11 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   assign store_resp_intg_err_o = data_intg_err & data_rvalid_i & data_we_q;
 
   // Send to controller for mcause encoding.
-  assign lsu_err_is_cheriot_o  = (cheriot_enable_i == IbexMuBiOn) & cheriot_err_q;
+  if (BaseIsa == BaseIsaRV32IorCHERIoT) begin : gen_cheriot_err
+    assign lsu_err_is_cheriot_o = (cheriot_enable_i == IbexMuBiOn) & cheriot_err_q;
+  end else begin : gen_no_cheriot_err
+    assign lsu_err_is_cheriot_o = 1'b0;
+  end
 
   assign busy_o = (ls_fsm_cs != IDLE);
 
