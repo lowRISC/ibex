@@ -12,7 +12,4 @@
 +}
  
  # Create a file with the path to the cover dirs
- set filepointer [open "$cov_merge_db_dir/runs.txt" w]
--- 
-2.34.1
-
+ # Replace spaces with newlines so each run is on its own line for the 'rank' command
