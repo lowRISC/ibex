@@ -19,6 +19,8 @@ filesets:
     depend:
       - lowrisc:prim:assert
       - lowrisc:prim:mubi
+      - lowrisc:prim:pulse_sync
+      - lowrisc:prim:sync_reqack
 
   files_verilator_waiver:
     depend:
