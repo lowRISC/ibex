@@ -60,13 +60,33 @@ class SimpleSystemCosim : public SimpleSystem {
 // Use raw pointer as destruction outside main can cause segment fault (due to
 // undefined instruction order vs VerilatorSimCtrl singleton).
 SimpleSystemCosim *simple_system_cosim;
-
+std::cout << "ISA:               " << simple_system_cosim->GetIsaString() << "\n";
+PrintIbexCosimConfig(secure_ibex, icache_en,
+                     pmp_num_regions[0], pmp_granularity[0],
+                     mhpm_counter_num[0], DmStartAddr[0], DmEndAddr[0]);
 extern "C" {
 void *get_spike_cosim() {
   assert(simple_system_cosim);
   assert(simple_system_cosim->_cosim);
 
   return static_cast<Cosim *>(simple_system_cosim->_cosim.get());
+}
+
+static void PrintIbexCosimConfig(bool secure_ibex, bool icache_en,
+                                 uint32_t pmp_num_regions,
+                                 uint32_t pmp_granularity,
+                                 uint32_t mhpm_counter_num,
+                                 uint32_t dm_start_addr,
+                                 uint32_t dm_end_addr) {
+  std::cout << "\nIbex configuration\n";
+  std::cout << "==================\n";
+  std::cout << "secure_ibex:       " << secure_ibex << "\n";
+  std::cout << "icache_en:         " << icache_en << "\n";
+  std::cout << "pmp_num_regions:   " << pmp_num_regions << "\n";
+  std::cout << "pmp_granularity:   " << pmp_granularity << "\n";
+  std::cout << "mhpm_counter_num:  " << mhpm_counter_num << "\n";
+  std::cout << "DmStartAddr:       0x" << std::hex << dm_start_addr << std::dec << "\n";
+  std::cout << "DmEndAddr:         0x" << std::hex << dm_end_addr   << std::dec << "\n";
 }
 
 void create_cosim(svBit secure_ibex, svBit icache_en,
@@ -76,6 +96,8 @@ void create_cosim(svBit secure_ibex, svBit icache_en,
                   const svBitVecVal *DmStartAddr,
                   const svBitVecVal *DmEndAddr) {
   assert(simple_system_cosim);
+ 
+ 
   simple_system_cosim->CreateCosim(secure_ibex, icache_en, pmp_num_regions[0],
                                    pmp_granularity[0], mhpm_counter_num[0],
                                    DmStartAddr[0], DmEndAddr[0]);
