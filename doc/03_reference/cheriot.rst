@@ -79,6 +79,8 @@ The data memory interface gains two tag signals:
 Since Ibex only has a 32-bit interface, it reads and writes capabilities in two consecutive transactions.
 The tag bits must be set for both transactions for the capability to be considered a valid one.
 
+.. _cheriot-trvk:
+
 TRVK Revocation Bitmap Interface (``trvk_revbm_*``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
