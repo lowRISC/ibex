@@ -25,6 +25,6 @@ if { [info exists ::env(cov_db_runfile)] } {
 }
 
 # Create a file with the path to the cover dirs
-set filepointer [open "$cov_merge_db_dir/runs.txt" w]
-puts $filepointer "$cov_db_dirs"
-close $filepointer
+# Replace spaces with newlines so each run is on its own line for the 'rank' command
+set cov_db_dirs_rank [string map {" " "\n"} [string trim $cov_db_dirs]]
+exec sh -c "cat << 'EOF' > $cov_merge_db_dir/runs.txt\n$cov_db_dirs_rank\nEOF"

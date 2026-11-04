@@ -8,7 +8,7 @@
 {
   upstream:
   {
-    url: https://github.com/lowRISC/opentitan
-    rev: 3424e7fb4bc3ac92eb640d6af070055d293bc710
+    url: https://github.com/SamuelRiedel/opentitan
+    rev: b511d663129f05c5bc3b660e6c389e6c40f54434
   }
 }

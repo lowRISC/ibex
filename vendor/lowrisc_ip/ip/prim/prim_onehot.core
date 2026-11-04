@@ -9,6 +9,7 @@ filesets:
   files_rtl:
     depend:
       - lowrisc:prim:util
+      - lowrisc:prim:and2
     files:
       - rtl/prim_onehot_enc.sv
       - rtl/prim_onehot_mux.sv

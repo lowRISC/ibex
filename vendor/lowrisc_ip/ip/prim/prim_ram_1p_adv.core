@@ -9,6 +9,9 @@ filesets:
     depend:
       - lowrisc:prim:assert
       - lowrisc:prim:util
+      - lowrisc:prim:buf
+      - lowrisc:prim:flop
+      - lowrisc:prim:mubi_pkg
       - lowrisc:prim:secded
       - lowrisc:prim:ram_1p
     files:

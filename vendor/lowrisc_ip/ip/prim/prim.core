@@ -15,12 +15,17 @@ filesets:
       - lowrisc:prim:pad_wrapper
       - lowrisc:prim:clock_mux2
       - lowrisc:prim:clock_inv
+      - lowrisc:prim:clock_gating
+      - lowrisc:prim:const
+      - lowrisc:prim:const_sec
       - lowrisc:prim:buf
       - lowrisc:prim:flop
       - lowrisc:prim:flop_en
       - lowrisc:prim:flop_2sync
       - lowrisc:prim:flop_no_rst
       - lowrisc:prim:rst_sync
+      - lowrisc:prim:pulse_sync
+      - lowrisc:prim:sync_reqack
       - lowrisc:prim:arbiter
       - lowrisc:prim:fifo
       - lowrisc:prim:alert
@@ -30,22 +35,24 @@ filesets:
       - lowrisc:prim:xor2
       - lowrisc:prim:xnor2
       - lowrisc:prim:and2
+      - lowrisc:prim:inv
       - lowrisc:prim:reg_we_check
       - lowrisc:prim:sha2
     files:
       - rtl/prim_clock_gating_sync.sv
+      - rtl/prim_hpc2.sv
+      - rtl/prim_hpc3.sv
       - rtl/prim_sram_arbiter.sv
       - rtl/prim_slicer.sv
-      - rtl/prim_sync_reqack.sv
       - rtl/prim_sync_reqack_data.sv
       - rtl/prim_sync_slow_fast.sv
       - rtl/prim_keccak.sv
       - rtl/prim_packer.sv
       - rtl/prim_packer_fifo.sv
       - rtl/prim_gate_gen.sv
-      - rtl/prim_pulse_sync.sv
       - rtl/prim_filter.sv
       - rtl/prim_filter_ctr.sv
+      - rtl/prim_flop_x.sv
       - rtl/prim_intr_hw.sv
     file_type: systemVerilogSource
 
