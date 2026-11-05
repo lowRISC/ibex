@@ -108,8 +108,8 @@ Instead, two instances of the register file are used.
 The first instance is driven by the main core and holds the data itself.
 The second instance is driven by the shadow core and holds the corresponding ECC.
 ECC checking is conducted inside the shadow core.
-In addition, the register file write port (write address, write enable, and write data) of the main core is compared against the one of the shadow core in the dual core lockstep.
-Relying on the ECC check alone would miss a faulty result whose check bits happen to match those of the correct result, e.g., a bitwise inverted result.
+In addition, the register file read addresses and write port (write address, write enable, and write data) of the main core are compared against the ones of the shadow core in the dual core lockstep.
+Relying on the ECC check alone would miss a faulty value whose check bits happen to match those of the correct value, e.g., a bitwise inverted result or a read from a register holding the inverse.
 This can be useful to detect fault injection attacks since the register file covers a reasonably large area.
 No attempt is made to correct detected errors, but an internal major alert is signaled for the system to take action.
 
