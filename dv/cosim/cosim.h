@@ -23,6 +23,9 @@ struct DSideAccessInfo {
   // set if an error response to the transaction is seen.
   bool error;
 
+  // set if the response to the transaction failed its integrity check.
+  bool intg_error;
+
   // `misaligned_first` and `misaligned_second` are set when the transaction is
   // generated for a misaligned store or load instruction.  `misaligned_first`
   // is true when the transaction is for the lower half and `misaligned_second`
@@ -110,7 +113,7 @@ class Cosim {
   // Set the state of the internal NMI (non-maskable interrupt) line.
   // Behaviour wise this is almost as same as external NMI case explained at
   // set_nmi method. Difference is that this one is a response from Ibex rather
-  // than an input.
+  // than an input. It is raised by dside integrity errors.
   virtual void set_nmi_int(bool nmi_int) = 0;
 
   // Set the debug request.

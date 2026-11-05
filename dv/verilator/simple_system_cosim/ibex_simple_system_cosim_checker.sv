@@ -113,7 +113,7 @@ module ibex_simple_system_cosim_checker #(
       if (host_dmem_rvalid) begin
         riscv_cosim_notify_dside_access(cosim_handle, outstanding_store, outstanding_addr,
           outstanding_store ? outstanding_store_data : host_dmem_rdata, outstanding_be,
-          host_dmem_err, outstanding_misaligned_first, outstanding_misaligned_second,
+          host_dmem_err, 1'b0, outstanding_misaligned_first, outstanding_misaligned_second,
           outstanding_misaligned_first_saw_error, outstanding_m_mode_access);
       end
     end

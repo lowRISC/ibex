@@ -109,7 +109,8 @@ class ibex_mem_intf_monitor extends uvm_monitor;
   endtask : collect_address_phase
 
   virtual protected task collect_response_phase();
-    ibex_mem_intf_seq_item trans_collected;
+    ibex_mem_intf_seq_item              trans_collected;
+    prim_secded_pkg::secded_inv_39_32_t resp_dec;
     forever begin
       collect_response_queue.get(trans_collected);
       do
@@ -122,6 +123,10 @@ class ibex_mem_intf_monitor extends uvm_monitor;
       end
 
       trans_collected.error = vif.monitor_cb.error;
+      // Write responses are checked too, unknown data isn't an error
+      resp_dec = prim_secded_pkg::prim_secded_inv_39_32_dec({vif.monitor_cb.rintg,
+                                                             vif.monitor_cb.rdata});
+      trans_collected.intg_error = (|resp_dec.err) === 1'b1;
       item_collected_port.write(trans_collected);
     end
   endtask : collect_response_phase
