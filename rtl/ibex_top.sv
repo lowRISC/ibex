@@ -897,6 +897,8 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       data_rdata_core,
       trvk_rtag,
       trvk_err,
+      rf_raddr_a,
+      rf_raddr_b,
       rf_waddr_wb,
       rf_we_wb,
       rf_wdata_wb,
@@ -954,6 +956,8 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     logic                         data_rdata_tag_local;
     logic                         data_err_local;
 
+    logic [4:0]                   rf_raddr_a_local;
+    logic [4:0]                   rf_raddr_b_local;
     logic [4:0]                   rf_waddr_wb_local;
     logic                         rf_we_wb_local;
     logic [RegFileDataWidth-1:0]  rf_wdata_wb_local;
@@ -1012,6 +1016,8 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       data_rdata_core,
       trvk_rtag,
       trvk_err,
+      rf_raddr_a,
+      rf_raddr_b,
       rf_waddr_wb,
       rf_we_wb,
       rf_wdata_wb,
@@ -1065,6 +1071,8 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       data_rdata_local,
       data_rdata_tag_local,
       data_err_local,
+      rf_raddr_a_local,
+      rf_raddr_b_local,
       rf_waddr_wb_local,
       rf_we_wb_local,
       rf_wdata_wb_local,
@@ -1194,6 +1202,8 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       .data_rdata_tag_i         (data_rdata_tag_local),
       .data_err_i               (data_err_local),
 
+      .rf_raddr_a_i             (rf_raddr_a_local),
+      .rf_raddr_b_i             (rf_raddr_b_local),
       .rf_waddr_wb_i            (rf_waddr_wb_local),
       .rf_we_wb_i               (rf_we_wb_local),
       .rf_wdata_wb_i            (rf_wdata_wb_local),
