@@ -123,7 +123,7 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
         // RVFI item is only notifying about new interrupts, not a retired instruction, so provide
         // cosim with interrupt information and loop back to await the next item.
         riscv_cosim_set_nmi(cosim_handle, rvfi_instr.nmi);
-        riscv_cosim_set_nmi_int(cosim_handle, rvfi_instr.nmi_int);
+        riscv_cosim_set_nmi_int(cosim_handle, rvfi_instr.nmi_int, rvfi_instr.nmi_int_mtval);
         riscv_cosim_set_mip(cosim_handle, rvfi_instr.pre_mip, rvfi_instr.pre_mip);
 
         continue;
@@ -148,7 +148,7 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
       // handled with the correct priority when they occur together.
       riscv_cosim_set_debug_req(cosim_handle, rvfi_instr.debug_req);
       riscv_cosim_set_nmi(cosim_handle, rvfi_instr.nmi);
-      riscv_cosim_set_nmi_int(cosim_handle, rvfi_instr.nmi_int);
+      riscv_cosim_set_nmi_int(cosim_handle, rvfi_instr.nmi_int, rvfi_instr.nmi_int_mtval);
       riscv_cosim_set_mip(cosim_handle, rvfi_instr.pre_mip, rvfi_instr.post_mip);
       riscv_cosim_set_mcycle(cosim_handle, rvfi_instr.mcycle);
 
