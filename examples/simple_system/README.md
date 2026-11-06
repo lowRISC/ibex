@@ -17,7 +17,7 @@ run stand-alone binaries. It contains:
 * The Python dependencies of this repository.
   Install them with `pip3 install -U -r python-requirements.txt` from the
   repository root.
-* RISC-V Compiler Toolchain - lowRISC provides a pre-built GCC based toolchain
+* RISC-V Compiler Toolchain - lowRISC provides a pre-built LLVM based toolchain
   <https://github.com/lowRISC/lowrisc-toolchains/releases>
 * libelf and its development libraries.
   On Debian/Ubuntu, install it by running `apt-get install libelf-dev`.

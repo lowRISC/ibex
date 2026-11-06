@@ -58,10 +58,10 @@ def add_configs_and_handwritten_directed_tests():
   ld_script: ../../../../vendor/riscv-isa-sim/tests/mseccfg/mseccfg_test.ld
   includes: .
   gcc_opts: -march=rv32imc -O2 -I . -I ./. -I ../softfloat -I ../riscv -fno-builtin-printf
-            -fdata-sections -fno-section-anchors -DPRINTF_SUPPORTED=1
+            -fdata-sections -DPRINTF_SUPPORTED=1
             ../../../vendor/riscv-isa-sim/tests/mseccfg/crt.S
             ../../../vendor/riscv-isa-sim/tests/mseccfg/syscalls.c
-            -mcmodel=medany -static -nostdlib -nostartfiles -lm -lgcc
+            -mcmodel=medany -static -nostdlib -nostartfiles
             -Wl,-M -Wl,-Map=link.log
   rtl_test: core_ibex_base_test
   rtl_params:
