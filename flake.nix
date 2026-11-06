@@ -258,13 +258,17 @@
         # ENVIRONMENTS #
         ################
 
-        # The formal environment has an untracked external requirement on Cadence Jasper.
-        # Add a check here which will prevent launching the devShell if Jasper is not found on the user's path.
-        # TODO: Is this robust? Do we want to check available features?
+        # Commercial EDA tools wanted in the EDA shells. Install paths and license servers are
+        # supplied at runtime from the JSON named by $LOWRISC_EDA_CONFIG.
+        # See https://github.com/lowRISC/lowrisc-nix/blob/main/lib/README-eda.md
+        eda_tools = builtins.fromJSON (builtins.readFile ./nix/eda_tool_data.json);
+        formal_eda_tools = builtins.filter (t: t.name == "Jasper") eda_tools;
+
+        # The formal environment has an external requirement on Cadence Jasper, which is
+        # provided through $LOWRISC_EDA_CONFIG. Warn if it could not be found.
         check_jg = ''
           if ! command -v jg &>/dev/null; then
-            echo "Jasper not found on path. Not launching devShell."
-            exit 1
+            echo "WARNING: Jasper (jg) not found on PATH." >&2
           fi
         '';
         exports = ''
@@ -316,20 +320,17 @@
           shellHook = prev.shellHook + ibex_syn.profile;
         });
 
-        # This shell uses mkShellNoCC as the stdenv CC can interfere with EDA tools.
-        eda_shell = pkgs.lib.makeOverridable pkgs.mkShellNoCC {
-          name = "ibex-devshell-eda";
-          buildInputs = ibex_runtime_deps;
-          nativeBuildInputs = ibex_project_deps;
-          shellHook = ''
-            ${ibex_profile_common}
-
-            # libnuma.so.1 is a bare DT_NEEDED in VCS's simv with no RPATH entry for it.
-            # On NixOS there is no FHS fallback, so we must surface numactl explicitly.
-            # Appending ensures the system library is preferred on FHS distros (e.g. Ubuntu).
-            # zlib is also required for some waveform dumping libs.
-            export LD_LIBRARY_PATH=''${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}${pkgs.lib.makeLibraryPath [ pkgs.numactl pkgs.zlib ]}
-          '';
+        # FHS sandbox with the commercial EDA tools on PATH, built with lowrisc-nix's mkEdaShell.
+        # `nix develop .#eda_shell` (or `nix develop .`) drops into the sandbox in the invoking
+        # shell (bash/fish/zsh), and `nix run .#eda_shell -- <cmd>` runs a command inside it.
+        # The FHS base already provides the runtime libraries (libelf, zlib, numactl, ...) as
+        # well as cmake and pkg-config.
+        eda_shell = inputs.lowrisc-nix.lib.mkEdaShell {
+          inherit pkgs;
+          name = "ibex-eda";
+          tools = eda_tools;
+          extraPkgs = lib.subtractLists (with pkgs; [cmake pkg-config]) ibex_project_deps;
+          profile = ibex_profile_common;
         };
 
         in {
@@ -338,16 +339,29 @@
             # to re-use its build environment when using the .#formal-dev flow.
             inherit lowrisc_sail;
           };
+          # `nix run .#eda_shell -- <cmd> <args>` runs a command inside the EDA sandbox.
+          apps = {
+            eda_shell = eda_shell.app;
+            default = eda_shell.app;
+          };
           devShells = rec {
             inherit shell syn_shell eda_shell;
-            formal = pkgs.mkShellNoCC {
-              packages = standard_deps;
-              shellHook = check_jg + exports;
+            default = eda_shell;
+
+            formal = inputs.lowrisc-nix.lib.mkEdaShell {
+              inherit pkgs;
+              name = "ibex-formal";
+              tools = formal_eda_tools;
+              extraPkgs = standard_deps;
+              profile = check_jg + exports;
             };
 
-            formal-dev = pkgs.mkShellNoCC {
-              packages = standard_deps;
-              shellHook = check_jg + exports + dev_msg;
+            formal-dev = inputs.lowrisc-nix.lib.mkEdaShell {
+              inherit pkgs;
+              name = "ibex-formal-dev";
+              tools = formal_eda_tools;
+              extraPkgs = standard_deps;
+              profile = check_jg + exports + dev_msg;
             };
 
             oss-dev = pkgs.mkShellNoCC {

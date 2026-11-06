@@ -1,0 +1,26 @@
+[
+    {
+        "name": "Xcelium",
+        "vendor": "Cadence",
+        "version": "24.03-s007",
+        "comment": "Provides xrun for the UVM verification environment."
+    },
+    {
+        "name": "vManager",
+        "vendor": "Cadence",
+        "version": "24.03-s002",
+        "comment": "Provides imc, used to merge and report Xcelium coverage."
+    },
+    {
+        "name": "Jasper",
+        "vendor": "Cadence",
+        "version": "2025.09",
+        "comment": "Formal verification."
+    },
+    {
+        "name": "VCS",
+        "vendor": "Synopsys",
+        "version": "X-2025.06-SP2-1",
+        "comment": "RTL simulator."
+    }
+]
