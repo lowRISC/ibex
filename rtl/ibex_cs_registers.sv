@@ -1770,7 +1770,8 @@ module ibex_cs_registers import ibex_pkg::*, ibex_cheriot_pkg::*; #(
     logic [DbgHwBreakNum-1:0] trigger_match;
 
     // Write select
-    assign tselect_we = csr_we_int & debug_mode_i & (csr_addr_i == CSR_TSELECT);
+    // tselect is writable from M-mode as well as Debug Mode.
+    assign tselect_we = csr_we_int & (csr_addr_i == CSR_TSELECT);
     for (genvar i = 0; i < DbgHwBreakNum; i++) begin : g_dbg_tmatch_we
       assign tmatch_control_we[i] = (i[DbgHwNumLen-1:0] == tselect_q) & csr_we_int & debug_mode_i &
                                     (csr_addr_i == CSR_TDATA1);
