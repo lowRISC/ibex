@@ -5,7 +5,7 @@
 
 package prim_ram_2p_pkg;
 
-  parameter int unsigned Ram2pReqWidth = 32'd7;
+  parameter int unsigned Ram2pReqWidth = 32'd10;
   parameter int unsigned Ram2pRspWidth = 32'd1;
 
   typedef struct packed {
