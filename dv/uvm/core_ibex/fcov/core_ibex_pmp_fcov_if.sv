@@ -674,7 +674,7 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
              binsof(cp_mmwp) intersect {1} &&
              binsof(pmp_dside_req_err) intersect {0});
           illegal_bins illegal_user_allow_wr =
-            // Deny WR everytime in User mode
+            // Deny WR every time in User mode
             (binsof(cp_priv_lvl_dside) intersect {PRIV_LVL_U} &&
              binsof(cp_req_type_dside) intersect {PMP_ACC_READ, PMP_ACC_WRITE} &&
              binsof(pmp_dside_req_err) intersect {0});

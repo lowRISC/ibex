@@ -79,7 +79,7 @@ package ibex_cheriot_pkg;
   //
   //  decoded_cap_t  - The uncompressed capability type used inside the core. Created by
   //                   `cheriot_decode_cap` and `cheriot_encode_cap`. Its lower 35 bits are the same
-  //                   as cap_t so encode is simpley a cast. The upper bits add the decompressed
+  //                   as cap_t so encode is simply a cast. The upper bits add the decompressed
   //                   bounds and permissions.
   // -----------------------------------------------------------------------------------------------
 
@@ -600,7 +600,7 @@ package ibex_cheriot_pkg;
 
     // we used the "requested top" to verify the results against original bounds
     // also compare address >= old base 32 to handle exp=24 case
-    //   exp = 24 case: can have addr < base (not covered by representibility checking);
+    //   exp = 24 case: can have addr < base (not covered by representability checking);
     //   other exp cases: always addr >= base when out_cap.tag == 1
     if (~in_bound)
       out_cap.valid = 1'b0;

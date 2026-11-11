@@ -118,7 +118,7 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   input  logic                                                         irq_timer_i,
   input  logic                                                         irq_external_i,
   input  logic [14:0]                                                  irq_fast_i,
-  // non-maskeable interrupt
+  // non-maskable interrupt
   input  logic                                                         irq_nm_i,
 
   // Scrambling Interface

@@ -112,9 +112,9 @@ void RegisterModel::NewTransaction(std::unique_ptr<RegisterTransaction> trans) {
     }
   }
   if (!matched) {
-    // Non existant register
+    // Non existent register
     if (!trans->illegal_csr) {
-      std::cout << "Non-existant register:" << std::endl;
+      std::cout << "Non-existent register:" << std::endl;
       trans->Print();
       std::cout << "Should have signalled an error." << std::endl;
       simctrl_->RequestStop(false);

@@ -414,7 +414,7 @@ def _main():
                     trr.sim_opts = shlex_if_not_empty('sim_opts')
 
                     # If the +discrete_debug_module=1 argument is passed via sim_opts, a alternate
-                    # memory heirarchy is enabled which seperates the debug rom memory sections
+                    # memory hierarchy is enabled which separates the debug rom memory sections
                     # from the main binary, emulating an external debug module
                     for plusarg, val in (trr.split('=') for trr in trr.sim_opts):
                         if plusarg == "+discrete_debug_module":

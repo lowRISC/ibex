@@ -374,7 +374,7 @@ Reset Value: ``0x0000_0000``
 Machine Security Configuration (mseccfg/mseccfgh)
 -------------------------------------------------
 
-CSR Address: ``mseccfg``: ``0x747``  ``mseccfg``: ``0x757``
+CSR Address: ``mseccfg``: ``0x747``  ``mseccfgh``: ``0x757``
 
 Reset Value: ``0x0000_0000_0000_0000``
 
