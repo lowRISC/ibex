@@ -13,6 +13,7 @@ class ibex_rvfi_seq_item extends uvm_sequence_item;
   bit [31:0] post_mip;
   bit        nmi;
   bit        nmi_int;
+  bit [31:0] nmi_int_mtval;
   bit        debug_req;
   bit        rf_wr_suppress;
   bit [63:0] mcycle;
@@ -31,6 +32,7 @@ class ibex_rvfi_seq_item extends uvm_sequence_item;
     `uvm_field_int (post_mip, UVM_DEFAULT)
     `uvm_field_int (nmi, UVM_DEFAULT)
     `uvm_field_int (nmi_int, UVM_DEFAULT)
+    `uvm_field_int (nmi_int_mtval, UVM_DEFAULT)
     `uvm_field_int (debug_req, UVM_DEFAULT)
     `uvm_field_int (rf_wr_suppress, UVM_DEFAULT)
     `uvm_field_int (mcycle, UVM_DEFAULT)
