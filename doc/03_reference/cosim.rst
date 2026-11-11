@@ -151,6 +151,9 @@ As Ibex doesn't perform speculative Dside memory accesses, all notified accesses
 
 Accesses notified via ``notify_dside_access`` can specify they saw an error response, the co-simulation system will produce the appropriate trap when the ISS attempts to access the address that saw the error.
 
+Accesses can also specify they saw an integrity error.
+Loads must then suppress their register write, and the co-simulation system sets ``mtval`` for the following internal NMI (``set_nmi_int``) itself.
+
 Accesses must be notified before they occur in the ISS for the access matching and trapping on errors to work.
 
 Iside accesses from Ibex can be speculative, so there is no simple link between accesses produced by the RTL and the accesses performed by the ISS for the Iside.
