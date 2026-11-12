@@ -2411,7 +2411,8 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   always_comb begin
     rvfi_set_trap_pc_d = rvfi_set_trap_pc_q;
 
-    if (pc_set && pc_mux_id == PC_EXC && (exc_pc_mux_id == EXC_PC_IRQ)) begin
+    if (pc_set && pc_mux_id == PC_EXC &&
+        (exc_pc_mux_id == EXC_PC_EXC || exc_pc_mux_id == EXC_PC_IRQ)) begin
       // PC is set to enter a trap handler
       rvfi_set_trap_pc_d = 1'b1;
     end else if (rvfi_set_trap_pc_q && rvfi_id_done) begin
