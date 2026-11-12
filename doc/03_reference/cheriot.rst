@@ -86,6 +86,7 @@ TRVK Revocation Bitmap Interface (``trvk_revbm_*``)
 
 The TRVK (Temporal Revocation) filter is positioned just outside the LSU.
 It intercepts capability loads and checks whether the loaded capability has been revoked by checking the revocation bitmap.
+With the SecureIbex parameter, the shadow core of the :ref:`dual core lockstep<lockstep>` has its own TRVK.
 
 The revocation bitmap interface is an OBI compliant memory-mapped port.
 Because this port is strictly used for bitmap lookups, it only implements the read channels of the OBI standard, sharing identical handshaking semantics with the instruction and data interfaces:
