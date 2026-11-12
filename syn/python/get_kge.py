@@ -49,15 +49,17 @@ def get_kge(report_path, weighted_dict):
     ge = 0.0
     for line_idx, line in enumerate(report):
         data = line.split()
-        if not data:
+        if len(data) < 3:
             continue
-        weight = weighted_dict.get(data[0])
+        cell_name = data[2]
+        weight = weighted_dict.get(cell_name)
         if weight is not None:
             try:
-                ge += float(data[1]) * weight
+                count = float(data[0])
+                ge += count * weight
             except (IndexError, ValueError):
                 raise RuntimeError('{}:{} Cell {} matched but was misformatted'
-                                   .format(report_path, line_idx + 1, data[0]))
+                                   .format(report_path, line_idx + 1, cell_name))
     print("Area in kGE = ", round(ge/1000, 2))
 
 
