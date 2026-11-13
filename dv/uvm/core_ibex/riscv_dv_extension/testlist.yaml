@@ -786,6 +786,8 @@
   rtl_test: core_ibex_icache_intg_test
   rtl_params:
     SecureIbex: 1
+    ICache: 1
+    ICacheECC: 1
 
 - test: riscv_rv32im_instr_test
   description: >
