@@ -178,8 +178,67 @@ Capability Loads and Stores
 Capabilities are 64-bit values (32-bit address + 32 bits of metadata) plus an out-of-band tag bit, so a capability load or store always occupies two consecutive, 8-byte-aligned 32-bit bus transactions.
 The LSU serialises these automatically: a capability store performs two word writes in order (low word, then high word) and drives ``data_tag_o`` high on both beats if the stored capability carries a valid tag.
 A capability load performs two word reads and collects both data words together with the two ``data_tag_i`` values; the capability is considered valid only if the tag is set on both beats.
+For a capability load, ``data_tag_o`` is high on both beats to request the tag from memory.
+Both beats use ``data_be_o`` = ``4'b1111``, and the LSU issues the second request in the cycle after the first grant, without waiting for the first response.
+:numref:`timing-cap-store` and :numref:`timing-cap-load` show both cases on the ``ibex_top`` ports with example latencies.
+In the store the second request goes out before the first response arrives, and in the load the first response arrives before the second request is granted.
+
+.. wavedrom::
+   :name: timing-cap-store
+   :caption: Capability Store
+
+   {"signal":
+     [
+       {"name": "clk", "wave": "p......."},
+       {"name": "data_req_o", "wave": "01..0..."},
+       {"name": "data_addr_o", "wave": "x=.=xxxx", "data": ["Addr", "Addr+4"]},
+       {"name": "data_we_o", "wave": "x=..xxxx", "data": ["1"]},
+       {"name": "data_be_o", "wave": "x=..xxxx", "data": ["4'b1111"]},
+       {"name": "data_wdata_o", "wave": "x=.=xxxx", "data": ["Cap addr", "Cap meta"]},
+       {"name": "data_tag_o", "wave": "x=.=xxxx", "data": ["Tag", "Tag"]},
+       {"name": "data_gnt_i", "wave": "0.1.0..."},
+       {"name": "data_rvalid_i", "wave": "0...1.0."},
+       {"name": "data_err_i", "wave": "xxxx==xx", "data": ["Err1", "Err2"]}
+     ],
+     "config": { "hscale": 2 }
+   }
 
 After a capability load the loaded tag passes through the TRVK revocation filter before reaching the register file.
 If the filter determines the capability has been software-revoked, the tag is silently cleared without raising an exception.
+The filter looks up the revocation bitmap if the first beat is tagged and the second beat carries tagged metadata of a capability that is not a sealing capability and whose base lies in the heap range.
+It issues the lookup on the ``trvk_revbm_*`` port in the same cycle as the second ``data_rvalid_i`` and holds that response back from the LSU until ``trvk_revbm_rvalid_i``.
+This delays the load by the grant and response latency of the bitmap port, which is at least one cycle.
+In :numref:`timing-cap-load` the ``data_*`` rows are the ``ibex_top`` ports on the memory side of the filter, and the internal rows show the response as the core receives it on its ``data_rvalid_i`` and ``data_tag_i``.
+The first beat passes straight through, while the second beat reaches the core only with ``trvk_revbm_rvalid_i`` and its tag is cleared if the bitmap marks the capability as revoked.
+Other capability loads and all other transactions pass through without delay.
+
+.. wavedrom::
+   :name: timing-cap-load
+   :caption: Capability Load with Revocation Bitmap Lookup
+
+   {"signal":
+     [
+       {"name": "clk", "wave": "p........"},
+       {"name": "data_req_o", "wave": "01..0...."},
+       {"name": "data_addr_o", "wave": "x==.xxxxx", "data": ["Addr", "Addr+4"]},
+       {"name": "data_we_o", "wave": "x=..xxxxx", "data": ["0"]},
+       {"name": "data_be_o", "wave": "x=..xxxxx", "data": ["4'b1111"]},
+       {"name": "data_tag_o", "wave": "x==.xxxxx", "data": ["1", "1"]},
+       {"name": "data_gnt_i", "wave": "01010...."},
+       {"name": "data_rvalid_i", "wave": "0.10.10.."},
+       {"name": "data_rdata_i", "wave": "xx=xx=xxx", "data": ["Cap addr", "Cap meta"]},
+       {"name": "data_tag_i", "wave": "xx=xx=xxx", "data": ["1", "1"]},
+       {},
+       {"name": "trvk_revbm_req_o", "wave": "0....1.0."},
+       {"name": "trvk_revbm_addr_o", "wave": "xxxxx=.xx", "data": ["BM addr"]},
+       {"name": "trvk_revbm_gnt_i", "wave": "0.....10."},
+       {"name": "trvk_revbm_rvalid_i", "wave": "0......10"},
+       {"name": "trvk_revbm_rdata_i", "wave": "xxxxxxx=x", "data": ["BM word"]},
+       {},
+       {"name": "core rvalid (internal)", "wave": "0.10...10"},
+       {"name": "core tag (internal)", "wave": "xx=xxxx=x", "data": ["1", "!Revoked"]}
+     ],
+     "config": { "hscale": 2 }
+   }
 
 For the ``data_tag_o`` / ``data_tag_i`` signal descriptions and the full TRVK revocation bitmap interface see :ref:`cheriot`.
