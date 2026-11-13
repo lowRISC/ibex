@@ -61,7 +61,7 @@ def log(*args, c=lambda x: x):
 write_logfile("") # Blank line to mark new run
 
 '''
-Races allow async processes to cleanly run in parrallel, until one declares victory,
+Races allow async processes to cleanly run in parallel, until one declares victory,
 at which point all the other futures are cancelled. Tasks should be sequence of
 awaitables. In order to declare victory of a race, simply return something not-None.
 '''

@@ -1915,7 +1915,7 @@ module ibex_core import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   // environment with information about the irq/debug_req/nmi state that applies to a particular
   // instruction.
   //
-  // When a irq/debug_req/nmi appears the ID stage will finish whatever instruction it is currently
+  // When an irq/debug_req/nmi appears the ID stage will finish whatever instruction it is currently
   // executing (if any) then take the trap the cycle after that instruction leaves the ID stage. The
   // trap taken depends upon the state of irq/debug_req/nmi on that cycle. In the cycles following
   // that before the first instruction of the trap handler enters the ID stage the state of

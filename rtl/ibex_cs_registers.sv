@@ -2091,7 +2091,7 @@ module ibex_cs_registers import ibex_pkg::*, ibex_cheriot_pkg::*; #(
     // PCC updating
     //  -- PC address range checking is always against the pcc_cap, which is only updated with
     //     CHER CJALR or exceptions. Legacy RV32 jumps/branches can change PC but not the PCC
-    //     bounds/perms, so they are still limited by the orginal bounds in IF stage checking
+    //     bounds/perms, so they are still limited by the original bounds in IF stage checking
     always_comb begin
 
       if (csr_save_cause_i) begin              // Exception cases

@@ -322,8 +322,8 @@ module ibex_icache import ibex_pkg::*; #(
   if (TweakInfection) begin : gen_tweak_infection
     // Before writing the data to the data bank, XOR the tweak on top of the data.
     // When reading back the data, undo this XOR.
-    // Determine the full address used for the outgoing data bank request. Apply '0, wich
-    // effectively disabled the tweak infection, when (a) invalidating the cache and (b)
+    // Determine the full address used for the outgoing data bank request. Apply '0, which
+    // effectively disables the tweak infection, when (a) invalidating the cache and (b)
     // when there is already an ECC error (we have already raised a minor alert).
     logic [ADDR_W-1:0]           data_address_ic0;
     logic [ADDR_W-IC_LINE_W-1:0] data_tweak_ic0;
