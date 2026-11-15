@@ -811,6 +811,15 @@ module ibex_id_stage import ibex_cheriot_pkg::*; #(
   assign jump_set        = jump_set_raw        & ~branch_jump_set_done_q;
   assign branch_set      = branch_set_raw      & ~branch_jump_set_done_q;
 
+  // FENCE.I is implemented as a jump, but unlike other jumps it must not fetch speculatively past
+  // an older load/store still outstanding in WB (see lowRISC/ibex#2574). The decoder only raises
+  // icache_inval_o for FENCE.I. Only the registered outstanding_*_wb_i signals are used (not
+  // lsu_resp_valid_i) so that no combinational path from the data to the instruction interface is
+  // created; this costs FENCE.I one extra cycle when it has to wait. Without a writeback stage the
+  // outstanding_*_wb_i inputs are tied off and this signal is constant zero.
+  logic fencei_wait_mem;
+  assign fencei_wait_mem = icache_inval_o & (outstanding_load_wb_i | outstanding_store_wb_i);
+
   // Branch condition is calculated in the first cycle and flopped for use in the second cycle
   // (only used in fixed time execution mode to determine branch destination).
   if (DataIndTiming) begin : g_sec_branch_taken
@@ -930,11 +939,20 @@ module ibex_id_stage import ibex_cheriot_pkg::*; #(
               perf_branch_o = 1'b1;
             end
             jump_in_dec: begin
-              // uncond branch operation
-              // BTALU means jumps only need one cycle
-              id_fsm_d      = BranchTargetALU ? FIRST_CYCLE : MULTI_CYCLE;
-              stall_jump    = ~BranchTargetALU;
-              jump_set_raw  = jump_set_dec;
+              if (fencei_wait_mem) begin
+                // FENCE.I must not refetch until every older load/store has completed, otherwise
+                // the refetch can overtake a store that modifies the following instructions.
+                // Stay in FIRST_CYCLE (so the decoder keeps asserting jump_set_dec) and stall
+                // until WB no longer holds an outstanding memory access.
+                id_fsm_d      = FIRST_CYCLE;
+                stall_jump    = 1'b1;
+              end else begin
+                // uncond branch operation
+                // BTALU means jumps only need one cycle
+                id_fsm_d      = BranchTargetALU ? FIRST_CYCLE : MULTI_CYCLE;
+                stall_jump    = ~BranchTargetALU;
+                jump_set_raw  = jump_set_dec;
+              end
             end
             default: begin
               id_fsm_d      = FIRST_CYCLE;
@@ -1073,6 +1091,11 @@ module ibex_id_stage import ibex_cheriot_pkg::*; #(
 
     `ASSERT(IbexCannotRetireWithPendingExceptions,
       instr_done |-> ~(wb_exception | outstanding_memory_access))
+
+    // FENCE.I must not start its refetch while an older load/store is still outstanding in WB,
+    // otherwise the refetch can overtake a store to the following instructions (lowRISC/ibex#2574).
+    `ASSERT(IbexFenceINoFetchWithOutstandingMem,
+      jump_set & icache_inval_o |-> ~(outstanding_load_wb_i | outstanding_store_wb_i))
 
     // Stall for reasons related to memory:
     // * There is an outstanding memory access that won't resolve this cycle (need to wait to allow
