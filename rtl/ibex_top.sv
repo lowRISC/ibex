@@ -883,6 +883,10 @@ module ibex_top import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
 
   // Redundant lockstep core implementation
   if (Lockstep) begin : gen_lockstep
+    // The shadow core runs at least one cycle behind the main core; ibex_lockstep has no
+    // zero-offset mode.
+    `ASSERT_INIT(IbexLockstepOffsetMin_A, LockstepOffset > 0)
+
     // SEC_CM: LOGIC.SHADOW
     // Note: certain synthesis tools like DC are very smart at optimizing away redundant logic.
     // Hence, we have to insert an optimization barrier at the IOs of the lockstep Ibex.
