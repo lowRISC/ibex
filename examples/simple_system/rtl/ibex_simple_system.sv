@@ -310,11 +310,17 @@ module ibex_simple_system (
       .data_addr_shadow_o        (),
       .data_wdata_shadow_o       (),
       .data_wdata_intg_shadow_o  (),
+      .data_tag_shadow_o         (),
 
       .instr_req_shadow_o        (),
       .instr_addr_shadow_o       (),
 
-      .cheriot_enable_i          (ibex_pkg::IbexMuBiOff)
+      .trvk_revbm_req_shadow_o   (),
+      .trvk_revbm_addr_shadow_o  (),
+
+      .cheriot_enable_i          (ibex_pkg::IbexMuBiOff),
+      .cheriot_enable_shadow_i   (ibex_pkg::IbexMuBiOff),
+      .cheriot_enable_cmp_i      (ibex_pkg::IbexMuBiOff)
     );
 
   // SRAM block for instruction and data storage

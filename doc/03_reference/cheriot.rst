@@ -34,6 +34,8 @@ CHERIoT support requires two conditions to be met:
 
 2. **Runtime**: set ``cheriot_enable_i`` to ``ibex_pkg::IbexMuBiOn``.
    When de-asserted (``ibex_pkg::IbexMuBiOff``) the core runs as a standard RV32I processor.
+   With the :ref:`dual core lockstep<lockstep>`, ``cheriot_enable_shadow_i`` must follow ``cheriot_enable_i`` one cycle later, and ``cheriot_enable_cmp_i``, raised after the last switch, enables the comparison of the two.
+   After switching, software must execute ``fence.i`` before any instruction that depends on the mode: the fetch stage may already have expanded the following instruction for the previous mode.
 
 .. important::
    **Security Constraint:** The ``cheriot_enable_i`` signal acts as a one-way switch. To ensure security and prevent arbitrary switching between memory protection modes, the mode must either be configured at reset and kept constant, or switched exactly once from off to on during runtime.
@@ -86,6 +88,7 @@ TRVK Revocation Bitmap Interface (``trvk_revbm_*``)
 
 The TRVK (Temporal Revocation) filter is positioned just outside the LSU.
 It intercepts capability loads and checks whether the loaded capability has been revoked by checking the revocation bitmap.
+With the SecureIbex parameter, the shadow core of the :ref:`dual core lockstep<lockstep>` has its own TRVK.
 
 The revocation bitmap interface is an OBI compliant memory-mapped port.
 Because this port is strictly used for bitmap lookups, it only implements the read channels of the OBI standard, sharing identical handshaking semantics with the instruction and data interfaces:
