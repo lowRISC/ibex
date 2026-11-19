@@ -367,7 +367,6 @@
             oss-dev = pkgs.mkShellNoCC {
               packages = standard_deps ++ [
                 lowrisc_yosys_slang
-                ((pkgs.yosys.override (attrs: { enablePython = false; })).overrideAttrs (finalAttrs: prev: { doCheck = false; }))
               ] ++ (with pkgs; [
                 gtkwave # not stricly necesssary
                 ric3
@@ -380,6 +379,7 @@
 
                 # yosys-config
                 gcc
+                yosys
               ]);
               shellHook = exports + dev_msg + ''
                 export LOWRISC_YOSYS_SLANG=${lowrisc_yosys_slang.out}/lib/slang.so
