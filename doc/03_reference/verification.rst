@@ -265,10 +265,8 @@ the Ibex repository:
 .. code-block:: bash
 
    dvsim dv/uvm/icache/dv/ibex_icache_sim_cfg.hjson --build-only
-   --skip-ral --purge --sr sim_out
+   --purge --scratch-root sim_out
 
-Specify the intended output directory using either the ``--sr`` or ``-scratch-root`` option.
-The ``--skip-ral`` option is mandatory for building/simulating the Icache testbench, as it does not
-have any CSRs, excluding this option will lead to build errors.
+Specify the intended output directory using either the ``-sr`` or ``--scratch-root`` option.
 ``--purge`` directs the tool to ``rm -rf`` the output directory before running the tool, this can be
 removed if not desired.
