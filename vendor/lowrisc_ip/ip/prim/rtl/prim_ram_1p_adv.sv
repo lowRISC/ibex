@@ -158,14 +158,14 @@ module prim_ram_1p_adv import prim_ram_1p_pkg::*; #(
       .clk_i,
       .rst_ni,
 
-      .req_i     (inst_req_d[i]),
-      .write_i   (write_q_b),
-      .addr_i    (inst_addr),
-      .wdata_i   (wdata_q),
-      .wmask_i   (wmask_q),
-      .rdata_o   (inst_rdata[i]),
-      .cfg_i     (cfg_i[i]),
-      .cfg_o     (cfg_o[i])
+      .req_i   (inst_req_d[i]),
+      .write_i (write_q_b),
+      .addr_i  (inst_addr),
+      .wdata_i (wdata_q),
+      .wmask_i (wmask_q),
+      .rdata_o (inst_rdata[i]),
+      .cfg_i   (cfg_i[i]),
+      .cfg_o   (cfg_o[i])
     );
   end
 

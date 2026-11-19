@@ -37,10 +37,11 @@ package dv_utils_pkg;
   // typedef parameterized pins_if for ease of implementation for interrupts and alerts
   typedef virtual pins_if #(NUM_MAX_INTERRUPTS) intr_vif;
 
-  // interface direction / mode - Host or Device
-  typedef enum bit {
-    Host,
-    Device
+  // Interface direction / mode
+  typedef enum bit [1:0] {
+    Host,   // The interface is active and is driving signals as a host
+    Device, // The interface is active and is driving signals as a device
+    Monitor // The interface is passive and drives no signals
   } if_mode_e;
 
   // compare operator types
@@ -140,20 +141,6 @@ package dv_utils_pkg;
   function automatic bit has_uvm_fatal_occurred();
     uvm_report_server report_server = uvm_report_server::get_server();
     return report_server.get_severity_count(UVM_FATAL) > 0;
-  endfunction
-
-  // get masked data based on provided byte mask; if csr reg handle is provided (optional) then
-  // masked bytes from csr's mirrored value are returned, else masked bytes are 0's
-  function automatic bit [bus_params_pkg::BUS_DW-1:0]
-      get_masked_data(bit [bus_params_pkg::BUS_DW-1:0] data,
-                      bit [bus_params_pkg::BUS_DBW-1:0] mask,
-                      uvm_reg csr = null);
-    bit [bus_params_pkg::BUS_DW-1:0] csr_data;
-    csr_data = (csr != null) ? csr.get_mirrored_value() : '0;
-    get_masked_data = data;
-    foreach (mask[i]) begin
-      if (~mask[i]) get_masked_data[i * 8 +: 8] = csr_data[i * 8 +: 8];
-    end
   endfunction
 
   // create a sequence by name and return the handle of uvm_sequence
@@ -358,7 +345,6 @@ package dv_utils_pkg;
 `ifdef UVM
   `include "dv_report_catcher.sv"
   `include "dv_report_server.sv"
-  `include "dv_vif_wrap.sv"
 `endif
 
 endpackage

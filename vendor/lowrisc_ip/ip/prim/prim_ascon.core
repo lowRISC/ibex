@@ -8,8 +8,10 @@ description: "Ascon unit"
 filesets:
   files_rtl:
     depend:
-       - lowrisc:prim:all
        - lowrisc:prim:sparse_fsm
+       - lowrisc:prim:assert
+       - lowrisc:prim:count
+       - lowrisc:prim:mubi_pkg
     files:
        - rtl/prim_ascon_round.sv
        - rtl/prim_ascon_sbox.sv
@@ -41,6 +43,12 @@ filesets:
       - lowrisc:lint:common
       - lowrisc:lint:comportable
 
+  files_slang_waiver:
+    depend:
+      # common waivers
+      - lowrisc:lint:common
+      - lowrisc:lint:comportable
+
 parameters:
   SYNTHESIS:
     datatype: bool
@@ -52,6 +60,7 @@ targets:
       - tool_verilator   ? (files_verilator_waiver)
       - tool_ascentlint  ? (files_ascentlint_waiver)
       - tool_veriblelint ? (files_veriblelint_waiver)
+      - tool_slang       ? (files_slang_waiver)
       - files_rtl
     toplevel: ascon
 

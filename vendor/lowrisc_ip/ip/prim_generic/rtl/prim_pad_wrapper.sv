@@ -12,6 +12,7 @@ module prim_pad_wrapper
 #(
   // These parameters are ignored in this model.
   parameter pad_type_e PadType = BidirStd,
+  parameter pad_orient_e PadOrient = OrientH,
   parameter scan_role_e ScanRole = NoScan
 ) (
   // This is only used for scanmode (not used in generic models)
@@ -41,6 +42,7 @@ module prim_pad_wrapper
                          attr_i.od_en,
                          attr_i.schmitt_en,
                          attr_i.keep_en,
+                         clk_scan_i,
                          scanmode_i,
                          pok_i};
   //VCS coverage on
