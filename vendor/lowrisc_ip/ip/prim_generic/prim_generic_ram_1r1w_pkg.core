@@ -11,7 +11,7 @@ virtual:
 filesets:
   files_rtl:
     depend:
-      - lowrisc:prim_generic:ram_2p_pkg
+      - lowrisc:prim:ram_2p_pkg
     files:
       - rtl/prim_ram_1r1w_pkg.sv
     file_type: systemVerilogSource
