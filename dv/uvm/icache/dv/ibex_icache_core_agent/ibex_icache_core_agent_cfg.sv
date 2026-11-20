@@ -7,6 +7,10 @@ class ibex_icache_core_agent_cfg extends dv_base_agent_cfg;
   // interface handle used by driver, monitor & the sequencer, via cfg handle
   virtual ibex_icache_core_if vif;
 
+  // Triggered before a reset. The driver stops the item it is driving and clears the control
+  // signals.
+  event stop_driving;
+
   `uvm_object_utils_begin(ibex_icache_core_agent_cfg)
   `uvm_object_utils_end
 
