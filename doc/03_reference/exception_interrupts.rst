@@ -147,7 +147,7 @@ The following pseudo-code snippet visualizes how to perform nested interrupt han
    :linenos:
 
    isr_handle_nested_interrupts(id) {
-     // Save mpec and mstatus to stack
+     // Save mepc and mstatus to stack
      mepc_bak = mepc;
      mstatus_bak = mstatus;
 

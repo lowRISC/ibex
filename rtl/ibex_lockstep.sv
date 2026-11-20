@@ -444,8 +444,8 @@ module ibex_lockstep import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
   logic                           shadow_dummy_instr_id;
   logic                           shadow_dummy_instr_wb;
 
-  // The following output does not need to be checked in the lockstep comparison as we anyways
-  // check the data_wdata itself.
+  // The following output does not need to be checked in the lockstep comparison as we check the
+  // data_wdata itself anyway.
   logic [6:0]                     shadow_data_wdata_intg;
   logic [MemDataWidth-1:0]        shadow_data_wdata_full;
 

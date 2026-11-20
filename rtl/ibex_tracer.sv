@@ -1114,9 +1114,9 @@ module ibex_tracer import ibex_cheriot_pkg::*; import ibex_pkg::*; (
   final begin
     if (file_handle != 32'h0) begin
       // This dance with "fh" is a bit silly. Some versions of Verilator treat a call of $fclose(xx)
-      // as a blocking assignment to xx. They then complain about the mixture with that an the
-      // non-blocking assignment we use when opening the file. The bug is fixed with recent versions
-      // of Verilator, but this hack is probably worth it for now.
+      // as a blocking assignment to xx. They then complain about the mixture with the non-blocking
+      // assignment we use when opening the file. The bug is fixed with recent
+      // versions of Verilator, but this hack is probably worth it for now.
       int fh;
       fh = file_handle;
       $fclose(fh);

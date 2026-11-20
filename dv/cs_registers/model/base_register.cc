@@ -209,7 +209,7 @@ uint32_t PmpAddrRegister::GetLockMask() {
   // Form the address of the corresponding CFG register
   uint32_t pmp_cfg_addr = 0x3A0 + (pmp_region / 4);
   // Form the address of the CFG registerfor the next region
-  // For region 15, this will point to a non-existant register, which is fine
+  // For region 15, this will point to a non-existent register, which is fine
   uint32_t pmp_cfg_plus1_addr = 0x3A0 + ((pmp_region + 1) / 4);
   uint32_t cfg_value = 0;
   uint32_t cfg_plus1_value = 0;

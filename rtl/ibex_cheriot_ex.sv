@@ -555,7 +555,7 @@ module ibex_cheriot_ex import ibex_cheriot_pkg::*; import ibex_pkg::*; #(
   if (WritebackStage) begin : gen_lsu_req_wb_stage
     // assert LSU req until instruction is retired (req_done from LSU)
     // note if the previous instr is also a load/store, cheriot_exec_id won't be asserted
-    // till WB is ready (lsu_resp for the previous isntr)
+    // till WB is ready (lsu_resp for the previous instr)
     logic unused_instr_first_cycle;
     assign unused_instr_first_cycle = instr_first_cycle_i;  // not needed with WB stage
     assign cheriot_lsu_req = is_cap & cheriot_exec_id_i;
@@ -674,10 +674,10 @@ module ibex_cheriot_ex import ibex_cheriot_pkg::*; import ibex_pkg::*; #(
   //    - cheriot no-LSU instructions
   //    - cheriot LSU (cap) instructions (including internal instr like LBC)
   //    - RV32  LSU (data) instructions
-  // this is a architectural access check (apply to the whole duration of an instruction)
+  // this is an architectural access check (apply to the whole duration of an instruction)
   //    - based on architectural capability registers and addresses
 
-  // - orginally we combine checking for CHERIoT and RV32 but it caused a combi loop
+  // - originally we combine checking for CHERIoT and RV32 but it caused a combi loop
   //   that goes from instr_executing -> rv32_lsu_req -> lsu_error ->
   //   cheriot_ex_err -> instr_executing
   //   it's not a real runtime issue but it does confuses timing tools so let's split for now.
@@ -709,10 +709,10 @@ module ibex_cheriot_ex import ibex_cheriot_pkg::*; import ibex_pkg::*; #(
     rv32_top_vio  = (rv32_top_chkaddr  > rv32_top_bound) || ~rv32_top_size_ok;
     rv32_base_vio = (rv32_base_chkaddr < rv32_base_bound);
 
-    // timing critical (data_req_o) path - don't add any unnecssary terms.
+    // timing critical (data_req_o) path - don't add any unnecessary terms.
     // we will chose with is_cheriot on the LSU interface later.
     //   for unaligned access, only check the starting (1st) address
-    //   (if there is an error, addr_incr_req won't be thre anyway
+    //   (if there is an error, addr_incr_req won't be there anyway)
     addr_bound_vio_rv32 =  (rv32_top_vio | rv32_base_vio) & ~addr_incr_req_i ;
 
     // main permission logic

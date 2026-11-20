@@ -5,7 +5,7 @@
 // Ibex specific macros
 #define SIGNATURE_ADDR 0x8ffffff8
 
-// signatue type - should be stored at sign_addr[7:0]
+// signature type - should be stored at sign_addr[7:0]
 #define CORE_STATUS 0x0
 #define TEST_RESULT 0x1
 #define WRITE_GPR 0x2

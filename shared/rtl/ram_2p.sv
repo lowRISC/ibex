@@ -5,8 +5,8 @@
 /**
  * Dual-port RAM with 1 cycle read/write delay, 32 bit words.
  * Optionally an extra delay can be added to the B-side requests.
- * This can be used to mimick an asymmetric memory delay like having the stack
- * and heap live in fast SRAM and the intructions live in slow, non-volatile
+ * This can be used to mimic an asymmetric memory delay like having the stack
+ * and heap live in fast SRAM and the instructions live in slow, non-volatile
  * memory.
  */
 

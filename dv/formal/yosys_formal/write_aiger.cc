@@ -769,7 +769,7 @@ struct AigerWriter
 	{
 		json.begin_object();
 		json.entry("version", "Yosys Witness Aiger map");
-		// json.entry("gennerator", yosys_maybe_version());
+		// json.entry("generator", yosys_maybe_version());
 
 		json.entry("latch_count", aig_l);
 		json.entry("input_count", aig_i);

@@ -218,7 +218,7 @@ struct GlobalClockPass : public Pass {
         // Hence produce an FF where sel = (aload == aload_polarity) ? AD : D
         //                               = aload ? (aload_polarity ? AD : D) :
         //                               (aload_polarity ? D : AD)
-        // This sames a cell since aload_polarity is a constant, so we can skip
+        // This saves a cell since aload_polarity is a constant, so we can skip
         // the equality check.
 
         bool aload_polarity = cell->getParam(ID(ALOAD_POLARITY)).as_bool();

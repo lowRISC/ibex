@@ -62,7 +62,7 @@ Some categories are just a single instruction, which is named without further de
   Which occurs depends upon the setting of ``dcsr.ebreakm`` / ``dcsr.ebreaku`` combined with the privilege level of executed instruction.
 * **ECall** - ``ECALL`` is an environment call used for escalation of privilege.
 * **MRet** - ``MRET`` return out of M-mode
-* **DRet** - ``DRET`` ruturn from debug mode.
+* **DRet** - ``DRET`` return from debug mode.
 * **WFI** - wait for interrupt.
 * **Fence** - ``FENCE`` memory fence on the data side.
 * **FenceI** - ``FENCE.I`` instruction fence instruction.
@@ -264,7 +264,7 @@ PMP
   * ``cp_pmp_iside_region_override``, ``cp_pmp_iside2_region_override``, ``cp_pmp_dside_region_override`` - Higher priority entry allows access that lower priority entry prevents.
   * ``pmp_instr_edge_cross`` - Compressed instruction access (16-bit) passes PMP but 32-bit access at same address crosses PMP region boundary.
 
-* Each field of mssecfg enabled/disabled, as well as written to using a CSR write, with relevant functionality tested.
+* Each field of mseccfg enabled/disabled, as well as written to using a CSR write, with relevant functionality tested.
 
   * RLB - rule locking bypass.
 

@@ -195,7 +195,7 @@ module ibex_compressed_decoder import ibex_pkg::*; #(
   logic [4:0] cm_sp_offset_d, cm_sp_offset_q;
   cm_state_e  cm_state_d, cm_state_q;
 
-  // Gate the `gets_expanded_o` to ensure that a invalid instruction looking like expandable cm.*
+  // Gate the `gets_expanded_o` to ensure that an invalid instruction looking like expandable cm.*
   // instructions will not be stalled/blocked in later control logic because it is waiting for
   // `INSTR_EXPANDED_LAST`.
   ibex_pkg::instr_exp_e gets_expanded;

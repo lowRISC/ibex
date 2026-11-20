@@ -681,7 +681,7 @@ module ibex_load_store_unit import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
       // resp_is_cap_q aligns with responses on the data interface,
       // lsu_is_cap_i aligns with requests
       //   we use lsu_go to qualify this update
-      //   - note this implies that LSU only support a outstand request at a time
+      //   - note this implies that LSU only supports an outstanding request at a time
       //   - new request can't be issued (go) until resp_valid
       //   - also note resp_valid is gated by (ls_fsm_cs == IDLE)
       if (lsu_go) begin

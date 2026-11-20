@@ -58,7 +58,7 @@ class TestRunResult(scripts_lib.testdata_cls):
     rtl_simulator: Optional[str] = None   # Which simulator is used
     iss_cosim: Optional[str] = None       # Which ISS are we cosimulating with?
 
-    # Options for discrete debug module memory heirarchy
+    # Options for discrete debug module memory hierarchy
     is_discrete_debug_module: Optional[bool] = None
     binary_main: Optional[pathlib.Path] = None
     binary_dm: Optional[pathlib.Path] = None

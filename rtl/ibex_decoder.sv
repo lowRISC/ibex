@@ -161,7 +161,7 @@ module ibex_decoder import ibex_cheriot_pkg::*; #(
   assign instr_rs2 = instr[24:20];
 
   // read cx3 if AUICGP
-  // note for GDC (c3) we want to use the regular scheme to resovel data hazards, instead of using
+  // note for GDC (c3) we want to use the regular scheme to resolve data hazards, instead of using
   // sideband signals to export CX3 from register file directly
   logic [4:0] raddr_a, raddr_b;
   assign raddr_a = cheriot_operator_o.CAUICGP ? 5'h3 : instr_rs1; // c3 / rs1

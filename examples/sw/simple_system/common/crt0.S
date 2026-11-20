@@ -46,7 +46,7 @@ reset_handler:
   mv x30, x1
   mv x31, x1
 
-  /* stack initilization */
+  /* stack initialization */
   la   x2, _stack_start
 
 _start:

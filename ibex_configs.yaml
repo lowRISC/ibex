@@ -61,7 +61,7 @@ opentitan:
   MHPMCounterNum           : 2
   MHPMCounterWidth         : 32
 
-# Three-stage pipeline with additional branch traget ALU and 1 cycle multiplier
+# Three-stage pipeline with additional branch target ALU and 1 cycle multiplier
 # (2 cycles for mulh) so mul does not stall (mulh stall 1 cycles). This is the
 # maximum performance configuration ignoring the branch predictor (which isn't
 # yet fully verified)

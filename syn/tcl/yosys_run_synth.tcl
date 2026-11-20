@@ -32,8 +32,8 @@ yosys "chparam -set RegFile $lr_synth_ibex_regfile $lr_synth_top_module"
 
 if { $lr_synth_ibex_secure_ibex } {
   yosys "chparam -set SecureIbex 1 $lr_synth_top_module"
-  # Place keep_hierarchy contraints on relevant modules to prevent aggressive
-  # synthesis optimzations across the boundaries of these modules.
+  # Place keep_hierarchy constraints on relevant modules to prevent aggressive
+  # synthesis optimizations across the boundaries of these modules.
   yosys "hierarchy -check -top $lr_synth_top_module"
   yosys "setattr -mod -set keep_hierarchy 1 *prim_and2*"
   yosys "setattr -mod -set keep_hierarchy 1 *prim_buf*"

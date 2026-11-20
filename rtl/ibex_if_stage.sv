@@ -442,7 +442,7 @@ module ibex_if_stage import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
 
   // allow_all is used to permit the pc wraparound case (pc = 0xffff_fffe, uncompressed instruction)
   // - in this case fetch should be allowed if pcc bounds is specified as the entire 32-bit space.
-  // - If we don't treat this as a specail case the fetch would be erred since headroom < 4
+  // - If we don't treat this as a special case the fetch would be erred since headroom < 4
   assign allow_all  = (pcc_cap_i.base32 == 0) & (pcc_cap_i.top33 == 33'h1_0000_0000);
 
   assign instr_hdrm = {1'b0, pcc_cap_i.top33} - {2'b00, if_instr_addr};
@@ -967,7 +967,7 @@ module ibex_if_stage import ibex_pkg::*; import ibex_cheriot_pkg::*; #(
     // Must not signal mispredict over multiple cycles but it's possible to have back to back
     // mispredicts for different branches (core signals mispredict, prefetch buffer/icache immediate
     // has not-taken side of the mispredicted branch ready, which itself is a predicted branch,
-    // following cycle core signal that that branch has mispredicted).
+    // following cycle core signal that branch has mispredicted).
     `ASSERT(MispredictSingleCycle,
       nt_branch_mispredict_i & ~(fetch_valid & fetch_ready) |=> ~nt_branch_mispredict_i)
 `endif
