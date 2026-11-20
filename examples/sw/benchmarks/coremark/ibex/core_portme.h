@@ -57,7 +57,9 @@ extern unsigned int _stack_start;
         Initialize these strings per platform
 */
 #ifndef COMPILER_VERSION
-#ifdef __GNUC__
+#ifdef __clang__
+#define COMPILER_VERSION "Clang"
+#elif defined(__GNUC__)
 #define COMPILER_VERSION "GCC"
 #else
 #define COMPILER_VERSION "unknown"
