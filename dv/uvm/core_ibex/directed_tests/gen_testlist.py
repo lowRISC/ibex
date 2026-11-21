@@ -112,6 +112,18 @@ def add_configs_and_handwritten_directed_tests():
     DbgTriggerEn: 1
   sim_opts: +enable_debug_seq=1
 
+- test: debug_mprven_test
+  desc: >
+    This test verifies that mstatus.MPRV is ignored in Debug Mode when
+    dcsr.mprven is unset.
+  iterations: 1
+  test_srcs: debug_mprven_test/debug_mprven_test.S
+  config: riscv-tests
+  rtl_test: core_ibex_debug_halt_wfi_test
+  rtl_params:
+    PMPEnable: 1
+  sim_opts: +enable_debug_seq=1
+
 - test: zcmp_reserved_test
   desc: >
     Reserved Zcmp encodings trap as illegal instructions and are not
