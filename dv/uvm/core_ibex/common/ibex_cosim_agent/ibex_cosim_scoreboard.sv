@@ -180,10 +180,12 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
 
     forever begin
       dmem_port.get(mem_op);
-      // Notify the cosim of all dside accesses emitted by the RTL
+      // Notify the cosim of all dside accesses emitted by the RTL. Integrity is only checked with
+      // SecureIbex.
       riscv_cosim_notify_dside_access(cosim_handle, mem_op.read_write == WRITE, mem_op.addr,
-        mem_op.data, mem_op.be, mem_op.error, mem_op.misaligned_first, mem_op.misaligned_second,
-        mem_op.misaligned_first_saw_error, mem_op.m_mode_access);
+        mem_op.data, mem_op.be, mem_op.error, cfg.secure_ibex & mem_op.intg_error,
+        mem_op.misaligned_first, mem_op.misaligned_second, mem_op.misaligned_first_saw_error,
+        mem_op.m_mode_access);
     end
   endtask: run_cosim_dmem
 
