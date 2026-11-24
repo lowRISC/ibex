@@ -730,15 +730,11 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
           binsof(cs_registers_i.priv_mode_id_o) intersect {PRIV_LVL_U};
       }
 
+      // The PMP checks pc_if + 2 unconditionally; the IF stage ignores the result for a compressed
+      // instruction (NoFetchErrPlus2OnCompressed in core_ibex_fcov_if checks the error it uses).
       pmp_instr_edge_cross: cross if_stage_i.instr_is_compressed_out,
                                   pmp_iside_req_err, pmp_iside2_req_err
-                              iff (pmp_iside_boundary_cross) {
-        // Compressed instruction cannot see an error over the boundary as it only ever does
-        // a single 16-bit fetch.
-        illegal_bins no_iside2_err_on_compressed =
-          binsof(if_stage_i.instr_is_compressed_out) intersect {1'b1} &&
-          binsof(pmp_iside2_req_err) intersect {1'b1};
-      }
+                              iff (pmp_iside_boundary_cross);
 
       misaligned_lsu_access_cross: cross misaligned_pmp_err_last,
                                          load_store_unit_i.fcov_ls_mis_pmp_err_2
