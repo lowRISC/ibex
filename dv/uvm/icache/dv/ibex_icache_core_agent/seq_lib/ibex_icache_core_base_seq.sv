@@ -197,10 +197,8 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
 
   // Called from the environment when resetting the DUT. Should ensure that the req_i signal is
   // dropped (to avoid any memory requests making it out of the DUT when it should be in reset)
-  //
-  // This must not be called while we're in body (otherwise we'd have multiple drivers for req_i).
   task reset_ifs();
-    cfg.vif.driver_cb.req <= 1'b0;
+    -> cfg.stop_driving;
   endtask
 
 endclass
