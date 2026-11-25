@@ -82,10 +82,17 @@ Dual core lockstep
 ------------------
 
 This configuration option instantiates a second copy of the core logic, referred to as the shadow core.
+With ``BaseIsa == BaseIsaRV32IorCHERIoT``, the core and its :ref:`TRVK filter<cheriot-trvk>` form one unit: the shadow core has its own TRVK, and the inputs and outputs below are the ones of this unit.
 The shadow core executes using a delayed version of all inputs supplied to the main core.
+The exception is the CHERIoT enable: with ``BaseIsa == BaseIsaRV32IorCHERIoT`` the shadow core has its own input ``cheriot_enable_shadow_i``, which the integrator drives one cycle after ``cheriot_enable_i`` and Ibex delays by ``LockstepOffset - 1`` more cycles.
+The one-cycle offset counts cycles of the ungated clock, so the integrator must switch the mode while the core runs: a change while the core sleeps with its clock gated reaches the shadow core one core clock cycle early.
+Once ``cheriot_enable_cmp_i``, delayed by ``LockstepOffset - 1`` cycles like the shadow enable, is not ``IbexMuBiOff``, ``cheriot_enable_i`` is compared against the delayed ``cheriot_enable_shadow_i``; a mismatch, or an enable that is not a valid ``ibex_mubi_t`` value, triggers an internal major alert.
+The integrator turns the comparison on only after the last change of either enable, once both hold the same valid value.
 All outputs of the shadow core are compared against a delayed version of the outputs of the main core.
 Any mismatch between the two sets of outputs will trigger an internal major alert.
-The shadow bus signals (``data_req_shadow_o``, ``data_addr_shadow_o``, etc. and ``instr_req_shadow_o``, ``instr_addr_shadow_o``) are exposed at the ``ibex_top`` level so that users can conduct additional security checks on integration-specific bus protocol conversion modules (see :ref:`core-integration` for the full signal list).
+The alerts of the shadow core, including the revocation bitmap errors of its TRVK, are not compared but signalled like the ones of the main core.
+The request tag of the data interface is compared encoded: each core encodes its own request tag and decodes its own copy of the response tag.
+The shadow bus signals (``data_*_shadow_o``, ``instr_*_shadow_o`` and ``trvk_revbm_*_shadow_o``) are exposed at the ``ibex_top`` level so that users can conduct additional security checks on integration-specific bus protocol conversion modules (see :ref:`core-integration` for the full signal list).
 
 Note that the register file and icache RAMs are not duplicated since these units are covered by other countermeasures.
 
