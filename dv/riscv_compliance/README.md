@@ -19,7 +19,8 @@ How to run RISC-V Compliance on Ibex
    - Verilator
    - fusesoc
    - srecord (for `srec_cat`)
-   - A RV32 compiler
+   - A RV32 compiler, e.g. the
+     [lowRISC RISC-V toolchain](https://github.com/lowRISC/lowrisc-toolchains/releases)
 
    On Ubuntu/Debian, install the required tools like this:
 
@@ -59,6 +60,10 @@ How to run RISC-V Compliance on Ibex
    cd $RISCV_COMPLIANCE_REPO_BASE
    # adjust to match your compiler name
    export RISCV_PREFIX=riscv32-unknown-elf-
+   # riscv-compliance's Makefile.include derives RISCV_GCC from RISCV_PREFIX
+   # with "?=", so export it directly to point at Clang instead (the
+   # lowRISC toolchain ships no riscv32-unknown-elf-gcc binary)
+   export RISCV_GCC=riscv32-unknown-elf-clang
    # give the absolute path to the simulation binary compiled in step 1
    export TARGET_SIM=/path/to/your/Vibex_riscv_compliance
 

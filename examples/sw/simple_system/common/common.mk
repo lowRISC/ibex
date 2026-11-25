@@ -19,9 +19,9 @@ SRCS = $(COMMON_SRCS) $(PROGRAM_C) $(EXTRA_SRCS)
 C_SRCS = $(filter %.c, $(SRCS))
 ASM_SRCS = $(filter %.S, $(SRCS))
 
-CC = riscv32-unknown-elf-gcc
+CC = riscv32-unknown-elf-clang
 
-CROSS_COMPILE = $(patsubst %-gcc,%-,$(CC))
+CROSS_COMPILE = riscv32-unknown-elf-
 OBJCOPY ?= $(CROSS_COMPILE)objcopy
 OBJDUMP ?= $(CROSS_COMPILE)objdump
 
@@ -57,7 +57,8 @@ endif
 # https://sourceware.org/bugzilla/show_bug.cgi?id=19921
 # is widely available.
 %.vmem: %.bin
-	srec_cat $^ -binary -offset 0x0000 -byte-swap 4 -o $@ -vmem
+	srec_cat $^ -binary -offset 0x0000 -fill 0xff -within $^ -binary -offset 0x0000 \
+		-range-padding 4 -byte-swap 4 -o $@ -vmem
 
 %.bin: %.elf
 	$(OBJCOPY) -O binary $^ $@

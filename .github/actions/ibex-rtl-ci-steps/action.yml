@@ -56,6 +56,11 @@ runs:
         # Run compliance test suite
         export TARGET_SIM=$PWD/build/lowrisc_ibex_ibex_riscv_compliance_0.1/sim-verilator/Vibex_riscv_compliance
         export RISCV_PREFIX=riscv32-unknown-elf-
+        # riscv-compliance's Makefile.include derives RISCV_GCC from
+        # RISCV_PREFIX with "?=", so exporting RISCV_GCC directly overrides
+        # that default without needing a riscv32-unknown-elf-gcc binary
+        # (which the LLVM toolchain doesn't ship).
+        export RISCV_GCC=riscv32-unknown-elf-clang
         export RISCV_TARGET=ibex
         export RISCV_DEVICE=rv32imc
         fail=0
