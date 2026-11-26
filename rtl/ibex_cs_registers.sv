@@ -993,7 +993,8 @@ module ibex_cs_registers import ibex_pkg::*, ibex_cheriot_pkg::*; #(
   // Send current priv level to the decoder
   assign priv_mode_id_o = priv_lvl_q;
   // Load/store instructions must factor in MPRV for PMP checking
-  assign priv_mode_lsu_o = mstatus_q.mprv ? mstatus_q.mpp : priv_lvl_q;
+  assign priv_mode_lsu_o = (mstatus_q.mprv && (!debug_mode_i || dcsr_q.mprven)) ?
+      mstatus_q.mpp : priv_lvl_q;
 
   // CSR operation logic
   always_comb begin
