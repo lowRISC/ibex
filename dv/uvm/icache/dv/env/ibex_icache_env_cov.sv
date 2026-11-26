@@ -15,17 +15,19 @@ class ibex_icache_env_cov extends dv_base_env_cov #(.CFG_T (ibex_icache_env_cfg)
   // the base class provides the following handles for use:
   // ibex_icache_env_cfg: cfg
 
-  // covergroups
-  // [add covergroups here]
+  // A line the cache read from memory before an invalidation is read from memory again after it,
+  // so the invalidation dropped it. Sampled by the scoreboard from the memory and core interfaces.
+  covergroup inval_refetch_cg with function sample (bit inval_while_busy, bit first_read);
+    // Whether the cache was busy (filling or still invalidating) when the invalidation started.
+    cp_inval_while_busy: coverpoint inval_while_busy;
+    // Whether this was the first memory read after the invalidation.
+    cp_first_read: coverpoint first_read;
+    inval_refetch_cross: cross cp_inval_while_busy, cp_first_read;
+  endgroup
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
-    // [instantiate covergroups here]
+    inval_refetch_cg = new();
   endfunction : new
-
-  virtual function void build_phase(uvm_phase phase);
-    super.build_phase(phase);
-    // [or instantiate covergroups here]
-  endfunction
 
 endclass

@@ -115,6 +115,14 @@ class ibex_icache_scoreboard
   int unsigned possible_old_count = 0;
   int unsigned actual_old_count = 0;
 
+  // For inval_refetch_cg: the lines read from memory with the cache enabled since the last
+  // invalidation, the lines read before it that have not been read again, the memory reads since
+  // it, and whether the cache was busy when it started.
+  protected bit lines_read[bit [31:0]];
+  protected bit lines_before_inval[bit [31:0]];
+  protected int unsigned reads_since_inval;
+  protected bit inval_while_busy;
+
   `uvm_component_new
 
   function void build_phase(uvm_phase phase);
@@ -190,6 +198,11 @@ class ibex_icache_scoreboard
 
     not_invalidating = 1'b0;
     window_reset();
+
+    lines_before_inval = lines_read;
+    lines_read.delete();
+    reads_since_inval = 0;
+    inval_while_busy = busy;
   endtask
 
   task process_enable(ibex_icache_core_bus_item item);
@@ -217,6 +230,7 @@ class ibex_icache_scoreboard
       if (item.is_grant) begin
         mem_trans_count += 1;
         window_take_mem_read();
+        if (enabled) sample_refetch(item.data);
       end else begin
         busy_check();
         `DV_CHECK_FATAL(mem_trans_count > 0);
@@ -256,6 +270,22 @@ class ibex_icache_scoreboard
 
     // Forget about any pending bus transactions (they've been thrown away anyway)
     mem_trans_count = 0;
+
+    // A reset empties the cache
+    lines_read.delete();
+    lines_before_inval.delete();
+  endfunction
+
+  // A memory read of the line holding addr: sample inval_refetch_cg if the cache read that line
+  // before the last invalidation and not since.
+  function void sample_refetch(logic [31:0] addr);
+    bit [31:0] line = addr >> ibex_pkg::IC_LINE_W;
+    if (cfg.en_cov && lines_before_inval.exists(line)) begin
+      cov.inval_refetch_cg.sample(inval_while_busy, reads_since_inval == 0);
+      lines_before_inval.delete(line);
+    end
+    lines_read[line] = 1'b1;
+    reads_since_inval++;
   endfunction
 
   // Called on the posedge of rst_n which ends the reset period.
