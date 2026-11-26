@@ -158,4 +158,40 @@
       tests: ["ibex_icache_stress_all_with_reset"]
     }
   ]
+
+  covergroups: [
+    {
+      name: icache_cg
+      desc: '''Lookups, hits and misses, hit ways, fill buffer use, ECC errors and the source of each
+            instruction (fill buffer, external bus or cache), crossed with the cache enable
+            (ibex_icache_fcov_if).'''
+    }
+    {
+      name: icache_fillbuf_cg
+      desc: '''Per fill buffer: its state, why it finished, its starting beat, and its state when
+            the cache is disabled, enabled or invalidated (ibex_icache_fcov_if).'''
+    }
+    {
+      name: inc_fetch_cg
+      desc: "Consecutive fetches with no branch between them: both increments and a wrap-around."
+    }
+    {
+      name: branch_dest_cg
+      desc: "Branch destinations near zero, near the top of the address space and elsewhere."
+    }
+    {
+      name: fetch_cg
+      desc: "Fetches with and without errors (including err_plus2), with the cache on and off."
+    }
+    {
+      name: cancelled_valid_cg
+      desc: "A branch cancelling a valid output, with and without ready."
+    }
+    {
+      name: inval_refetch_cg
+      desc: '''After an invalidation, the cache reads again from memory a line it had read before:
+            the invalidation dropped it. Crossed with whether the cache was busy when the
+            invalidation started and whether this was the first memory read after it.'''
+    }
+  ]
 }

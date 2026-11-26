@@ -167,6 +167,18 @@ Coverpoints will be created at two levels, ICache top level and individual fill 
 * `cp_state_when_inval_start` - State of the fill buffer when cache invalidation begins
 * `cp_starting_beat` - Beat fill buffer started on and hence sent its first request for (which may be part way through a line)
 
+#### Invalidation coverage
+
+`inval_refetch_cg` in `ibex_icache_env_cov` is sampled by the scoreboard from the memory and core interfaces.
+It records a line that the cache read from memory before an invalidation being read from memory again after it.
+
+**Coverpoints**
+* `cp_inval_while_busy` - Whether the cache was busy when the invalidation started
+* `cp_first_read` - Whether this was the first memory read after the invalidation
+
+**Crosses**
+* `inval_refetch_cross` - Cross of the two
+
 
 ### Self-checking strategy
 #### Scoreboard
