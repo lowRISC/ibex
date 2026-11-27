@@ -85,6 +85,17 @@ module core_ibex_tb_top;
   // Ibex Inputs
   parameter int unsigned BootAddr         = 32'h`BOOT_ADDR; // ResetVec = BootAddr/256b + 0x80
 
+  // +cheriot_enable=1 runs the core in CHERIoT mode from reset (CHERIoT builds only)
+  ibex_pkg::ibex_mubi_t cheriot_enable;
+  initial begin
+    int unsigned enable = 0;
+    void'($value$plusargs("cheriot_enable=%d", enable));
+    if (enable && BaseIsa != ibex_pkg::BaseIsaRV32IorCHERIoT) begin
+      `uvm_fatal("core_ibex_tb_top", "+cheriot_enable=1 needs BaseIsa = BaseIsaRV32IorCHERIoT")
+    end
+    cheriot_enable = enable ? ibex_pkg::IbexMuBiOn : ibex_pkg::IbexMuBiOff;
+  end
+
   // Scrambling interface instantiation
   logic [ibex_pkg::SCRAMBLE_KEY_W-1:0]   scramble_key;
   logic [ibex_pkg::SCRAMBLE_NONCE_W-1:0] scramble_nonce;
@@ -187,9 +198,9 @@ module core_ibex_tb_top;
     .crash_dump_o              (                           ),
     .double_fault_seen_o       (dut_if.double_fault_seen   ),
 
-    .cheriot_enable_i          (ibex_pkg::IbexMuBiOff      ),
-    .cheriot_enable_shadow_i   (ibex_pkg::IbexMuBiOff      ),
-    .cheriot_enable_cmp_i      (ibex_pkg::IbexMuBiOff      ),
+    .cheriot_enable_i          (cheriot_enable             ),
+    .cheriot_enable_shadow_i   (cheriot_enable             ),
+    .cheriot_enable_cmp_i      (cheriot_enable             ),
 
     .fetch_enable_i            (dut_if.fetch_enable        ),
     .mcounteren_writable_i     (dut_if.mcounteren_writable ),
