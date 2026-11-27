@@ -105,6 +105,20 @@
     RV32ZC: ["ibex_pkg::RV32ZcaZcmp", "ibex_pkg::RV32ZcaZcbZcmp"]
   sim_opts: +disable_cosim=1
 
+- test: cheriot_cap_basic
+  desc: >
+    Runs in CHERIoT mode from reset. Derives a 16-byte capability from the
+    root memory capability in mtdc, checks its address, bounds and tag, and
+    stores and loads through it. The test checks itself: the cosim does not
+    model CHERIoT yet.
+  iterations: 1
+  test_srcs: cheriot_cap_basic/cheriot_cap_basic.S
+  config: riscv-tests
+  rtl_params:
+    PMPEnable: 1
+    BaseIsa: "ibex_pkg::BaseIsaRV32IorCHERIoT"
+  sim_opts: +cheriot_enable=1 +disable_cosim=1 +disable_spurious_dside_responses=1
+
 - test: dummy_instr_minstret_test
   desc: >
     Dummy instructions must not be counted in minstret: the minstret delta
