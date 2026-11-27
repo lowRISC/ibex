@@ -1,0 +1,337 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+//
+// RISC-V testplan of core_ibex; CHERIoT is in core_ibex_cheriot_testplan.hjson. Tests not in the
+// testlists yet are planned.
+{
+  name: "core_ibex"
+
+  testpoints: [
+    {
+      name: riscv_dv_random
+      desc: '''Random instruction streams
+
+            Random RV32IMC instruction streams in M and U mode, from arithmetic only to the full
+            instruction set, each instruction compared with Spike (cosim).'''
+      stage: V1
+      tests: ["riscv_arithmetic_basic_test", "riscv_machine_mode_rand_test",
+              "riscv_rand_instr_test", "riscv_rv32im_instr_test", "riscv_user_mode_rand_test"]
+    }
+
+    {
+      name: riscv_dv_control_flow
+      desc: '''Jumps, branches and loops
+
+            Random jumps, jump stress and loops, exercising branch targets, the prefetch buffer
+            and instruction-side flushes; fetch_enable_i toggled while loads and stores are in
+            flight.'''
+      stage: V2
+      tests: ["riscv_fetch_en_chk_test", "riscv_jump_stress_test", "riscv_loop_test",
+              "riscv_rand_jump_test"]
+    }
+
+    {
+      name: riscv_dv_exceptions
+      desc: '''Illegal instructions, hints, ebreak and invalid CSRs
+
+            Each traps or retires exactly as in Spike, and the handler resumes correctly.'''
+      stage: V2
+      tests: ["riscv_ebreak_test", "riscv_hint_instr_test", "riscv_illegal_instr_test",
+              "riscv_invalid_csr_test"]
+    }
+
+    {
+      name: riscv_dv_debug
+      desc: '''Debug mode
+
+            Entry by request, trigger, ebreak and single step; dret; the debug CSRs; debug
+            requests and interrupts in both orders; debug during WFI, branches and stalls.'''
+      stage: V2
+      tests: ["riscv_debug_basic_test", "riscv_debug_branch_jump_test",
+              "riscv_debug_csr_entry_test", "riscv_debug_ebreak_test",
+              "riscv_debug_ebreakmu_test", "riscv_debug_in_irq_test", "riscv_debug_instr_test",
+              "riscv_debug_on_stall_test", "riscv_debug_single_step_test",
+              "riscv_debug_stress_test", "riscv_debug_triggers_test", "riscv_debug_wfi_test",
+              "riscv_dret_test", "riscv_irq_in_debug_mode_test"]
+    }
+
+    {
+      name: riscv_dv_interrupts
+      desc: '''Interrupts
+
+            Single, multiple and nested interrupts, interrupts during WFI and CSR accesses, traps
+            mixed with interrupts and debug, and an NMI taken ahead of an excepting instruction.'''
+      stage: V2
+      tests: ["riscv_assorted_traps_interrupts_debug_test", "riscv_interrupt_csr_test",
+              "riscv_interrupt_instr_test", "riscv_interrupt_wfi_test",
+              "riscv_multiple_interrupt_test", "riscv_nested_interrupt_test",
+              "riscv_nmi_at_exc_test", "riscv_single_interrupt_test"]
+    }
+
+    {
+      name: riscv_dv_csrs
+      desc: '''CSR behaviour and U-mode WFI timeout
+
+            CSR reads and writes against the CSR descriptions, and WFI in U mode with mstatus.TW
+            set.'''
+      stage: V2
+      tests: ["riscv_csr_test", "riscv_umode_tw_test"]
+    }
+
+    {
+      name: riscv_dv_memory
+      desc: '''Unaligned accesses, bus errors and memory stress
+
+            Unaligned loads and stores, bus errors on data and instruction fetch, also with
+            interrupts and debug requests arriving with them, and memory stress.'''
+      stage: V2
+      tests: ["riscv_mem_error_test", "riscv_mem_error_traps_test", "riscv_mmu_stress_test",
+              "riscv_unaligned_load_store_test"]
+    }
+
+    {
+      name: riscv_dv_integrity
+      desc: '''Integrity countermeasures
+
+            Integrity errors on memory responses, the PC, the register file (data and address) and
+            the RAMs and icache are detected and raise the right alert.'''
+      stage: V2S
+      tests: ["riscv_icache_intg_test", "riscv_mem_intg_error_test", "riscv_pc_intg_test",
+              "riscv_ram_intg_test", "riscv_rf_addr_intg_test", "riscv_rf_intg_test"]
+    }
+
+    {
+      name: riscv_dv_reset
+      desc: '''Reset during execution
+
+            A reset in the middle of execution returns the core to its reset state.'''
+      stage: V2
+      tests: ["riscv_reset_test"]
+    }
+
+    {
+      name: riscv_dv_pmp
+      desc: '''Random PMP and ePMP configurations
+
+            Region matching, permissions, locked regions, mseccfg MML, MMWP and RLB, out-of-bounds
+            and fully random configurations.'''
+      stage: V2
+      tests: ["riscv_epmp_mml_execute_only_test", "riscv_epmp_mml_read_only_test",
+              "riscv_epmp_mml_test", "riscv_epmp_mmwp_test", "riscv_epmp_rlb_test",
+              "riscv_pmp_basic_test", "riscv_pmp_disable_all_regions_test",
+              "riscv_pmp_full_random_test", "riscv_pmp_out_of_bounds_test",
+              "riscv_pmp_region_exec_test", "riscv_pmp_traps_test"]
+    }
+
+    {
+      name: riscv_dv_bitmanip
+      desc: '''Bit-manipulation instructions
+
+            The bit-manipulation instructions of each supported configuration.'''
+      stage: V2
+      tests: ["riscv_bitmanip_balanced_test", "riscv_bitmanip_full_test"]
+    }
+
+    {
+      name: directed_smoke
+      desc: '''Directed-test flow
+
+            An empty directed test boots, signals completion and passes the end-of-test checks.'''
+      stage: V1
+      tests: ["empty"]
+    }
+
+    {
+      name: riscv_tests_isa
+      desc: '''riscv-tests ISA suites
+
+            rv32ui, rv32um and rv32mi: each test checks itself and passes.'''
+      stage: V1
+      tests: ["add", "addi", "and", "andi", "auipc", "beq", "bge", "bgeu", "blt", "bltu", "bne",
+              "breakpoint", "csr", "div", "divu", "fence_i", "illegal", "jal", "jalr", "lb",
+              "lbu", "lh", "lh-misaligned", "lhu", "lui", "lw", "lw-misaligned", "ma_addr",
+              "ma_fetch", "mcsr", "mul", "mulh", "mulhsu", "mulhu", "or", "ori", "rem", "remu",
+              "rvc", "sb", "sbreak", "scall", "sh", "sh-misaligned", "shamt", "simple", "sll",
+              "slli", "slt", "slti", "sltiu", "sltu", "sra", "srai", "srl", "srli", "sub", "sw",
+              "sw-misaligned", "xor", "xori", "zicntr"]
+    }
+
+    {
+      name: riscv_arch_tests
+      desc: '''RISC-V architectural tests
+
+            The I, M, C and B suites: each test's signature matches the reference.'''
+      stage: V1
+      tests: ["Fencei", "add-01", "addi-01", "and-01", "andi-01", "andn-01", "auipc-01",
+              "bclr-01", "bclri-01", "beq-01", "bext-01", "bexti-01", "bge-01", "bgeu-01",
+              "binv-01", "binvi-01", "blt-01", "bltu-01", "bne-01", "bset-01", "bseti-01",
+              "cadd-01", "caddi-01", "caddi16sp-01", "caddi4spn-01", "cand-01", "candi-01",
+              "cbeqz-01", "cbnez-01", "cebreak-01", "cj-01", "cjal-01", "cjalr-01", "cjr-01",
+              "cli-01", "clmul-01", "clmulh-01", "clmulr-01", "clui-01", "clw-01", "clwsp-01",
+              "clz-01", "cmv-01", "cnop-01", "cor-01", "cpop-01", "cslli-01", "csrai-01",
+              "csrli-01", "csub-01", "csw-01", "cswsp-01", "ctz-01", "cxor-01", "div-01",
+              "divu-01", "fence-01", "jal-01", "jalr-01", "lb-align-01", "lbu-align-01",
+              "lh-align-01", "lhu-align-01", "lui-01", "lw-align-01", "max-01", "maxu-01",
+              "min-01", "minu-01", "misalign1-jalr-01", "mul-01", "mulh-01", "mulhsu-01",
+              "mulhu-01", "or-01", "orcb_32-01", "ori-01", "orn-01", "rem-01", "remu-01",
+              "rev8_32-01", "rol-01", "ror-01", "rori-01", "sb-align-01", "sext-b-01",
+              "sext-h-01", "sh-align-01", "sh1add-01", "sh2add-01", "sh3add-01", "sll-01",
+              "slli-01", "slt-01", "slti-01", "sltiu-01", "sltu-01", "sra-01", "srai-01",
+              "srl-01", "srli-01", "sub-01", "sw-align-01", "xnor-01", "xor-01", "xori-01",
+              "zext-h_32-01"]
+    }
+
+    {
+      name: epmp_generated
+      desc: '''Generated ePMP CSR and access tests
+
+            The riscv-isa-sim mseccfg generator's tests (test_pmp_csr_* and test_pmp_ok_*, 744 in
+            the directed testlist): every combination of lock, RLB, MMWP, MML, privilege mode and
+            permission, for CSR behaviour and for accesses. Not listed one by one.'''
+      stage: V2
+      tests: []
+    }
+
+    {
+      name: pmp_directed
+      desc: '''Directed PMP tests
+
+            Overlapping regions, where the lowest-numbered match wins; mseccfg RLB and lock
+            interaction, i.e. which pmpcfg writes are accepted after locking; PMP faults, bus
+            errors and completing accesses followed by each instruction category.'''
+      stage: V2
+      tests: ["access_pmp_overlap", "cov_expr_fetch_wrap", "cov_expr_pmp_tor",
+              "cov_fcov_pmp_mml_locked_wr", "cov_fcov_pmp_region_mml0",
+              "cov_fcov_pmp_region_mml1", "cov_fcov_pmp_region_wr_exec_c0",
+              "cov_fcov_pmp_region_wr_exec_c1", "cov_fcov_pmp_region_wr_exec_c2",
+              "cov_fcov_pmp_region_wr_exec_c3", "cov_fcov_pmp_region_wr_exec_c4",
+              "pmp_fault_hazard", "pmp_mseccfg_test_rlb0_l0_0_u0",
+              "pmp_mseccfg_test_rlb0_l0_0_u1", "pmp_mseccfg_test_rlb0_l0_1_next_l1_r1_u0",
+              "pmp_mseccfg_test_rlb0_l0_1_next_l1_r1_u1",
+              "pmp_mseccfg_test_rlb0_l0_1_next_l1_r1_w1_u0",
+              "pmp_mseccfg_test_rlb0_l0_1_next_l1_r1_w1_u1",
+              "pmp_mseccfg_test_rlb0_l0_1_next_l1_r1_w1_x1_u0",
+              "pmp_mseccfg_test_rlb0_l0_1_next_l1_r1_w1_x1_u1",
+              "pmp_mseccfg_test_rlb0_l0_1_next_l1_r1_x1_u0",
+              "pmp_mseccfg_test_rlb0_l0_1_next_l1_r1_x1_u1",
+              "pmp_mseccfg_test_rlb0_l0_1_next_l1_u0", "pmp_mseccfg_test_rlb0_l0_1_next_l1_u1",
+              "pmp_mseccfg_test_rlb0_l0_1_next_l1_w1_u0",
+              "pmp_mseccfg_test_rlb0_l0_1_next_l1_w1_u1",
+              "pmp_mseccfg_test_rlb0_l0_1_next_l1_w1_x1_u0",
+              "pmp_mseccfg_test_rlb0_l0_1_next_l1_w1_x1_u1",
+              "pmp_mseccfg_test_rlb0_l0_1_next_l1_x1_u0",
+              "pmp_mseccfg_test_rlb0_l0_1_next_l1_x1_u1", "pmp_mseccfg_test_rlb1_l0_0_u0",
+              "pmp_mseccfg_test_rlb1_l0_0_u1", "pmp_mseccfg_test_rlb1_l0_1_u0",
+              "pmp_mseccfg_test_rlb1_l0_1_u1", "pmp_mseccfg_test_rlb1_l1_0_u0",
+              "pmp_mseccfg_test_rlb1_l1_0_u1", "pmp_mseccfg_test_rlb1_l1_1_u0",
+              "pmp_mseccfg_test_rlb1_l1_1_u1"]
+    }
+
+    {
+      name: counters_and_user_mode
+      desc: '''Counter enable and inhibit, and U-mode execution
+
+            mcounteren gating of U-mode counter access and its lock, U-mode execution, every CSR
+            accessed from M and U mode with illegal accesses trapping, and mcountinhibit.'''
+      stage: V2
+      tests: ["cov_expr_counter_hwrite", "cov_expr_counter_inhibit", "csr_access_sweep",
+              "mcounteren_lock_test", "mcounteren_test", "u_mode_exec_test"]
+    }
+
+    {
+      name: zcmp
+      desc: '''Zcmp push, pop and move
+
+            Every Zcmp instruction over all register lists, stack adjustments and register pairs,
+            and the reserved encodings as illegal instructions.'''
+      stage: V2
+      tests: ["cov_block_zcmp_dummy", "zcmp_push_pop_mv", "zcmp_reserved_test"]
+    }
+
+    {
+      name: counter_high_half
+      desc: '''Writes to the upper half of the 64-bit counters
+
+            mcycleh, minstreth and mhpmcounterNh read back, the low half is unchanged and the
+            counters carry into the high half.'''
+      stage: V2
+      tests: ["counter_high_half_write", "cov_block_mcycleh_inhibit"]
+    }
+
+    {
+      name: minstret_exact
+      desc: '''minstret counts exactly the instructions retired
+
+            An instruction that traps does not retire, mret does, compressed and Zcmp instructions
+            count once, and a write to minstret replaces the writing instruction's increment.'''
+      stage: V2
+      tests: ["minstret_exact"]
+    }
+
+    {
+      name: debug_triggers
+      desc: '''Every debug trigger
+
+            Each trigger of the configuration can be selected, programmed, read back and fired.'''
+      stage: V2
+      tests: ["debug_triggers_all"]
+    }
+
+    {
+      name: debug_directed
+      desc: '''Directed debug-mode tests
+
+            ebreak inside debug mode, privilege changes inside one debug session, accesses to the
+            debug module's range under PMP, and single step with pending interrupts.'''
+      stage: V2
+      tests: ["cov_expr_step_irq", "cov_fcov_debug_tdata_read", "debug_dm_pmp", "debug_mret_umode"]
+    }
+
+    {
+      name: config_ports
+      desc: '''hart_id_i and boot_addr_i
+
+            mhartid reads hart_id_i and cannot be written; the core boots from boot_addr_i.'''
+      stage: V2
+      tests: ["ibex_boot_addr", "ibex_mhartid", "ibex_mhartid_ones"]
+    }
+
+    {
+      name: decode_corners
+      desc: '''Decode corners
+
+            packh, the reserved OP-IMM encodings and writes to the performance counters, which the
+            random tests do not reach.'''
+      stage: V2
+      tests: ["cov_block_zbk", "cov_expr_rv_misc", "ibex_decode_holes"]
+    }
+
+    {
+      name: integrity_directed
+      desc: '''Directed bus integrity errors
+
+            A load with bad integrity raises the internal NMI with the expected mcause and mtval;
+            a second one inside the handler stays pending until it returns; integrity errors on
+            instruction fetch fault.'''
+      stage: V2S
+      tests: ["cov_expr_intg_err", "cov_expr_nmi_capture"]
+    }
+  ]
+
+  covergroups: [
+    {
+      name: uarch_cg
+      desc: '''Instruction categories, stalls, hazards and pipeline state in the ID and WB
+            stages.'''
+    }
+    {
+      name: pmp_region_cg
+      desc: '''Per PMP region: matching mode, permissions, lock and the access outcome.'''
+    }
+    {
+      name: pmp_top_cg
+      desc: '''mseccfg MML, MMWP and RLB, privilege mode and access type.'''
+    }
+  ]
+}
