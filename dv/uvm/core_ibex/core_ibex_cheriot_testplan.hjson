@@ -1,0 +1,222 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+//
+// CHERIoT testplan of core_ibex. Tests not in the directed testlist yet are planned.
+{
+  name: "core_ibex_cheriot"
+
+  testpoints: [
+    {
+      name: cheriot_basic
+      desc: '''Run in CHERIoT mode from reset
+
+            Hold cheriot_enable_i On from reset (+cheriot_enable=1). Derive a bounded capability
+            from the root memory capability in mtdc, check its address, base, length and tag,
+            store and load through it, and check that CClearTag clears only the tag. The test
+            checks itself and writes its result through a capability.'''
+      stage: V1
+      tests: ["cheriot_cap_basic"]
+    }
+
+    {
+      name: cheriot_isa_directed
+      desc: '''Directed tests of each CHERIoT instruction
+
+            Capability fields (base, length, type, permissions, address, high word); CIncAddr,
+            CSetAddr and the CSetBounds variants with their rounding; sealing and unsealing;
+            sentries and fault causes of CJALR; PCC and its bounds at instruction fetch; the null
+            capability; CLC and CSC with and without the MC permission; special capability
+            registers and their legalisation; AUIPCC and AUICGP; compressed and Zcb instructions
+            in CHERIoT mode. Each test checks itself.'''
+      stage: V2
+      tests: ["cheriot_andperm", "cheriot_asr_counter_csr", "cheriot_auipcc_auicgp_repr",
+              "cheriot_branch_self_loop", "cheriot_c_shift_imm", "cheriot_cap_addr",
+              "cheriot_cap_base", "cheriot_cap_high", "cheriot_cap_len", "cheriot_cap_perms",
+              "cheriot_cap_readback", "cheriot_cap_type", "cheriot_ccleartag", "cheriot_cinc_addr",
+              "cheriot_cincaddrimm", "cheriot_cjal_link_wrap", "cheriot_cjalr_faults",
+              "cheriot_cjalr_sentry", "cheriot_clsc_top_edge", "cheriot_cseal_cunseal",
+              "cheriot_csetaddr", "cheriot_csethigh", "cheriot_cspecialrw_c0", "cheriot_csub",
+              "cheriot_fetch_bounds", "cheriot_intcap_arith", "cheriot_mscratchc_seal",
+              "cheriot_mtvec_mepc_access", "cheriot_null_cap", "cheriot_pcc", "cheriot_perm_lc_sc",
+              "cheriot_repr_window_sweep", "cheriot_scr_faults", "cheriot_scr_legalize",
+              "cheriot_seal_fail", "cheriot_setbounds", "cheriot_setboundsexact",
+              "cheriot_setboundsimm", "cheriot_setboundsrndn", "cheriot_zcb",
+              "cheriot_zero_len_perm", "cov_fcov2_cheri_isa", "cov_fcov3_cheri_isa"]
+    }
+
+    {
+      name: cheriot_traps_and_errors
+      desc: '''CHERIoT instructions meeting interrupts, debug mode and bus errors
+
+            Interrupts taken during CHERIoT instructions, CHERIoT instructions in debug mode, and
+            data bus and integrity errors on capability loads and stores, each with the expected
+            cause, MEPCC and register state.'''
+      stage: V2
+      tests: ["cheriot_irq_cheri", "cheriot_debug_mode", "cheriot_mem_err"]
+    }
+
+    {
+      name: cheriot_random_operands
+      desc: '''CHERIoT instructions over random operands
+
+            Capabilities built at random from the root capabilities, in every class of bounds,
+            address, permissions and object type, as operands of every CHERIoT instruction and
+            of capability loads and stores. Checked instruction by instruction by a CHERIoT
+            cosim.'''
+      stage: V2
+      tests: ["cheriot_rand_operands", "cheriot_rand_operands_far", "cheriot_rand_ldst"]
+    }
+
+    {
+      name: cheriot_stack_high_water_mark
+      desc: '''Stack high water mark CSRs
+
+            mshwm and mshwmb: reset value, rounding of writes to 16 bytes, the update on every
+            store whose address lies in the window and on no other access, and access that
+            needs the SR permission.'''
+      stage: V2
+      tests: ["cheriot_mshwm"]
+    }
+
+    {
+      name: cheriot_illegal_instructions
+      desc: '''Illegal instructions in CHERIoT mode and with cheriot_enable_i Off
+
+            Every reserved encoding class traps as an illegal instruction with the expected
+            mcause, mtval and MEPCC in CHERIoT mode, and CHERIoT instructions are illegal with
+            cheriot_enable_i Off.'''
+      stage: V2
+      tests: ["cheriot_illegal_sweep", "cheriot_illegal_rv_mode", "cheriot_cgetoffset_illegal",
+              "cheriot_cdbg_ctrl_illegal", "cheriot_illegal_branch_dit", "cheriot_reg_index"]
+    }
+
+    {
+      name: cheriot_rtos_patterns
+      desc: '''CHERIoT instructions as the CHERIoT RTOS uses them
+
+            Capabilities round-trip exactly through CSC and CLC, and an integer store clears
+            only its own granule's tag; CMove; CRoundRepresentableLength and
+            CRepresentableAlignmentMask across exponent boundaries; CGetTop; CSetEqualExact and
+            CTestSubset.'''
+      stage: V2
+      tests: ["cheriot_rtos_clc_csc", "cheriot_rtos_cmove", "cheriot_rtos_crrl",
+              "cheriot_rtos_gettop", "cheriot_rtos_isequal", "cheriot_rtos_subset"]
+    }
+
+    {
+      name: cheriot_temporal_safety
+      desc: '''Tag clearing on stores and the revocation load barrier
+
+            Integer stores clear the tag of the granules they touch and no others, and a
+            dereference of an untagged pointer raises a tag violation. CLC returns tag 0 for a
+            capability whose base lies in a revoked granule, and only inside the heap window,
+            also with integrity errors on the revocation bitmap.'''
+      stage: V2
+      tests: ["cheriot_revoke_basic", "cheriot_revoke_attenuation", "cheriot_revoke_load_barrier",
+              "cheriot_revoke_load_barrier_intg", "cheriot_revoke_load_barrier_rnd",
+              "cheriot_revoke_load_barrier_rnd_intg", "cheriot_revoke_load_barrier_rnd_both"]
+    }
+
+    {
+      name: cheriot_enable_pin
+      desc: '''cheriot_enable_i Off, switched On while running, and switched back Off
+
+            With the pin Off, loads and stores are not capability-checked. Switched On while
+            running, CHERIoT mode takes effect (AUIPC becomes AUIPCC). Switched Off again, which
+            the pin contract forbids, the core raises a major alert rather than silently
+            dropping its checks. A trap through an untagged MTCC raises a major alert too.'''
+      stage: V2
+      tests: ["cheriot_bck_nocheck", "cheriot_enable_transition", "cheriot_enable_on_off",
+              "cheriot_fatal_err_mtcc"]
+    }
+
+    {
+      name: cheriot_security_features
+      desc: '''Dummy instructions and data-independent timing in CHERIoT mode
+
+            With dummy instruction insertion and data-independent timing enabled, CHERIoT
+            instructions give the same results and take no trap.'''
+      stage: V2S
+      tests: ["cheriot_dummy_instr"]
+    }
+
+    {
+      name: cheriot_memory_safety_cases
+      desc: '''Memory-safety weaknesses from the Juliet suite
+
+            Bare-metal versions of Juliet CWE cases (buffer overflows and underwrites,
+            write-what-where, off-by-one, integer overflow, use after free, double free,
+            uninitialised variables): each is stopped by the expected CHERI check.'''
+      stage: V2
+      tests: ["juliet_cwe121_stack_bof", "juliet_cwe122_heap_bof",
+              "juliet_cwe123_write_what_where", "juliet_cwe124_buf_underwrite",
+              "juliet_cwe131_fault", "juliet_cwe131_repr", "juliet_cwe190_int_overflow",
+              "juliet_cwe193_off_by_one", "juliet_cwe272_least_privilege",
+              "juliet_cwe415_double_free", "juliet_cwe416_use_after_free",
+              "juliet_cwe457_uninit_var", "juliet_cwe468_fault", "juliet_cwe468_repr"]
+    }
+
+    {
+      name: cheriot_pipeline_scenarios
+      desc: '''CHERIoT instructions in specific pipeline situations
+
+            CLC and CSC in the pipeline, a sentry CJALR, traps and MRET, and debug requests,
+            NMIs and fetch-enable drops placed in an exact cycle of a capability access.'''
+      stage: V3
+      tests: ["wb_cheri_clc_csc", "wb_cheri_sentry_cjalr", "wb_cheri_trap_mret",
+              "cov_fcov2_cheri_hazard", "cov_fcov3_cheri_irq", "cov_fcov4_cheri_hazard"]
+    }
+
+    {
+      name: cheriot_debug_module
+      desc: '''The debug module in CHERIoT mode
+
+            The RISC-V debug module behind the core's buses, driven over DMI: halt, register
+            and capability register access by abstract command, the program buffer and resume,
+            with the core in CHERIoT mode.'''
+      stage: V2
+      tests: ["dm_basic_cheriot"]
+    }
+  ]
+
+  covergroups: [
+    {
+      name: cheriot_uarch_cg
+      desc: '''CHERIoT instructions by operand class (bounds, address, permissions, type, tag)
+            and their results.'''
+    }
+    {
+      name: cheri_access_bounds_cg
+      desc: '''Data accesses through a capability near its base and top, inside and outside.'''
+    }
+    {
+      name: cheri_representability_cg
+      desc: '''Address changes near the edges of the representable window, by instruction.'''
+    }
+    {
+      name: cheri_zero_len_perm_cg
+      desc: '''Operands with zero length or zero permissions, by instruction class.'''
+    }
+    {
+      name: cheri_illegal_insn_cg
+      desc: '''Illegal instructions by encoding class, in CHERIoT mode and with the pin Off.'''
+    }
+    {
+      name: cheri_interrupt_cheri_cg
+      desc: '''Interrupts arriving during CHERIoT instructions, including both beats of CSC.'''
+    }
+    {
+      name: cheri_mshwm_cg
+      desc: '''Stack high water mark CSR accesses and the stores that update it.'''
+    }
+    {
+      name: cheriot_obi_backpressure_cg
+      desc: '''Capability loads and stores under data bus back-pressure, by LSU state.'''
+    }
+    {
+      name: trvk_cg
+      desc: '''Revocation load-barrier verdicts and the bitmap responses behind them.'''
+    }
+  ]
+}
