@@ -1,0 +1,82 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+//
+// riscv-compliance on the Verilator compliance simulation (this directory), as CI runs it.
+{
+  name: "riscv_compliance"
+
+  testpoints: [
+    {
+      name: rv32i
+      desc: '''RV32I base integer instructions
+
+            The riscv-compliance rv32i tests, built for rv32imc. Each test's signature must
+            match the suite's reference output.
+
+            CI accepts exactly four failing rv32i tests out of 48 (see the CI step and
+            lowRISC/ibex#100).'''
+      stage: V1
+      tests: ["rv32i_I-ADD-01", "rv32i_I-ADDI-01", "rv32i_I-AND-01", "rv32i_I-ANDI-01",
+              "rv32i_I-AUIPC-01", "rv32i_I-BEQ-01", "rv32i_I-BGE-01", "rv32i_I-BGEU-01",
+              "rv32i_I-BLT-01", "rv32i_I-BLTU-01", "rv32i_I-BNE-01", "rv32i_I-DELAY_SLOTS-01",
+              "rv32i_I-EBREAK-01", "rv32i_I-ECALL-01", "rv32i_I-ENDIANESS-01", "rv32i_I-IO",
+              "rv32i_I-JAL-01", "rv32i_I-JALR-01", "rv32i_I-LB-01", "rv32i_I-LBU-01",
+              "rv32i_I-LH-01", "rv32i_I-LHU-01", "rv32i_I-LUI-01", "rv32i_I-LW-01",
+              "rv32i_I-MISALIGN_JMP-01", "rv32i_I-MISALIGN_LDST-01", "rv32i_I-NOP-01",
+              "rv32i_I-OR-01", "rv32i_I-ORI-01", "rv32i_I-RF_size-01", "rv32i_I-RF_width-01",
+              "rv32i_I-RF_x0-01", "rv32i_I-SB-01", "rv32i_I-SH-01", "rv32i_I-SLL-01",
+              "rv32i_I-SLLI-01", "rv32i_I-SLT-01", "rv32i_I-SLTI-01", "rv32i_I-SLTIU-01",
+              "rv32i_I-SLTU-01", "rv32i_I-SRA-01", "rv32i_I-SRAI-01", "rv32i_I-SRL-01",
+              "rv32i_I-SRLI-01", "rv32i_I-SUB-01", "rv32i_I-SW-01", "rv32i_I-XOR-01",
+              "rv32i_I-XORI-01"]
+    }
+
+    {
+      name: rv32im
+      desc: '''M extension: multiply and divide
+
+            The riscv-compliance rv32im tests, built for rv32imc. Each test's signature must
+            match the suite's reference output.'''
+      stage: V1
+      tests: ["rv32im_DIV", "rv32im_DIVU", "rv32im_MUL", "rv32im_MULH", "rv32im_MULHSU",
+              "rv32im_MULHU", "rv32im_REM", "rv32im_REMU"]
+    }
+
+    {
+      name: rv32imc
+      desc: '''C extension: compressed instructions
+
+            The riscv-compliance rv32imc tests, built for rv32imc. Each test's signature must
+            match the suite's reference output.'''
+      stage: V1
+      tests: ["rv32imc_C-ADD", "rv32imc_C-ADDI", "rv32imc_C-ADDI16SP", "rv32imc_C-ADDI4SPN",
+              "rv32imc_C-AND", "rv32imc_C-ANDI", "rv32imc_C-BEQZ", "rv32imc_C-BNEZ",
+              "rv32imc_C-J", "rv32imc_C-JAL", "rv32imc_C-JALR", "rv32imc_C-JR", "rv32imc_C-LI",
+              "rv32imc_C-LUI", "rv32imc_C-LW", "rv32imc_C-LWSP", "rv32imc_C-MV", "rv32imc_C-OR",
+              "rv32imc_C-SLLI", "rv32imc_C-SRAI", "rv32imc_C-SRLI", "rv32imc_C-SUB",
+              "rv32imc_C-SW", "rv32imc_C-SWSP", "rv32imc_C-XOR"]
+    }
+
+    {
+      name: rv32Zicsr
+      desc: '''Zicsr: CSR access instructions
+
+            The riscv-compliance rv32Zicsr tests, built for rv32imc. Each test's signature must
+            match the suite's reference output.'''
+      stage: V1
+      tests: ["rv32Zicsr_I-CSRRC-01", "rv32Zicsr_I-CSRRCI-01", "rv32Zicsr_I-CSRRS-01",
+              "rv32Zicsr_I-CSRRSI-01", "rv32Zicsr_I-CSRRW-01", "rv32Zicsr_I-CSRRWI-01"]
+    }
+
+    {
+      name: rv32Zifencei
+      desc: '''Zifencei: instruction-fetch fence
+
+            The riscv-compliance rv32Zifencei tests, built for rv32imc. Each test's signature must
+            match the suite's reference output.'''
+      stage: V1
+      tests: ["rv32Zifencei_I-FENCE.I-01"]
+    }
+  ]
+}

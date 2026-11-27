@@ -1,0 +1,67 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+//
+// ibex_cs_registers alone: 10000 random CSR accesses and random resets, each read checked by the
+// C++ model (model/). CSRs outside reg_driver/csr_listing.def are covered by the core's benches.
+{
+  name: "cs_registers"
+
+  testpoints: [
+    {
+      name: pmp_cfg
+      desc: '''pmpcfg: WARL fields, lock and reserved encodings
+
+            Random writes, sets and clears of pmpcfg. An entry whose L bit is set ignores
+            writes until reset, unless mseccfg.RLB is set. R=0 W=1 is reserved and reads back
+            with R and W cleared, unless mseccfg.MML is set. With mseccfg.MML set, a write that
+            would add a locked M-mode-only executable rule or a locked shared executable region
+            is ignored. The bytes of entries above PMPNumRegions read as zero.'''
+      stage: V2
+      tests: ["tb_cs_registers"]
+    }
+
+    {
+      name: pmp_addr
+      desc: '''pmpaddr: read-write and lock rules
+
+            pmpaddr i ignores writes when entry i is locked, or when entry i+1 is locked and in
+            TOR mode; mseccfg.RLB lifts both. The addresses of entries above PMPNumRegions read
+            as zero.'''
+      stage: V2
+      tests: ["tb_cs_registers"]
+    }
+
+    {
+      name: mseccfg
+      desc: '''mseccfg and mseccfgh: the Smepmp bits
+
+            mseccfg.MML and mseccfg.MMWP stay set until reset once set. mseccfg.RLB cannot be set
+            while it is clear and any pmpcfg L bit is set. The other bits, and mseccfgh, read as
+            zero.'''
+      stage: V2
+      tests: ["tb_cs_registers"]
+    }
+
+    {
+      name: counters
+      desc: '''Performance counter CSRs
+
+            mcountinhibit, mhpmevent3-31 and mhpmcounter3-31(h) for the MHPMCounterNum
+            implemented counters of MHPMCounterWidth bits, zero for the others; minstret(h)
+            read-write.'''
+      stage: V2
+      tests: ["tb_cs_registers"]
+    }
+
+    {
+      name: reset
+      desc: '''Reset values
+
+            Resets every 100 to 1000 cycles during the access stream; afterwards every modelled
+            CSR reads its reset value.'''
+      stage: V2
+      tests: ["tb_cs_registers"]
+    }
+  ]
+}

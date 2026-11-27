@@ -1,0 +1,56 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+//
+// Programs on the Simple System with Spike in lock-step (ci/run-cosim-test.sh), as CI runs them:
+// every retired instruction and data access is compared with Spike.
+{
+  name: "simple_system_cosim"
+
+  testpoints: [
+    {
+      name: coremark
+      desc: '''CoreMark under co-simulation
+
+            examples/sw/benchmarks/coremark: integer, multiply/divide and compressed code, each
+            instruction compared with Spike. The co-simulation is the check
+            (--skip-pass-check).'''
+      stage: V1
+      tests: ["coremark"]
+    }
+
+    {
+      name: pmp_smoke
+      desc: '''PMP: a locked read-only region traps a store
+
+            pmp_smoke_test locks a PMP entry as a read-only region over a variable and writes it.
+            The store must take an access fault in M-mode, as in Spike. Runs only on
+            configurations with PMPEnable=1.'''
+      stage: V1
+      tests: ["pmp_smoke_test"]
+    }
+
+    {
+      name: data_independent_timing
+      desc: '''Data-independent timing
+
+            dit_test times data-dependent code with data-independent timing off and on; with it
+            on, every run must take the same time. The program prints PASS. Runs only on
+            configurations with SecureIbex=1.'''
+      stage: V2
+      tests: ["dit_test"]
+    }
+
+    {
+      name: dummy_instructions
+      desc: '''Dummy instruction insertion
+
+            dummy_instr_test times the same code with dummy instruction insertion off and on;
+            with it on, the run times must vary, and the dummy instructions must not appear as
+            retired instructions to Spike. The program prints PASS. Runs only on configurations
+            with SecureIbex=1.'''
+      stage: V2
+      tests: ["dummy_instr_test"]
+    }
+  ]
+}
