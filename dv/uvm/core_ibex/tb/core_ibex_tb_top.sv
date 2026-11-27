@@ -199,9 +199,8 @@ module core_ibex_tb_top;
     .double_fault_seen_o       (dut_if.double_fault_seen   ),
 
     .cheriot_enable_i          (cheriot_enable             ),
-    .cheriot_enable_i          (ibex_pkg::IbexMuBiOff      ),
-    .cheriot_enable_shadow_i   (ibex_pkg::IbexMuBiOff      ),
-    .cheriot_enable_cmp_i      (ibex_pkg::IbexMuBiOff      ),
+    .cheriot_enable_shadow_i   (cheriot_enable             ),
+    .cheriot_enable_cmp_i      (cheriot_enable             ),
 
     .fetch_enable_i            (dut_if.fetch_enable        ),
     .mcounteren_writable_i     (dut_if.mcounteren_writable ),
