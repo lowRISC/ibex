@@ -38,7 +38,7 @@ Supported Configurations
 The current set of supported configurations are:
 
  * ``small`` - RV32IMC with two stage pipeline and 3 cycle multiplier
- * ``opentitan`` - The configuration used by the `OpenTitan <www.opentitan.org>`_ project
+ * ``opentitan`` - The configuration used by the Earl Grey top of `OpenTitan <https://opentitan.org/book/hw/top_earlgrey/ip_autogen/rv_core_ibex/index.html>`_
  * ``maxperf`` - RV32IMC with three stage pipeline and single cycle multiplier, maximum performance (using stable features) configuration.
  * ``maxperf-pmp-bmbalanced`` - ``maxperf`` configuration with PMP and the 'balanced' bit-manipulation configuration (:ref:`core-integration` for details).
 
@@ -47,4 +47,5 @@ The current set of supported configurations are:
 Supported Parameter Sets
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``opentitan`` configuration is the parameter set used and signed off in the Earl Grey top of `OpenTitan <https://opentitan.org>`__ (``rv_core_ibex``).
+The ``opentitan`` configuration is the parameter set used and signed off in the Earl Grey top of `OpenTitan <https://opentitan.org/book/hw/top_earlgrey/ip_autogen/rv_core_ibex/index.html>`__ (``rv_core_ibex``).
+The parameter values are listed in the ``opentitan`` entry of `ibex_configs.yaml <https://github.com/lowRISC/ibex/blob/master/ibex_configs.yaml#L41-L62>`__.
